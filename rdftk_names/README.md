@@ -9,6 +9,7 @@ provides macro support for defining new namespaces in the same style as this lib
 ## Vocabularies
 
 * `dc`: Dublin Core Metadata
+* `foaf`: Friend of a Friend
 * `geo`: W3C Geographic
 * `owl`: Web Ontology Language
 * `rdf`: RDF Syntax
