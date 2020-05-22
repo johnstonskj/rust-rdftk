@@ -3,6 +3,9 @@
 This crate provides a set of modules that contain the URIs and QName strings for commonly used vocabularies. It also 
 provides macro support for defining new namespaces in the same style as this library.
 
+[![crates.io](https://img.shields.io/crates/v/rdftk_names.svg)](https://crates.io/crates/rdftk_names)
+[![docs.rs](https://docs.rs/rdftk_names/badge.svg)](https://docs.rs/rdftk_names)
+
 ## Vocabularies
 
 * `dc`: Dublin Core Metadata

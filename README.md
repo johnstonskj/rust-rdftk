@@ -6,8 +6,6 @@ consistent set of tools for reading and writing files, manipulating models progr
 
 ![MIT License](https://img.shields.io/badge/license-mit-118811.svg)
 ![Minimum Rust Version](https://img.shields.io/badge/Min%20Rust-1.40-green.svg)
-[![crates.io](https://img.shields.io/crates/v/rdftk.svg)](https://crates.io/crates/rdftk)
-[![docs.rs](https://docs.rs/rdftk/badge.svg)](https://docs.rs/rdftk)
 [![travis.ci](https://travis-ci.org/johnstonskj/rust-rdftk.svg?branch=master)](https://travis-ci.org/johnstonskj/rust-rdftk)
 [![GitHub stars](https://img.shields.io/github/stars/johnstonskj/rust-rdftk.svg)](https://github.com/johnstonskj/rust-rdftk/stargazers)
 
