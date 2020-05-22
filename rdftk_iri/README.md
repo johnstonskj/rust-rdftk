@@ -1,6 +1,6 @@
 # Crate rdfktk_iri
 
-TBD
+Another implementation of the `IRI` and URI specifications.
 
 [![crates.io](https://img.shields.io/crates/v/rdftk_iri.svg)](https://crates.io/crates/rdftk_iri)
 [![docs.rs](https://docs.rs/rdftk_iri/badge.svg)](https://docs.rs/rdftk_iri)

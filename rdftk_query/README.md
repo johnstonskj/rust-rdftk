@@ -1,6 +1,6 @@
 # Crate rdfktk_query
 
-TBD
+Placeholder for query API and SPARQL support.
 
 [![crates.io](https://img.shields.io/crates/v/rdftk_query.svg)](https://crates.io/crates/rdftk_query)
 [![docs.rs](https://docs.rs/rdftk_query/badge.svg)](https://docs.rs/rdftk_query)

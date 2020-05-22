@@ -1,6 +1,6 @@
 # Crate rdfktk_io
 
-TBD
+Traits for reading/wtiting `Statement`s and `Graph`s as well as implementations for common file formats.
 
 [![crates.io](https://img.shields.io/crates/v/rdftk_io.svg)](https://crates.io/crates/rdftk_io)
 [![docs.rs](https://docs.rs/rdftk_io/badge.svg)](https://docs.rs/rdftk_io)
