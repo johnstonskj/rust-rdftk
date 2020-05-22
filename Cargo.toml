@@ -1,0 +1,11 @@
+[workspace]
+
+members = [
+    "rdftk_core",
+    "rdftk_graph",
+    "rdftk_io",
+    "rdftk_iri",
+    "rdftk_memgraph",
+    "rdftk_names",
+    "rdftk_query",
+]
