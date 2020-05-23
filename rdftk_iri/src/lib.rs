@@ -1,9 +1,9 @@
 /*!
-One-line description.
-
-More detailed description, with
+Another implementation of the `IRI` and URI specifications.
 
 # Example
+
+TBD
 
 */
 

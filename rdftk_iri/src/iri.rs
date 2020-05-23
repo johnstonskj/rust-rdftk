@@ -1,9 +1,9 @@
 /*!
 Provides the `URI` type that supports the semantics of the
-[URI](https://en.wikipedia.org/wiki/Uniform_Resource_Identifier) and
-[IRI](https://en.wikipedia.org/wiki/Internationalized_Resource_Identifier) specifications, and
-which includes both [URL](https://en.wikipedia.org/wiki/URL)s as well as
-[URN](https://en.wikipedia.org/wiki/Uniform_Resource_Name)s.
+[IRI](https://en.wikipedia.org/wiki/Internationalized_Resource_Identifier),
+[URI](https://en.wikipedia.org/wiki/Uniform_Resource_Identifier),
+[URL](https://en.wikipedia.org/wiki/URL), and
+[URN](https://en.wikipedia.org/wiki/Uniform_Resource_Name) specifications.
 
 In general, URLs are written as follows:
 

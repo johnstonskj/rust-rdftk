@@ -1,9 +1,10 @@
 /*!
-One-line description.
-
-More detailed description, with
+Provides the `Scheme` component of an `IRI` as well as a set of known schemes in the `KnownSchemes`
+enum.
 
 # Example
+
+TBD
 
 */
 

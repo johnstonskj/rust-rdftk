@@ -1,9 +1,9 @@
 /*!
-One-line description.
-
-More detailed description, with
+An implementation of the `Graph` traits for simple in-memory cases.
 
 # Example
+
+TBD
 
 */
 
@@ -17,6 +17,9 @@ use std::rc::Rc;
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
+///
+/// A very simple in-memory implementation of the `Graph` and `NamedGraph` traits.
+///
 #[derive(Clone, Debug)]
 pub struct MemGraph {
     name: Option<IRI>,

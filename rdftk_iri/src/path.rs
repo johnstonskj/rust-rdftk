@@ -1,9 +1,9 @@
 /*!
-One-line description.
-
-More detailed description, with
+Provides the `Path` component of an `IRI`.
 
 # Example
+
+TBD
 
 */
 

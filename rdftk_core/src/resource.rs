@@ -1,9 +1,9 @@
 /*!
-One-line description.
-
-More detailed description, with
+Implementation of the `Resource` pattern as a kind of statement builder.
 
 # Example
+
+TBD
 
 */
 

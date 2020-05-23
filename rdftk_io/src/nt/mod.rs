@@ -1,9 +1,12 @@
 /*!
-One-line description.
-
-More detailed description, with
+Provides for writing out in both the
+[RDF 1.1 N-Triples](https://www.w3.org/TR/n-triples/), _a line-based syntax for an RDF graph_, and
+[RDF 1.1 N-Quads](https://www.w3.org/TR/n-quads/), _a line-based syntax for RDF datasets_,
+formats.
 
 # Example
+
+TBD
 
 */
 

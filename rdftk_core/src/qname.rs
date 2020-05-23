@@ -1,7 +1,5 @@
 /*!
-One-line description.
-
-More detailed description, with
+A qualified name, `QName` implementation.
 
 # Example
 

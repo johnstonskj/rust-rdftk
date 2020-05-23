@@ -1,9 +1,9 @@
 /*!
-One-line description.
-
-More detailed description, with
+Provides a builder experience for creating `IRI` instances.
 
 # Example
+
+TBD
 
 */
 

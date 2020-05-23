@@ -1,9 +1,9 @@
 /*!
-One-line description.
-
-More detailed description, with
+A single statement (subject, predicate, object) in the RDF data mode.
 
 # Example
+
+TBD
 
 */
 

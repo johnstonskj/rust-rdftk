@@ -1,9 +1,9 @@
 /*!
-One-line description.
-
-More detailed description, with
+The `Literal` type used in the object component of a statement.
 
 # Example
+
+TBD
 
 */
 

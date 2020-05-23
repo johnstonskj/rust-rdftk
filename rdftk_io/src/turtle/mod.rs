@@ -1,9 +1,10 @@
 /*!
-One-line description.
-
-More detailed description, with
+Provides for writing out in the [RDF 1.1 Turtle](https://www.w3.org/TR/turtle/), _Terse RDF Triple
+Language_, format.
 
 # Example
+
+TBD
 
 */
 

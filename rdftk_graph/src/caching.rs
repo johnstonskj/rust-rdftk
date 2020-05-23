@@ -1,7 +1,6 @@
 /*!
-One-line description.
-
-More detailed description, with
+An extension to the core `Graph` to support graphs that cache literal and resource values to
+reduce memory use/fragmentation.
 
 # Example
 

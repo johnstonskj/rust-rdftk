@@ -1,9 +1,9 @@
 /*!
-One-line description.
-
-More detailed description, with
+Traits which describe the capabilities of different `Graph` types.
 
 # Example
+
+TBD
 
 */
 

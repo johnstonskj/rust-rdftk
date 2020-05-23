@@ -1,9 +1,9 @@
 /*!
-One-line description.
-
-More detailed description, with
+Provides the `IRI` specific `Error` and `Result` types.
 
 # Example
+
+TBD
 
 */
 

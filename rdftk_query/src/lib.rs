@@ -1,9 +1,9 @@
 /*!
-One-line description.
-
-More detailed description, with
+Placeholder for query API and SPARQL support.
 
 # Example
+
+TBD
 
 */
 

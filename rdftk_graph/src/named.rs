@@ -1,9 +1,9 @@
 /*!
-One-line description.
-
-More detailed description, with
+An extension to the core `Graph` to support named graphs.
 
 # Example
+
+TBD
 
 */
 

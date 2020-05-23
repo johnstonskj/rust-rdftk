@@ -1,9 +1,10 @@
 /*!
-One-line description.
-
-More detailed description, with
+Provides for writing out in the [RDF 1.1 XML Syntax](https://www.w3.org/TR/rdf-syntax-grammar/)
+format.
 
 # Example
+
+TBD
 
 */
 

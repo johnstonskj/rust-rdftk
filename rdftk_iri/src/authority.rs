@@ -1,9 +1,10 @@
 /*!
-One-line description.
-
-More detailed description, with
+Provides the `Authoriy` component of an `IRI` comprising `Host`, `Port`, and `KnownPorts`
+types.
 
 # Example
+
+TBD
 
 */
 

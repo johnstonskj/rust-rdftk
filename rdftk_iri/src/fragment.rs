@@ -1,9 +1,9 @@
 /*!
-One-line description.
-
-More detailed description, with
+Provides the `Fragment` component of an `IRI`.
 
 # Example
+
+TBD
 
 */
 

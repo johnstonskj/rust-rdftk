@@ -1,9 +1,9 @@
 /*!
-One-line description.
-
-More detailed description, with
+A trait for prefix-mapping required by the `Graph` trait.
 
 # Example
+
+TBD
 
 */
 

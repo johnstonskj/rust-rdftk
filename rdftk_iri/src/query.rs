@@ -1,9 +1,9 @@
 /*!
-One-line description.
-
-More detailed description, with
+Provides the `Query` component of an `IRI`.
 
 # Example
+
+TBD
 
 */
 

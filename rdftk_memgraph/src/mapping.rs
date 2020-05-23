@@ -1,9 +1,9 @@
 /*!
-One-line description.
-
-More detailed description, with
+Implementation of the `PrefixMapping` trait for `MemGraph`.
 
 # Example
+
+TBD
 
 */
 

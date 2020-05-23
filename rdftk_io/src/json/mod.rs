@@ -1,9 +1,11 @@
 /*!
-One-line description.
-
-More detailed description, with
+Provides for writing out in both the
+[JSON-LD 1.1](https://www.w3.org/TR/json-ld/), _A JSON-based Serialization for Linked Data_, and
+[RDF 1.1 JSON Alternate Serialization (RDF/JSON)](https://www.w3.org/TR/rdf-json/) formats.
 
 # Example
+
+TBD
 
 */
 

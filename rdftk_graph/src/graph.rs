@@ -1,9 +1,9 @@
 /*!
-One-line description.
-
-More detailed description, with
+The core `Graph` type implemented by all model providers.
 
 # Example
+
+TBD
 
 */
 

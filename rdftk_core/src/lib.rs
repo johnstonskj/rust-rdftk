@@ -1,9 +1,10 @@
 /*!
-One-line description.
-
-More detailed description, with
+The core data model; concrete implementations for `Statement`s and `Literal`s, along with a 
+concrete `Resource` type that provides a builder-like experience for models.
 
 # Example
+
+TBD
 
 */
 
