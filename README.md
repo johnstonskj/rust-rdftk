@@ -1,4 +1,4 @@
-# An RDF Toolkit for Rust
+# RDFtk: An RDF Toolkit for Rust
 
 The RDF toolkit for Rust is a set of crates providing the ability to work with RDF data. The goal is to provide a 
 consistent set of tools for reading and writing files, manipulating models programmatically, and working with graph
@@ -44,3 +44,5 @@ probably be joined by others over time.
    │                                        │
    └────────────────────────────────────────┘
 ```
+
+[![RDF](http://www.w3.org/RDF/icons/rdf_w3c_button.32)](http://www.w3.org/RDF/)
