@@ -23,6 +23,9 @@ probably be joined by others over time.
 * `names`: Common vocabularies.
 * `query`: Placeholder for query APIs and SPARQL support.
 
+The following diagram shows the crate dependencies, but for clarify it has combined `core` and `graph` into a single 
+unit.
+
 ```text
                      ┌──────────────┐
         ┌────────────│   memgraph   │─────────────┐
@@ -38,9 +41,9 @@ probably be joined by others over time.
    │    └─────┬──────────────┴──────────────┬─────┘
    │          │                             │
    │          │                             │
-   │  ┌──────────────┐              ┌──────────────┐
-   │  │      io      │              │    query     │
-   │  └──────────────┘              └──────────────┘
+   │    ┌──────────────┐           ┌──────────────┐
+   │    │      io      │           │    query     │
+   │    └──────────────┘           └──────────────┘
    │                                        │
    └────────────────────────────────────────┘
 ```
