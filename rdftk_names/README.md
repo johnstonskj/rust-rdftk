@@ -8,19 +8,38 @@ provides macro support for defining new namespaces in the same style as this lib
 
 ## Vocabularies
 
-* `dc`: Dublin Core Metadata; [dublincore.org](https://www.dublincore.org/), includ
-  * `dcam`
-  * `dcmi_types`
-  * `elements`
-  * `terms`
-* `foaf`: Friend of a Friend; [specification](http://xmlns.com/foaf/spec/)
-* `geo`: W3C Geographic
-* `owl`: Web Ontology Language [![OWL](https://www.w3.org/Icons/SW/Buttons/sw-owl-blue.png)](http://www.w3.org/2001/sw/wiki/OWL)
-* `rdf`: RDF Syntax [![RDF](https://www.w3.org/Icons/SW/Buttons/sw-rdf-blue.png)](http://www.w3.org/2001/sw/wiki/RDF)
-* `rdfs`: RDF Schema [![RDF](https://www.w3.org/Icons/SW/Buttons/sw-rdf-blue.png)](http://www.w3.org/2001/sw/wiki/RDF)
-* `xsd`: XML Schema data types
+Te following table shows the set of namespaces supported, those with "TBD" in the module column are yet to be encoded.
 
-# Example
+| Module           | Vocabulary | Namespace |
+|------------------|------------|-----------|
+| `dt::dcam`       | [DCMI Abstract Model](https://www.dublincore.org/specifications/dublin-core/abstract-model/) | `http://purl.org/dc/dcam/` |
+| `dt::dcmi_types` | [DCMI Type Vocabulary](https://www.dublincore.org/specifications/dublin-core/dcmi-type-vocabulary/) | `http://purl.org/dc/dcmitype/` |
+| `dt::elements`'  | [DCMI Terms](https://www.dublincore.org/specifications/dublin-core/dcmi-terms/) | `http://purl.org/dc/elements/1.1/` |
+| `dt::terms`      | [DCMI Terms](https://www.dublincore.org/specifications/dublin-core/dcmi-terms/) legacy elements | `http://purl.org/dc/terms/` |
+| `foaf`           | [Friend of a Friend](http://xmlns.com/foaf/spec/) | `http://xmlns.com/foaf/0.1/` |
+| `geo`            | [Basic Geo Vocabulary](https://www.w3.org/2003/01/geo/) | `http://www.w3.org/2003/01/geo/wgs84_pos#` |
+| `owl`            | [![OWL](https://www.w3.org/Icons/SW/Buttons/sw-owl-blue.png)](http://www.w3.org/2001/sw/wiki/OWL) Web Ontology Language  | `http://www.w3.org/2002/07/owl#` |
+| `rdf`            | [![RDF](https://www.w3.org/Icons/SW/Buttons/sw-rdf-blue.png)](http://www.w3.org/2001/sw/wiki/RDF) RDF Syntax  | `http://www.w3.org/1999/02/22-rdf-syntax-ns#` |
+| `rdfs`           | [![RDF](https://www.w3.org/Icons/SW/Buttons/sw-rdf-blue.png)](http://www.w3.org/2001/sw/wiki/RDF) RDF Schema  | `http://www.w3.org/2000/01/rdf-schema#` |
+| `xsd`            | [XML Schema data types](https://www.w3.org/TR/xmlschema-2) | `http://www.w3.org/2001/XMLSchema#` |
+| TBD              | [![SKOS](https://www.w3.org/Icons/SW/Buttons/sw-skos-blue.png)](http://www.w3.org/2001/sw/wiki/SKOS) Simple Knowledge Organization System (SKOS) | `http://www.w3.org/2004/02/skos/core#` |
+| TBD              | [![PROV](https://www.w3.org/Icons/SW/Buttons/sw-prov-blue.png)](http://www.w3.org/2001/sw/wiki/PROV) PROV | `http://www.w3.org/ns/prov#` |
+| TBD              | [![RDFa](https://www.w3.org/Icons/SW/Buttons/sw-rdfa-blue.png)](http://www.w3.org/2001/sw/wiki/RDFa) RDF in Attributes (RDFa) | `http://www.w3.org/ns/rdfa#` |
+| TBD              | [RDF Calendar](https://www.w3.org/TR/rdfcal/) | `http://www.w3.org/2002/12/cal#`  |
+| TBD              | [vCard Ontology](https://www.w3.org/TR/vcard-rdf/) | `http://www.w3.org/2006/vcard/ns#` |
+| TBD              | [The Organization Ontology](https://www.w3.org/TR/vocab-org/) | `http://www.w3.org/ns/org#` |
+| TBD              | [Creative Commons Rights Expression Language](https://wiki.creativecommons.org/wiki/CC_REL) | `http://creativecommons.org/ns#` |
+
+## The namespace Macro
+
+The `namespace!` macro takes three parameters:
+
+* The common prefix for the module,
+* The namespace URI for the module,
+* A list of pairs where the first is the name of the function to return the IRI for the name
+* The name, as a string, of the vocabulary element.
+
+## Example
 
 The following example replicates the `geo` module using the `namespace!` macro.
 
@@ -53,9 +72,4 @@ namespace! {
 
 ## TODO
 
-* SKOS, `http://www.w3.org/2004/02/skos/core#`; [![SKOS](https://www.w3.org/Icons/SW/Buttons/sw-skos-blue.png)](http://www.w3.org/2001/sw/wiki/SKOS)
-* PROV, `http://www.w3.org/ns/prov#`; [![PROV](https://www.w3.org/Icons/SW/Buttons/sw-prov-blue.png)](http://www.w3.org/2001/sw/wiki/PROV)
-* RDFa, `tp://www.w3.org/ns/rdfa#`;  [![RDFa](https://www.w3.org/Icons/SW/Buttons/sw-rdfa-blue.png)](http://www.w3.org/2001/sw/wiki/RDFa)
-* org, `http://www.w3.org/ns/org#`; https://www.w3.org/TR/vocab-org/
-* vcard, `http://www.w3.org/2006/vcard/ns#`; https://www.w3.org/TR/vcard-rdf/
-* CC, `http://creativecommons.org/ns#`; https://wiki.creativecommons.org/wiki/CC_REL
+TBD

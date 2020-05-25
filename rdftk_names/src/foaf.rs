@@ -1,7 +1,6 @@
 /*!
-Functions that create URIs for the [Friend of a Friend](http://xmlns.com/foaf/0.1/) namespace.
+Functions that create URIs for the [Friend of a Friend](http://xmlns.com/foaf/spec/) namespace.
 
-See the [specification](http://xmlns.com/foaf/spec/).
 */
 
 namespace! {

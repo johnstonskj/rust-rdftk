@@ -1,7 +1,6 @@
 /*!
-Functions that create URIs for the OWL 2 Web ontology Language [OWL2](http://www.w3.org/2002/07/owl#) namespace.
+Functions that create URIs for the OWL 2 Web ontology Language [OWL2](http://www.w3.org/TR/owl2-quick-reference/) namespace.
 
-From `http://www.w3.org/TR/owl2-quick-reference/`.
 */
 
 namespace! {

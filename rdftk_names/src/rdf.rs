@@ -1,5 +1,5 @@
 /*!
-Functions that create URIs for the [RDF](http://www.w3.org/1999/02/22-rdf-syntax-ns#) namespace.
+Functions that create URIs for the [RDF](https://www.w3.org/TR/rdf11-concepts/) namespace.
 */
 
 namespace! {
