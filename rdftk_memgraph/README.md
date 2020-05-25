@@ -1,4 +1,4 @@
-# Crate rdfktk_memgraph
+# RDFtk: MemGraph
 
 An implementation of the `Graph` traits for simple in-memory cases.
 
@@ -12,3 +12,7 @@ An implementation of the `Graph` traits for simple in-memory cases.
 * First release
 
 ## TODO
+
+TBD 
+
+[![RDF](http://www.w3.org/RDF/icons/rdf_w3c_button.32)](http://www.w3.org/2001/sw/wiki/RDF)

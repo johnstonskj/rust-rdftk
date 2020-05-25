@@ -1,4 +1,4 @@
-# Crate rdfktk_graph
+# RDFtk: Graph
 
 Traits which describe the capabilities of different `Graph` types.
 
@@ -12,3 +12,7 @@ Traits which describe the capabilities of different `Graph` types.
 * First release
 
 ## TODO
+
+TBD 
+
+[![RDF](https://www.w3.org/Icons/SW/Buttons/sw-rdf-blue.png)](http://www.w3.org/2001/sw/wiki/RDF)

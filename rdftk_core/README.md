@@ -1,4 +1,4 @@
-# Crate rdfktk_core
+# RDFtk: Core
 
 The core data model; concrete implementations for `Statement`s and `Literal`s, along with a concrete `Resource` type 
 that provides a builder-like experience for models.
@@ -13,3 +13,7 @@ that provides a builder-like experience for models.
 * First release
 
 ## TODO
+
+TBD 
+
+[![RDF](https://www.w3.org/Icons/SW/Buttons/sw-rdf-blue.png)](http://www.w3.org/2001/sw/wiki/RDF)

@@ -1,4 +1,4 @@
-# Crate rdfktk_iri
+# RDFtk: IRI
 
 Another implementation of the `IRI` and URI specifications.
 
@@ -15,3 +15,5 @@ Another implementation of the `IRI` and URI specifications.
 
 1. Complete implementations for trait `Normalize`.
 1. Work on Builder.
+
+[![RDF](https://www.w3.org/Icons/SW/Buttons/sw-rdf-blue.png)](http://www.w3.org/2001/sw/wiki/RDF)

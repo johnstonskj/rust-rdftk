@@ -14,14 +14,14 @@ consistent set of tools for reading and writing files, manipulating models progr
 The following set of crates are included in this repository (and Rust workspace), they are not yet complete and will 
 probably be joined by others over time.
 
-* `core`: The core data model, concrete implementations for `Statement`s and `Literal`s, along with a concrete
+* [`Core`](./rdftk_core): The core data model, concrete implementations for `Statement`s and `Literal`s, along with a concrete
   `Resource` type that provides a builder-like experience for models. 
-* `graph`: Traits that describe the behavior of `Graph`s, these are implemented by different strategies such as `memgraph`.
-* `io`: Traits for reading/writing statements and graphs as well as implementations for several common formats.
-* `iri`: An implementation of a true IRI type.
-* `memgraph`: A simple in-memory graph.
-* `names`: Common vocabularies.
-* `query`: Placeholder for query APIs and SPARQL support.
+* [`Graph`](./rdftk_graph): Traits that describe the behavior of `Graph`s, these are implemented by different strategies such as `memgraph`.
+* [`IO`](./rdftk_io): Traits for reading/writing statements and graphs as well as implementations for several common formats.
+* [`IRI`](./rdftk_iri): An implementation of a true IRI type.
+* [`MemGraph`](./rdftk_memgraph): A simple in-memory graph.
+* [`Names`](./rdftk_names): Common vocabularies.
+* [`Query`](./rdftk_query): Placeholder for query APIs and SPARQL support.
 
 The following diagram shows the crate dependencies, but for clarify it has combined `core` and `graph` into a single 
 unit.
@@ -48,4 +48,4 @@ unit.
    └────────────────────────────────────────┘
 ```
 
-[![RDF](http://www.w3.org/RDF/icons/rdf_w3c_button.32)](http://www.w3.org/RDF/)
+[![RDF](https://www.w3.org/Icons/SW/Buttons/sw-rdf-blue.png)](http://www.w3.org/2001/sw/wiki/RDF)
