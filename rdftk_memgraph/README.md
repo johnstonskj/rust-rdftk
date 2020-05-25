@@ -15,4 +15,4 @@ An implementation of the `Graph` traits for simple in-memory cases.
 
 TBD 
 
-[![RDF](http://www.w3.org/RDF/icons/rdf_w3c_button.32)](http://www.w3.org/2001/sw/wiki/RDF)
+[![RDF](https://www.w3.org/Icons/SW/Buttons/sw-rdf-blue.png)](http://www.w3.org/2001/sw/wiki/RDF)
