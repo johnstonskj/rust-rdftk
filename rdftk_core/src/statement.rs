@@ -50,12 +50,6 @@ pub struct Statement {
     object: ObjectNode,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct IndexedStatement {
-    id: String,
-    statement: Statement,
-}
-
 // ------------------------------------------------------------------------------------------------
 // Public Functions
 // ------------------------------------------------------------------------------------------------
@@ -307,43 +301,6 @@ impl Statement {
             self.object().clone(),
         ));
         statements
-    }
-}
-
-// ------------------------------------------------------------------------------------------------
-
-impl Into<Statement> for IndexedStatement {
-    fn into(self) -> Statement {
-        self.statement
-    }
-}
-
-impl IndexedStatement {
-    pub fn new(id: &str, subject: SubjectNode, predicate: IRI, object: ObjectNode) -> Self {
-        Self {
-            id: id.to_string(),
-            statement: Statement {
-                subject,
-                predicate,
-                object,
-            },
-        }
-    }
-
-    pub fn id(&self) -> String {
-        self.id.to_owned()
-    }
-
-    pub fn subject(&self) -> &SubjectNode {
-        &self.statement.subject
-    }
-
-    pub fn predicate(&self) -> &IRI {
-        &self.statement.predicate
-    }
-
-    pub fn object(&self) -> &ObjectNode {
-        &self.statement.object
     }
 }
 

@@ -16,7 +16,8 @@ same look and feel is maintained.
 # Example
 
 The following short example shows the use of `Resource`, and a nested resource, to build a small
-RDF model.
+RDF model. Once a resource is created it can be converted into a vector of `Statement`s for either
+writing out or constructing a `Graph` instance.
 
 ```rust
 use rdftk_core::{Literal, Resource, Statement};
@@ -132,6 +133,9 @@ struct Container<T> {
 // ------------------------------------------------------------------------------------------------
 
 impl Predicate {
+    ///
+    /// Construct a new Predicate instance with the provided `IRI` name.
+    ///
     pub fn new(name: IRI) -> Self {
         Self {
             name,
@@ -141,14 +145,25 @@ impl Predicate {
 
     // --------------------------------------------------------------------------------------------
 
+    ///
+    /// Add a new literal value to this predicate.
+    ///
     pub fn property(&mut self, value: Literal) -> &mut Self {
         self.objects.push(ResourceObject::Literal(value));
         self
     }
+
+    ///
+    /// Add a new literal value to this predicate.
+    ///
     pub fn value_of(&mut self, value: Literal) -> &mut Self {
         self.objects.push(ResourceObject::Literal(value));
         self
     }
+
+    ///
+    /// Add a new literal value to this predicate.
+    ///
     pub fn literal(&mut self, value: Literal) -> &mut Self {
         self.objects.push(ResourceObject::Literal(value));
         self
@@ -258,24 +273,40 @@ impl Into<Vec<Rc<Statement>>> for Resource {
 }
 
 impl Resource {
+    ///
+    /// Construct a new `Resource` with the subject cloned from an existing
+    /// [`SubjectNode`](../statement/struct.SubjectNode.html).
+    ///
     pub fn new(subject: &SubjectNode) -> Self {
         Self {
             subject: subject.clone(),
             predicates: Default::default(),
         }
     }
+
+    ///
+    /// Construct a new `Resource` with a new blank node as the subject.
+    ///
     pub fn blank() -> Self {
         Self {
             subject: SubjectNode::blank(),
             predicates: Default::default(),
         }
     }
+
+    ///
+    /// Construct a new `Resource` with a named blank node as the subject.
+    ///
     pub fn blank_named(name: &str) -> Self {
         Self {
             subject: SubjectNode::blank_named(name),
             predicates: Default::default(),
         }
     }
+
+    ///
+    /// Construct a new `Resource` with the provided `IRI` as the subject.
+    ///
     pub fn named(name: &IRI) -> Self {
         Self {
             subject: SubjectNode::named(name),
@@ -285,6 +316,9 @@ impl Resource {
 
     // --------------------------------------------------------------------------------------------
 
+    ///
+    /// Add the `Predicate` instance to this resource.
+    ///
     pub fn predicate(&mut self, predicate: Predicate) -> &mut Self {
         for object in predicate.objects.into_iter() {
             self.insert(&predicate.name, object);
@@ -294,12 +328,23 @@ impl Resource {
 
     // --------------------------------------------------------------------------------------------
 
+    ///
+    /// Add a new predicate with a literal value to this resource.
+    ///
     pub fn property(&mut self, predicate: &IRI, value: Literal) -> &mut Self {
         self.literal(predicate, value)
     }
+
+    ///
+    /// Add a new predicate with a literal value to this resource.
+    ///
     pub fn value_of(&mut self, predicate: &IRI, value: Literal) -> &mut Self {
         self.literal(predicate, value)
     }
+
+    ///
+    /// Add a new predicate with a literal value to this resource.
+    ///
     pub fn literal(&mut self, predicate: &IRI, value: Literal) -> &mut Self {
         self.insert(predicate, ResourceObject::Literal(value))
     }
@@ -415,6 +460,9 @@ impl Resource {
 
     // --------------------------------------------------------------------------------------------
 
+    ///
+    /// Set the RDF type (classifier) of this resource.
+    ///
     pub fn rdf_type(&mut self, name: &IRI) -> &mut Self {
         self.insert(
             &rdf::a_type(),
@@ -537,7 +585,6 @@ fn flatten(resource: &Resource, sts: &mut Vec<Statement>) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rdftk_names::{dc::elements as dc, foaf, rdf};
     use std::str::FromStr;
 
     fn contact(name: &str) -> IRI {
