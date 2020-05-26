@@ -30,3 +30,15 @@ namespace! {
         direction, "direction"
     }
 }
+
+/// Create a numbered member in a container
+#[inline]
+pub fn member(index: usize) -> IRI {
+    IRI::from_str(&format!("{}_{}", NAMESPACE, index)).unwrap()
+}
+
+/// Create a numbered member in a container
+#[inline]
+pub fn member_qname(index: usize) -> String {
+    format!("{}:_{}", PREFIX, index)
+}
