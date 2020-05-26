@@ -49,7 +49,7 @@ use std::str::FromStr;
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct QName {
     prefix: Option<String>,
     name: String,

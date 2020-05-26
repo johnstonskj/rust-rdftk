@@ -83,16 +83,47 @@ impl Path {
         self.inner.split('/').map(|s| s.to_string()).collect()
     }
 
+    pub fn push(&mut self, segment: &str) -> UriResult<()> {
+        if parse::is_path(segment) {
+            if self.inner.ends_with('/') {
+                self.inner = format!("{}{}", self.inner, segment);
+            } else {
+                self.inner = format!("{}/{}", self.inner, segment);
+            }
+            Ok(())
+        } else {
+            Err(ErrorKind::InvalidChar(Component::Path).into())
+        }
+    }
+
+    pub fn pop(&mut self) -> Option<String> {
+        let mut segments = self.segments();
+        let last = segments.pop();
+        self.inner = segments.join("/");
+        last
+    }
+
     pub fn has_slug(&self) -> bool {
         !self.inner.is_empty() && !self.inner.ends_with('/')
     }
 
-    pub fn push(&mut self, _segment: &str) {
-        unimplemented!()
+    pub fn slug(&mut self) -> Option<String> {
+        if self.has_slug() {
+            let segments = self.segments();
+            segments.last().cloned()
+        } else {
+            None
+        }
     }
 
-    pub fn pop(&mut self) -> Option<String> {
-        unimplemented!()
+    pub fn pop_slug(&mut self) -> Option<String> {
+        let mut segments = self.segments();
+        let last = segments.pop();
+        self.inner = segments.join("/");
+        if !self.inner.is_empty() {
+            self.inner = format!("{}/", self.inner);
+        }
+        last
     }
 
     pub fn merge(&mut self, _path: &Path) -> UriResult<()> {

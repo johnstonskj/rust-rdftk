@@ -34,14 +34,14 @@ fn contact(name: &str) -> IRI {
 }
 
 let resource =
-    Resource::named(&IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap())
-        .value_of(&dc::publisher(), Literal::new("Wikipedia"))
-        .value_of(&dc::title(), Literal::new("Tony Benn"))
+    Resource::named(IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap())
+        .value_of(dc::publisher(), Literal::new("Wikipedia"))
+        .value_of(dc::title(), Literal::new("Tony Benn"))
         .resource(
-            &dc::description(),
+            dc::description(),
             Resource::blank()
-                .resource_named(&rdf::a_type(), &foaf::person())
-                .value_of(&foaf::name(), Literal::new("Tony Benn"))
+                .resource_named(rdf::a_type(), foaf::person())
+                .value_of(foaf::name(), Literal::new("Tony Benn"))
                 .to_owned(),
         )
         .to_owned();
@@ -210,7 +210,7 @@ impl Predicate {
             .push(ResourceObject::Resource(Resource::blank_named(name)));
         self
     }
-    pub fn resource_named(&mut self, name: &IRI) -> &mut Self {
+    pub fn resource_named(&mut self, name: IRI) -> &mut Self {
         self.objects
             .push(ResourceObject::Resource(Resource::named(name)));
         self
@@ -277,9 +277,9 @@ impl Resource {
     /// Construct a new `Resource` with the subject cloned from an existing
     /// [`SubjectNode`](../statement/struct.SubjectNode.html).
     ///
-    pub fn new(subject: &SubjectNode) -> Self {
+    pub fn new(subject: SubjectNode) -> Self {
         Self {
-            subject: subject.clone(),
+            subject,
             predicates: Default::default(),
         }
     }
@@ -307,7 +307,7 @@ impl Resource {
     ///
     /// Construct a new `Resource` with the provided `IRI` as the subject.
     ///
-    pub fn named(name: &IRI) -> Self {
+    pub fn named(name: IRI) -> Self {
         Self {
             subject: SubjectNode::named(name),
             predicates: Default::default(),
@@ -321,7 +321,7 @@ impl Resource {
     ///
     pub fn predicate(&mut self, predicate: Predicate) -> &mut Self {
         for object in predicate.objects.into_iter() {
-            self.insert(&predicate.name, object);
+            self.insert(predicate.name.clone(), object);
         }
         self
     }
@@ -331,27 +331,27 @@ impl Resource {
     ///
     /// Add a new predicate with a literal value to this resource.
     ///
-    pub fn property(&mut self, predicate: &IRI, value: Literal) -> &mut Self {
+    pub fn property(&mut self, predicate: IRI, value: Literal) -> &mut Self {
         self.literal(predicate, value)
     }
 
     ///
     /// Add a new predicate with a literal value to this resource.
     ///
-    pub fn value_of(&mut self, predicate: &IRI, value: Literal) -> &mut Self {
+    pub fn value_of(&mut self, predicate: IRI, value: Literal) -> &mut Self {
         self.literal(predicate, value)
     }
 
     ///
     /// Add a new predicate with a literal value to this resource.
     ///
-    pub fn literal(&mut self, predicate: &IRI, value: Literal) -> &mut Self {
+    pub fn literal(&mut self, predicate: IRI, value: Literal) -> &mut Self {
         self.insert(predicate, ResourceObject::Literal(value))
     }
 
     // --------------------------------------------------------------------------------------------
 
-    pub fn property_alternatives(&mut self, predicate: &IRI, values: &[Literal]) -> &mut Self {
+    pub fn property_alternatives(&mut self, predicate: IRI, values: &[Literal]) -> &mut Self {
         self.insert(
             predicate,
             ResourceObject::Literals(Container {
@@ -361,7 +361,7 @@ impl Resource {
         )
     }
 
-    pub fn property_bag(&mut self, predicate: &IRI, values: &[Literal]) -> &mut Self {
+    pub fn property_bag(&mut self, predicate: IRI, values: &[Literal]) -> &mut Self {
         self.insert(
             predicate,
             ResourceObject::Literals(Container {
@@ -371,7 +371,7 @@ impl Resource {
         )
     }
 
-    pub fn property_sequence(&mut self, predicate: &IRI, values: &[Literal]) -> &mut Self {
+    pub fn property_sequence(&mut self, predicate: IRI, values: &[Literal]) -> &mut Self {
         self.insert(
             predicate,
             ResourceObject::Literals(Container {
@@ -383,7 +383,7 @@ impl Resource {
 
     pub fn property_container(
         &mut self,
-        predicate: &IRI,
+        predicate: IRI,
         values: &[Literal],
         kind: IRI,
     ) -> &mut Self {
@@ -398,22 +398,22 @@ impl Resource {
 
     // --------------------------------------------------------------------------------------------
 
-    pub fn resource_blank_named(&mut self, predicate: &IRI, name: &str) -> &mut Self {
+    pub fn resource_blank_named(&mut self, predicate: IRI, name: &str) -> &mut Self {
         self.insert(
             predicate,
             ResourceObject::Resource(Resource::blank_named(name)),
         )
     }
-    pub fn resource_named(&mut self, predicate: &IRI, name: &IRI) -> &mut Self {
+    pub fn resource_named(&mut self, predicate: IRI, name: IRI) -> &mut Self {
         self.insert(predicate, ResourceObject::Resource(Resource::named(name)))
     }
-    pub fn resource(&mut self, predicate: &IRI, resource: Resource) -> &mut Self {
+    pub fn resource(&mut self, predicate: IRI, resource: Resource) -> &mut Self {
         self.insert(predicate, ResourceObject::Resource(resource))
     }
 
     // --------------------------------------------------------------------------------------------
 
-    pub fn resource_alternatives(&mut self, predicate: &IRI, values: &[Resource]) -> &mut Self {
+    pub fn resource_alternatives(&mut self, predicate: IRI, values: &[Resource]) -> &mut Self {
         self.insert(
             predicate,
             ResourceObject::Resources(Container {
@@ -423,7 +423,7 @@ impl Resource {
         )
     }
 
-    pub fn resource_bag(&mut self, predicate: &IRI, values: &[Resource]) -> &mut Self {
+    pub fn resource_bag(&mut self, predicate: IRI, values: &[Resource]) -> &mut Self {
         self.insert(
             predicate,
             ResourceObject::Resources(Container {
@@ -433,7 +433,7 @@ impl Resource {
         )
     }
 
-    pub fn resource_sequence(&mut self, predicate: &IRI, values: &[Resource]) -> &mut Self {
+    pub fn resource_sequence(&mut self, predicate: IRI, values: &[Resource]) -> &mut Self {
         self.insert(
             predicate,
             ResourceObject::Resources(Container {
@@ -445,7 +445,7 @@ impl Resource {
 
     pub fn resource_container(
         &mut self,
-        predicate: &IRI,
+        predicate: IRI,
         values: &[Resource],
         kind: IRI,
     ) -> &mut Self {
@@ -463,21 +463,21 @@ impl Resource {
     ///
     /// Set the RDF type (classifier) of this resource.
     ///
-    pub fn rdf_type(&mut self, name: &IRI) -> &mut Self {
+    pub fn rdf_type(&mut self, name: IRI) -> &mut Self {
         self.insert(
-            &rdf::a_type(),
+            rdf::a_type(),
             ResourceObject::Resource(Resource::named(name)),
         )
     }
 
     // --------------------------------------------------------------------------------------------
 
-    fn insert(&mut self, predicate: &IRI, object: ResourceObject) -> &mut Self {
-        if !self.predicates.contains_key(predicate) {
+    fn insert(&mut self, predicate: IRI, object: ResourceObject) -> &mut Self {
+        if !self.predicates.contains_key(&predicate) {
             self.predicates
                 .insert(predicate.clone(), RefCell::default());
         }
-        let values = self.predicates.get(predicate).unwrap();
+        let values = self.predicates.get(&predicate).unwrap();
         values.borrow_mut().push(object);
         self
     }
@@ -598,14 +598,14 @@ mod tests {
     #[test]
     fn test_wpedia_example_01() {
         let resource =
-            Resource::named(&IRI::from_str("http://www.w3.org/People/EM/contact#me").unwrap())
-                .literal(&contact("fullName"), "Eric Miller".into())
+            Resource::named(IRI::from_str("http://www.w3.org/People/EM/contact#me").unwrap())
+                .literal(contact("fullName"), "Eric Miller".into())
                 .resource_named(
-                    &contact("mailbox"),
-                    &IRI::from_str("mailto:e.miller123(at)example").unwrap(),
+                    contact("mailbox"),
+                    IRI::from_str("mailto:e.miller123(at)example").unwrap(),
                 )
-                .literal(&contact("personalTitle"), "Dr.".into())
-                .rdf_type(&contact("Person"))
+                .literal(contact("personalTitle"), "Dr.".into())
+                .rdf_type(contact("Person"))
                 .to_owned();
         let sts: Vec<Statement> = resource.into();
         assert_eq!(sts.len(), 4);

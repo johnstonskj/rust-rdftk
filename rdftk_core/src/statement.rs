@@ -84,9 +84,9 @@ impl SubjectNode {
         }
     }
 
-    pub fn named(name: &IRI) -> Self {
+    pub fn named(name: IRI) -> Self {
         Self {
-            inner: Subject::Uri(name.clone()),
+            inner: Subject::Uri(name),
         }
     }
 
@@ -137,13 +137,13 @@ impl Display for ObjectNode {
 
 impl From<IRI> for ObjectNode {
     fn from(iri: IRI) -> Self {
-        ObjectNode::named(&iri)
+        ObjectNode::named(iri)
     }
 }
 
 impl From<&IRI> for ObjectNode {
     fn from(iri: &IRI) -> Self {
-        ObjectNode::named(iri)
+        ObjectNode::named(iri.clone())
     }
 }
 
@@ -159,7 +159,7 @@ impl From<SubjectNode> for ObjectNode {
     fn from(subject: SubjectNode) -> Self {
         match subject.inner {
             Subject::BNode(node) => ObjectNode::blank_named(&node),
-            Subject::Uri(uri) => ObjectNode::named(&uri),
+            Subject::Uri(uri) => ObjectNode::named(uri),
         }
     }
 }
@@ -168,7 +168,7 @@ impl From<&SubjectNode> for ObjectNode {
     fn from(subject: &SubjectNode) -> Self {
         match &subject.inner {
             Subject::BNode(node) => ObjectNode::blank_named(node),
-            Subject::Uri(uri) => ObjectNode::named(uri),
+            Subject::Uri(uri) => ObjectNode::named(uri.clone()),
         }
     }
 }
@@ -186,9 +186,9 @@ impl ObjectNode {
         }
     }
 
-    pub fn named(name: &IRI) -> Self {
+    pub fn named(name: IRI) -> Self {
         Self {
-            inner: Object::Uri(name.clone()),
+            inner: Object::Uri(name),
         }
     }
 
@@ -222,7 +222,7 @@ impl ObjectNode {
 
     pub fn as_subject(&self) -> Option<SubjectNode> {
         match &self.inner {
-            Object::Uri(u) => Some(SubjectNode::named(u)),
+            Object::Uri(iri) => Some(SubjectNode::named(iri.clone())),
             Object::BNode(b) => Some(SubjectNode::blank_named(b)),
             _ => None,
         }

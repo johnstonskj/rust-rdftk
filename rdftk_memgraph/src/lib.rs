@@ -8,7 +8,7 @@ TBD
 */
 
 use rdftk_core::{ObjectNode, Resource, Statement, SubjectNode};
-use rdftk_graph::{Graph, NamedGraph, PrefixMapping};
+use rdftk_graph::{Graph, NamedGraph, PrefixMappings};
 use rdftk_iri::IRI;
 use std::collections::HashSet;
 use std::rc::Rc;
@@ -127,13 +127,13 @@ impl Graph for MemGraph {
     }
 
     fn resource_for(&self, subject: &SubjectNode) -> Resource {
-        let mut resource = Resource::new(subject);
+        let mut resource = Resource::new(subject.clone());
         for st in &self.statements {
             let object = st.object();
             if object.is_literal() {
-                resource.literal(st.predicate(), object.as_literal().unwrap().clone());
+                resource.literal(st.predicate().clone(), object.as_literal().unwrap().clone());
             } else {
-                resource.resource(st.predicate(), Resource::new(subject.into()));
+                resource.resource(st.predicate().clone(), Resource::new(subject.clone()));
             }
         }
         resource
@@ -166,7 +166,7 @@ impl Graph for MemGraph {
         self.statements.clear()
     }
 
-    fn prefix_mapping(&self) -> Rc<dyn PrefixMapping> {
+    fn prefix_mappings(&self) -> Rc<dyn PrefixMappings> {
         self.mappings.clone()
     }
 }

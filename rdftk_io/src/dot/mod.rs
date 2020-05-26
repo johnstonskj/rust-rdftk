@@ -4,7 +4,7 @@ Provides for writing a graph in the [GraphViz](https://graphviz.gitlab.io/) dot 
 
 use crate::GraphWriter;
 use rdftk_core::{ObjectNode, Statement, SubjectNode};
-use rdftk_graph::Graph;
+use rdftk_graph::{Graph, PrefixMappings};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io::Write;
@@ -69,7 +69,7 @@ impl Default for DotWriter {
 
 impl<W: Write, G: Graph> GraphWriter<W, G> for DotWriter {
     fn write(&self, w: &mut W, graph: &G) -> std::io::Result<()> {
-        self.write(w, &graph.statements())
+        self.write(w, &graph.statements(), graph.prefix_mappings().clone())
     }
 }
 
@@ -140,7 +140,12 @@ impl DotWriter {
             id
         }
     }
-    fn write<W: Write>(&self, w: &mut W, statements: &[Rc<Statement>]) -> std::io::Result<()> {
+    fn write<W: Write>(
+        &self,
+        w: &mut W,
+        statements: &[Rc<Statement>],
+        mappings: Rc<dyn PrefixMappings>,
+    ) -> std::io::Result<()> {
         writeln!(w, "digraph {{    \nrankdir=BT\n    charset=\"utf-8\";")?;
 
         writeln!(w)?;
@@ -152,7 +157,10 @@ impl DotWriter {
                 self.node_prefix,
                 self.subject_id(statement.subject()),
                 self.object_id(statement.object()),
-                statement.predicate(),
+                match mappings.compress(statement.predicate().clone()) {
+                    None => statement.predicate().to_string(),
+                    Some(qname) => qname.to_string(),
+                }
             )?;
         }
 
@@ -218,24 +226,27 @@ mod tests {
     use super::*;
     use rdftk_core::{Literal, Statement};
     use rdftk_iri::IRI;
+    use rdftk_memgraph::Mappings;
     use std::str::FromStr;
 
     #[test]
     fn test_dot_writer() {
+        let mappings = Mappings::default();
+
         let mut statements: Vec<Rc<Statement>> = Default::default();
 
         statements.push(Rc::new(Statement::new(
-            SubjectNode::named(&IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap()),
+            SubjectNode::named(IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap()),
             IRI::from_str("http://purl.org/dc/elements/1.1/title").unwrap(),
             Literal::new("Tony Benn").into(),
         )));
         statements.push(Rc::new(Statement::new(
-            SubjectNode::named(&IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap()),
+            SubjectNode::named(IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap()),
             IRI::from_str("http://purl.org/dc/elements/1.1/publisher").unwrap(),
             Literal::new("Wikipedia").into(),
         )));
         statements.push(Rc::new(Statement::new(
-            SubjectNode::named(&IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap()),
+            SubjectNode::named(IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap()),
             IRI::from_str("http://purl.org/dc/elements/1.1/description").unwrap(),
             ObjectNode::blank_named("B1"),
         )));
@@ -254,6 +265,8 @@ mod tests {
 
         let writer = DotWriter::default();
         let mut out = std::io::stdout();
-        assert!(writer.write(&mut out, &statements).is_ok());
+        assert!(writer
+            .write(&mut out, &statements, Rc::new(mappings))
+            .is_ok());
     }
 }

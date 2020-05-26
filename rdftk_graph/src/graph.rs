@@ -9,7 +9,7 @@ TBD
 
 #![allow(clippy::module_name_repetitions)]
 
-use crate::PrefixMapping;
+use crate::PrefixMappings;
 use rdftk_core::{ObjectNode, Resource, Statement, SubjectNode};
 use rdftk_iri::IRI;
 use std::collections::HashSet;
@@ -56,5 +56,5 @@ pub trait Graph {
 
     fn clear(&mut self);
 
-    fn prefix_mapping(&self) -> Rc<dyn PrefixMapping>;
+    fn prefix_mappings(&self) -> Rc<dyn PrefixMappings>;
 }

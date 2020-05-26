@@ -141,7 +141,7 @@ impl UriBuilder {
     pub fn append_segment(&mut self, segment: &str) -> &mut Self {
         match &mut self.path {
             None => self.path = Some(Path::from_str(segment).unwrap()),
-            Some(path) => path.push(segment),
+            Some(path) => path.push(segment).unwrap(),
         }
         self
     }

@@ -20,3 +20,6 @@ error-chain = "0.12.2"
 rdftk_core = { version = "0.1.0", path = "../rdftk_core" }
 rdftk_graph = { version = "0.1.0", path = "../rdftk_graph" }
 rdftk_iri = { version = "0.1.0", path = "../rdftk_iri" }
+
+[dev-dependencies]
+rdftk_memgraph = { version = "0.1.0", path = "../rdftk_memgraph" }

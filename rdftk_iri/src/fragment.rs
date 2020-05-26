@@ -32,6 +32,14 @@ pub struct Fragment {
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
+impl Default for Fragment {
+    fn default() -> Self {
+        Self {
+            inner: "".to_string(),
+        }
+    }
+}
+
 impl Display for Fragment {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "#{}", self.inner)
