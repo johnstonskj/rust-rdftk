@@ -6,19 +6,19 @@ The following are some well-known formats (see [Wikipedia](https://en.wikipedia.
 for a description of different serializations), support is indicated in the final column with
 an **R** for read support and **W** for write support.
 
-| Name          | MIME Type                                       | Specification | R/W |
-|---------------|-------------------------------------------------|---------------|-----|
-| [N-Triples](https://img.shields.io/badge/RDF-N--Triples-blue) | application/n-triples     | [W3C](https://www.w3.org/TR/n-triples/)                 | **W** |
-| [N-Quads](https://img.shields.io/badge/RDF-N--Quads-blue)     | application/n-quads,      | [W3C](https://www.w3.org/TR/n-quads/)                   |     |
-| [N3](https://img.shields.io/badge/RDF-N3-blue)                | text/rdf+n3               | [W3C Submission](https://www.w3.org/TeamSubmission/n3/) |     |
-| [Turtle](https://img.shields.io/badge/RDF-Turtle-blue)        | text/turtle               | [W3C](https://www.w3.org/TR/turtle/)                    |     |
-| RDF/XML       | application/rdf+xml       | [W3C](https://www.w3.org/TR/rdf-syntax-grammar/) |     |
-| JSON-LD       | application/ld+json       | [W3C](https://www.w3.org/TR/json-ld/)            |     |
-| RDF/JSON      | application/rdf+json      | [W3C](https://www.w3.org/TR/rdf-json/)           |     |
-| TriG          | application/trig          | [W3C](https://www.w3.org/TR/trig/)               |     |
-| [RDFa](https://www.w3.org/Icons/SW/Buttons/sw-rdfa-blue.png)  | ?                            | [W3C](https://www.w3.org/TR/rdfa-core/)                 |     |
-| HDT           | ?                         | [W3C Submission](https://www.w3.org/Submission/2011/SUBM-HDT-20110330/) |     |
-| BinaryRDF     | application/x-binary-rdf  | [Community](https://afs.github.io/rdf-thrift/rdf-binary-thrift.html)    |     |
+| Module   | Name          | MIME Type                                       | Specification | R/W |
+|----------|---------------|-------------------------------------------------|---------------|-----|
+| `nt`     | [![N-Triples](https://img.shields.io/badge/RDF-N--Triples-blue)](https://www.w3.org/TR/n-triples/) | `application/n-triples` | [W3C](https://www.w3.org/TR/n-triples/) | **W** |
+| `nq`     | [![N-Quads](https://img.shields.io/badge/RDF-N--Quads-blue)](https://www.w3.org/TR/n-quads/)       | `application/n-quads`   | [W3C](https://www.w3.org/TR/n-quads/) |     |
+| `n3`     | [![N3](https://img.shields.io/badge/RDF-N3-blue)](https://www.w3.org/TeamSubmission/n3/)           | `text/rdf+n3`           | [W3C Submission](https://www.w3.org/TeamSubmission/n3/) |     |
+| `turtle` |[![Turtle](https://img.shields.io/badge/RDF-Turtle-blue)](https://www.w3.org/TR/turtle/)            | `text/turtle`           | [W3C](https://www.w3.org/TR/turtle/) |     |
+| `xml`    | RDF/XML       | `application/rdf+xml`       | [W3C](https://www.w3.org/TR/rdf-syntax-grammar/) |     |
+| `json`   | JSON-LD       | `application/ld+json`       | [W3C](https://www.w3.org/TR/json-ld/) |     |
+| TBD      | RDF/JSON      | `application/rdf+json`      | [W3C](https://www.w3.org/TR/rdf-json/) |     |
+| TBD      | TriG          | `application/trig`          | [W3C](https://www.w3.org/TR/trig/) |     |
+| TBD      | [RDFa](https://www.w3.org/Icons/SW/Buttons/sw-rdfa-blue.png)                                       | ?                            | [W3C](https://www.w3.org/TR/rdfa-core/) |     |
+| TBD      | HDT           | ?                           | [W3C Submission](https://www.w3.org/Submission/2011/SUBM-HDT-20110330/) |     |
+| TBD      | BinaryRDF     | `application/x-binary-rdf`  | [Community](https://afs.github.io/rdf-thrift/rdf-binary-thrift.html) |     |
 
 Each module will also provide public constants `NAME`, `FILE_EXTENSION`, and `MIME_TYPE`.
 
