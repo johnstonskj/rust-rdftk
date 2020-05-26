@@ -28,8 +28,7 @@ TBD
 
 */
 
-use rdftk_core::Statement;
-use rdftk_graph::Graph;
+use rdftk_graph::{Graph, NamedGraph};
 use std::io::{Read, Write};
 use std::rc::Rc;
 
@@ -38,32 +37,24 @@ use std::rc::Rc;
 // ------------------------------------------------------------------------------------------------
 
 ///
-/// Read a single [`Statement`](../rdftk_core/statement/struct.Statement.html) from the provided
-/// implementation of [`Read`](https://doc.rust-lang.org/std/io/trait.Read.html).
-///
-pub trait StatementReader<R: Read> {
-    fn read(&self, r: &mut R) -> std::io::Result<Statement>;
-}
-
-///
 /// Read an entire `Graph` from the provided implementation of
 /// [`Read`](https://doc.rust-lang.org/std/io/trait.Read.html).
 ///
 pub trait GraphReader<R: Read, G: Graph> {
     fn read(&self, r: &mut R) -> std::io::Result<Rc<G>>;
-    fn read_with(&self, r: &mut R, reader: &dyn StatementReader<R>) -> std::io::Result<Rc<G>>;
 }
 
 // ------------------------------------------------------------------------------------------------
 
-///
-/// Write a single [`Statement`](../rdftk_core/statement/struct.Statement.html) using the provided
-/// implementation of [`Write`](https://doc.rust-lang.org/std/io/trait.Write.html).
-///
-pub trait StatementWriter<W: Write> {
-    /// Write the formatted statement `statement` using the write implementation `w`.
-    fn write(&self, w: &mut W, statement: &Statement) -> std::io::Result<()>;
-}
+// ///
+// /// Write a single [`Statement`](../rdftk_core/statement/struct.Statement.html) using the provided
+// /// implementation of [`Write`](https://doc.rust-lang.org/std/io/trait.Write.html).
+// ///
+// pub trait StatementWriter<W: Write> {
+//     /// Write the formatted statement `statement` using the write implementation `w`.
+//     fn write(&self, w: &mut W, statement: &Statement) -> std::io::Result<()>;
+// }
+//
 
 ///
 /// Write all [`Statement`](../rdftk_core/statement/struct.Statement.html)s in the
@@ -73,30 +64,16 @@ pub trait StatementWriter<W: Write> {
 pub trait GraphWriter<W: Write, G: Graph> {
     /// Write the formatted graph `Graph` using the write implementation `w`.
     fn write(&self, w: &mut W, graph: &G) -> std::io::Result<()>;
-    /// Write the formatted graph `Graph` using the write implementation `w` using the provided
-    /// statement writer. Note that the implementation of this method uses the `begin` and `end`
-    /// methods as well as `statement_writer`.
-    fn write_with(
-        &self,
-        w: &mut W,
-        graph: &G,
-        statement_writer: &dyn StatementWriter<W>,
-    ) -> std::io::Result<()> {
-        self.begin(w, graph)?;
-        for statement in graph.statements() {
-            statement_writer.write(w, &statement)?;
-        }
-        self.end(w, graph)?;
-        Ok(())
-    }
-    /// Write any pre-amble required before any statements.
-    fn begin(&self, _w: &mut W, _graph: &G) -> std::io::Result<()> {
-        Ok(())
-    }
-    /// Write any post-amble required after any statements.
-    fn end(&self, _w: &mut W, _graph: &G) -> std::io::Result<()> {
-        Ok(())
-    }
+}
+
+///
+/// Write all [`Statement`](../rdftk_core/statement/struct.Statement.html)s in the
+/// [`NamedGraph`](../rdftk_graph/graph/trait.NamedGraph.html) using the provided implementation of
+/// [`Write`](https://doc.rust-lang.org/std/io/trait.Write.html).
+///
+pub trait NamedGraphWriter<W: Write, G: NamedGraph> {
+    /// Write the formatted graph `Graph` using the write implementation `w`.
+    fn write(&self, w: &mut W, graph: &G) -> std::io::Result<()>;
 }
 
 #[doc(hidden)]
@@ -107,6 +84,8 @@ pub mod json;
 
 #[doc(hidden)]
 pub mod n3;
+
+pub mod nq;
 
 pub mod nt;
 

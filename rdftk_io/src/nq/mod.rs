@@ -1,7 +1,7 @@
 /*!
 Provides for writing a graph in the
-[RDF 1.1 N-Triples](https://www.w3.org/TR/n-triples/), _a line-based syntax for an RDF graph_
-format.
+[RDF 1.1 N-Quads](https://www.w3.org/TR/n-quads/), _a line-based syntax for RDF datasets_,
+formats
 
 # Example
 
@@ -9,8 +9,8 @@ TBD
 
 */
 
-use crate::GraphWriter;
-use rdftk_graph::Graph;
+use crate::NamedGraphWriter;
+use rdftk_graph::NamedGraph;
 use std::io::Write;
 use std::marker::PhantomData;
 
@@ -19,21 +19,21 @@ use std::marker::PhantomData;
 // ------------------------------------------------------------------------------------------------
 
 #[derive(Debug)]
-pub struct NTripleWriter {
+pub struct NQuadWriter {
     inner: PhantomData<u8>,
 }
 
-pub const NAME: &str = "N-Triples";
+pub const NAME: &str = "N-Quads";
 
-pub const FILE_EXTENSION: &str = "nt";
+pub const FILE_EXTENSION: &str = "nq";
 
-pub const MIME_TYPE: &str = "application/n-triples";
+pub const MIME_TYPE: &str = "application/n-quads";
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl Default for NTripleWriter {
+impl Default for NQuadWriter {
     fn default() -> Self {
         Self {
             inner: Default::default(),
@@ -41,15 +41,16 @@ impl Default for NTripleWriter {
     }
 }
 
-impl<W: Write, G: Graph> GraphWriter<W, G> for NTripleWriter {
+impl<W: Write, G: NamedGraph> NamedGraphWriter<W, G> for NQuadWriter {
     fn write(&self, w: &mut W, graph: &G) -> std::io::Result<()> {
         for statement in graph.statements() {
             write!(
                 w,
-                "{} <{}> {} .",
+                "{} <{}> {} {} .",
                 statement.subject(),
                 statement.predicate(),
-                statement.object()
+                statement.object(),
+                graph.name().as_ref().unwrap(),
             )?;
         }
         Ok(())
