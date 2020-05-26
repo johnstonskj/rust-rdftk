@@ -61,6 +61,6 @@ unit.
 [![N3](https://img.shields.io/badge/RDF-N3-blue)](https://www.w3.org/TeamSubmission/n3/)
 [![Turtle](https://img.shields.io/badge/RDF-Turtle-blue)](https://www.w3.org/TR/turtle/)
 
-<div style="font-size: smaller">
-_All usage of the W3C Semantic Web Technology Buttons are in accordance with https://www.w3.org/2007/10/sw-logos.html_.
+<div style="font-size: small; font-style: italic;">
+All usage of the W3C Semantic Web Technology Buttons are in accordance with https://www.w3.org/2007/10/sw-logos.html.
 </div>
