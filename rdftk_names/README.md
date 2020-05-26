@@ -36,8 +36,8 @@ The `namespace!` macro takes three parameters:
 
 * The common prefix for the module,
 * The namespace URI for the module,
-* A list of pairs where the first is the name of the function to return the IRI for the name
-* The name, as a string, of the vocabulary element.
+* A list of pairs where the first is the name of the function to return the IRI for the name, and the second is the 
+  string name of the vocabulary element.
 
 ## Example
 

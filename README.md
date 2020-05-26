@@ -49,3 +49,18 @@ unit.
 ```
 
 [![RDF](https://www.w3.org/Icons/SW/Buttons/sw-rdf-blue.png)](http://www.w3.org/2001/sw/wiki/RDF)
+[![OWL](https://www.w3.org/Icons/SW/Buttons/sw-owl-blue.png)](http://www.w3.org/2001/sw/wiki/OWL)
+[![RDFa](https://www.w3.org/Icons/SW/Buttons/sw-rdfa-blue.png)](http://www.w3.org/2001/sw/wiki/RDFa)
+[![SKOS](https://www.w3.org/Icons/SW/Buttons/sw-skos-blue.png)](http://www.w3.org/2001/sw/wiki/SKOS)
+[![PROV](https://www.w3.org/Icons/SW/Buttons/sw-prov-blue.png)](http://www.w3.org/2001/sw/wiki/PROV)
+[![SPARQL](https://www.w3.org/Icons/SW/Buttons/sw-sparql-blue.png)](http://www.w3.org/2001/sw/wiki/SPARQL/)
+
+
+[![N-Triples](https://img.shields.io/badge/RDF-N--Triples-blue)](https://www.w3.org/TR/n-triples/)
+[![N-Quads](https://img.shields.io/badge/RDF-N--Quads-blue)](https://www.w3.org/TR/n-quads/)
+[![N3](https://img.shields.io/badge/RDF-N3-blue)](https://www.w3.org/TeamSubmission/n3/)
+[![Turtle](https://img.shields.io/badge/RDF-Turtle-blue)](https://www.w3.org/TR/turtle/)
+
+<div style="font-size: smaller">
+_All usage of the W3C Semantic Web Technology Buttons are in accordance with https://www.w3.org/2007/10/sw-logos.html_.
+</div>
