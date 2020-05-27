@@ -1,11 +1,6 @@
 /*!
-Provides for writing out in the [Notation3 (N3)](https://www.w3.org/TeamSubmission/n3/), _a readable
-RDF syntax_, format.
-
-# Example
-
-TBD
-
+Provides for writing a `Graph` instance in the [Notation3 (N3)](https://www.w3.org/TeamSubmission/n3/),
+_a readable RDF syntax_, format.
 */
 
 // use ...

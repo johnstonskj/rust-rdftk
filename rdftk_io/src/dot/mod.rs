@@ -1,5 +1,16 @@
 /*!
-Provides for writing a graph in the [GraphViz](https://graphviz.gitlab.io/) dot file format.
+Provides for writing a `Graph` instance in the [GraphViz](https://graphviz.gitlab.io/) dot file format.
+
+This writer also as certain options that govern the output generated, these are set using the
+`DotOptions` structure which can be passed to `DotWriter::new`.
+
+```rust
+use rdftk_io::dot::{DotOptions, DotWriter};
+
+let mut options = DotOptions::default();
+options.blank_labels = true;
+let writer = DotWriter::new(options);
+```
 */
 
 use crate::GraphWriter;
@@ -14,27 +25,52 @@ use std::rc::Rc;
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
+///
+/// Used to set configurable components of the generated dot file. A default set of options may be
+/// be used by using the `Default` implementation on `DotWriter`, or by passing the `Default`
+/// implementation of `DotOptions` to `DotWriter::new`.
+///
+#[derive(Debug)]
+pub struct DotOptions {
+    /// The dot shape used to render a blank node. Default is `circle`.
+    pub blank_shape: String,
+    /// The color name used to render a blank node. Default is `green`.
+    pub blank_color: String,
+    /// Determines whether labels are included in blank node shapes. Default is `false`.
+    pub blank_labels: bool,
+    /// The dot shape used to render an IRI node. Default is `ellipse`.
+    pub iri_shape: String,
+    /// The color name used to render an IRI node. Default is `blue`.
+    pub iri_color: String,
+    /// The dot shape used to render a literal node. Default is `record`.
+    pub literal_shape: String,
+    /// The color name used to render a literal node. Default is `black`.
+    pub literal_color: String,
+    /// The prefix string used to generate internal node identifiers. Default is `node_`.
+    pub node_prefix: String,
+}
+
+///
+/// This struct implements the `GraphWriter` trait and will write out a serialized form for the
+/// entire graph.
+///
 #[derive(Debug)]
 pub struct DotWriter {
     nodes: RefCell<HashMap<String, Node>>,
-    blank_shape: String,
-    blank_color: String,
-    blank_labels: bool,
-    iri_shape: String,
-    iri_color: String,
-    literal_shape: String,
-    literal_color: String,
-    node_prefix: String,
+    options: DotOptions,
 }
 
+/// The display name of this serialization format.
 pub const NAME: &str = "GraphViz";
 
+/// The common file extension for this serialization format.
 pub const FILE_EXTENSION: &str = "dot";
 
+/// The MIME type used for this serialization format.
 pub const MIME_TYPE: &str = "text/vnd.graphviz";
 
 // ------------------------------------------------------------------------------------------------
-// Implementations
+// Private Types
 // ------------------------------------------------------------------------------------------------
 
 #[derive(Debug)]
@@ -51,10 +87,13 @@ struct Node {
     label: String,
 }
 
-impl Default for DotWriter {
+// ------------------------------------------------------------------------------------------------
+// Implementations
+// ------------------------------------------------------------------------------------------------
+
+impl Default for DotOptions {
     fn default() -> Self {
         Self {
-            nodes: Default::default(),
             blank_shape: "circle".to_string(),
             blank_color: "green".to_string(),
             blank_labels: false,
@@ -67,6 +106,17 @@ impl Default for DotWriter {
     }
 }
 
+// ------------------------------------------------------------------------------------------------
+
+impl Default for DotWriter {
+    fn default() -> Self {
+        Self {
+            nodes: Default::default(),
+            options: Default::default(),
+        }
+    }
+}
+
 impl<W: Write, G: Graph> GraphWriter<W, G> for DotWriter {
     fn write(&self, w: &mut W, graph: &G) -> std::io::Result<()> {
         self.write(w, &graph.statements(), graph.prefix_mappings().clone())
@@ -74,6 +124,17 @@ impl<W: Write, G: Graph> GraphWriter<W, G> for DotWriter {
 }
 
 impl DotWriter {
+    ///
+    /// Create a new writer with the provided options, this is used to override the default
+    /// options that are used when calling `Default::default`.
+    ///
+    pub fn new(options: DotOptions) -> Self {
+        Self {
+            nodes: Default::default(),
+            options,
+        }
+    }
+
     fn subject_id(&self, node: &SubjectNode) -> String {
         let mut nodes = self.nodes.borrow_mut();
         if let Some(node) = nodes.get(&node.to_string()) {
@@ -154,7 +215,7 @@ impl DotWriter {
             writeln!(
                 w,
                 "    \"{}{}\" -> \"node_{}\" [label=\"{}\"];",
-                self.node_prefix,
+                self.options.node_prefix,
                 self.subject_id(statement.subject()),
                 self.object_id(statement.object()),
                 match mappings.compress(statement.predicate().clone()) {
@@ -169,22 +230,25 @@ impl DotWriter {
         for node in self.nodes.borrow().values() {
             match node.kind {
                 NodeKind::Blank => {
-                    if self.blank_labels {
+                    if self.options.blank_labels {
                         writeln!(
                             w,
                             "    \"{}{}\" [label=\"{}{}\",shape={},color={}];",
-                            self.node_prefix,
+                            self.options.node_prefix,
                             node.id,
-                            self.node_prefix,
+                            self.options.node_prefix,
                             node.id,
-                            self.blank_shape,
-                            self.blank_color
+                            self.options.blank_shape,
+                            self.options.blank_color
                         )?;
                     } else {
                         writeln!(
                             w,
                             "    \"{}{}\" [label=\"\",shape={},color={}];",
-                            self.node_prefix, node.id, self.blank_shape, self.blank_color
+                            self.options.node_prefix,
+                            node.id,
+                            self.options.blank_shape,
+                            self.options.blank_color
                         )?;
                     }
                 }
@@ -192,23 +256,23 @@ impl DotWriter {
                     writeln!(
                         w,
                         "    \"{}{}\" [URL=\"{}\",label=\"{}\",shape={},color={}];",
-                        self.node_prefix,
+                        self.options.node_prefix,
                         node.id,
                         node.label,
                         node.label,
-                        self.iri_shape,
-                        self.iri_color
+                        self.options.iri_shape,
+                        self.options.iri_color
                     )?;
                 }
                 NodeKind::Literal => {
                     writeln!(
                         w,
                         "    \"{}{}\" [label=\"{}\",shape={},color={}];",
-                        self.node_prefix,
+                        self.options.node_prefix,
                         node.id,
                         node.label,
-                        self.literal_shape,
-                        self.literal_color
+                        self.options.literal_shape,
+                        self.options.literal_color
                     )?;
                 }
             }
@@ -231,7 +295,13 @@ mod tests {
 
     #[test]
     fn test_dot_writer() {
-        let mappings = Mappings::default();
+        let mut mappings = Mappings::default();
+        mappings.include_rdf();
+        mappings.insert(
+            "dc",
+            IRI::from_str("http://purl.org/dc/elements/1.1/").unwrap(),
+        );
+        mappings.insert("foaf", IRI::from_str("http://xmlns.com/foaf/0.1/").unwrap());
 
         let mut statements: Vec<Rc<Statement>> = Default::default();
 
@@ -263,7 +333,8 @@ mod tests {
                 .into(),
         )));
 
-        let writer = DotWriter::default();
+        let options = DotOptions::default();
+        let writer = DotWriter::new(options);
         let mut out = std::io::stdout();
         assert!(writer
             .write(&mut out, &statements, Rc::new(mappings))

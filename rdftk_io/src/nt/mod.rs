@@ -1,12 +1,7 @@
 /*!
-Provides for writing a graph in the
+Provides for writing a `Graph` instance in the
 [RDF 1.1 N-Triples](https://www.w3.org/TR/n-triples/), _a line-based syntax for an RDF graph_
 format.
-
-# Example
-
-TBD
-
 */
 
 use crate::GraphWriter;
@@ -18,15 +13,22 @@ use std::marker::PhantomData;
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
+///
+/// This struct implements the `GraphWriter` trait and will write out a serialized form of the
+/// entire graph.
+///
 #[derive(Debug)]
 pub struct NTripleWriter {
     inner: PhantomData<u8>,
 }
 
+/// The display name of this serialization format.
 pub const NAME: &str = "N-Triples";
 
+/// The common file extension for this serialization format.
 pub const FILE_EXTENSION: &str = "nt";
 
+/// The MIME type used for this serialization format.
 pub const MIME_TYPE: &str = "application/n-triples";
 
 // ------------------------------------------------------------------------------------------------
