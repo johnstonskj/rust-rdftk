@@ -22,25 +22,25 @@ pub enum Component {
 
 error_chain! {
     errors {
-        #[doc = "A URI cannot be constructed from the empty string."]
+        #[doc = "An IRI cannot be constructed from the empty string."]
         IsEmpty {
-            description("A URI cannot be constructed from the empty string.")
-            display("A URI cannot be constructed from the empty string.")
+            description("An IRI cannot be constructed from the empty string.")
+            display("An IRI cannot be constructed from the empty string.")
         }
-        #[doc = "An error occurred normalizing a URI component."]
+        #[doc = "An error occurred normalizing an IRI component."]
         Normalization(c: Component) {
-            description("An error occurred normalizing a URI component.")
-            display("An error occurred normalizing the {:?} URI component.", c)
+            description("An error occurred normalizing an IRI component.")
+            display("An error occurred normalizing the {:?} IRI component.", c)
         }
         #[doc = "An invalid character was found."]
         InvalidChar(c: Component) {
             description("An invalid character was found.")
-            display("An invalid character was found in the {:?} URI component.", c)
+            display("An invalid character was found in the {:?} IRI component.", c)
         }
-        #[doc = "Provided String value is not a valid URI."]
+        #[doc = "Provided String value is not a valid IRI."]
         Syntax(s: String) {
-            description("Provided String value is not a valid URI.")
-            display("Provided String value `{}` was is a valid URI.", s)
+            description("Provided String value is not a valid IRI.")
+            display("Provided String value `{}` was is a valid IRI.", s)
         }
     }
 }

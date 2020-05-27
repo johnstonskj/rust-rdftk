@@ -1,5 +1,5 @@
 /*!
-This crate provides a set of modules that contain the URIs and QName strings for commonly used
+This crate provides a set of modules that contain the IRIs and QName strings for commonly used
 vocabularies. It also provides [macro](macro.namespace.html) support for defining new namespaces
 in the same style as this library.
 
@@ -72,10 +72,10 @@ extern crate paste;
 /// #[doc = "The default prefix for this namespace"]
 /// pub const PREFIX: &str = "fb";
 ///
-/// #[doc = "The URI for this namespace"]
+/// #[doc = "The IRI for this namespace"]
 /// pub const NAMESPACE: &str = "http://example.com/schema/FooBar#";
 ///
-/// #[doc = "Construct a URI for this name"]
+/// #[doc = "Construct an IRI for this name"]
 /// #[inline]
 /// pub fn foo() -> IRI {
 ///     IRI::from_str(&format!("{}{}", NAMESPACE, "Foo")).unwrap()
@@ -98,7 +98,7 @@ macro_rules! namespace {
     #[doc = "The default prefix for this namespace"]
     pub const PREFIX: &str = $prefix;
 
-    #[doc = "The URI for this namespace"]
+    #[doc = "The IRI (as string) for this namespace"]
     pub const NAMESPACE: &str = $namespace;
 
     $(
@@ -110,7 +110,7 @@ macro_rules! namespace {
 #[doc(hidden)]
 macro_rules! nsname {
     ($fn_name:ident, $name:expr) => {
-        #[doc = "Construct a URI for this name"]
+        #[doc = "Construct an IRI for this name"]
         #[inline]
         pub fn $fn_name() -> IRI {
             IRI::from_str(&format!("{}{}", NAMESPACE, $name)).unwrap()

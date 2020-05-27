@@ -1,17 +1,13 @@
 /*!
-Provides the `URI` type that supports the semantics of the
+Provides the `IRI` type that supports the semantics of the
 [IRI](https://en.wikipedia.org/wiki/Internationalized_Resource_Identifier),
 [URI](https://en.wikipedia.org/wiki/Uniform_Resource_Identifier),
 [URL](https://en.wikipedia.org/wiki/URL), and
 [URN](https://en.wikipedia.org/wiki/Uniform_Resource_Name) specifications.
 
-In general, URLs are written as follows:
-
-```text
-    <scheme>:<scheme-specific-part>
-```
-
 # Example
+
+TBD
 
 # Specification
 

@@ -9,6 +9,11 @@ consistent set of tools for reading and writing files, manipulating models progr
 [![travis.ci](https://travis-ci.org/johnstonskj/rust-rdftk.svg?branch=master)](https://travis-ci.org/johnstonskj/rust-rdftk)
 [![GitHub stars](https://img.shields.io/github/stars/johnstonskj/rust-rdftk.svg)](https://github.com/johnstonskj/rust-rdftk/stargazers)
 
+Note that, in terms of implementation, the primary goals of the RDFtk project is to provide a consistent and complete
+set of crates for handling RDF data. To this end the crates will value readability and usability over runtime
+optimization (either memory, or speed) at this time. Getting the right interface will be the primary aim with those
+optimizations coming as necessary.
+
 ## Crates
 
 The following set of crates are included in this repository (and Rust workspace), they are not yet complete and will 

@@ -21,7 +21,7 @@ use std::time::Duration;
 pub enum DataType {
     String,
     QName,
-    URI,
+    IRI,
     Boolean,
     Float,
     Double,
@@ -64,7 +64,7 @@ impl Display for Literal {
                     match data_type {
                         DataType::String => xsd::string(),
                         DataType::QName => xsd::q_name(),
-                        DataType::URI => xsd::any_uri(),
+                        DataType::IRI => xsd::any_uri(),
                         DataType::Boolean => xsd::boolean(),
                         DataType::Float => xsd::float(),
                         DataType::Double => xsd::double(),
@@ -111,7 +111,7 @@ impl From<IRI> for Literal {
     fn from(value: IRI) -> Self {
         Self {
             lexical_form: value.to_string(),
-            data_type: Some(DataType::URI),
+            data_type: Some(DataType::IRI),
             language: None,
         }
     }

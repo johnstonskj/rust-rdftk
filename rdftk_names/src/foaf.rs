@@ -1,5 +1,5 @@
 /*!
-Functions that create URIs for the [Friend of a Friend](http://xmlns.com/foaf/spec/) namespace.
+Functions that create IRIs for the [Friend of a Friend](http://xmlns.com/foaf/spec/) namespace.
 
 */
 

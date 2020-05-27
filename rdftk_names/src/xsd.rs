@@ -1,5 +1,5 @@
 /*!
-Functions that create URIs for the [XML Schema Data Types](https://www.w3.org/TR/xmlschema-2/) namespace.
+Functions that create IRIs for the [XML Schema Data Types](https://www.w3.org/TR/xmlschema-2/) namespace.
 */
 
 namespace! {

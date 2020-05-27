@@ -1,6 +1,6 @@
 # RDFtk: Names
 
-This crate provides a set of modules that contain the URIs and QName strings for commonly used vocabularies. It also 
+This crate provides a set of modules that contain the IRIs and QName strings for commonly used vocabularies. It also 
 provides macro support for defining new namespaces in the same style as this library.
 
 [![crates.io](https://img.shields.io/crates/v/rdftk_names.svg)](https://crates.io/crates/rdftk_names)
@@ -35,7 +35,7 @@ Te following table shows the set of namespaces supported, those with "TBD" in th
 The `namespace!` macro takes three parameters:
 
 * The common prefix for the module,
-* The namespace URI for the module,
+* The namespace IRI for the module,
 * A list of pairs where the first is the name of the function to return the IRI for the name, and the second is the 
   string name of the vocabulary element.
 

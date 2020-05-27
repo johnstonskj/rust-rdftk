@@ -1,5 +1,5 @@
 /*!
-Functions that create URIs for the W3C [Geo Vocabulary](https://www.w3.org/2003/01/geo/) namespace.
+Functions that create IRIs for the W3C [Geo Vocabulary](https://www.w3.org/2003/01/geo/) namespace.
 */
 
 namespace! {

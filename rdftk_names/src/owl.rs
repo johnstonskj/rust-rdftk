@@ -1,5 +1,5 @@
 /*!
-Functions that create URIs for the OWL 2 Web ontology Language [OWL2](http://www.w3.org/TR/owl2-quick-reference/) namespace.
+Functions that create IRIs for the OWL 2 Web ontology Language [OWL2](http://www.w3.org/TR/owl2-quick-reference/) namespace.
 
 */
 

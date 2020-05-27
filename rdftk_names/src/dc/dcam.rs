@@ -1,5 +1,5 @@
 /*!
-Functions that create URIs for the Dublin Core [DCAM](http://purl.org/dc/dcam/) namespace.
+Functions that create IRIs for the Dublin Core [DCAM](http://purl.org/dc/dcam/) namespace.
 
 Retrieved from `https://www.dublincore.org/specifications/dublin-core/dcmi-terms/dublin_core_terms.nt`.
 */

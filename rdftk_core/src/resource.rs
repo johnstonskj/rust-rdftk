@@ -9,7 +9,7 @@ the object of a predicate and so _nested_ or _related_ resources can be written 
 particulary useful where the object is a blank node.
 
 Additionally a `Predicate` builder is provided where it is more readable to add only the values
-individually rather than repeating the same predicate URI as the `Resource` interface requires. The
+individually rather than repeating the same predicate IRI as the `Resource` interface requires. The
 interface for `Predicate` is intended to be a precise sub-set of the `Resource` methods so that the
 same look and feel is maintained.
 

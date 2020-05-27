@@ -1,5 +1,5 @@
 /*!
-Functions that create URIs for the [RDF](https://www.w3.org/TR/rdf11-concepts/) namespace.
+Functions that create IRIs for the [RDF](https://www.w3.org/TR/rdf11-concepts/) namespace.
 */
 
 namespace! {

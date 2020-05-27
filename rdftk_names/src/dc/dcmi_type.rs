@@ -1,5 +1,5 @@
 /*!
-Functions that create URIs for the Dublin Core [DCMI Type](http://purl.org/dc/dcmitype/) namespace.
+Functions that create IRIs for the Dublin Core [DCMI Type](http://purl.org/dc/dcmitype/) namespace.
 
 Retrieved from `https://www.dublincore.org/specifications/dublin-core/dcmi-terms/dublin_core_terms.nt`.
 */
