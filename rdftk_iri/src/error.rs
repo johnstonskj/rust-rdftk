@@ -47,5 +47,15 @@ error_chain! {
             description("The current IRI is not a valid base URI (RFC-3986§5.2.1).")
             display("The current IRI is not a valid base URI (RFC-3986§5.2.1).")
         }
+        #[doc = "A PrefixedName may not have an empty name part."]
+        EmptyPrefixedName {
+            description("A PrefixedName may not have an empty name part.")
+            display("A PrefixedName may not have an empty name part.")
+        }
+        #[doc = "The String value provided is not a valid PrefixedName."]
+        InvalidPrefixedName(s: String) {
+            description("The String value provided is not a valid PrefixedName.")
+            display("The String value `{}` is not a valid PrefixedName.", s)
+        }
     }
 }

@@ -170,6 +170,9 @@ pub use authority::{Authority, Host, KnownPorts, Port};
 pub mod path;
 pub use path::Path;
 
+// pub mod prename;
+// pub use prename::{Prefix, PrefixedName};
+
 pub mod query;
 pub use query::{Query, QueryPart};
 
