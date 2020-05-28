@@ -12,7 +12,7 @@ creation of [GraphViz](https://graphviz.gitlab.io/) dot files for a visualizatio
 | `nt`     | [![N-Triples](https://img.shields.io/badge/RDF-N--Triples-blue)](https://www.w3.org/TR/n-triples/) | `application/n-triples` | [W3C](https://www.w3.org/TR/n-triples/) | **W** |
 | `nq`     | [![N-Quads](https://img.shields.io/badge/RDF-N--Quads-blue)](https://www.w3.org/TR/n-quads/)       | `application/n-quads`   | [W3C](https://www.w3.org/TR/n-quads/) | **W** |
 | `n3`     | [![N3](https://img.shields.io/badge/RDF-N3-blue)](https://www.w3.org/TeamSubmission/n3/)           | `text/rdf+n3`           | [W3C Submission](https://www.w3.org/TeamSubmission/n3/) |     |
-| `turtle` |[![Turtle](https://img.shields.io/badge/RDF-Turtle-blue)](https://www.w3.org/TR/turtle/)            | `text/turtle`           | [W3C](https://www.w3.org/TR/turtle/) |     |
+| `turtle` |[![Turtle](https://img.shields.io/badge/RDF-Turtle-blue)](https://www.w3.org/TR/turtle/)            | `text/turtle`           | [W3C](https://www.w3.org/TR/turtle/) | **W** |
 | `xml`    | RDF/XML       | `application/rdf+xml`       | [W3C](https://www.w3.org/TR/rdf-syntax-grammar/) |     |
 | `json`   | JSON-LD       | `application/ld+json`       | [W3C](https://www.w3.org/TR/json-ld/) |     |
 | TBD      | [![RDFa](https://www.w3.org/Icons/SW/Buttons/sw-rdfa-blue.png)](http://www.w3.org/2001/sw/wiki/RDFa) | `text/html`                            | [W3C](https://www.w3.org/TR/rdfa-core/) |     |
@@ -41,8 +41,8 @@ use std::rc::Rc;
 /// Read an entire `Graph` from the provided implementation of
 /// [`Read`](https://doc.rust-lang.org/std/io/trait.Read.html).
 ///
-pub trait GraphReader<R: Read, G: Graph> {
-    fn read(&self, r: &mut R) -> std::io::Result<Rc<G>>;
+pub trait GraphReader {
+    fn read<R: Read, G: Graph>(&self, r: &mut R) -> std::io::Result<Rc<G>>;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -62,9 +62,9 @@ pub trait GraphReader<R: Read, G: Graph> {
 /// [`Graph`](../rdftk_graph/graph/trait.Graph.html) using the provided implementation of
 /// [`Write`](https://doc.rust-lang.org/std/io/trait.Write.html).
 ///
-pub trait GraphWriter<W: Write, G: Graph> {
+pub trait GraphWriter {
     /// Write the formatted graph `Graph` using the write implementation `w`.
-    fn write(&self, w: &mut W, graph: &G) -> std::io::Result<()>;
+    fn write(&self, w: &mut impl Write, graph: &impl Graph) -> std::io::Result<()>;
 }
 
 ///
@@ -72,10 +72,35 @@ pub trait GraphWriter<W: Write, G: Graph> {
 /// [`NamedGraph`](../rdftk_graph/graph/trait.NamedGraph.html) using the provided implementation of
 /// [`Write`](https://doc.rust-lang.org/std/io/trait.Write.html).
 ///
-pub trait NamedGraphWriter<W: Write, G: NamedGraph> {
+pub trait NamedGraphWriter {
     /// Write the formatted graph `Graph` using the write implementation `w`.
-    fn write(&self, w: &mut W, graph: &G) -> std::io::Result<()>;
+    fn write(&self, w: &mut impl Write, graph: &impl NamedGraph) -> std::io::Result<()>;
 }
+
+// ------------------------------------------------------------------------------------------------
+// Public Functions
+// ------------------------------------------------------------------------------------------------
+
+pub fn write_graph_to_string(w: &impl GraphWriter, graph: &impl Graph) -> std::io::Result<String> {
+    use std::io::Cursor;
+    let mut buffer = Cursor::new(Vec::new());
+    w.write(&mut buffer, graph)?;
+    Ok(String::from_utf8(buffer.into_inner()).unwrap())
+}
+
+pub fn write_named_graph_to_string(
+    w: &impl NamedGraphWriter,
+    graph: &impl NamedGraph,
+) -> std::io::Result<String> {
+    use std::io::Cursor;
+    let mut buffer = Cursor::new(Vec::new());
+    w.write(&mut buffer, graph)?;
+    Ok(String::from_utf8(buffer.into_inner()).unwrap())
+}
+
+// ------------------------------------------------------------------------------------------------
+// Modules
+// ------------------------------------------------------------------------------------------------
 
 pub mod dot;
 

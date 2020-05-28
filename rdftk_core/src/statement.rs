@@ -23,7 +23,7 @@ use unique_id::Generator;
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 enum Subject {
     BNode(String),
-    Uri(IRI),
+    IRI(IRI),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -34,7 +34,7 @@ pub struct SubjectNode {
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 enum Object {
     BNode(String),
-    Uri(IRI),
+    IRI(IRI),
     Literal(Box<Literal>),
 }
 
@@ -65,7 +65,7 @@ impl Display for SubjectNode {
             "{}",
             match &self.inner {
                 Subject::BNode(node) => format!("_:{}", node),
-                Subject::Uri(uri) => format!("<{}>", uri),
+                Subject::IRI(iri) => format!("<{}>", iri),
             }
         )
     }
@@ -86,7 +86,7 @@ impl SubjectNode {
 
     pub fn named(name: IRI) -> Self {
         Self {
-            inner: Subject::Uri(name),
+            inner: Subject::IRI(name),
         }
     }
 
@@ -104,16 +104,21 @@ impl SubjectNode {
         }
     }
 
-    pub fn is_uri(&self) -> bool {
+    pub fn is_iri(&self) -> bool {
         match self.inner {
-            Subject::Uri(_) => true,
+            Subject::IRI(_) => true,
             _ => false,
         }
     }
 
-    pub fn as_uri(&self) -> Option<&IRI> {
+    #[inline]
+    pub fn is_named(&self) -> bool {
+        self.is_iri()
+    }
+
+    pub fn as_iri(&self) -> Option<&IRI> {
         match &self.inner {
-            Subject::Uri(u) => Some(u),
+            Subject::IRI(u) => Some(u),
             _ => None,
         }
     }
@@ -128,7 +133,7 @@ impl Display for ObjectNode {
             "{}",
             match &self.inner {
                 Object::BNode(node) => format!("_:{}", node),
-                Object::Uri(uri) => format!("<{}>", uri),
+                Object::IRI(iri) => format!("<{}>", iri),
                 Object::Literal(literal) => literal.to_string(),
             }
         )
@@ -159,7 +164,7 @@ impl From<SubjectNode> for ObjectNode {
     fn from(subject: SubjectNode) -> Self {
         match subject.inner {
             Subject::BNode(node) => ObjectNode::blank_named(&node),
-            Subject::Uri(uri) => ObjectNode::named(uri),
+            Subject::IRI(iri) => ObjectNode::named(iri),
         }
     }
 }
@@ -168,7 +173,7 @@ impl From<&SubjectNode> for ObjectNode {
     fn from(subject: &SubjectNode) -> Self {
         match &subject.inner {
             Subject::BNode(node) => ObjectNode::blank_named(node),
-            Subject::Uri(uri) => ObjectNode::named(uri.clone()),
+            Subject::IRI(iri) => ObjectNode::named(iri.clone()),
         }
     }
 }
@@ -188,7 +193,7 @@ impl ObjectNode {
 
     pub fn named(name: IRI) -> Self {
         Self {
-            inner: Object::Uri(name),
+            inner: Object::IRI(name),
         }
     }
 
@@ -206,23 +211,23 @@ impl ObjectNode {
         }
     }
 
-    pub fn is_uri(&self) -> bool {
+    pub fn is_iri(&self) -> bool {
         match self.inner {
-            Object::Uri(_) => true,
+            Object::IRI(_) => true,
             _ => false,
         }
     }
 
-    pub fn as_uri(&self) -> Option<&IRI> {
+    pub fn as_iri(&self) -> Option<&IRI> {
         match &self.inner {
-            Object::Uri(u) => Some(u),
+            Object::IRI(u) => Some(u),
             _ => None,
         }
     }
 
     pub fn as_subject(&self) -> Option<SubjectNode> {
         match &self.inner {
-            Object::Uri(iri) => Some(SubjectNode::named(iri.clone())),
+            Object::IRI(iri) => Some(SubjectNode::named(iri.clone())),
             Object::BNode(b) => Some(SubjectNode::blank_named(b)),
             _ => None,
         }

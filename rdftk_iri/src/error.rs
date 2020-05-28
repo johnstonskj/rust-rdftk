@@ -42,5 +42,10 @@ error_chain! {
             description("Provided String value is not a valid IRI.")
             display("Provided String value `{}` was is a valid IRI.", s)
         }
+        #[doc = "The current IRI is not a valid base URI (RFC-3986§5.2.1)."]
+        NotValidBase {
+            description("The current IRI is not a valid base URI (RFC-3986§5.2.1).")
+            display("The current IRI is not a valid base URI (RFC-3986§5.2.1).")
+        }
     }
 }

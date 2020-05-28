@@ -15,12 +15,12 @@ TBD
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
-use crate::error::{Error as UriError, Result as UriResult};
+use crate::error::{Error as IriError, Result as IriResult};
 use crate::{Authority, Fragment, Host, Path, Port, Query, QueryPart, Scheme, IRI};
 use std::convert::TryFrom;
 use std::str::FromStr;
 
-pub struct UriBuilder {
+pub struct IriBuilder {
     scheme: Option<Scheme>,
     host: Option<Host>,
     user_name: Option<String>,
@@ -39,7 +39,7 @@ pub struct UriBuilder {
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl Default for UriBuilder {
+impl Default for IriBuilder {
     fn default() -> Self {
         Self {
             scheme: None,
@@ -54,11 +54,11 @@ impl Default for UriBuilder {
     }
 }
 
-impl TryFrom<&mut UriBuilder> for IRI {
-    type Error = UriError;
+impl TryFrom<&mut IriBuilder> for IRI {
+    type Error = IriError;
 
     fn try_from(builder: &mut UriBuilder) -> Result<Self, Self::Error> {
-        let mut uri = match &builder.path {
+        let mut iri = match &builder.path {
             None => IRI::default(),
             Some(path) => IRI::new(path),
         };
@@ -76,40 +76,40 @@ impl TryFrom<&mut UriBuilder> for IRI {
             authority.set_port(port);
         }
         if !authority.is_empty() {
-            uri.set_authority(Some(authority));
+            iri.set_authority(Some(authority));
         }
         if let Some(scheme) = &builder.scheme {
-            uri.set_scheme(Some(scheme.clone()));
+            iri.set_scheme(Some(scheme.clone()));
         }
 
         if let Some(query) = &builder.query {
-            uri.set_query(Some(query.clone()));
+            iri.set_query(Some(query.clone()));
         }
         if let Some(fragment) = &builder.fragment {
-            uri.set_fragment(Some(fragment.clone()));
+            iri.set_fragment(Some(fragment.clone()));
         }
-        Ok(uri)
+        Ok(iri)
     }
 }
 
-impl UriBuilder {
+impl IriBuilder {
     pub fn scheme(&mut self, scheme: &Scheme) -> &mut Self {
         self.scheme = Some(scheme.clone());
         self
     }
-    pub fn scheme_str(&mut self, scheme: &str) -> UriResult<&mut Self> {
+    pub fn scheme_str(&mut self, scheme: &str) -> IriResult<&mut Self> {
         self.scheme = Some(Scheme::from_str(scheme)?);
         Ok(self)
     }
-    pub fn host_name(&mut self, host: &str) -> UriResult<&mut Self> {
+    pub fn host_name(&mut self, host: &str) -> IriResult<&mut Self> {
         self.host = Some(Host::Name(host.to_string()));
         Ok(self)
     }
-    pub fn ip_address(&mut self, host: &str) -> UriResult<&mut Self> {
+    pub fn ip_address(&mut self, host: &str) -> IriResult<&mut Self> {
         self.host = Some(Host::IPV4(host.to_string()));
         Ok(self)
     }
-    pub fn ipv6_address(&mut self, host: &str) -> UriResult<&mut Self> {
+    pub fn ipv6_address(&mut self, host: &str) -> IriResult<&mut Self> {
         self.host = Some(Host::IPV6(host.to_string()));
         Ok(self)
     }
@@ -134,7 +134,7 @@ impl UriBuilder {
         self.path = Some(path.clone());
         self
     }
-    pub fn path_str(&mut self, path: &str) -> UriResult<&mut Self> {
+    pub fn path_str(&mut self, path: &str) -> IriResult<&mut Self> {
         self.path = Some(Path::from_str(path)?);
         Ok(self)
     }
@@ -149,7 +149,7 @@ impl UriBuilder {
         self.query = Some(query.clone());
         self
     }
-    pub fn query_str(&mut self, query: &str) -> UriResult<&mut Self> {
+    pub fn query_str(&mut self, query: &str) -> IriResult<&mut Self> {
         self.query = Some(Query::from_str(query)?);
         Ok(self)
     }
@@ -165,7 +165,7 @@ impl UriBuilder {
         self.fragment = Some(fragment.clone());
         self
     }
-    pub fn fragment_str(&mut self, fragment: &str) -> UriResult<&mut Self> {
+    pub fn fragment_str(&mut self, fragment: &str) -> IriResult<&mut Self> {
         self.fragment = Some(Fragment::from_str(fragment)?);
         Ok(self)
     }
@@ -195,9 +195,9 @@ mod tests {
 
     #[test]
     fn test_http_url() {
-        fn inner() -> UriResult<IRI> {
-            let mut builder = UriBuilder::default();
-            let result: UriResult<IRI> = builder
+        fn inner() -> IriResult<IRI> {
+            let mut builder = IriBuilder::default();
+            let result: IriResult<IRI> = builder
                 .scheme(&KnownSchemes::Https.into())
                 .user_name("john.doe")
                 .host_name("www.example.com")?
@@ -219,8 +219,8 @@ mod tests {
 
     #[test]
     fn test_ldap_url() {
-        let mut builder = UriBuilder::default();
-        let result: UriResult<IRI> = builder
+        let mut builder = IriBuilder::default();
+        let result: IriResult<IRI> = builder
             .scheme(&KnownSchemes::Ldap.into())
             .host_name("[2001:db8::7]")
             .unwrap()
@@ -238,9 +238,9 @@ mod tests {
     }
 
     #[test]
-    fn test_mailto_uri() {
-        let mut builder = UriBuilder::default();
-        let result: UriResult<IRI> = builder
+    fn test_mailto_iri() {
+        let mut builder = IriBuilder::default();
+        let result: IriResult<IRI> = builder
             .scheme(&KnownSchemes::Mailto.into())
             .path_str("John.Doe@example.com")
             .unwrap()
@@ -251,9 +251,9 @@ mod tests {
     }
 
     #[test]
-    fn test_news_uri() {
-        let mut builder = UriBuilder::default();
-        let result: UriResult<IRI> = builder
+    fn test_news_iri() {
+        let mut builder = IriBuilder::default();
+        let result: IriResult<IRI> = builder
             .scheme(&KnownSchemes::News.into())
             .path_str("comp.infosystems.www.servers.unix")
             .unwrap()
@@ -267,9 +267,9 @@ mod tests {
     }
 
     #[test]
-    fn test_tel_uri() {
-        let mut builder = UriBuilder::default();
-        let result: UriResult<IRI> = builder
+    fn test_tel_iri() {
+        let mut builder = IriBuilder::default();
+        let result: IriResult<IRI> = builder
             .scheme(&KnownSchemes::Tel.into())
             .path_str("+1-816-555-1212")
             .unwrap()
@@ -280,9 +280,9 @@ mod tests {
     }
 
     #[test]
-    fn test_telnet_uri() {
-        let mut builder = UriBuilder::default();
-        let result: UriResult<IRI> = builder
+    fn test_telnet_iri() {
+        let mut builder = IriBuilder::default();
+        let result: IriResult<IRI> = builder
             .scheme(&KnownSchemes::Telnet.into())
             .ip_address("192.0.2.16")
             .unwrap()
@@ -296,9 +296,9 @@ mod tests {
     }
 
     #[test]
-    fn test_urn_uri() {
-        let mut builder = UriBuilder::default();
-        let result: UriResult<IRI> = builder
+    fn test_urn_iri() {
+        let mut builder = IriBuilder::default();
+        let result: IriResult<IRI> = builder
             .scheme(&KnownSchemes::Urn.into())
             .path_str("oasis:names:specification:docbook:dtd:xml:4.1.2")
             .unwrap()

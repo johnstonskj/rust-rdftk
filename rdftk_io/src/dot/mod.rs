@@ -117,9 +117,9 @@ impl Default for DotWriter {
     }
 }
 
-impl<W: Write, G: Graph> GraphWriter<W, G> for DotWriter {
-    fn write(&self, w: &mut W, graph: &G) -> std::io::Result<()> {
-        self.write(w, &graph.statements(), graph.prefix_mappings().clone())
+impl GraphWriter for DotWriter {
+    fn write(&self, w: &mut impl Write, graph: &impl Graph) -> std::io::Result<()> {
+        self.write_statements(w, &graph.statements(), graph.prefix_mappings().clone())
     }
 }
 
@@ -150,13 +150,13 @@ impl DotWriter {
                         label: node.as_blank().unwrap().clone(),
                     },
                 );
-            } else if node.is_uri() {
+            } else if node.is_iri() {
                 nodes.insert(
                     node.to_string(),
                     Node {
                         id: id.clone(),
                         kind: NodeKind::IRI,
-                        label: node.as_uri().unwrap().to_string(),
+                        label: node.as_iri().unwrap().to_string(),
                     },
                 );
             }
@@ -179,13 +179,13 @@ impl DotWriter {
                         label: node.as_blank().unwrap().clone(),
                     },
                 );
-            } else if node.is_uri() {
+            } else if node.is_iri() {
                 nodes.insert(
                     node.to_string(),
                     Node {
                         id: id.clone(),
                         kind: NodeKind::IRI,
-                        label: node.as_uri().unwrap().to_string(),
+                        label: node.as_iri().unwrap().to_string(),
                     },
                 );
             } else if node.is_literal() {
@@ -201,13 +201,14 @@ impl DotWriter {
             id
         }
     }
-    fn write<W: Write>(
+
+    fn write_statements<W: Write>(
         &self,
         w: &mut W,
         statements: &[Rc<Statement>],
         mappings: Rc<dyn PrefixMappings>,
     ) -> std::io::Result<()> {
-        writeln!(w, "digraph {{    \nrankdir=BT\n    charset=\"utf-8\";")?;
+        writeln!(w, "digraph {{\n    rankdir=BT\n    charset=\"utf-8\";")?;
 
         writeln!(w)?;
 
@@ -278,66 +279,5 @@ impl DotWriter {
             }
         }
         writeln!(w, "}}")
-    }
-}
-
-// ------------------------------------------------------------------------------------------------
-// Unit Tests
-// ------------------------------------------------------------------------------------------------
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use rdftk_core::{Literal, Statement};
-    use rdftk_iri::IRI;
-    use rdftk_memgraph::Mappings;
-    use std::str::FromStr;
-
-    #[test]
-    fn test_dot_writer() {
-        let mut mappings = Mappings::default();
-        mappings.include_rdf();
-        mappings.insert(
-            "dc",
-            IRI::from_str("http://purl.org/dc/elements/1.1/").unwrap(),
-        );
-        mappings.insert("foaf", IRI::from_str("http://xmlns.com/foaf/0.1/").unwrap());
-
-        let mut statements: Vec<Rc<Statement>> = Default::default();
-
-        statements.push(Rc::new(Statement::new(
-            SubjectNode::named(IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap()),
-            IRI::from_str("http://purl.org/dc/elements/1.1/title").unwrap(),
-            Literal::new("Tony Benn").into(),
-        )));
-        statements.push(Rc::new(Statement::new(
-            SubjectNode::named(IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap()),
-            IRI::from_str("http://purl.org/dc/elements/1.1/publisher").unwrap(),
-            Literal::new("Wikipedia").into(),
-        )));
-        statements.push(Rc::new(Statement::new(
-            SubjectNode::named(IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap()),
-            IRI::from_str("http://purl.org/dc/elements/1.1/description").unwrap(),
-            ObjectNode::blank_named("B1"),
-        )));
-        statements.push(Rc::new(Statement::new(
-            SubjectNode::blank_named("B1"),
-            IRI::from_str("http://xmlns.com/foaf/0.1/name").unwrap(),
-            Literal::new("Tony Benn").into(),
-        )));
-        statements.push(Rc::new(Statement::new(
-            SubjectNode::blank_named("B1"),
-            IRI::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#type").unwrap(),
-            IRI::from_str("http://xmlns.com/foaf/0.1/Person")
-                .unwrap()
-                .into(),
-        )));
-
-        let options = DotOptions::default();
-        let writer = DotWriter::new(options);
-        let mut out = std::io::stdout();
-        assert!(writer
-            .write(&mut out, &statements, Rc::new(mappings))
-            .is_ok());
     }
 }

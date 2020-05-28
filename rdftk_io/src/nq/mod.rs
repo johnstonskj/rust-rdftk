@@ -43,8 +43,8 @@ impl Default for NQuadWriter {
     }
 }
 
-impl<W: Write, G: NamedGraph> NamedGraphWriter<W, G> for NQuadWriter {
-    fn write(&self, w: &mut W, graph: &G) -> std::io::Result<()> {
+impl NamedGraphWriter for NQuadWriter {
+    fn write(&self, w: &mut impl Write, graph: &impl NamedGraph) -> std::io::Result<()> {
         for statement in graph.statements() {
             write!(
                 w,

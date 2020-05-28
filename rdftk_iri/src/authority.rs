@@ -10,7 +10,7 @@ TBD
 
 #![allow(clippy::module_name_repetitions)]
 
-use crate::error::{Component, Error as UriError, ErrorKind, Result as UriResult};
+use crate::error::{Component, Error as IriError, ErrorKind, Result as IriResult};
 use crate::parse;
 use crate::Normalize;
 use regex::Regex;
@@ -128,6 +128,23 @@ impl Display for Host {
     }
 }
 
+impl Normalize for Host {
+    fn normalize(self) -> IriResult<Self>
+    where
+        Self: Sized,
+    {
+        // RFC-3986§6.2.2
+        Ok(match self {
+            Host::IPV4(_) => self.clone(),
+            Host::IPV6(address) => Host::IPV6(address.to_uppercase()),
+            Host::IPVFuture(version, address) => {
+                Host::IPVFuture(version.to_uppercase(), address.to_uppercase())
+            }
+            Host::Name(name) => Host::Name(name.to_lowercase()),
+        })
+    }
+}
+
 // ------------------------------------------------------------------------------------------------
 
 impl Default for Authority {
@@ -164,7 +181,7 @@ impl Display for Authority {
 }
 
 impl FromStr for Authority {
-    type Err = UriError;
+    type Err = IriError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         parse_authority(s)
@@ -172,8 +189,14 @@ impl FromStr for Authority {
 }
 
 impl Normalize for Authority {
-    fn normalize(self) -> UriResult<Self> {
-        unimplemented!()
+    fn normalize(self) -> IriResult<Self> {
+        Ok(Self {
+            host: match self.host {
+                None => None,
+                Some(host) => Some(host.normalize()?),
+            },
+            ..self
+        })
     }
 }
 
@@ -243,7 +266,7 @@ impl Authority {
         self.port = None;
     }
 
-    pub fn set_user_name(&mut self, user_name: &str) -> UriResult<()> {
+    pub fn set_user_name(&mut self, user_name: &str) -> IriResult<()> {
         if parse::is_iuserinfo(user_name) {
             self.user_name = Some(user_name.to_string());
             Ok(())
@@ -255,7 +278,7 @@ impl Authority {
         self.user_name = None;
     }
 
-    pub fn set_password(&mut self, password: &str) -> UriResult<()> {
+    pub fn set_password(&mut self, password: &str) -> IriResult<()> {
         if parse::is_iuserinfo(password) {
             self.password = Some(password.to_string());
             Ok(())
@@ -276,7 +299,7 @@ impl Authority {
 // Private Functions
 // ------------------------------------------------------------------------------------------------
 
-fn parse_authority(s: &str) -> UriResult<Authority> {
+fn parse_authority(s: &str) -> IriResult<Authority> {
     let parts = s.split('@').collect::<Vec<&str>>();
     match parts.len() {
         1 => {
@@ -311,7 +334,7 @@ fn parse_authority(s: &str) -> UriResult<Authority> {
     }
 }
 
-fn parse_iuserinfo(s: &str) -> UriResult<(Option<String>, Option<String>)> {
+fn parse_iuserinfo(s: &str) -> IriResult<(Option<String>, Option<String>)> {
     let parts = s.split('@').collect::<Vec<&str>>();
     match parts.len() {
         1 => Ok((Some(s.to_string()), None)),
@@ -323,7 +346,7 @@ fn parse_iuserinfo(s: &str) -> UriResult<(Option<String>, Option<String>)> {
     }
 }
 
-fn parse_ihost(s: &str) -> UriResult<(Option<Host>, Option<Port>)> {
+fn parse_ihost(s: &str) -> IriResult<(Option<Host>, Option<Port>)> {
     let ipv4 = Regex::new(r"^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(:(\d+))?$").unwrap();
     let ipvmore = Regex::new(r"^\[(v([0-9A-Fa-f]+)\.)?([0-9A-Fa-f:]+)](:(\d+))?$").unwrap();
 

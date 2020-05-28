@@ -58,6 +58,10 @@ impl PrefixMappings for Mappings {
         self.reverse.get(namespace)
     }
 
+    fn prefixes(&self) -> Vec<&Prefix> {
+        self.forward.keys().collect()
+    }
+
     fn expand(&self, qname: QName) -> Option<IRI> {
         match self.get_namespace(&(qname.prefix().into())) {
             None => None,

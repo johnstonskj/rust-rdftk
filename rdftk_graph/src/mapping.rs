@@ -12,6 +12,7 @@ TBD
 use rdftk_core::QName;
 use rdftk_iri::IRI;
 use rdftk_names::{rdf, rdfs, xsd};
+use std::fmt::Debug;
 use std::str::FromStr;
 
 // ------------------------------------------------------------------------------------------------
@@ -24,7 +25,7 @@ pub enum Prefix {
     Some(String),
 }
 
-pub trait PrefixMappings {
+pub trait PrefixMappings: Debug {
     fn is_empty(&self) -> bool;
 
     fn len(&self) -> usize;
@@ -32,6 +33,8 @@ pub trait PrefixMappings {
     fn get_namespace(&self, prefix: &Prefix) -> Option<&IRI>;
 
     fn get_prefix(&self, namespace: &IRI) -> Option<&Prefix>;
+
+    fn prefixes(&self) -> Vec<&Prefix>;
 
     fn expand(&self, qname: QName) -> Option<IRI>;
 

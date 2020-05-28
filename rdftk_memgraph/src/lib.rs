@@ -24,7 +24,7 @@ use std::rc::Rc;
 pub struct MemGraph {
     name: Option<IRI>,
     statements: Vec<Rc<Statement>>,
-    mappings: Rc<Mappings>,
+    mappings: Rc<dyn PrefixMappings>,
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -40,20 +40,22 @@ impl Default for MemGraph {
         Self {
             name: None,
             statements: Default::default(),
-            mappings: Default::default(),
+            mappings: Rc::new(Mappings::default()),
         }
     }
 }
 
 impl From<Vec<Statement>> for MemGraph {
     fn from(sts: Vec<Statement>) -> Self {
-        Self::with(sts.into_iter().map(Rc::new).collect())
+        MemGraph::default()
+            .with(sts.into_iter().map(Rc::new).collect())
+            .to_owned()
     }
 }
 
 impl From<Vec<Rc<Statement>>> for MemGraph {
     fn from(sts: Vec<Rc<Statement>>) -> Self {
-        Self::with(sts)
+        MemGraph::default().with(sts).to_owned()
     }
 }
 
@@ -128,7 +130,7 @@ impl Graph for MemGraph {
 
     fn resource_for(&self, subject: &SubjectNode) -> Resource {
         let mut resource = Resource::new(subject.clone());
-        for st in &self.statements {
+        for st in &self.statements_for(subject) {
             let object = st.object();
             if object.is_literal() {
                 resource.literal(st.predicate().clone(), object.as_literal().unwrap().clone());
@@ -190,26 +192,17 @@ impl NamedGraph for MemGraph {
 }
 
 impl MemGraph {
-    pub fn with(sts: Vec<Rc<Statement>>) -> Self {
-        Self {
-            name: None,
-            statements: sts,
-            mappings: Default::default(),
-        }
+    pub fn named(&mut self, name: IRI) -> &mut Self {
+        self.name = Some(name);
+        self
     }
-    pub fn named(name: IRI) -> Self {
-        Self {
-            name: Some(name),
-            statements: Default::default(),
-            mappings: Default::default(),
-        }
+    pub fn with(&mut self, statements: Vec<Rc<Statement>>) -> &mut Self {
+        self.statements = statements;
+        self
     }
-    pub fn named_with(name: IRI, sts: Vec<Rc<Statement>>) -> Self {
-        Self {
-            name: Some(name),
-            statements: sts,
-            mappings: Default::default(),
-        }
+    pub fn mappings(&mut self, mappings: Rc<dyn PrefixMappings>) -> &mut Self {
+        self.mappings = mappings;
+        self
     }
 }
 

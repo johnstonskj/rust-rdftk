@@ -9,7 +9,7 @@ TBD
 
 #![allow(clippy::module_name_repetitions)]
 
-use crate::error::{Component, Error as UriError, ErrorKind, Result as UriResult};
+use crate::error::{Component, Error as IriError, ErrorKind, Result as IriResult};
 use crate::parse;
 use crate::Normalize;
 use std::fmt::{Display, Formatter};
@@ -47,7 +47,7 @@ impl Display for Fragment {
 }
 
 impl FromStr for Fragment {
-    type Err = UriError;
+    type Err = IriError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if parse::is_ifragment(s) {
@@ -61,7 +61,7 @@ impl FromStr for Fragment {
 }
 
 impl Normalize for Fragment {
-    fn normalize(self) -> UriResult<Self> {
+    fn normalize(self) -> IriResult<Self> {
         unimplemented!()
     }
 }

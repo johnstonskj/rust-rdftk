@@ -43,10 +43,10 @@ impl Default for NTripleWriter {
     }
 }
 
-impl<W: Write, G: Graph> GraphWriter<W, G> for NTripleWriter {
-    fn write(&self, w: &mut W, graph: &G) -> std::io::Result<()> {
+impl GraphWriter for NTripleWriter {
+    fn write(&self, w: &mut impl Write, graph: &impl Graph) -> std::io::Result<()> {
         for statement in graph.statements() {
-            write!(
+            writeln!(
                 w,
                 "{} <{}> {} .",
                 statement.subject(),
