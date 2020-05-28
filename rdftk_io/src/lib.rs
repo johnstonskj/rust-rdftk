@@ -42,20 +42,10 @@ use std::rc::Rc;
 /// [`Read`](https://doc.rust-lang.org/std/io/trait.Read.html).
 ///
 pub trait GraphReader {
-    fn read<R: Read, G: Graph>(&self, r: &mut R) -> std::io::Result<Rc<G>>;
+    fn read<G: Graph>(&self, r: &mut impl Read) -> std::io::Result<Rc<G>>;
 }
 
 // ------------------------------------------------------------------------------------------------
-
-// ///
-// /// Write a single [`Statement`](../rdftk_core/statement/struct.Statement.html) using the provided
-// /// implementation of [`Write`](https://doc.rust-lang.org/std/io/trait.Write.html).
-// ///
-// pub trait StatementWriter<W: Write> {
-//     /// Write the formatted statement `statement` using the write implementation `w`.
-//     fn write(&self, w: &mut W, statement: &Statement) -> std::io::Result<()>;
-// }
-//
 
 ///
 /// Write all [`Statement`](../rdftk_core/statement/struct.Statement.html)s in the
@@ -73,7 +63,7 @@ pub trait GraphWriter {
 /// [`Write`](https://doc.rust-lang.org/std/io/trait.Write.html).
 ///
 pub trait NamedGraphWriter {
-    /// Write the formatted graph `Graph` using the write implementation `w`.
+    /// Write the formatted graph `NamedGraph` using the write implementation `w`.
     fn write(&self, w: &mut impl Write, graph: &impl NamedGraph) -> std::io::Result<()>;
 }
 
@@ -81,6 +71,10 @@ pub trait NamedGraphWriter {
 // Public Functions
 // ------------------------------------------------------------------------------------------------
 
+///
+/// A convenience function that will return a String containing the output of the `GraphWriter`
+/// for the given `Graph` instance.
+///
 pub fn write_graph_to_string(w: &impl GraphWriter, graph: &impl Graph) -> std::io::Result<String> {
     use std::io::Cursor;
     let mut buffer = Cursor::new(Vec::new());
@@ -88,6 +82,10 @@ pub fn write_graph_to_string(w: &impl GraphWriter, graph: &impl Graph) -> std::i
     Ok(String::from_utf8(buffer.into_inner()).unwrap())
 }
 
+///
+/// A convenience function that will return a String containing the output of the `NamedGraphWriter`
+/// for the given `NamedGraph` instance.
+///
 pub fn write_named_graph_to_string(
     w: &impl NamedGraphWriter,
     graph: &impl NamedGraph,
