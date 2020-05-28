@@ -57,7 +57,7 @@ impl Default for IriBuilder {
 impl TryFrom<&mut IriBuilder> for IRI {
     type Error = IriError;
 
-    fn try_from(builder: &mut UriBuilder) -> Result<Self, Self::Error> {
+    fn try_from(builder: &mut IriBuilder) -> Result<Self, Self::Error> {
         let mut iri = match &builder.path {
             None => IRI::default(),
             Some(path) => IRI::new(path),
