@@ -363,7 +363,7 @@ mod tests {
         let st = Statement::new(
             SubjectNode::blank_named("01"),
             rdfs::label(),
-            Literal::new_typed("2020", DataType::Int).into(),
+            Literal::with_type("2020", DataType::Int).into(),
         );
         assert_eq!(
             st.to_string(),

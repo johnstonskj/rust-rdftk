@@ -17,36 +17,54 @@ use std::time::Duration;
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
+///
+///
+///
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum DataType {
+    /// Denotes a literal of type `xsd::string`.
     String,
+    /// Denotes a literal of type `xsd::qname`.
     QName,
+    /// Denotes a literal of type `xsd::anyURI`.
     IRI,
+    /// Denotes a literal of type `xsd::boolean`.
     Boolean,
+    /// Denotes a literal of type `xsd::float`.
     Float,
+    /// Denotes a literal of type `xsd::double`.
     Double,
+    /// Denotes a literal of type `xsd::long`.
     Long,
+    /// Denotes a literal of type `xsd::int`.
     Int,
+    /// Denotes a literal of type `xsd::short`.
     Short,
+    /// Denotes a literal of type `xsd::byte`.
     Byte,
+    /// Denotes a literal of type `xsd::unsignedLong`.
     UnsignedLong,
+    /// Denotes a literal of type `xsd::unsignedInt`.
     UnsignedInt,
+    /// Denotes a literal of type `xsd::unsignedShort`.
     UnsignedShort,
+    /// Denotes a literal of type `xsd::unsignedByte`.
     UnsignedByte,
+    /// Denotes a literal of type `xsd::duration`.
     Duration,
+    /// Denotes a literal where the type is indicated by the provided `IRI`.
     Other(Box<IRI>),
 }
 
+///
+///
+///
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Literal {
     lexical_form: String,
     data_type: Option<DataType>,
     language: Option<String>,
 }
-
-// ------------------------------------------------------------------------------------------------
-// Public Functions
-// ------------------------------------------------------------------------------------------------
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
@@ -256,7 +274,7 @@ impl Literal {
         }
     }
 
-    pub fn new_typed(value: &str, data_type: DataType) -> Self {
+    pub fn with_type(value: &str, data_type: DataType) -> Self {
         Self {
             lexical_form: value.to_string(),
             data_type: Some(data_type),
@@ -264,7 +282,7 @@ impl Literal {
         }
     }
 
-    pub fn new_string(value: &str, language: &str) -> Self {
+    pub fn with_language(value: &str, language: &str) -> Self {
         Self {
             lexical_form: value.to_string(),
             data_type: None,
@@ -294,18 +312,6 @@ impl Literal {
 }
 
 // ------------------------------------------------------------------------------------------------
-// Private Types
-// ------------------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------------------
-// Private Functions
-// ------------------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------------------
-// Modules
-// ------------------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------------------
 // Unit Tests
 // ------------------------------------------------------------------------------------------------
 
@@ -314,33 +320,74 @@ mod tests {
     use super::*;
     use std::time::Instant;
 
-    fn test_to_string(literal: Literal, result: &str) {
-        assert_eq!(literal.to_string(), result)
+    #[test]
+    fn test_untyped() {
+        let value = Literal::new("a string");
+        assert!(!value.has_data_type());
+        assert!(!value.has_language());
+        assert_eq!(value.lexical_form(), "a string");
+        assert_eq!(value.to_string(), "\"a string\"");
     }
 
     #[test]
-    fn test_from_types() {
-        test_to_string(
-            "a string".to_string().into(),
-            "\"a string\"^^<http://www.w3.org/2001/XMLSchema#string>",
-        );
-        test_to_string(
-            true.into(),
-            "\"true\"^^<http://www.w3.org/2001/XMLSchema#boolean>",
-        );
-        test_to_string(
-            1u64.into(),
-            "\"1\"^^<http://www.w3.org/2001/XMLSchema#unsignedLong>",
-        );
+    fn test_language_string() {
+        let value = Literal::with_language("a string", "en_us");
+        assert!(!value.has_data_type());
+        assert!(value.has_language());
+        assert_eq!(value.lexical_form(), "a string");
+        assert_eq!(value.to_string(), "\"a string\"@en_us");
+    }
 
+    #[test]
+    fn test_typed_as_string() {
+        let value: Literal = "a string".to_string().into();
+        assert!(value.has_data_type());
+        assert!(!value.has_language());
+        assert_eq!(value.lexical_form(), "a string");
+        assert_eq!(
+            value.to_string(),
+            "\"a string\"^^<http://www.w3.org/2001/XMLSchema#string>"
+        );
+    }
+
+    #[test]
+    fn test_typed_as_boolean() {
+        let value: Literal = true.into();
+        assert!(value.has_data_type());
+        assert!(!value.has_language());
+        assert_eq!(value.lexical_form(), "true");
+        assert_eq!(
+            value.to_string(),
+            "\"true\"^^<http://www.w3.org/2001/XMLSchema#boolean>"
+        );
+    }
+
+    #[test]
+    fn test_typed_as_long() {
+        let value: Literal = 1u64.into();
+        assert!(value.has_data_type());
+        assert!(!value.has_language());
+        assert_eq!(value.lexical_form(), "1");
+        assert_eq!(
+            value.to_string(),
+            "\"1\"^^<http://www.w3.org/2001/XMLSchema#unsignedLong>"
+        );
+    }
+
+    #[test]
+    fn test_typed_as_duration() {
         let start = Instant::now();
         std::thread::sleep(Duration::from_secs(2));
         let duration = start.elapsed();
         println!("Duration  In: {:#?}", duration);
-        let duration: Literal = duration.into();
-        println!("Duration Out: {}", duration);
-        let duration = duration.to_string();
-        assert!(duration.starts_with("\"T2."));
-        assert!(duration.ends_with("S\"^^<http://www.w3.org/2001/XMLSchema#duration>"));
+
+        let value: Literal = duration.into();
+        println!("Duration Out: {}", value);
+        assert!(value.has_data_type());
+        assert!(!value.has_language());
+
+        let value_str = value.to_string();
+        assert!(value_str.starts_with("\"T2."));
+        assert!(value_str.ends_with("S\"^^<http://www.w3.org/2001/XMLSchema#duration>"));
     }
 }
