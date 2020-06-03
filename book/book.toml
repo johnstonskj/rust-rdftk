@@ -1,6 +1,7 @@
 [book]
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
-title = "RDFtk: An RDF Toolkit for Rust"
+title = "The RDFtk Book"
+description = "RDFtk: An RDF Toolkit for Rust"
 language = "en"
 multilingual = false
 

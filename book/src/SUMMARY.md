@@ -1,4 +1,4 @@
-# RDF Toolkit
+# The RDFtk Book
 
 - [Introduction](./introduction.md)
   - [RDF Primer](./intro_primer.md)
