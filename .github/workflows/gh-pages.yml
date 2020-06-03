@@ -5,6 +5,11 @@ on:
     branches:
       - master
 
+defaults:
+  run:
+    shell: bash
+    working-directory: ./book
+
 jobs:
   deploy:
     runs-on: ubuntu-18.04
@@ -18,8 +23,6 @@ jobs:
           # mdbook-version: 'latest'
 
       - name: Build
-        with:
-          path: ./book
         run: mdbook build
 
       - name: Deploy
