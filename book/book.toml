@@ -1,0 +1,28 @@
+[book]
+authors = ["Simon Johnston <johnstonskj@gmail.com>"]
+title = "RDFtk: An RDF Toolkit for Rust"
+language = "en"
+multilingual = false
+
+[build]
+build-dir = "publish"
+create-missing = true
+
+[rust]
+edition = "2018"
+
+[output.html]
+git-repository-url = "https://github.com/johnstonskj/rust-rdftk"
+mathjax-support = true
+curly-quotes = true
+
+[output.html.fold] 
+enable = true
+level = 2
+
+[output.html.playpen]
+line-numbers = true
+
+[output.html.search]
+use-boolean-and = true
+
