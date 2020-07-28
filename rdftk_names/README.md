@@ -69,6 +69,9 @@ namespace! {
 
 ## Changes
 
+**Version 0.1.2**
+
+* Added `rdf:li`.
 
 **Version 0.1.1**
 
