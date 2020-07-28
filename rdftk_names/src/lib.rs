@@ -7,9 +7,15 @@ The vocabularies supported can be found [below](#modules).
 
 # Macro Example
 
-The following example replicates the `geo` module using the `namespace!` macro.
+The following example replicates the `geo` module using the `namespace!` macro. Note that as this
+macro uses `paste::item` the client will need to have a dependency on the
+[paste crate](https://crates.io/crates/paste), and a macro use statement in their code.
+
 
 ```rust,ignore
+#[macro_use]
+extern crate paste;
+
 #[macro_use]
 extern crate rdftk_names;
 
@@ -107,7 +113,16 @@ macro_rules! namespace {
     };
 }
 
-#[doc(hidden)]
+///
+/// Typically this macro is only called by the `namespace!` macro. It takes an identifier and a
+/// string and produces:
+///
+/// 1. a function with the same identifier which returns a complete IRI using the
+///    value of `NAMESPACE` in the current scope, and
+/// 1. a function with the same identifier, but the suffix `_qname` which returns a qualified name
+///    using the value of `PREFIX` in the current scope.
+///
+#[macro_export]
 macro_rules! nsname {
     ($fn_name:ident, $name:expr) => {
         #[doc = "Construct an IRI for this name"]

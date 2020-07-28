@@ -38,6 +38,9 @@ The `namespace!` macro takes three parameters:
 * The namespace IRI for the module,
 * A list of pairs where the first is the name of the function to return the IRI for the name, and the second is the 
   string name of the vocabulary element.
+  
+Note that as this macro uses `paste::item` the client will need to have a dependency on the [paste crate](https://crates.io/crates/paste), 
+and a macro use statement in their code.
 
 ## Example
 
@@ -65,6 +68,11 @@ namespace! {
 ```
 
 ## Changes
+
+
+**Version 0.1.1**
+
+* Made `nsname!` macro public.
 
 **Version 0.1.0**
 
