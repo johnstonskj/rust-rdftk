@@ -68,9 +68,6 @@ const PREFIX_AND_NAME: usize = 2;
 
 impl Display for QName {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        if let Some(prefix) = &self.prefix {
-            write!(f, "{}:", prefix)?
-        }
         write!(
             f,
             "{}:{}",
@@ -212,7 +209,7 @@ mod tests {
     #[test]
     fn test_new_qname() {
         let qname = QName::new("foo");
-        assert_eq!(qname.to_string(), "foo".to_string());
+        assert_eq!(qname.to_string(), ":foo".to_string());
         assert_eq!(qname.as_curie(), "[:foo]".to_string());
 
         let qname = QName::with_prefix("rdf", "foo");
@@ -224,7 +221,7 @@ mod tests {
     fn test_qname_from_str() {
         let qname = QName::from_str("foo");
         assert!(qname.is_ok());
-        assert_eq!(qname.unwrap().to_string(), "foo".to_string());
+        assert_eq!(qname.unwrap().to_string(), ":foo".to_string());
 
         let qname = QName::from_str("rdf:foo");
         assert!(qname.is_ok());

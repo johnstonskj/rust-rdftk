@@ -8,4 +8,5 @@ members = [
     "rdftk_memgraph",
     "rdftk_names",
     "rdftk_query",
+    "rdftk_skos",
 ]

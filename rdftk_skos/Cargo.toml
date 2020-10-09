@@ -1,0 +1,25 @@
+[package]
+name = "rdftk_skos"
+version = "0.1.0"
+authors = ["Simon Johnston <johnstonskj@gmail.com>"]
+edition = "2018"
+description = "A data model with RDF support for the Simple Knowledge Organization System (SKOS) vocabulary."
+documentation = "https://docs.rs/rdftk_skos/"
+repository = "https://github.com/johnstonskj/rust-rdftk.git"
+license = "MIT"
+readme = "README.md"
+publish = true
+
+[package.metadata.docs.rs]
+# This sets the default target to `x86_64-unknown-linux-gnu`
+# and only builds that target for documentation.
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+paste = "0.1.12"
+rdftk_io = { version = "0.1.0", path = "../rdftk_io" }
+rdftk_iri = { version = "0.1.0", path = "../rdftk_iri" }
+rdftk_core = { version = "0.1.2", path = "../rdftk_core" }
+rdftk_graph = { version = "0.1.0", path = "../rdftk_graph" }
+rdftk_memgraph = { version = "0.1.0", path = "../rdftk_memgraph" }
+rdftk_names = { version = "0.1.2", path = "../rdftk_names" }
