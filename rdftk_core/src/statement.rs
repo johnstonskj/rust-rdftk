@@ -71,6 +71,18 @@ impl Display for SubjectNode {
     }
 }
 
+impl From<IRI> for SubjectNode {
+    fn from(iri: IRI) -> Self {
+        SubjectNode::named(iri)
+    }
+}
+
+impl From<&IRI> for SubjectNode {
+    fn from(iri: &IRI) -> Self {
+        SubjectNode::named(iri.clone())
+    }
+}
+
 impl SubjectNode {
     pub fn blank() -> Self {
         Self {

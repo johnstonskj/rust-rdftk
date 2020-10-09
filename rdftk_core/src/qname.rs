@@ -71,7 +71,16 @@ impl Display for QName {
         if let Some(prefix) = &self.prefix {
             write!(f, "{}:", prefix)?
         }
-        write!(f, "{}", &self.name)
+        write!(
+            f,
+            "{}:{}",
+            if let Some(prefix) = &self.prefix {
+                prefix.to_string()
+            } else {
+                String::new()
+            },
+            &self.name
+        )
     }
 }
 

@@ -29,6 +29,12 @@ pub fn make_statements() -> Vec<Rc<Statement>> {
 
 ## Changes
 
+
+**Version 0.1.1**
+
+* Added `From` to allow direct construction of a `SubjectNode` from an `IRI`.
+* Fixed a bug in `QName` that dropped the ":" for non-prefixed values.
+ 
 **Version 0.1.0**
 
 * First release.
