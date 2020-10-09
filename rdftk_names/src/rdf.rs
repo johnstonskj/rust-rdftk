@@ -23,6 +23,7 @@ namespace! {
         nil, "nil",
         first, "first",
         rest, "rest",
+        li, "li",
         xml_literal, "XMLLiteral",
         json, "JSON",
         compound_literal, "CompoundLiteral",

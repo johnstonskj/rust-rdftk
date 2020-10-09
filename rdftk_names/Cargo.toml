@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_names"
-version = "0.1.0"
+version = "0.1.2"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
 description = "Provides a set of modules that contain the IRIs and QName strings for commonly used vocabularies"
