@@ -11,6 +11,12 @@ TBD
 
 ## Changes
 
+**Version 0.1.1**
+
+* Added `is_top_concept` method to `Scheme`.
+* Added "Top" indicator to concepts in markdown.
+* Added concept tree to markdown.
+
 **Version 0.1.0**
 
 * First release.

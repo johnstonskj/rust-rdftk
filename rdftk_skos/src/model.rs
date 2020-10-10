@@ -285,6 +285,9 @@ impl Scheme {
         self.concepts.insert(concept);
         self.top_concepts.insert(uri);
     }
+    pub fn is_top_collection(&self, uri: &IRI) -> bool {
+        self.top_concepts.contains(uri)
+    }
     pub fn has_concepts(&self) -> bool {
         !self.concepts.is_empty()
     }

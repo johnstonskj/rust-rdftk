@@ -60,7 +60,7 @@
 * [Information technology (hardware)](http://vocabularies.unesco.org/thesaurus/mt5.45)
 
 
-### Concept: Computers
+### Top Concept: Computers
 
 [<http://vocabularies.unesco.org/thesaurus/concept534>](http://vocabularies.unesco.org/thesaurus/concept534)
 
@@ -80,6 +80,11 @@
 > | Relationship | Concept IRI |
 > |--------------|-------------|
 > | skos:narrower | [Analog Computers](http://vocabularies.unesco.org/thesaurus/concept2258) |
+
+## Concept Tree
+
+* Computers
+  * Analog Computers
 
 ## Collections
 

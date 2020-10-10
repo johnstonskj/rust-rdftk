@@ -59,9 +59,11 @@ pub fn write_markdown(
         writeln!(w, "{}", header(2, "Concepts"))?;
         let mut sorted: Vec<&Concept> = scheme.concepts().collect();
         sorted.sort_by_key(|&a| sort_label(a, &context));
-        for concept in sorted {
-            write_concept(w, &concept, &context)?;
+        for concept in &sorted {
+            write_concept(w, concept, &context)?;
         }
+        writeln!(w, "{}", header(2, "Concept Tree"))?;
+        write_concept_tree(w, &sorted, &context)?;
     }
 
     if scheme.has_collections() {
@@ -267,7 +269,17 @@ fn data_type_uri(dt: &DataType) -> IRI {
 
 fn write_concept<'a>(w: &mut impl Write, concept: &Concept, context: &Context<'a>) -> Result<()> {
     writeln!(w)?;
-    write_named_obj_header(w, concept, "Concept", 3, &context)?;
+    write_named_obj_header(
+        w,
+        concept,
+        if context.scheme.is_top_collection(concept.uri()) {
+            "Top Concept"
+        } else {
+            "Concept"
+        },
+        3,
+        &context,
+    )?;
 
     if concept.has_properties() {
         write_labeled_obj(w, concept, 4, &context)?;
@@ -278,6 +290,55 @@ fn write_concept<'a>(w: &mut impl Write, concept: &Concept, context: &Context<'a
     }
 
     write_collection_membership(w, concept.uri(), context)
+}
+
+fn write_concept_tree<'a>(
+    w: &mut impl Write,
+    concepts: &Vec<&Concept>,
+    context: &Context<'a>,
+) -> Result<()> {
+    writeln!(w)?;
+    write_concept_tree_inner(
+        w,
+        &concepts
+            .iter()
+            .filter(|c| context.scheme.is_top_collection(c.uri()))
+            .cloned()
+            .collect(),
+        0,
+        context,
+    )?;
+    writeln!(w)
+}
+
+fn write_concept_tree_inner<'a>(
+    w: &mut impl Write,
+    current_concepts: &Vec<&Concept>,
+    current_depth: usize,
+    context: &Context<'a>,
+) -> Result<()> {
+    for concept in current_concepts {
+        writeln!(
+            w,
+            "{} {}",
+            list_item(current_depth),
+            match concept.preferred_label(context.language) {
+                None => concept.uri().to_string(),
+                Some(label) => label,
+            }
+        )?;
+        let next_level: Vec<&Concept> = concept
+            .relations()
+            .filter(|r| r.predicate() == &ns::narrower())
+            .map(|r| context.scheme.concept(r.other()).unwrap())
+            .collect();
+        write_concept_tree_inner(w, &next_level, current_depth + 1, context)?;
+    }
+    Ok(())
+}
+
+fn list_item(depth: usize) -> String {
+    format!("{}*", format!("{: <1$}", "", depth * 2))
 }
 
 fn write_collection<'a>(
