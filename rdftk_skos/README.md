@@ -11,6 +11,10 @@ TBD
 
 ## Changes
 
+**Version 0.1.2**
+
+* Added new `markdown::write_concept_tree_markdown`.
+
 **Version 0.1.1**
 
 * Added `is_top_concept` method to `Scheme`.

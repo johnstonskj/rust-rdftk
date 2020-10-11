@@ -86,6 +86,18 @@ pub fn write_markdown(
     Ok(())
 }
 
+pub fn write_concept_tree_markdown<'a>(
+    w: &mut impl Write,
+    scheme: &Scheme,
+    language: &str,
+) -> Result<()> {
+    let context = Context::new(scheme, language);
+    let mut sorted: Vec<&Concept> = scheme.concepts().collect();
+    sorted.sort_by_key(|&a| sort_label(a, &context));
+    writeln!(w, "{}", header(2, "Concept Tree"))?;
+    write_concept_tree(w, &sorted, &context)
+}
+
 // ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------

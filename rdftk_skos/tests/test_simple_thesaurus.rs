@@ -1,7 +1,7 @@
 use rdftk_core::{DataType, Literal};
 use rdftk_graph::Graph;
 use rdftk_names::{dc, xsd};
-use rdftk_skos::markdown::write_markdown;
+use rdftk_skos::markdown::{write_concept_tree_markdown, write_markdown};
 use rdftk_skos::model::{
     to_rdf_graph, Collection, Concept, LiteralProperty, Named, Propertied, Scheme,
 };
@@ -158,4 +158,21 @@ fn test_simple_thesaurus_to_markdown() {
     assert!(String::from_utf8(buffer.into_inner())
         .unwrap()
         .starts_with(MARKDOWN));
+}
+
+const MARKDOWN_TREE: &str = include_str!("simple_thesaurus_tree.md");
+
+#[test]
+fn test_simple_thesaurus_to_markdown_tree() {
+    let scheme = make_unesco_computer();
+
+    let mut buffer = Cursor::new(Vec::new());
+    let result = write_concept_tree_markdown(&mut buffer, &scheme, "en");
+
+    assert!(result.is_ok());
+
+    assert_eq!(
+        String::from_utf8(buffer.into_inner()).unwrap(),
+        MARKDOWN_TREE
+    );
 }
