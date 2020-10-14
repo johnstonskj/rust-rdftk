@@ -9,6 +9,8 @@ TBD
 
 */
 
+use rdftk_names::Vocabulary;
+
 namespace! {
     "skos",
     "http://www.w3.org/2004/02/skos/core#",
@@ -63,7 +65,7 @@ pub mod xl {
     }
 }
 
-pub mod iso {
+pub(crate) mod iso {
     namespace! {
         "isothes",
         "http://purl.org/iso25964/skos-thes#",

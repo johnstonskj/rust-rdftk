@@ -141,6 +141,10 @@ and remove them from the 'unwise' set:
 #[macro_use]
 extern crate error_chain;
 
+#[cfg(feature = "new_parser")]
+#[macro_use]
+extern crate nom;
+
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
@@ -173,6 +177,9 @@ pub use path::Path;
 // pub mod prename;
 // pub use prename::{Prefix, PrefixedName};
 
+#[cfg(feature = "new_parser")]
+pub mod pname;
+
 pub mod query;
 pub use query::{Query, QueryPart};
 
@@ -181,4 +188,4 @@ pub use fragment::Fragment;
 
 #[allow(clippy::module_inception)]
 pub mod iri;
-pub use iri::IRI;
+pub use iri::{IRIRef, IRI};

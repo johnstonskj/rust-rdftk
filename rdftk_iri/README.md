@@ -10,6 +10,11 @@ more clones than necessary and parse more slowly than could be the case.
 
 ## Changes
 
+
+**Version 0.1.1**
+
+* Added `IRIRef` type.
+
 **Version 0.1.0**
 
 * First release.

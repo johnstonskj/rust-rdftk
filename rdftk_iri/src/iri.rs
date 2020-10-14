@@ -9,6 +9,7 @@ use crate::{Authority, Fragment, Normalize, Path, Query, Scheme};
 use regex::Regex;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
+use std::sync::Arc;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -22,6 +23,8 @@ pub struct IRI {
     query: Option<Query>,
     fragment: Option<Fragment>,
 }
+
+pub type IRIRef = Arc<IRI>;
 
 // ------------------------------------------------------------------------------------------------
 // Public Functions

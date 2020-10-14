@@ -11,7 +11,7 @@ TBD
 
 use crate::model::{
     standard_mappings, to_rdf_graph, Collection, Concept, Labeled, LiteralProperty, Named,
-    Propertied, Relation, Scheme,
+    ObjectProperty, Propertied, Scheme,
 };
 use crate::ns;
 use rdftk_core::DataType;
@@ -415,7 +415,7 @@ fn write_collection_membership<'a>(
 
 fn write_collection_members<'a>(
     w: &mut impl Write,
-    members: impl Iterator<Item = &'a Relation>,
+    members: impl Iterator<Item = &'a ObjectProperty>,
     context: &Context<'a>,
 ) -> Result<()> {
     writeln!(w, "{}", header(4, "Members"))?;
@@ -433,7 +433,7 @@ fn write_collection_members<'a>(
 
 fn write_relationships<'a>(
     w: &mut impl Write,
-    relations: impl Iterator<Item = &'a Relation>,
+    relations: impl Iterator<Item = &'a ObjectProperty>,
     context: &Context<'a>,
 ) -> Result<()> {
     writeln!(w, "{}", header(4, "Related Concepts"))?;

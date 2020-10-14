@@ -13,7 +13,7 @@ TBD
 use crate::ns;
 use rdftk_core::{Literal, ObjectNode, Statement, SubjectNode};
 use rdftk_graph::{Graph, PrefixMappings};
-use rdftk_iri::IRI;
+use rdftk_iri::{IRIRef, IRI};
 use rdftk_memgraph::{Mappings, MemGraph};
 use rdftk_names::{dc, owl, rdf, xsd};
 use std::collections::{HashMap, HashSet};
@@ -25,53 +25,55 @@ use std::rc::Rc;
 
 #[derive(Clone, Debug)]
 pub struct Scheme {
-    uri: IRI,
-    concepts: HashSet<Concept>,
-    top_concepts: HashSet<IRI>,
+    uri: IRIRef,
+    concepts: HashMap<IRIRef, Concept>,
+    top_concepts: HashSet<IRIRef>,
     collections: HashSet<Collection>,
     properties: Vec<LiteralProperty>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Concept {
-    uri: IRI,
-    relations: Vec<Relation>,
+    uri: IRIRef,
+    relations: Vec<ObjectProperty>,
     properties: Vec<LiteralProperty>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Collection {
-    uri: IRI,
+    uri: IRIRef,
     ordered: bool,
-    members: Vec<Relation>,
+    members: Vec<IRIRef>,
     properties: Vec<LiteralProperty>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct LiteralProperty {
-    predicate: IRI,
+    predicate: IRIRef,
     value: Literal,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct Relation {
-    predicate: IRI,
-    other: IRI,
+pub struct ObjectProperty {
+    predicate: IRIRef,
+    other: IRIRef,
 }
 
+// ------------------------------------------------------------------------------------------------
+
 pub trait Named {
-    fn new(uri: IRI) -> Self;
+    fn new(uri: IRIRef) -> Self;
 
-    fn new_with_label(uri: IRI, text: &str, language: Option<&str>) -> Self;
+    fn new_with_label(uri: IRIRef, text: &str, language: Option<&str>) -> Self;
 
-    fn uri(&self) -> &IRI;
+    fn uri(&self) -> &IRIRef;
 }
 
 pub trait Propertied {
     fn add_property(&mut self, property: LiteralProperty) {
         self.properties_mut().push(property);
     }
-    fn has_property(&self, predicate: &IRI) -> bool {
+    fn has_property(&self, predicate: &IRIRef) -> bool {
         self.properties()
             .iter()
             .any(|property| property.predicate() == predicate)
@@ -105,18 +107,18 @@ pub trait Labeled: Propertied {
     }
     fn has_labels(&self) -> bool {
         self.properties().iter().any(|property| {
-            property.predicate == ns::pref_label()
-                || property.predicate == ns::alt_label()
-                || property.predicate == ns::hidden_label()
+            property.predicate == *ns::pref_label()
+                || property.predicate == *ns::alt_label()
+                || property.predicate == *ns::hidden_label()
         })
     }
     fn labels(&self) -> Vec<&LiteralProperty> {
         self.properties()
             .into_iter()
             .filter(|property| {
-                property.predicate == ns::pref_label()
-                    || property.predicate == ns::alt_label()
-                    || property.predicate == ns::hidden_label()
+                property.predicate == *ns::pref_label()
+                    || property.predicate == *ns::alt_label()
+                    || property.predicate == *ns::hidden_label()
             })
             .collect()
     }
@@ -180,12 +182,13 @@ pub fn to_rdf_graph(scheme: &Scheme, default_namespace: Option<IRI>) -> MemGraph
 
 pub fn standard_mappings() -> Mappings {
     let mut mappings = Mappings::default();
-    mappings.insert(ns::PREFIX, ns::NAMESPACE.parse().unwrap());
-    mappings.insert(ns::iso::PREFIX, ns::iso::NAMESPACE.parse().unwrap());
-    mappings.insert(dc::terms::PREFIX, dc::terms::NAMESPACE.parse().unwrap());
-    mappings.insert(rdf::PREFIX, rdf::NAMESPACE.parse().unwrap());
-    mappings.insert(owl::PREFIX, owl::NAMESPACE.parse().unwrap());
-    mappings.insert(xsd::PREFIX, xsd::NAMESPACE.parse().unwrap());
+    mappings.insert(ns::prefix(), ns::namespace());
+    mappings.insert(ns::xl::prefix(), ns::xl::namespace());
+    mappings.insert(ns::iso::prefix(), ns::iso::namespace());
+    mappings.insert(dc::terms::prefix(), dc::terms::namespace());
+    mappings.insert(rdf::prefix(), rdf::namespace());
+    mappings.insert(owl::prefix(), owl::namespace());
+    mappings.insert(xsd::prefix(), xsd::namespace());
     mappings
 }
 
@@ -194,7 +197,7 @@ pub fn standard_mappings() -> Mappings {
 // ------------------------------------------------------------------------------------------------
 
 impl Named for Scheme {
-    fn new(uri: IRI) -> Self {
+    fn new(uri: IRIRef) -> Self {
         Self {
             uri,
             concepts: Default::default(),
@@ -204,7 +207,7 @@ impl Named for Scheme {
         }
     }
 
-    fn new_with_label(uri: IRI, text: &str, language: Option<&str>) -> Self {
+    fn new_with_label(uri: IRIRef, text: &str, language: Option<&str>) -> Self {
         let mut scheme = Self::new(uri);
         scheme.properties.push(match language {
             None => LiteralProperty::preferred_label(text),
@@ -213,7 +216,7 @@ impl Named for Scheme {
         scheme
     }
 
-    fn uri(&self) -> &IRI {
+    fn uri(&self) -> &IRIRef {
         &self.uri
     }
 }
@@ -233,7 +236,7 @@ impl Labeled for Scheme {}
 impl ToStatements for Scheme {
     fn to_statements(&self) -> Vec<Statement> {
         let mut statements: Vec<Statement> = Default::default();
-        let subject = SubjectNode::named(self.uri().clone());
+        let subject = SubjectNode::named(*self.uri().clone());
         statements.push(Statement::new(
             subject.clone(),
             rdf::a_type(),
@@ -251,14 +254,14 @@ impl ToStatements for Scheme {
             statements.push(Statement::new(
                 SubjectNode::named(member.uri().clone()),
                 ns::in_scheme(),
-                ObjectNode::named(self.uri().clone()),
+                ObjectNode::named(*self.uri().clone()),
             ));
         }
         for member in &self.top_concepts {
             statements.push(Statement::new(
                 subject.clone(),
                 ns::has_top_concept(),
-                ObjectNode::named(member.clone()),
+                ObjectNode::named(*member.clone()),
             ));
         }
         for member in self.collections() {
@@ -266,7 +269,7 @@ impl ToStatements for Scheme {
             statements.push(Statement::new(
                 SubjectNode::named(member.uri().clone()),
                 ns::in_scheme(),
-                ObjectNode::named(self.uri().clone()),
+                ObjectNode::named(*self.uri().clone()),
             ));
         }
         for property in self.properties() {
@@ -378,19 +381,19 @@ impl ToStatements for Concept {
 impl Concept {
     pub fn broader(&mut self, uri: IRI) -> Self {
         let mut new_concept = Self::new(uri);
-        new_concept.add_relation(Relation::narrower(self.uri().clone()));
-        self.add_relation(Relation::broader(new_concept.uri().clone()));
+        new_concept.add_relation(ObjectProperty::narrower(self.uri().clone()));
+        self.add_relation(ObjectProperty::broader(new_concept.uri().clone()));
         new_concept
     }
 
     pub fn narrower(&mut self, uri: IRI) -> Self {
         let mut new_concept = Self::new(uri);
-        new_concept.add_relation(Relation::broader(self.uri().clone()));
-        self.add_relation(Relation::narrower(new_concept.uri().clone()));
+        new_concept.add_relation(ObjectProperty::broader(self.uri().clone()));
+        self.add_relation(ObjectProperty::narrower(new_concept.uri().clone()));
         new_concept
     }
 
-    pub fn add_relation(&mut self, relation: Relation) {
+    pub fn add_relation(&mut self, relation: ObjectProperty) {
         self.relations.push(relation);
     }
     pub fn has_relation(&self, predicate: &IRI) -> bool {
@@ -400,7 +403,7 @@ impl Concept {
     pub fn has_relations(&self) -> bool {
         !self.relations.is_empty()
     }
-    pub fn relations(&self) -> impl Iterator<Item = &Relation> {
+    pub fn relations(&self) -> impl Iterator<Item = &ObjectProperty> {
         self.relations.iter()
     }
 }
@@ -505,15 +508,15 @@ impl Collection {
     }
 
     pub fn add_member(&mut self, uri: IRI) {
-        self.members.push(Relation::member(uri));
+        self.members.push(ObjectProperty::member(uri));
     }
     pub fn add_list_member(&mut self, uri: IRI) {
-        self.members.push(Relation::member_list(uri));
+        self.members.push(ObjectProperty::member_list(uri));
     }
     pub fn has_members(&self) -> bool {
         !self.members.is_empty()
     }
-    pub fn members(&self) -> impl Iterator<Item = &Relation> {
+    pub fn members(&self) -> impl Iterator<Item = &ObjectProperty> {
         self.members.iter()
     }
 }
@@ -640,7 +643,7 @@ impl LiteralProperty {
 
 // ------------------------------------------------------------------------------------------------
 
-impl ToStatement for Relation {
+impl ToStatement for ObjectProperty {
     fn to_statement(&self, subject: &SubjectNode) -> Statement {
         Statement::new(
             subject.clone(),
@@ -650,7 +653,7 @@ impl ToStatement for Relation {
     }
 }
 
-impl Relation {
+impl ObjectProperty {
     pub fn new(predicate: IRI, other: IRI) -> Self {
         Self { predicate, other }
     }
