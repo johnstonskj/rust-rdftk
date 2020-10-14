@@ -39,8 +39,7 @@ The `namespace!` macro takes three parameters:
 * A list of pairs where the first is the name of the function to return the IRI for the name, and the second is the 
   string name of the vocabulary element.
   
-Note that as this macro uses `paste::item` the client will need to have a dependency on the [paste crate](https://crates.io/crates/paste), 
-and a macro use statement in their code.
+Note that as this macro uses `paste::item` the client will need to have a dependency on the [paste crate](https://crates.io/crates/paste).
 
 ## Example
 
@@ -50,7 +49,10 @@ The following example replicates the `geo` module using the `namespace!` macro.
 #[macro_use]
 extern crate rdftk_names;
 
+use rdftk_names::Vocabulary;
+
 namespace! {
+    GeoSpatialVocabulary,
     "geo",
     "http://www.w3.org/2003/01/geo/wgs84_pos#",
     {
@@ -68,6 +70,10 @@ namespace! {
 ```
 
 ## Changes
+
+**Version 0.1.3**
+
+* `namespace!` macro now creates a local cache of `Arc<IRI>` instances to reduce memory consumption.
 
 **Version 0.1.2**
 
