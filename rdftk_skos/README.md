@@ -11,6 +11,10 @@ TBD
 
 ## Changes
 
+**Version 0.1.4**
+
+* Using new `IRIRef` approach for all crates.
+
 **Version 0.1.3**
 
 * Added relationship kinds from the ISO schema.
@@ -31,6 +35,6 @@ TBD
 
 ## TODO
 
-TBD 
+1. Performance!!! 
 
 [![SKOS](https://www.w3.org/Icons/SW/Buttons/sw-skos-blue.png)](http://www.w3.org/2001/sw/wiki/SKOS)

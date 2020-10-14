@@ -1,16 +1,21 @@
+use rdftk_core::graph::Graph;
 use rdftk_core::{DataType, Literal};
-use rdftk_graph::Graph;
+use rdftk_iri::IRI;
 use rdftk_names::{dc, xsd};
 use rdftk_skos::markdown::{write_concept_tree_markdown, write_markdown};
 use rdftk_skos::model::{
     to_rdf_graph, Collection, Concept, LiteralProperty, Named, Propertied, Scheme,
 };
 use std::io::Cursor;
+use std::str::FromStr;
 
 fn make_unesco_computer() -> Scheme {
     // Taken from http://vocabularies.unesco.org/browser/rest/v1/thesaurus/data?uri=http%3A%2F%2Fvocabularies.unesco.org%2Fthesaurus%2Fconcept2258&format=text/turtle
-    let mut scheme: Scheme =
-        Scheme::new("http://vocabularies.unesco.org/thesaurus".parse().unwrap());
+    let mut scheme: Scheme = Scheme::new(
+        IRI::from_str("http://vocabularies.unesco.org/thesaurus")
+            .unwrap()
+            .into(),
+    );
     scheme.add_property(LiteralProperty::preferred_label_with(
         "UNESCO Thesaurus",
         "en",
@@ -30,9 +35,9 @@ fn make_unesco_computer() -> Scheme {
     scheme.add_property(LiteralProperty::description("The UNESCO thesaurus."));
 
     let mut computers: Concept = Concept::new(
-        "http://vocabularies.unesco.org/thesaurus/concept534"
-            .parse()
-            .unwrap(),
+        IRI::from_str("http://vocabularies.unesco.org/thesaurus/concept534")
+            .unwrap()
+            .into(),
     );
     computers.add_property(LiteralProperty::preferred_label_with("حواسيب", "ar"));
     computers.add_property(LiteralProperty::preferred_label_with("Computers", "en"));
@@ -40,9 +45,9 @@ fn make_unesco_computer() -> Scheme {
     computers.add_property(LiteralProperty::preferred_label_with("Компьютеры", "ru"));
 
     let mut analog_computers = computers.narrower(
-        "http://vocabularies.unesco.org/thesaurus/concept2258"
-            .parse()
-            .unwrap(),
+        IRI::from_str("http://vocabularies.unesco.org/thesaurus/concept2258")
+            .unwrap()
+            .into(),
     );
     analog_computers.add_property(LiteralProperty::preferred_label_with(
         "Calculateur analogique",
@@ -66,17 +71,17 @@ fn make_unesco_computer() -> Scheme {
         "es",
     ));
     analog_computers.add_property(LiteralProperty::new(
-        dc::terms::modified(),
+        dc::terms::modified().clone(),
         Literal::with_type(
             "2019-12-15T14:00:02Z",
-            DataType::Other(Box::from(xsd::date_time())),
+            DataType::Other(xsd::date_time().clone()),
         ),
     ));
 
     let mut collection = Collection::new(
-        "http://vocabularies.unesco.org/thesaurus/mt5.45"
-            .parse()
-            .unwrap(),
+        IRI::from_str("http://vocabularies.unesco.org/thesaurus/mt5.45")
+            .unwrap()
+            .into(),
     );
     collection.add_property(LiteralProperty::preferred_label_with(
         "تكنولوجيا المعلومات (الأجهزة)",
@@ -98,12 +103,12 @@ fn make_unesco_computer() -> Scheme {
         "Tecnología de la información (equipos)",
         "es",
     ));
-    collection.add_member(analog_computers.uri().clone());
+    collection.add_member(&analog_computers);
 
     let mut domain_collection = Collection::new(
-        "http://vocabularies.unesco.org/thesaurus/domain5"
-            .parse()
-            .unwrap(),
+        IRI::from_str("http://vocabularies.unesco.org/thesaurus/domain5")
+            .unwrap()
+            .into(),
     );
     domain_collection.add_property(LiteralProperty::preferred_label_with(
         "معلومات واتصالات",
@@ -125,7 +130,7 @@ fn make_unesco_computer() -> Scheme {
         "Información y comunicación",
         "es",
     ));
-    domain_collection.add_member(collection.uri().clone());
+    domain_collection.add_member(&collection);
 
     scheme.add_top_concept(computers);
     scheme.add_concept(analog_computers);
@@ -136,11 +141,21 @@ fn make_unesco_computer() -> Scheme {
 }
 
 #[test]
+fn test_simple_thesaurus() {
+    let scheme = make_unesco_computer();
+
+    println!("{:#?}", scheme);
+}
+
+#[test]
 fn test_simple_thesaurus_to_rdf() {
     let scheme = make_unesco_computer();
 
     let statements = to_rdf_graph(&scheme, None).statements();
 
+    for statement in &statements {
+        println!("{}", statement);
+    }
     assert_eq!(statements.len(), 41);
 }
 

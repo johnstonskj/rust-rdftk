@@ -14,11 +14,11 @@ use crate::model::{
     ObjectProperty, Propertied, Scheme,
 };
 use crate::ns;
+use rdftk_core::graph::PrefixMappings;
 use rdftk_core::DataType;
-use rdftk_graph::PrefixMappings;
 use rdftk_io::turtle::TurtleWriter;
 use rdftk_io::GraphWriter;
-use rdftk_iri::IRI;
+use rdftk_iri::IRIRef;
 use rdftk_memgraph::Mappings;
 use rdftk_names::xsd;
 use std::io::{Result, Write};
@@ -45,7 +45,7 @@ pub fn write_markdown(
     w: &mut impl Write,
     scheme: &Scheme,
     language: &str,
-    default_namespace: Option<IRI>,
+    default_namespace: Option<IRIRef>,
 ) -> Result<()> {
     let context = Context::new(scheme, language);
 
@@ -154,9 +154,9 @@ fn write_labeled_obj<'a>(
         .properties()
         .into_iter()
         .filter(|property| {
-            property.predicate() != &ns::pref_label()
-                && property.predicate() != &ns::alt_label()
-                && property.predicate() != &ns::hidden_label()
+            property.predicate() != ns::pref_label()
+                && property.predicate() != ns::alt_label()
+                && property.predicate() != ns::hidden_label()
         })
         .collect();
     if !other_properties.is_empty() {
@@ -258,7 +258,7 @@ fn write_other_properties<'a>(
     Ok(())
 }
 
-fn data_type_uri(dt: &DataType) -> IRI {
+fn data_type_uri(dt: &DataType) -> IRIRef {
     match dt {
         DataType::String => xsd::string(),
         DataType::QName => xsd::q_name(),
@@ -275,8 +275,9 @@ fn data_type_uri(dt: &DataType) -> IRI {
         DataType::UnsignedShort => xsd::unsigned_short(),
         DataType::UnsignedByte => xsd::unsigned_byte(),
         DataType::Duration => xsd::duration(),
-        DataType::Other(iri) => iri.as_ref().clone(),
+        DataType::Other(iri) => iri,
     }
+    .clone()
 }
 
 fn write_concept<'a>(w: &mut impl Write, concept: &Concept, context: &Context<'a>) -> Result<()> {
@@ -284,7 +285,7 @@ fn write_concept<'a>(w: &mut impl Write, concept: &Concept, context: &Context<'a
     write_named_obj_header(
         w,
         concept,
-        if context.scheme.is_top_collection(concept.uri()) {
+        if concept.is_top_concept() {
             "Top Concept"
         } else {
             "Concept"
@@ -314,7 +315,7 @@ fn write_concept_tree<'a>(
         w,
         &concepts
             .iter()
-            .filter(|c| context.scheme.is_top_collection(c.uri()))
+            .filter(|concept| concept.is_top_concept())
             .cloned()
             .collect(),
         0,
@@ -341,7 +342,7 @@ fn write_concept_tree_inner<'a>(
         )?;
         let next_level: Vec<&Concept> = concept
             .relations()
-            .filter(|r| r.predicate() == &ns::narrower())
+            .filter(|r| r.predicate() == ns::narrower())
             .map(|r| context.scheme.concept(r.other()).unwrap())
             .collect();
         write_concept_tree_inner(w, &next_level, current_depth + 1, context)?;
@@ -384,17 +385,13 @@ fn write_collection<'a>(
 
 fn write_collection_membership<'a>(
     w: &mut impl Write,
-    member_uri: &IRI,
+    member_uri: &IRIRef,
     context: &Context<'a>,
 ) -> Result<()> {
     let in_collections: Vec<&Collection> = context
         .scheme
         .collections()
-        .filter(|collection| {
-            collection
-                .members()
-                .any(|member| member.other() == member_uri)
-        })
+        .filter(|collection| collection.members().any(|member| member == member_uri))
         .collect();
 
     if !in_collections.is_empty() {
@@ -415,18 +412,13 @@ fn write_collection_membership<'a>(
 
 fn write_collection_members<'a>(
     w: &mut impl Write,
-    members: impl Iterator<Item = &'a ObjectProperty>,
+    members: impl Iterator<Item = &'a IRIRef>,
     context: &Context<'a>,
 ) -> Result<()> {
     writeln!(w, "{}", header(4, "Members"))?;
     writeln!(w)?;
     for member in members {
-        writeln!(
-            w,
-            "* [{}]({})",
-            uri_to_label(member.other(), context),
-            member.other()
-        )?;
+        writeln!(w, "* [{}]({})", uri_to_label(member, context), member)?;
     }
     writeln!(w)
 }
@@ -456,7 +448,7 @@ fn write_relationships<'a>(
     Ok(())
 }
 
-fn uri_to_label<'a>(uri: &IRI, context: &Context<'a>) -> String {
+fn uri_to_label<'a>(uri: &IRIRef, context: &Context<'a>) -> String {
     if let Some(concept) = context.scheme.concepts().find(|c| c.uri() == uri) {
         if let Some(label) = concept.preferred_label(context.language) {
             return label;
