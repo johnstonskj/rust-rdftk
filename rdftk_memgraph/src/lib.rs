@@ -7,9 +7,9 @@ TBD
 
 */
 
+use rdftk_core::graph::{Graph, NamedGraph, PrefixMappings};
 use rdftk_core::{ObjectNode, Resource, Statement, SubjectNode};
-use rdftk_graph::{Graph, NamedGraph, PrefixMappings};
-use rdftk_iri::IRI;
+use rdftk_iri::IRIRef;
 use std::collections::HashSet;
 use std::rc::Rc;
 
@@ -22,7 +22,7 @@ use std::rc::Rc;
 ///
 #[derive(Clone, Debug)]
 pub struct MemGraph {
-    name: Option<IRI>,
+    name: Option<IRIRef>,
     statements: Vec<Rc<Statement>>,
     mappings: Rc<dyn PrefixMappings>,
 }
@@ -72,7 +72,7 @@ impl Graph for MemGraph {
         self.statements.iter().any(|st| st.as_ref() == statement)
     }
 
-    fn contains_all(&self, subject: &SubjectNode, predicate: &IRI, object: &ObjectNode) -> bool {
+    fn contains_all(&self, subject: &SubjectNode, predicate: &IRIRef, object: &ObjectNode) -> bool {
         self.statements.iter().any(|st| {
             st.subject() == subject && st.predicate() == predicate && st.object() == object
         })
@@ -94,11 +94,11 @@ impl Graph for MemGraph {
         self.statements.iter().map(|st| st.subject()).collect()
     }
 
-    fn predicates(&self) -> HashSet<&IRI> {
+    fn predicates(&self) -> HashSet<&IRIRef> {
         self.statements.iter().map(|st| st.predicate()).collect()
     }
 
-    fn predicates_for(&self, subject: &SubjectNode) -> HashSet<&IRI> {
+    fn predicates_for(&self, subject: &SubjectNode) -> HashSet<&IRIRef> {
         self.statements
             .iter()
             .filter_map(|st| {
@@ -115,7 +115,7 @@ impl Graph for MemGraph {
         self.statements.iter().map(|st| st.object()).collect()
     }
 
-    fn objects_for(&self, subject: &SubjectNode, predicate: &IRI) -> HashSet<&ObjectNode> {
+    fn objects_for(&self, subject: &SubjectNode, predicate: &IRIRef) -> HashSet<&ObjectNode> {
         self.statements
             .iter()
             .filter_map(|st| {
@@ -174,17 +174,17 @@ impl Graph for MemGraph {
 }
 
 impl NamedGraph for MemGraph {
-    fn name(&self) -> &Option<IRI> {
+    fn name(&self) -> &Option<IRIRef> {
         &self.name
     }
 
-    fn set_name(&mut self, name: IRI) -> Option<IRI> {
+    fn set_name(&mut self, name: IRIRef) -> Option<IRIRef> {
         let old = self.name.clone();
         self.name = Some(name);
         old
     }
 
-    fn unset_name(&mut self) -> Option<IRI> {
+    fn unset_name(&mut self) -> Option<IRIRef> {
         let old = self.name.clone();
         self.name = None;
         old
@@ -192,7 +192,7 @@ impl NamedGraph for MemGraph {
 }
 
 impl MemGraph {
-    pub fn named(&mut self, name: IRI) -> &mut Self {
+    pub fn named(&mut self, name: IRIRef) -> &mut Self {
         self.name = Some(name);
         self
     }

@@ -7,9 +7,9 @@ TBD
 
 */
 
+use rdftk_core::graph::{Prefix, PrefixMappings};
 use rdftk_core::QName;
-use rdftk_graph::{Prefix, PrefixMappings};
-use rdftk_iri::{Fragment, IRI};
+use rdftk_iri::{Fragment, IRIRef};
 use std::collections::HashMap;
 
 // ------------------------------------------------------------------------------------------------
@@ -18,8 +18,8 @@ use std::collections::HashMap;
 
 #[derive(Clone, Debug)]
 pub struct Mappings {
-    forward: HashMap<Prefix, IRI>,
-    reverse: HashMap<IRI, Prefix>,
+    forward: HashMap<Prefix, IRIRef>,
+    reverse: HashMap<IRIRef, Prefix>,
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -50,11 +50,11 @@ impl PrefixMappings for Mappings {
         self.forward.len()
     }
 
-    fn get_namespace(&self, prefix: &Prefix) -> Option<&IRI> {
+    fn get_namespace(&self, prefix: &Prefix) -> Option<&IRIRef> {
         self.forward.get(prefix)
     }
 
-    fn get_prefix(&self, namespace: &IRI) -> Option<&Prefix> {
+    fn get_prefix(&self, namespace: &IRIRef) -> Option<&Prefix> {
         self.reverse.get(namespace)
     }
 
@@ -62,16 +62,18 @@ impl PrefixMappings for Mappings {
         self.forward.keys().collect()
     }
 
-    fn expand(&self, qname: QName) -> Option<IRI> {
+    fn expand(&self, qname: QName) -> Option<IRIRef> {
         match self.get_namespace(&(qname.prefix().into())) {
             None => None,
             Some(namespace) => {
                 if namespace.has_fragment() {
-                    Some(namespace.with_new_fragment(Some(qname.name().parse().unwrap())))
+                    Some(IRIRef::from(
+                        namespace.with_new_fragment(Some(qname.name().parse().unwrap())),
+                    ))
                 } else {
                     let mut path = namespace.path().clone();
                     if path.push(qname.name()).is_ok() {
-                        Some(namespace.with_new_path(path))
+                        Some(IRIRef::from(namespace.with_new_path(path)))
                     } else {
                         None
                     }
@@ -80,7 +82,7 @@ impl PrefixMappings for Mappings {
         }
     }
 
-    fn compress(&self, iri: IRI) -> Option<QName> {
+    fn compress(&self, iri: IRIRef) -> Option<QName> {
         let (iri, name) = if iri.has_fragment() {
             let fragment = iri.fragment();
             let fragment = fragment.as_ref().unwrap();
@@ -95,7 +97,7 @@ impl PrefixMappings for Mappings {
         } else {
             return None;
         };
-        match self.get_prefix(&iri) {
+        match self.get_prefix(&IRIRef::from(iri)) {
             None => None,
             Some(prefix) => match prefix {
                 Prefix::Default => Some(QName::new(&name)),
@@ -104,13 +106,13 @@ impl PrefixMappings for Mappings {
         }
     }
 
-    fn insert_default(&mut self, iri: IRI) -> &mut Self {
+    fn insert_default(&mut self, iri: IRIRef) -> &mut Self {
         self.forward.insert(Prefix::Default, iri.clone());
         self.reverse.insert(iri, Prefix::Default);
         self
     }
 
-    fn insert(&mut self, prefix: &str, iri: IRI) -> &mut Self {
+    fn insert(&mut self, prefix: &str, iri: IRIRef) -> &mut Self {
         assert!(!prefix.is_empty());
         let prefix = Prefix::Some(prefix.to_string());
         self.forward.insert(prefix.clone(), iri.clone());
@@ -136,7 +138,7 @@ impl PrefixMappings for Mappings {
 }
 
 impl Mappings {
-    pub fn with_default(iri: IRI) -> Self {
+    pub fn with_default(iri: IRIRef) -> Self {
         let mut new = Mappings::default();
         new.insert_default(iri);
         new
@@ -150,6 +152,7 @@ impl Mappings {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rdftk_iri::IRI;
     use std::str::FromStr;
 
     fn make_mappings() -> Mappings {
@@ -157,7 +160,9 @@ mod tests {
         mappings.include_xsd();
         mappings.include_rdf();
         mappings.include_rdfs();
-        mappings.insert_default(IRI::from_str("http://xmlns.com/foaf/0.1/").unwrap());
+        mappings.insert_default(IRIRef::from(
+            IRI::from_str("http://xmlns.com/foaf/0.1/").unwrap(),
+        ));
         mappings
     }
 
@@ -184,20 +189,26 @@ mod tests {
         let mut mappings = make_mappings();
         mappings.insert(
             "foo",
-            IRI::from_str("http://example.com/schema/foo/1.0").unwrap(),
+            IRIRef::from(IRI::from_str("http://example.com/schema/foo/1.0").unwrap()),
         );
 
         assert_eq!(
             mappings.expand(QName::with_prefix("rdf", "Bag")),
-            Some(IRI::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#Bag").unwrap())
+            Some(IRIRef::from(
+                IRI::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#Bag").unwrap()
+            ))
         );
         assert_eq!(
             mappings.expand(QName::new("knows")),
-            Some(IRI::from_str("http://xmlns.com/foaf/0.1/knows").unwrap())
+            Some(IRIRef::from(
+                IRI::from_str("http://xmlns.com/foaf/0.1/knows").unwrap()
+            ))
         );
         assert_eq!(
             mappings.expand(QName::with_prefix("foo", "Bar")),
-            Some(IRI::from_str("http://example.com/schema/foo/1.0/Bar").unwrap())
+            Some(IRIRef::from(
+                IRI::from_str("http://example.com/schema/foo/1.0/Bar").unwrap()
+            ))
         );
 
         assert_eq!(mappings.expand(QName::with_prefix("rdfx", "Bag")), None);
@@ -208,18 +219,21 @@ mod tests {
         let mappings = make_mappings();
 
         assert_eq!(
-            mappings
-                .compress(IRI::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#Bag").unwrap()),
+            mappings.compress(IRIRef::from(
+                IRI::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#Bag").unwrap()
+            )),
             Some(QName::with_prefix("rdf", "Bag"))
         );
         assert_eq!(
-            mappings.compress(IRI::from_str("http://xmlns.com/foaf/0.1/knows").unwrap()),
+            mappings.compress(IRIRef::from(
+                IRI::from_str("http://xmlns.com/foaf/0.1/knows").unwrap()
+            )),
             Some(QName::new("knows"))
         );
         assert_eq!(
-            mappings.compress(
+            mappings.compress(IRIRef::from(
                 IRI::from_str("http://www.w3.org/2003/01/geo/wgs84_pos#SpatialThing").unwrap()
-            ),
+            )),
             None
         );
     }
