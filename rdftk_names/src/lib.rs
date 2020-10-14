@@ -198,8 +198,17 @@ mod tests {
 
     #[test]
     fn test_expansion() {
+        assert_eq!(default_prefix(), "p".to_string());
+
+        assert_eq!(namespace_str(), "heep://schema/com/p#");
+        assert_eq!(
+            namespace_iri(),
+            &IRIRef::new(IRI::from_str("heep://schema/com/p#").unwrap())
+        );
+
         assert_eq!(foo().to_string(), "heep://schema/com/p#Foo");
         assert_eq!(foo_qname(), "p:Foo");
+
         assert_eq!(bar().to_string(), "heep://schema/com/p#Bar");
         assert_eq!(bar_qname(), "p:Bar");
     }
