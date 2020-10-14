@@ -11,6 +11,10 @@ TBD
 
 ## Changes
 
+**Version 0.1.3**
+
+* Added relationship kinds from the ISO schema.
+
 **Version 0.1.2**
 
 * Added new `markdown::write_concept_tree_markdown`.

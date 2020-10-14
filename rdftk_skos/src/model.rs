@@ -694,6 +694,26 @@ impl Relation {
         Self::new(ns::member_list(), other)
     }
 
+    // ISO relationships
+    pub fn broader_generic(other: IRI) -> Self {
+        Self::new(ns::iso::broader_generic(), other)
+    }
+    pub fn broader_instantial(other: IRI) -> Self {
+        Self::new(ns::iso::broader_instantial(), other)
+    }
+    pub fn broader_partitive(other: IRI) -> Self {
+        Self::new(ns::iso::broader_partitive(), other)
+    }
+    pub fn narrower_generic(other: IRI) -> Self {
+        Self::new(ns::iso::narrower_generic(), other)
+    }
+    pub fn narrower_instantial(other: IRI) -> Self {
+        Self::new(ns::iso::narrower_instantial(), other)
+    }
+    pub fn narrower_partitive(other: IRI) -> Self {
+        Self::new(ns::iso::narrower_partitive(), other)
+    }
+
     pub fn predicate(&self) -> &IRI {
         &self.predicate
     }

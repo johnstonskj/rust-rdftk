@@ -79,7 +79,14 @@ pub mod iso {
             sub_group, "subGroup",
             subordinate_array, "subordinateArray",
             super_group, "superGroup",
-            super_ordinate, "superOrdinate"
+            super_ordinate, "superOrdinate",
+
+            broader_generic, "broaderGeneric",
+            broader_instantial, "broaderInstantial",
+            broader_partitive, "broaderPartitive",
+            narrower_generic, "narrowerGeneric",
+            narrower_instantial, "narrowerInstantial",
+            narrower_partitive, "narrowerPartitive"
         }
     }
 }
