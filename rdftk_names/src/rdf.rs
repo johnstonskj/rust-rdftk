@@ -34,8 +34,10 @@ namespace! {
 
 /// Create a numbered member in a container
 #[inline]
-pub fn member(index: usize) -> IRI {
-    IRI::from_str(&format!("{}_{}", NAMESPACE, index)).unwrap()
+pub fn member(index: usize) -> IRIRef {
+    IRI::from_str(&format!("{}_{}", NAMESPACE, index))
+        .unwrap()
+        .into()
 }
 
 /// Create a numbered member in a container
