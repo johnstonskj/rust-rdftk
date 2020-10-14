@@ -7,8 +7,8 @@ TBD
 
 */
 
-use crate::PrefixMappings;
-use rdftk_core::{ObjectNode, Resource, Statement, SubjectNode};
+use crate::graph::PrefixMappings;
+use crate::{ObjectNode, Resource, Statement, SubjectNode};
 use rdftk_iri::IRI;
 use std::collections::HashSet;
 use std::rc::Rc;

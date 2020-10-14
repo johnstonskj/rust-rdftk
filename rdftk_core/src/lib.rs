@@ -13,8 +13,8 @@ use std::str::FromStr;
 let mut statements: Vec<Rc<Statement>> = Default::default();
 
 statements.push(Rc::new(Statement::new(
-    SubjectNode::named(IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap()),
-    IRI::from_str("http://purl.org/dc/elements/1.1/title").unwrap(),
+    SubjectNode::named(IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap().into()),
+    IRI::from_str("http://purl.org/dc/elements/1.1/title").unwrap().into(),
     Literal::new("Tony Benn").into(),
 )));
 ```

@@ -35,13 +35,13 @@ fn contact(name: &str) -> IRI {
 
 let resource =
     Resource::named(IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap().into())
-        .value_of(dc::publisher().into(), Literal::new("Wikipedia"))
-        .value_of(dc::title().into(), Literal::new("Tony Benn"))
+        .value_of(dc::publisher().clone(), Literal::new("Wikipedia"))
+        .value_of(dc::title().clone(), Literal::new("Tony Benn"))
         .resource(
-            dc::description().into(),
+            dc::description().clone(),
             Resource::blank()
-                .resource_named(rdf::a_type().into(), foaf::person().into())
-                .value_of(foaf::name().into(), Literal::new("Tony Benn"))
+                .resource_named(rdf::a_type().clone(), foaf::person().clone())
+                .value_of(foaf::name().clone(), Literal::new("Tony Benn"))
                 .to_owned(),
         )
         .to_owned();
@@ -465,7 +465,7 @@ impl Resource {
     ///
     pub fn rdf_type(&mut self, name: IRIRef) -> &mut Self {
         self.insert(
-            rdf::a_type().into(),
+            rdf::a_type().clone(),
             ResourceObject::Resource(Resource::named(name)),
         )
     }
@@ -523,12 +523,12 @@ fn flatten(resource: &Resource, sts: &mut Vec<Statement>) {
                 ));
                 sts.push(Statement::new(
                     container.clone(),
-                    rdf::a_type().into(),
+                    rdf::a_type().clone(),
                     match kind {
                         ContainerKind::Alt => rdf::alt(),
                         ContainerKind::Bag => rdf::bag(),
                         ContainerKind::Seq => rdf::seq(),
-                        ContainerKind::Other(iri) => iri.clone(),
+                        ContainerKind::Other(iri) => iri,
                     }
                     .into(),
                 ));

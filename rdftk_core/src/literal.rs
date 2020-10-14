@@ -95,7 +95,7 @@ impl Display for Literal {
                         DataType::UnsignedShort => xsd::unsigned_short(),
                         DataType::UnsignedByte => xsd::unsigned_byte(),
                         DataType::Duration => xsd::duration(),
-                        DataType::Other(iri) => iri.clone(),
+                        DataType::Other(iri) => iri,
                     }
                 ),
                 (None, Some(language)) => format!("@{}", language.to_lowercase()),

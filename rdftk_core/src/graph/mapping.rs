@@ -13,7 +13,6 @@ use crate::QName;
 use rdftk_iri::IRIRef;
 use rdftk_names::{rdf, rdfs, xsd};
 use std::fmt::Debug;
-use std::str::FromStr;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -52,21 +51,21 @@ pub trait PrefixMappings: Debug {
     where
         Self: Sized,
     {
-        self.insert(xsd::prefix(), xsd::namespace())
+        self.insert(xsd::default_prefix(), xsd::namespace_iri().clone())
     }
 
     fn include_rdf(&mut self) -> &mut Self
     where
         Self: Sized,
     {
-        self.insert(rdf::prefix(), rdf::namespace())
+        self.insert(rdf::default_prefix(), rdf::namespace_iri().clone())
     }
 
     fn include_rdfs(&mut self) -> &mut Self
     where
         Self: Sized,
     {
-        self.insert(rdfs::prefix(), rdfs::namespace())
+        self.insert(rdfs::default_prefix(), rdfs::namespace_iri().clone())
     }
 
     fn remove(&mut self, prefix: &Prefix);
