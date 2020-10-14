@@ -7,9 +7,8 @@ TBD
 
 */
 
-use crate::graph::PrefixMappings;
 use crate::{ObjectNode, Resource, Statement, SubjectNode};
-use rdftk_iri::IRI;
+use rdftk_iri::IRIRef;
 use std::collections::HashSet;
 use std::rc::Rc;
 
@@ -25,7 +24,7 @@ pub trait Graph {
 
     fn contains(&self, statement: &Statement) -> bool;
 
-    fn contains_all(&self, subject: &SubjectNode, predicate: &IRI, object: &ObjectNode) -> bool;
+    fn contains_all(&self, subject: &SubjectNode, predicate: &IRIRef, object: &ObjectNode) -> bool;
 
     fn statements(&self) -> Vec<Rc<Statement>>;
 
@@ -33,13 +32,13 @@ pub trait Graph {
 
     fn subjects(&self) -> HashSet<&SubjectNode>;
 
-    fn predicates(&self) -> HashSet<&IRI>;
+    fn predicates(&self) -> HashSet<&IRIRef>;
 
-    fn predicates_for(&self, subject: &SubjectNode) -> HashSet<&IRI>;
+    fn predicates_for(&self, subject: &SubjectNode) -> HashSet<&IRIRef>;
 
     fn objects(&self) -> HashSet<&ObjectNode>;
 
-    fn objects_for(&self, subject: &SubjectNode, predicate: &IRI) -> HashSet<&ObjectNode>;
+    fn objects_for(&self, subject: &SubjectNode, predicate: &IRIRef) -> HashSet<&ObjectNode>;
 
     fn resource_for(&self, subject: &SubjectNode) -> Resource;
 

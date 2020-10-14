@@ -29,6 +29,10 @@ pub fn make_statements() -> Vec<Rc<Statement>> {
 
 ## Changes
 
+**Version 0.1.5**
+
+* Updates for rdftk_memgraph to build.
+
 **Version 0.1.4**
 
 * Made all local dependencies only major/minor valued.
