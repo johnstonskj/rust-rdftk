@@ -9,9 +9,9 @@ TBD
 */
 
 use crate::GraphWriter;
+use rdftk_core::graph::{Graph, Prefix, PrefixMappings};
 use rdftk_core::{Literal, SubjectNode};
-use rdftk_graph::{Graph, Prefix, PrefixMappings};
-use rdftk_iri::IRI;
+use rdftk_iri::IRIRef;
 use std::io::Write;
 use std::rc::Rc;
 
@@ -129,7 +129,7 @@ impl TurtleWriter {
             options,
         }
     }
-    pub fn with_base(base: IRI, options: TurtleOptions) -> Self {
+    pub fn with_base(base: IRIRef, options: TurtleOptions) -> Self {
         Self {
             base: Some(base.to_string()),
             options,
@@ -196,7 +196,7 @@ impl TurtleWriter {
     fn write_iri<W: Write>(
         &self,
         w: &mut W,
-        iri: &IRI,
+        iri: &IRIRef,
         mappings: &Rc<dyn PrefixMappings>,
     ) -> std::io::Result<()> {
         if let Some(base) = &self.base {

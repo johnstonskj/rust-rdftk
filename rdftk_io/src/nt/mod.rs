@@ -5,7 +5,7 @@ format.
 */
 
 use crate::GraphWriter;
-use rdftk_graph::Graph;
+use rdftk_core::graph::Graph;
 use std::io::Write;
 use std::marker::PhantomData;
 

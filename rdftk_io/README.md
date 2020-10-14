@@ -28,6 +28,10 @@ Each module will also provide public constants `NAME`, `FILE_EXTENSION`, and `MI
 
 ## Changes
 
+**Version 0.1.2**
+
+* Made all `IRI` into `IRIRef`.
+
 **Version 0.1.1**
 
 * Made all local dependencies only major/minor valued.

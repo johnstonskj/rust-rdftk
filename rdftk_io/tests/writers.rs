@@ -1,5 +1,5 @@
 use rdftk_io::write_graph_to_string;
-use rdftk_iri::IRI;
+use rdftk_iri::{IRIRef, IRI};
 use std::str::FromStr;
 
 pub mod common;
@@ -97,7 +97,7 @@ fn write_to_turtle_with_base() {
     let graph = common::tony_benn_graph();
 
     let writer = TurtleWriter::with_base(
-        IRI::from_str("http://en.wikipedia.org/wiki/").unwrap(),
+        IRIRef::from(IRI::from_str("http://en.wikipedia.org/wiki/").unwrap()),
         TurtleOptions::default(),
     );
 
@@ -124,7 +124,7 @@ fn write_to_turtle_with_options() {
     options.use_sparql_style = true;
     options.nest_blank_nodes = false;
     let writer = TurtleWriter::with_base(
-        IRI::from_str("http://en.wikipedia.org/wiki/").unwrap(),
+        IRIRef::from(IRI::from_str("http://en.wikipedia.org/wiki/").unwrap()),
         options,
     );
 

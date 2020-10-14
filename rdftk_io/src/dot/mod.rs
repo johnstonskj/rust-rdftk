@@ -14,8 +14,8 @@ let writer = DotWriter::new(options);
 */
 
 use crate::GraphWriter;
+use rdftk_core::graph::{Graph, PrefixMappings};
 use rdftk_core::{ObjectNode, Statement, SubjectNode};
-use rdftk_graph::{Graph, PrefixMappings};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io::Write;

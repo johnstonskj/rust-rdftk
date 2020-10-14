@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_io"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
 description = "Traits for reading/wtiting Statements and Graphs as well as implementations for common file formats"
@@ -18,7 +18,6 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 error-chain = "0.12.2"
 rdftk_core = { version = "0.1", path = "../rdftk_core" }
-rdftk_graph = { version = "0.1", path = "../rdftk_graph" }
 rdftk_iri = { version = "0.1", path = "../rdftk_iri" }
 
 [dev-dependencies]

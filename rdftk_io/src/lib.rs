@@ -29,7 +29,7 @@ TBD
 
 */
 
-use rdftk_graph::{Graph, NamedGraph};
+use rdftk_core::graph::{Graph, NamedGraph};
 use std::io::{Read, Write};
 use std::rc::Rc;
 
