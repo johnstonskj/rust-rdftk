@@ -29,6 +29,10 @@ pub fn make_statements() -> Vec<Rc<Statement>> {
 
 ## Changes
 
+**Version 0.1.4**
+
+* Made all local dependencies only major/minor valued.
+
 **Version 0.1.3**
 
 * Moved all `IRI` to `IRIRef` on interfaces.

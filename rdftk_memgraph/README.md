@@ -7,6 +7,10 @@ An implementation of the `Graph` traits for simple in-memory cases.
 
 ## Changes
 
+**Version 0.1.1**
+
+* Made all local dependencies only major/minor valued.
+
 **Version 0.1.0**
 
 * First release

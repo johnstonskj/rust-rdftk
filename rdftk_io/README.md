@@ -28,6 +28,10 @@ Each module will also provide public constants `NAME`, `FILE_EXTENSION`, and `MI
 
 ## Changes
 
+**Version 0.1.1**
+
+* Made all local dependencies only major/minor valued.
+
 **Version 0.1.0**
 
 * First release.

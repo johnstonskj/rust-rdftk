@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_memgraph"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
 description = "An implementation of the`Graph traits for simple in-memory cases"
@@ -16,7 +16,7 @@ publish = true
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-rdftk_iri = { version = "0.1.0", path = "../rdftk_iri" }
-rdftk_core = { version = "0.1.0", path = "../rdftk_core" }
-rdftk_graph = { version = "0.1.0", path = "../rdftk_graph" }
-rdftk_names = { version = "0.1.0", path = "../rdftk_names" }
+rdftk_iri = { version = "0.1", path = "../rdftk_iri" }
+rdftk_core = { version = "0.1", path = "../rdftk_core" }
+rdftk_graph = { version = "0.1", path = "../rdftk_graph" }
+rdftk_names = { version = "0.1", path = "../rdftk_names" }
