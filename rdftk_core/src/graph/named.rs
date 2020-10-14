@@ -10,16 +10,16 @@ TBD
 #![allow(clippy::module_name_repetitions)]
 
 use crate::Graph;
-use rdftk_iri::IRI;
+use rdftk_iri::IRIRef;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
 pub trait NamedGraph: Graph {
-    fn name(&self) -> &Option<IRI>;
+    fn name(&self) -> &Option<IRIRef>;
 
-    fn set_name(&mut self, name: IRI) -> Option<IRI>;
+    fn set_name(&mut self, name: IRIRef) -> Option<IRIRef>;
 
-    fn unset_name(&mut self) -> Option<IRI>;
+    fn unset_name(&mut self) -> Option<IRIRef>;
 }

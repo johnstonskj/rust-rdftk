@@ -8,7 +8,7 @@ TBD
 */
 
 use crate::QName;
-use rdftk_iri::IRI;
+use rdftk_iri::IRIRef;
 use rdftk_names::xsd;
 use std::fmt::{Display, Formatter};
 use std::time::Duration;
@@ -53,7 +53,7 @@ pub enum DataType {
     /// Denotes a literal of type `xsd::duration`.
     Duration,
     /// Denotes a literal where the type is indicated by the provided `IRI`.
-    Other(Box<IRI>),
+    Other(IRIRef),
 }
 
 ///
@@ -95,7 +95,7 @@ impl Display for Literal {
                         DataType::UnsignedShort => xsd::unsigned_short(),
                         DataType::UnsignedByte => xsd::unsigned_byte(),
                         DataType::Duration => xsd::duration(),
-                        DataType::Other(iri) => iri.as_ref().clone(),
+                        DataType::Other(iri) => iri.clone(),
                     }
                 ),
                 (None, Some(language)) => format!("@{}", language.to_lowercase()),
@@ -125,8 +125,8 @@ impl From<&str> for Literal {
     }
 }
 
-impl From<IRI> for Literal {
-    fn from(value: IRI) -> Self {
+impl From<IRIRef> for Literal {
+    fn from(value: IRIRef) -> Self {
         Self {
             lexical_form: value.to_string(),
             data_type: Some(DataType::IRI),

@@ -30,6 +30,9 @@ extern crate error_chain;
 
 pub mod error;
 
+pub mod graph;
+pub use graph::Graph;
+
 pub mod literal;
 pub use literal::*;
 

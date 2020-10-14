@@ -9,8 +9,8 @@ TBD
 
 #![allow(clippy::module_name_repetitions)]
 
-use rdftk_core::QName;
-use rdftk_iri::IRI;
+use crate::QName;
+use rdftk_iri::IRIRef;
 use rdftk_names::{rdf, rdfs, xsd};
 use std::fmt::Debug;
 use std::str::FromStr;
@@ -30,21 +30,21 @@ pub trait PrefixMappings: Debug {
 
     fn len(&self) -> usize;
 
-    fn get_namespace(&self, prefix: &Prefix) -> Option<&IRI>;
+    fn get_namespace(&self, prefix: &Prefix) -> Option<&IRIRef>;
 
-    fn get_prefix(&self, namespace: &IRI) -> Option<&Prefix>;
+    fn get_prefix(&self, namespace: &IRIRef) -> Option<&Prefix>;
 
     fn prefixes(&self) -> Vec<&Prefix>;
 
-    fn expand(&self, qname: QName) -> Option<IRI>;
+    fn expand(&self, qname: QName) -> Option<IRIRef>;
 
-    fn compress(&self, iri: IRI) -> Option<QName>;
+    fn compress(&self, iri: IRIRef) -> Option<QName>;
 
-    fn insert_default(&mut self, iri: IRI) -> &mut Self
+    fn insert_default(&mut self, iri: IRIRef) -> &mut Self
     where
         Self: Sized;
 
-    fn insert(&mut self, prefix: &str, iri: IRI) -> &mut Self
+    fn insert(&mut self, prefix: &str, iri: IRIRef) -> &mut Self
     where
         Self: Sized;
 
@@ -52,21 +52,21 @@ pub trait PrefixMappings: Debug {
     where
         Self: Sized,
     {
-        self.insert(xsd::PREFIX, IRI::from_str(xsd::NAMESPACE).unwrap())
+        self.insert(xsd::prefix(), xsd::namespace())
     }
 
     fn include_rdf(&mut self) -> &mut Self
     where
         Self: Sized,
     {
-        self.insert(rdf::PREFIX, IRI::from_str(rdf::NAMESPACE).unwrap())
+        self.insert(rdf::prefix(), rdf::namespace())
     }
 
     fn include_rdfs(&mut self) -> &mut Self
     where
         Self: Sized,
     {
-        self.insert(rdfs::PREFIX, IRI::from_str(rdfs::NAMESPACE).unwrap())
+        self.insert(rdfs::prefix(), rdfs::namespace())
     }
 
     fn remove(&mut self, prefix: &Prefix);

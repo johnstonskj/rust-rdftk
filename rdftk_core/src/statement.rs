@@ -10,7 +10,7 @@ TBD
 #![allow(clippy::module_name_repetitions)]
 
 use crate::literal::Literal;
-use rdftk_iri::IRI;
+use rdftk_iri::IRIRef;
 use rdftk_names::rdf;
 use std::fmt::{Display, Formatter};
 use unique_id::sequence::SequenceGenerator as IDGenerator;
@@ -23,7 +23,7 @@ use unique_id::Generator;
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 enum Subject {
     BNode(String),
-    IRI(IRI),
+    IRI(IRIRef),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -34,7 +34,7 @@ pub struct SubjectNode {
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 enum Object {
     BNode(String),
-    IRI(IRI),
+    IRI(IRIRef),
     Literal(Box<Literal>),
 }
 
@@ -46,7 +46,7 @@ pub struct ObjectNode {
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Statement {
     subject: SubjectNode,
-    predicate: IRI,
+    predicate: IRIRef,
     object: ObjectNode,
 }
 
@@ -71,14 +71,14 @@ impl Display for SubjectNode {
     }
 }
 
-impl From<IRI> for SubjectNode {
-    fn from(iri: IRI) -> Self {
+impl From<IRIRef> for SubjectNode {
+    fn from(iri: IRIRef) -> Self {
         SubjectNode::named(iri)
     }
 }
 
-impl From<&IRI> for SubjectNode {
-    fn from(iri: &IRI) -> Self {
+impl From<&IRIRef> for SubjectNode {
+    fn from(iri: &IRIRef) -> Self {
         SubjectNode::named(iri.clone())
     }
 }
@@ -96,7 +96,7 @@ impl SubjectNode {
         }
     }
 
-    pub fn named(name: IRI) -> Self {
+    pub fn named(name: IRIRef) -> Self {
         Self {
             inner: Subject::IRI(name),
         }
@@ -128,7 +128,7 @@ impl SubjectNode {
         self.is_iri()
     }
 
-    pub fn as_iri(&self) -> Option<&IRI> {
+    pub fn as_iri(&self) -> Option<&IRIRef> {
         match &self.inner {
             Subject::IRI(u) => Some(u),
             _ => None,
@@ -152,14 +152,14 @@ impl Display for ObjectNode {
     }
 }
 
-impl From<IRI> for ObjectNode {
-    fn from(iri: IRI) -> Self {
+impl From<IRIRef> for ObjectNode {
+    fn from(iri: IRIRef) -> Self {
         ObjectNode::named(iri)
     }
 }
 
-impl From<&IRI> for ObjectNode {
-    fn from(iri: &IRI) -> Self {
+impl From<&IRIRef> for ObjectNode {
+    fn from(iri: &IRIRef) -> Self {
         ObjectNode::named(iri.clone())
     }
 }
@@ -203,7 +203,7 @@ impl ObjectNode {
         }
     }
 
-    pub fn named(name: IRI) -> Self {
+    pub fn named(name: IRIRef) -> Self {
         Self {
             inner: Object::IRI(name),
         }
@@ -230,7 +230,7 @@ impl ObjectNode {
         }
     }
 
-    pub fn as_iri(&self) -> Option<&IRI> {
+    pub fn as_iri(&self) -> Option<&IRIRef> {
         match &self.inner {
             Object::IRI(u) => Some(u),
             _ => None,
@@ -274,7 +274,7 @@ impl Display for Statement {
 }
 
 impl Statement {
-    pub fn new(subject: SubjectNode, predicate: IRI, object: ObjectNode) -> Self {
+    pub fn new(subject: SubjectNode, predicate: IRIRef, object: ObjectNode) -> Self {
         Self {
             subject,
             predicate,
@@ -286,7 +286,7 @@ impl Statement {
         &self.subject
     }
 
-    pub fn predicate(&self) -> &IRI {
+    pub fn predicate(&self) -> &IRIRef {
         &self.predicate
     }
 
@@ -299,22 +299,22 @@ impl Statement {
         let new_subject = SubjectNode::blank();
         statements.push(Statement::new(
             new_subject.clone(),
-            rdf::a_type(),
+            rdf::a_type().clone(),
             rdf::statement().into(),
         ));
         statements.push(Statement::new(
             new_subject.clone(),
-            rdf::subject(),
+            rdf::subject().clone(),
             self.subject().into(),
         ));
         statements.push(Statement::new(
             new_subject.clone(),
-            rdf::predicate(),
+            rdf::predicate().clone(),
             self.predicate().into(),
         ));
         statements.push(Statement::new(
             new_subject,
-            rdf::object(),
+            rdf::object().clone(),
             self.object().clone(),
         ));
         statements
@@ -351,7 +351,7 @@ mod tests {
     fn test_make_a_statement() {
         let st = Statement::new(
             SubjectNode::blank_named("01"),
-            rdf::a_type(),
+            rdf::a_type().clone(),
             rdfs::class().into(),
         );
         assert_eq!(st.to_string(), "_:01 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2000/01/rdf-schema#class> .");
@@ -361,7 +361,7 @@ mod tests {
     fn test_make_literal_statement() {
         let st = Statement::new(
             SubjectNode::blank_named("01"),
-            rdfs::label(),
+            rdfs::label().clone(),
             Literal::new("some thing").into(),
         );
         assert_eq!(
@@ -374,7 +374,7 @@ mod tests {
     fn test_make_typed_literal_statement() {
         let st = Statement::new(
             SubjectNode::blank_named("01"),
-            rdfs::label(),
+            rdfs::label().clone(),
             Literal::with_type("2020", DataType::Int).into(),
         );
         assert_eq!(

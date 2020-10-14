@@ -1,13 +1,11 @@
 /*!
-The core `Graph` type implemented by all model providers.
+Traits which describe the capabilities of different `Graph` types.
 
 # Example
 
 TBD
 
 */
-
-#![allow(clippy::module_name_repetitions)]
 
 use crate::PrefixMappings;
 use rdftk_core::{ObjectNode, Resource, Statement, SubjectNode};
@@ -19,6 +17,7 @@ use std::rc::Rc;
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
+/// The core `Graph` type implemented by all model providers.
 pub trait Graph {
     fn is_empty(&self) -> bool;
 
@@ -58,3 +57,16 @@ pub trait Graph {
 
     fn prefix_mappings(&self) -> Rc<dyn PrefixMappings>;
 }
+
+// ------------------------------------------------------------------------------------------------
+// Modules
+// ------------------------------------------------------------------------------------------------
+
+pub mod named;
+pub use named::*;
+
+pub mod caching;
+pub use caching::*;
+
+pub mod mapping;
+pub use mapping::*;

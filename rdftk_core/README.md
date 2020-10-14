@@ -29,6 +29,14 @@ pub fn make_statements() -> Vec<Rc<Statement>> {
 
 ## Changes
 
+**Version 0.1.3**
+
+* Moved all `IRI` to `IRIRef` on interfaces.
+* Moved `Graph` and associated types into core and deprecated `rdftk_graph`.
+
+**Version 0.1.2**
+
+* Clean-up changes.
 
 **Version 0.1.1**
 

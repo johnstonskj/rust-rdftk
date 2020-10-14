@@ -9,8 +9,8 @@ reduce memory use/fragmentation.
 #![allow(clippy::module_name_repetitions)]
 
 use crate::Graph;
-use rdftk_core::{Literal, SubjectNode};
-use rdftk_iri::IRI;
+use crate::{Literal, SubjectNode};
+use rdftk_iri::IRIRef;
 use std::time::Duration;
 
 // ------------------------------------------------------------------------------------------------
@@ -19,11 +19,11 @@ use std::time::Duration;
 
 pub trait CachingGraph: Graph {
     fn blank_subject_named(&self, name: &str) -> &SubjectNode;
-    fn subject(&self, iri: &IRI) -> &SubjectNode;
+    fn subject(&self, iri: &IRIRef) -> &SubjectNode;
 
     fn string(&self, v: &str) -> &Literal;
     fn qname(&self, v: &str) -> &Literal;
-    fn uri(&self, v: &IRI) -> &Literal;
+    fn uri(&self, v: &IRIRef) -> &Literal;
     fn boolean(&self, v: &bool) -> &Literal;
     fn float(&self, v: &f32) -> &Literal;
     fn double(&self, v: &f64) -> &Literal;
