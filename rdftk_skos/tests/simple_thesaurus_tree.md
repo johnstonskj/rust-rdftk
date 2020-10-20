@@ -1,5 +1,5 @@
-## Concept Tree
+## Concept Hierarchy
 
-* Computers
-  * Analog Computers
+* **[Computers](#c__computers)**
+  * [Analog Computers](#c__analog_computers)
 

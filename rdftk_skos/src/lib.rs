@@ -21,6 +21,6 @@ extern crate rdftk_names;
 
 pub mod markdown;
 
-pub mod model;
+pub mod simple;
 
 pub mod ns;

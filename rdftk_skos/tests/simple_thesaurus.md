@@ -1,4 +1,4 @@
-# Scheme: UNESCO Thesaurus
+# <a name="s__unesco_thesaurus">Scheme: UNESCO Thesaurus
 
 [<http://vocabularies.unesco.org/thesaurus>](http://vocabularies.unesco.org/thesaurus)
 
@@ -19,9 +19,18 @@
 > |-----------|--------------|-----------|----------|
 > | dcterms:description | The UNESCO thesaurus. |  |  |
 
+----------
+
+## Concept Hierarchy
+
+* **[Computers](#c__computers)**
+  * [Analog Computers](#c__analog_computers)
+
+----------
+
 ## Concepts
 
-### Concept: Analog Computers
+### <a name="c__analog_computers">Concept: Analog Computers
 
 [<http://vocabularies.unesco.org/thesaurus/concept2258>](http://vocabularies.unesco.org/thesaurus/concept2258)
 
@@ -53,14 +62,13 @@
 
 > | Relationship | Concept IRI |
 > |--------------|-------------|
-> | skos:broader | [Computers](http://vocabularies.unesco.org/thesaurus/concept534) |
+> | skos:broader | [Computers](#c__computers) |
 
 #### In Collections
 
-* [Information technology (hardware)](http://vocabularies.unesco.org/thesaurus/mt5.45)
+* [Information technology (hardware)](cc__information_technology_(hardware))
 
-
-### Top Concept: Computers
+### <a name="c__computers">Concept: Computers
 
 [<http://vocabularies.unesco.org/thesaurus/concept534>](http://vocabularies.unesco.org/thesaurus/concept534)
 
@@ -79,16 +87,13 @@
 
 > | Relationship | Concept IRI |
 > |--------------|-------------|
-> | skos:narrower | [Analog Computers](http://vocabularies.unesco.org/thesaurus/concept2258) |
+> | skos:narrower | [Analog Computers](#c__analog_computers) |
 
-## Concept Tree
-
-* Computers
-  * Analog Computers
+----------
 
 ## Collections
 
-### Collection: Information and communication
+### <a name="cc__information_and_communication">Collection: Information and communication
 
 [<http://vocabularies.unesco.org/thesaurus/domain5>](http://vocabularies.unesco.org/thesaurus/domain5)
 
@@ -106,10 +111,9 @@
 
 #### Members
 
-* [Information technology (hardware)](http://vocabularies.unesco.org/thesaurus/mt5.45)
+* Collection [Information technology (hardware)](cc__information_technology_(hardware))
 
-
-### Collection: Information technology (hardware)
+### <a name="cc__information_technology_(hardware)">Collection: Information technology (hardware)
 
 [<http://vocabularies.unesco.org/thesaurus/mt5.45>](http://vocabularies.unesco.org/thesaurus/mt5.45)
 
@@ -127,11 +131,13 @@
 
 #### Members
 
-* [Analog Computers](http://vocabularies.unesco.org/thesaurus/concept2258)
+* Concept [Analog Computers](c__analog_computers)
 
 #### In Collections
 
-* [Information and communication](http://vocabularies.unesco.org/thesaurus/domain5)
+* [Information and communication](cc__information_and_communication)
+
+----------
 
 ## Appendix - RDF
 

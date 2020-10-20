@@ -9,11 +9,13 @@ TBD
 
 */
 
-use crate::model::{
-    standard_mappings, to_rdf_graph, Collection, Concept, Labeled, LiteralProperty, Named,
-    ObjectProperty, Propertied, Scheme,
+use crate::simple::collection::Member;
+use crate::simple::concept::ConceptRelation;
+use crate::simple::properties::LabelKind;
+use crate::simple::{
+    standard_mappings, to_rdf_graph, Collection, Concept, Label, Labeled, LiteralProperty, Named,
+    Propertied, Scheme, ToURI,
 };
-use crate::ns;
 use rdftk_core::graph::PrefixMappings;
 use rdftk_core::DataType;
 use rdftk_io::turtle::TurtleWriter;
@@ -21,7 +23,9 @@ use rdftk_io::GraphWriter;
 use rdftk_iri::IRIRef;
 use rdftk_memgraph::Mappings;
 use rdftk_names::xsd;
+use std::cell::RefCell;
 use std::io::{Result, Write};
+use std::rc::Rc;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -32,8 +36,8 @@ use std::io::{Result, Write};
 // ------------------------------------------------------------------------------------------------
 
 struct Context<'a> {
-    mappings: Mappings,
-    scheme: &'a Scheme,
+    ns_mappings: Mappings,
+    collections: Vec<Rc<RefCell<Collection>>>,
     language: &'a str,
 }
 
@@ -49,31 +53,51 @@ pub fn write_markdown(
 ) -> Result<()> {
     let context = Context::new(scheme, language);
 
-    write_named_obj_header(w, scheme, "Scheme", 1, &context)?;
+    write_entity_header(w, scheme, "s", "Scheme", 1, &context)?;
 
-    if scheme.has_properties() {
-        write_labeled_obj(w, scheme, 2, &context)?;
-    }
+    if scheme.has_top_concepts() {
+        write_line(w)?;
 
-    if scheme.has_concepts() {
+        write_concept_tree(w, scheme, &context)?;
+
+        write_line(w)?;
+
         writeln!(w, "{}", header(2, "Concepts"))?;
-        let mut sorted: Vec<&Concept> = scheme.concepts().collect();
-        sorted.sort_by_key(|&a| sort_label(a, &context));
-        for concept in &sorted {
-            write_concept(w, concept, &context)?;
+        writeln!(w)?;
+
+        let mut concepts = scheme.concepts_flattened();
+        concepts.sort_by_key(|concept| concept.borrow().preferred_label(language));
+
+        for concept in &concepts {
+            for (relation, related) in concept.borrow().concepts() {
+                if relation == &ConceptRelation::Narrower
+                    || relation == &ConceptRelation::NarrowerPartitive
+                    || relation == &ConceptRelation::NarrowerInstantial
+                //                    || relation == &ConceptRelation::Related
+                {
+                    related
+                        .borrow_mut()
+                        .add_related_concept(relation.inverse(), concept.clone());
+                }
+            }
         }
-        writeln!(w, "{}", header(2, "Concept Tree"))?;
-        write_concept_tree(w, &sorted, &context)?;
+
+        for concept in &concepts {
+            write_concept(w, &*concept.borrow(), &context)?;
+        }
     }
 
-    if scheme.has_collections() {
+    write_line(w)?;
+
+    if scheme.has_top_collections() {
         writeln!(w, "{}", header(2, "Collections"))?;
-        let mut sorted: Vec<&Collection> = scheme.collections().collect();
-        sorted.sort_by_key(|&a| sort_label(a, &context));
-        for collection in sorted {
-            write_collection(w, &collection, &context)?;
+        writeln!(w)?;
+        for collection in &context.collections {
+            write_collection(w, &collection.borrow(), &context)?;
         }
     }
+
+    write_line(w)?;
 
     writeln!(w, "{}", header(2, "Appendix - RDF"))?;
     writeln!(w)?;
@@ -91,11 +115,7 @@ pub fn write_concept_tree_markdown<'a>(
     scheme: &Scheme,
     language: &str,
 ) -> Result<()> {
-    let context = Context::new(scheme, language);
-    let mut sorted: Vec<&Concept> = scheme.concepts().collect();
-    sorted.sort_by_key(|&a| sort_label(a, &context));
-    writeln!(w, "{}", header(2, "Concept Tree"))?;
-    write_concept_tree(w, &sorted, &context)
+    write_concept_tree(w, scheme, &Context::new(scheme, language))
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -104,9 +124,12 @@ pub fn write_concept_tree_markdown<'a>(
 
 impl<'a> Context<'a> {
     fn new(scheme: &'a Scheme, language: &'a str) -> Self {
+        // make collection mappings!
+        let mut collections = scheme.collections_flattened();
+        collections.sort_by_key(|collection| collection.borrow().preferred_label(language));
         Self {
-            mappings: standard_mappings(),
-            scheme,
+            ns_mappings: standard_mappings(),
+            collections,
             language,
         }
     }
@@ -116,77 +139,56 @@ impl<'a> Context<'a> {
 // Private Functions
 // ------------------------------------------------------------------------------------------------
 
-fn sort_label<'a>(thing: &(impl Named + Labeled), context: &Context<'a>) -> String {
-    match thing.preferred_label(context.language) {
-        None => thing.uri().to_string(),
-        Some(s) => s,
-    }
-}
-
-fn write_named_obj_header<'a>(
+fn write_entity_header<'a>(
     w: &mut impl Write,
-    obj: &(impl Named + Labeled),
+    obj: &(impl Named + Labeled + Propertied),
+    anchor_prefix: &str,
     header_text: &str,
     depth: usize,
     context: &Context<'a>,
 ) -> Result<()> {
-    if let Some(label) = obj.preferred_label(context.language) {
-        writeln!(w, "{}: {}", header(depth, header_text), label)?;
-    } else {
-        writeln!(w, "{}", header(depth, header_text))?;
-    }
+    let label = obj.preferred_label(context.language);
+    writeln!(
+        w,
+        "{}: {}",
+        anchored_header(
+            depth,
+            header_text,
+            &label_to_fragment(&label, anchor_prefix)
+        ),
+        label
+    )?;
 
     writeln!(w)?;
     writeln!(w, "[<{}>]({})", obj.uri(), obj.uri())?;
-    writeln!(w)
-}
+    writeln!(w)?;
 
-fn write_labeled_obj<'a>(
-    w: &mut impl Write,
-    obj: &impl Labeled,
-    header_depth: usize,
-    context: &Context<'a>,
-) -> Result<()> {
-    writeln!(w, "{}", header(header_depth, "Labels"))?;
-    write_labels(w, &mut obj.labels(), &context)?;
+    if obj.has_labels() {
+        writeln!(w, "{}", header(depth + 1, "Labels"))?;
+        write_labels(w, obj.labels().iter().collect(), &context)?;
+    }
 
-    let mut other_properties: Vec<&LiteralProperty> = obj
-        .properties()
-        .into_iter()
-        .filter(|property| {
-            property.predicate() != ns::pref_label()
-                && property.predicate() != ns::alt_label()
-                && property.predicate() != ns::hidden_label()
-        })
-        .collect();
-    if !other_properties.is_empty() {
-        writeln!(w, "{}", header(header_depth, "Other Properties"))?;
-        write_other_properties(w, &mut other_properties, &context)?;
+    if obj.has_properties() {
+        writeln!(w, "{}", header(depth + 1, "Other Properties"))?;
+        writeln!(w)?;
+        write_other_properties(w, obj.properties().iter().collect(), &context)?;
     }
     Ok(())
 }
 
-fn write_labels<'a>(
-    w: &mut impl Write,
-    labels: &mut Vec<&LiteralProperty>,
-    context: &Context<'a>,
-) -> Result<()> {
-    labels.sort_by(|a, b| {
-        b.predicate()
-            .to_string()
-            .partial_cmp(&a.predicate().to_string())
-            .unwrap()
-    });
-    let mut current_kind = &Default::default();
-    for label in labels {
-        if label.predicate() != current_kind {
-            current_kind = label.predicate();
+fn write_labels<'a>(w: &mut impl Write, labels: Vec<&Label>, context: &Context<'a>) -> Result<()> {
+    let mut labels = labels;
+    labels.sort_by_key(|label| label.kind());
+    let mut current_kind: Option<&LabelKind> = None;
+    for label in labels.iter() {
+        if Some(label.kind()) != current_kind {
+            current_kind = Some(label.kind());
             writeln!(w)?;
             writeln!(
                 w,
                 "> **{}**",
-                match context.mappings.compress(label.predicate().clone()) {
-                    None => label.predicate().to_string(),
+                match context.ns_mappings.compress(label.kind().to_uri()) {
+                    None => label.kind().to_uri().to_string(),
                     Some(qname) => qname.to_string(),
                 }
             )?;
@@ -194,18 +196,15 @@ fn write_labels<'a>(
             writeln!(w, "> | Label Text | Language |")?;
             writeln!(w, "> |------------|----------|")?;
         }
+        let lang = label.language();
         writeln!(
             w,
             "> | {} | {} |",
-            label.value().lexical_form(),
-            match label.value().language() {
-                None => String::new(),
-                Some(lang) =>
-                    if lang == context.language {
-                        format!("**{}**", lang)
-                    } else {
-                        lang.to_string()
-                    },
+            label.text(),
+            if lang == context.language {
+                format!("**{}**", lang)
+            } else {
+                lang.to_string()
             }
         )?;
     }
@@ -215,30 +214,25 @@ fn write_labels<'a>(
 
 fn write_other_properties<'a>(
     w: &mut impl Write,
-    properties: &mut Vec<&LiteralProperty>,
+    properties: Vec<&LiteralProperty>,
     context: &Context<'a>,
 ) -> Result<()> {
-    properties.sort_by(|a, b| {
-        a.predicate()
-            .to_string()
-            .partial_cmp(&b.predicate().to_string())
-            .unwrap()
-    });
-    writeln!(w)?;
+    let mut properties = properties;
+    properties.sort_by_key(|property| property.predicate().to_string());
     writeln!(w, "> | Predicate | Literal Form | Data Type | Language |")?;
     writeln!(w, "> |-----------|--------------|-----------|----------|")?;
-    for property in properties {
+    for property in properties.iter() {
         writeln!(
             w,
             "> | {} | {} | {} | {} |",
-            match context.mappings.compress(property.predicate().clone()) {
+            match context.ns_mappings.compress(property.predicate().clone()) {
                 None => property.predicate().to_string(),
                 Some(qname) => qname.to_string(),
             },
             property.value().lexical_form(),
             match property.value().data_type() {
                 None => String::new(),
-                Some(dt) => match context.mappings.compress(data_type_uri(dt)) {
+                Some(dt) => match context.ns_mappings.compress(data_type_uri(dt)) {
                     None => property.predicate().to_string(),
                     Some(qname) => qname.to_string(),
                 },
@@ -281,71 +275,89 @@ fn data_type_uri(dt: &DataType) -> IRIRef {
 }
 
 fn write_concept<'a>(w: &mut impl Write, concept: &Concept, context: &Context<'a>) -> Result<()> {
+    write_entity_header(w, concept, "c", "Concept", 3, &context)?;
+
+    if concept.has_concepts() {
+        write_concept_relations(w, concept, context)?;
+    }
+
+    write_collection_membership(w, concept.uri(), context)?;
+
+    Ok(())
+}
+
+fn write_concept_relations<'a>(
+    w: &mut impl Write,
+    concept: &Concept,
+    context: &Context<'a>,
+) -> Result<()> {
+    writeln!(w, "{}", header(4, "Related Concepts"))?;
     writeln!(w)?;
-    write_named_obj_header(
-        w,
-        concept,
-        if concept.is_top_concept() {
-            "Top Concept"
-        } else {
-            "Concept"
-        },
-        3,
-        &context,
-    )?;
-
-    if concept.has_properties() {
-        write_labeled_obj(w, concept, 4, &context)?;
+    writeln!(w, "> | Relationship | Concept IRI |")?;
+    writeln!(w, "> |--------------|-------------|")?;
+    for (relation, related) in concept.concepts() {
+        let related = related.borrow();
+        let label = related.preferred_label(context.language);
+        writeln!(
+            w,
+            "> | {} | [{}](#{}) |",
+            match context.ns_mappings.compress(relation.to_uri()) {
+                None => relation.to_uri().to_string(),
+                Some(qname) => qname.to_string(),
+            },
+            label,
+            &label_to_fragment(&label, "c")
+        )?;
     }
-
-    if concept.has_relations() {
-        write_relationships(w, concept.relations(), context)?;
-    }
-
-    write_collection_membership(w, concept.uri(), context)
+    writeln!(w)?;
+    Ok(())
 }
 
 fn write_concept_tree<'a>(
     w: &mut impl Write,
-    concepts: &Vec<&Concept>,
+    scheme: &Scheme,
     context: &Context<'a>,
 ) -> Result<()> {
+    writeln!(w, "{}", header(2, "Concept Hierarchy"))?;
     writeln!(w)?;
-    write_concept_tree_inner(
-        w,
-        &concepts
-            .iter()
-            .filter(|concept| concept.is_top_concept())
-            .cloned()
-            .collect(),
-        0,
-        context,
-    )?;
+    for concept in scheme.top_concepts().map(|concept| concept.borrow()) {
+        let label = concept.preferred_label(context.language);
+        writeln!(
+            w,
+            "{} **[{}](#{})**",
+            list_item(0),
+            label,
+            label_to_fragment(&label, "c")
+        )?;
+        if concept.has_concepts() {
+            write_concept_tree_inner(w, concept.concepts().collect(), 1, context)?;
+        }
+    }
+
     writeln!(w)
 }
 
 fn write_concept_tree_inner<'a>(
     w: &mut impl Write,
-    current_concepts: &Vec<&Concept>,
+    current_concepts: Vec<&(ConceptRelation, Rc<RefCell<Concept>>)>,
     current_depth: usize,
     context: &Context<'a>,
 ) -> Result<()> {
-    for concept in current_concepts {
+    let mut current_concepts = current_concepts;
+    current_concepts.sort_by_key(|(_, concept)| concept.borrow().preferred_label(context.language));
+    for (_, concept) in current_concepts {
+        let concept = concept.borrow();
+        let label = concept.preferred_label(context.language);
         writeln!(
             w,
-            "{} {}",
+            "{} [{}](#{})",
             list_item(current_depth),
-            match concept.preferred_label(context.language) {
-                None => concept.uri().to_string(),
-                Some(label) => label,
-            }
+            label,
+            label_to_fragment(&label, "c")
         )?;
-        let next_level: Vec<&Concept> = concept
-            .relations()
-            .filter(|r| r.predicate() == ns::narrower())
-            .map(|r| context.scheme.concept(r.other()).unwrap())
-            .collect();
-        write_concept_tree_inner(w, &next_level, current_depth + 1, context)?;
+        if concept.has_concepts() {
+            write_concept_tree_inner(w, concept.concepts().collect(), current_depth + 1, context)?;
+        }
     }
     Ok(())
 }
@@ -359,10 +371,10 @@ fn write_collection<'a>(
     collection: &Collection,
     context: &Context<'a>,
 ) -> Result<()> {
-    writeln!(w)?;
-    write_named_obj_header(
+    write_entity_header(
         w,
         collection,
+        "cc",
         if collection.is_ordered() {
             "Ordered Collection"
         } else {
@@ -371,10 +383,6 @@ fn write_collection<'a>(
         3,
         &context,
     )?;
-
-    if collection.has_properties() {
-        write_labeled_obj(w, collection, 4, &context)?;
-    }
 
     if collection.has_members() {
         write_collection_members(w, collection.members(), context)?;
@@ -388,22 +396,24 @@ fn write_collection_membership<'a>(
     member_uri: &IRIRef,
     context: &Context<'a>,
 ) -> Result<()> {
-    let in_collections: Vec<&Collection> = context
-        .scheme
-        .collections()
-        .filter(|collection| collection.members().any(|member| member == member_uri))
+    let in_collections: Vec<&Rc<RefCell<Collection>>> = context
+        .collections
+        .iter()
+        .filter(|collection| collection.borrow().has_member(member_uri))
         .collect();
 
     if !in_collections.is_empty() {
         writeln!(w, "{}", header(4, "In Collections"))?;
         writeln!(w)?;
         for collection in in_collections {
+            let collection = collection.borrow();
             let pref_label = collection.preferred_label(context.language);
-            if let Some(label) = pref_label {
-                writeln!(w, "* [{}]({})", label, collection.uri())?;
-            } else {
-                writeln!(w, "* [{}]({})", collection.uri(), collection.uri())?;
-            }
+            writeln!(
+                w,
+                "* [{}]({})",
+                pref_label,
+                label_to_fragment(&pref_label, "cc")
+            )?;
         }
         writeln!(w)?;
     }
@@ -412,59 +422,60 @@ fn write_collection_membership<'a>(
 
 fn write_collection_members<'a>(
     w: &mut impl Write,
-    members: impl Iterator<Item = &'a IRIRef>,
+    members: impl Iterator<Item = &'a Member>,
     context: &Context<'a>,
 ) -> Result<()> {
     writeln!(w, "{}", header(4, "Members"))?;
     writeln!(w)?;
     for member in members {
-        writeln!(w, "* [{}]({})", uri_to_label(member, context), member)?;
+        match member {
+            Member::Collection(member) => {
+                let member = member.borrow();
+                let pref_label = member.preferred_label(context.language);
+                writeln!(
+                    w,
+                    "* Collection [{}]({})",
+                    pref_label,
+                    label_to_fragment(&pref_label, "cc")
+                )?;
+            }
+            Member::Concept(member) => {
+                let member = member.borrow();
+                let pref_label = member.preferred_label(context.language);
+                writeln!(
+                    w,
+                    "* Concept [{}]({})",
+                    pref_label,
+                    label_to_fragment(&pref_label, "c")
+                )?;
+            }
+        }
     }
     writeln!(w)
-}
-
-fn write_relationships<'a>(
-    w: &mut impl Write,
-    relations: impl Iterator<Item = &'a ObjectProperty>,
-    context: &Context<'a>,
-) -> Result<()> {
-    writeln!(w, "{}", header(4, "Related Concepts"))?;
-    writeln!(w)?;
-    writeln!(w, "> | Relationship | Concept IRI |")?;
-    writeln!(w, "> |--------------|-------------|")?;
-    for relation in relations {
-        writeln!(
-            w,
-            "> | {} | [{}]({}) |",
-            match context.mappings.compress(relation.predicate().clone()) {
-                None => relation.predicate().to_string(),
-                Some(qname) => qname.to_string(),
-            },
-            uri_to_label(relation.other(), context),
-            relation.other()
-        )?;
-    }
-    writeln!(w)?;
-    Ok(())
-}
-
-fn uri_to_label<'a>(uri: &IRIRef, context: &Context<'a>) -> String {
-    if let Some(concept) = context.scheme.concepts().find(|c| c.uri() == uri) {
-        if let Some(label) = concept.preferred_label(context.language) {
-            return label;
-        }
-    }
-
-    if let Some(collection) = context.scheme.collections().find(|c| c.uri() == uri) {
-        if let Some(label) = collection.preferred_label(context.language) {
-            return label;
-        }
-    }
-
-    uri.to_string()
 }
 
 #[inline]
 fn header(depth: usize, text: &str) -> String {
     format!("{} {}", format!("{:#<1$}", "", depth), text)
+}
+
+#[inline]
+fn write_line(w: &mut impl Write) -> Result<()> {
+    writeln!(w, "----------")?;
+    writeln!(w)
+}
+
+#[inline]
+fn anchored_header(depth: usize, text: &str, anchor: &str) -> String {
+    format!(
+        "{} <a name=\"{}\">{}",
+        format!("{:#<1$}", "", depth),
+        anchor,
+        text
+    )
+}
+
+#[inline]
+fn label_to_fragment(label: &str, prefix: &str) -> String {
+    format!("{}__{}", prefix, label.to_lowercase().replace(" ", "_"))
 }
