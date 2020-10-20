@@ -11,6 +11,12 @@ TBD
 
 ## Changes
 
+
+**Version 0.1.5**
+
+* `model` module now renamed `simple` and it follows a more strict hierarchy approach.
+* More performance work, but more to do.
+
 **Version 0.1.4**
 
 * Using new `IRIRef` approach for all crates.
