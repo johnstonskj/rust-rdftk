@@ -148,26 +148,35 @@ impl ToStatements for Collection {
                 in_scheme.clone(),
             ));
         }
-        // TODO: this is not how member list works
-        // see https://www.w3.org/TR/skos-reference/#L3514
-        // and https://ontola.io/blog/ordered-data-in-rdf/
-        for member in &self.members {
-            statements.push(Statement::new(
-                subject.clone(),
-                if self.ordered {
-                    ns::member_list().clone()
-                } else {
-                    ns::member().clone()
-                },
-                member.uri().into(),
-            ));
+
+        if self.has_members() {
+            if self.ordered {
+                let mut list_node: SubjectNode = make_list_node(&mut statements, None);
+                for (i, member) in self.members.iter().enumerate() {
+                    add_to_list_node(&mut statements, &list_node, &member.uri());
+                    if i < self.members.len() {
+                        list_node = make_list_node(&mut statements, Some(list_node));
+                    }
+                }
+                make_list_end(&mut statements, &list_node);
+            } else {
+                for member in &self.members {
+                    statements.push(Statement::new(
+                        subject.clone(),
+                        ns::member().clone(),
+                        member.uri().into(),
+                    ));
+                }
+            }
         }
+
         for label in self.labels() {
             statements.push(label.to_statement(&subject));
         }
         for property in self.properties() {
             statements.push(property.to_statement(&subject));
         }
+
         statements
     }
 }
@@ -254,4 +263,46 @@ impl Collection {
             .flatten()
             .collect()
     }
+}
+
+// ------------------------------------------------------------------------------------------------
+// Private Functions
+// ------------------------------------------------------------------------------------------------
+
+fn make_list_node(statements: &mut Vec<Statement>, from: Option<SubjectNode>) -> SubjectNode {
+    let new_node = SubjectNode::blank();
+    if let Some(from) = from {
+        statements.push(Statement::new(
+            from.clone(),
+            rdf::rest().clone(),
+            new_node.clone().into(),
+        ));
+    }
+    statements.push(Statement::new(
+        new_node.clone(),
+        rdf::a_type().clone(),
+        rdf::list().clone().into(),
+    ));
+    new_node
+}
+
+fn add_to_list_node(statements: &mut Vec<Statement>, current: &SubjectNode, member_uri: &IRIRef) {
+    statements.push(Statement::new(
+        current.clone(),
+        rdf::first().clone(),
+        member_uri.into(),
+    ));
+}
+
+fn make_list_end(statements: &mut Vec<Statement>, last: &SubjectNode) {
+    statements.push(Statement::new(
+        last.clone(),
+        rdf::a_type().clone(),
+        rdf::list().clone().into(),
+    ));
+    statements.push(Statement::new(
+        last.clone(),
+        rdf::rest().clone(),
+        rdf::nil().clone().into(),
+    ));
 }
