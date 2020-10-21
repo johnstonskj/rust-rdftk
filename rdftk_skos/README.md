@@ -11,6 +11,9 @@ TBD
 
 ## Changes
 
+**Version 0.1.6**
+
+* Explicit version management.
 
 **Version 0.1.5**
 
