@@ -71,6 +71,10 @@ namespace! {
 
 ## Changes
 
+**Version 0.1.5**
+
+* Explicit version management.
+
 **Version 0.1.3**
 
 * `namespace!` macro now creates a local cache of `Arc<IRI>` instances to reduce memory consumption.
