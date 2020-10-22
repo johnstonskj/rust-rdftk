@@ -335,15 +335,22 @@ fn write_concept_tree_inner<'a>(
 ) -> Result<()> {
     let mut current_concepts = current_concepts;
     current_concepts.sort_by_key(|(_, concept)| concept.borrow().preferred_label(context.language));
-    for (_, concept) in current_concepts {
+    for (relation, concept) in current_concepts {
         let concept = concept.borrow();
         let label = concept.preferred_label(context.language);
+
+        let formatting = match relation {
+            ConceptRelation::NarrowerInstantial => "*",
+            _ => "",
+        };
         writeln!(
             w,
-            "{} [{}](#{})",
+            "{} {}[{}](#{}){}",
             list_item(current_depth),
+            formatting,
             label,
-            label_to_fragment(&label, "concept")
+            label_to_fragment(&label, "concept"),
+            formatting,
         )?;
         if concept.has_concepts() {
             write_concept_tree_inner(w, concept.concepts().collect(), current_depth + 1, context)?;
@@ -448,6 +455,7 @@ fn write_line(w: &mut impl Write) -> Result<()> {
 fn label_to_fragment(label: &str, prefix: &str) -> String {
     format!("{}-{}", prefix, label)
         .to_lowercase()
+        .trim()
         .replace(" ", "-")
         .replace(&['(', ')', ',', '\"', '.', ';', ':', '\''][..], "")
 }

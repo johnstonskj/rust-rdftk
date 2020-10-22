@@ -11,6 +11,11 @@ TBD
 
 ## Changes
 
+**Version 0.1.8**
+
+* trim label string to get rid of trailing '-' in fragments.
+* make instances italic in concept tree.
+
 **Version 0.1.7**
 
 * Fixed markdown generation of fragment links.
