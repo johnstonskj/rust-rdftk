@@ -11,19 +11,23 @@ TBD
 
 ## Changes
 
+**Version 0.1.11**
+
+* Enhancement; added logic to pull `skos:definition` property and display as text for any resource.
+
 **Version 0.1.10**
 
-* Fixed bug in jump-to links
-* Fixed bug in tree generation, following non-narrower relationships.
+* Fixed bug in jump-to links; an unwanted trailing ']' character.
+* Fixed bug in tree generation; it was following non-narrower relationships.
 
 **Version 0.1.9**
 
-* Added links at the top to jump down to different sections.
+* Enhancement; added links at the top to jump down to different sections.
 
 **Version 0.1.8**
 
-* trim label string to get rid of trailing '-' in fragments.
-* make instances italic in concept tree.
+* Fixed bug in `label_to_fragment`; trim label string to get rid of trailing '-'.
+* Enhancement; make instances italic in concept tree.
 
 **Version 0.1.7**
 

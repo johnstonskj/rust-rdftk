@@ -9,6 +9,7 @@ TBD
 
 */
 
+use crate::ns;
 use crate::simple::collection::Member;
 use crate::simple::concept::ConceptRelation;
 use crate::simple::properties::LabelKind;
@@ -157,6 +158,14 @@ fn write_entity_header<'a>(
 ) -> Result<()> {
     let label = obj.preferred_label(context.language);
     writeln!(w, "{}: {}", header(depth, header_text,), label)?;
+
+    let for_language = Some(context.language.to_string());
+    if let Some(definition) = obj.properties().iter().find(|prop| {
+        prop.predicate() == ns::definition() && prop.value().language() == &for_language
+    }) {
+        writeln!(w)?;
+        writeln!(w, "*{}*", definition.value().lexical_form())?;
+    }
 
     writeln!(w)?;
     writeln!(w, "[<{}>]({})", obj.uri(), obj.uri())?;

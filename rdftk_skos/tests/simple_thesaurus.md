@@ -1,5 +1,7 @@
 # Scheme: UNESCO Thesaurus
 
+*The UNESCO thesaurus.*
+
 [<http://vocabularies.unesco.org/thesaurus>](http://vocabularies.unesco.org/thesaurus)
 
 ## Labels
@@ -17,7 +19,7 @@
 
 > | Predicate | Literal Form | Data Type | Language |
 > |-----------|--------------|-----------|----------|
-> | dcterms:description | The UNESCO thesaurus. |  |  |
+> | skos:definition | The UNESCO thesaurus. |  | **en** |
 
 ----------
 

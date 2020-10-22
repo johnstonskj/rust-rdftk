@@ -9,11 +9,14 @@ fn make_unesco_computer() -> Scheme {
     let mut scheme: Scheme = Scheme::new(&IRIRef::from(
         IRI::from_str("http://vocabularies.unesco.org/thesaurus").unwrap(),
     ));
+    scheme.add_property(LiteralProperty::definition_with(
+        "The UNESCO thesaurus.",
+        "en",
+    ));
     scheme.add_preferred_label("UNESCO Thesaurus", "en");
     scheme.add_preferred_label("Thésaurus de l'UNESCO", "fr");
     scheme.add_preferred_label("Тезаурус ЮНЕСКО", "ru");
     scheme.add_preferred_label("Tesauro de la UNESCO", "es");
-    scheme.add_property(LiteralProperty::description("The UNESCO thesaurus."));
 
     let computers = scheme.new_top_concept(&IRIRef::from(
         IRI::from_str("http://vocabularies.unesco.org/thesaurus/concept534").unwrap(),
