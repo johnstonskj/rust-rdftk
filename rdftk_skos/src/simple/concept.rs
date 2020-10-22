@@ -87,6 +87,20 @@ impl ConceptRelation {
             Self::InverseRelated => Self::Related,
         }
     }
+
+    pub fn is_narrower(&self) -> bool {
+        match self {
+            Self::Narrower | Self::NarrowerPartitive | Self::NarrowerInstantial => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_broader(&self) -> bool {
+        match self {
+            Self::Broader | Self::BroaderPartitive | Self::BroaderInstantial => true,
+            _ => false,
+        }
+    }
 }
 
 // ------------------------------------------------------------------------------------------------

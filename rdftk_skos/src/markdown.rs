@@ -59,10 +59,10 @@ pub fn write_markdown(
         write_line(w)?;
 
         write!(w, "Jump to: ")?;
-        write!(w, "[Concepts Hierarchy](#concepts-hierarchy)] | ")?;
-        write!(w, "[Concepts](#concepts)] | ")?;
-        write!(w, "[Collections](#collections)] | ")?;
-        writeln!(w, "[Appendix - RDF](#appendix-rdf)]")?;
+        write!(w, "[Concepts Hierarchy](#concepts-hierarchy) | ")?;
+        write!(w, "[Concepts](#concepts) | ")?;
+        write!(w, "[Collections](#collections) | ")?;
+        writeln!(w, "[Appendix - RDF](#appendix-rdf)")?;
         writeln!(w)?;
 
         write_line(w)?;
@@ -344,7 +344,7 @@ fn write_concept_tree_inner<'a>(
 ) -> Result<()> {
     let mut current_concepts = current_concepts;
     current_concepts.sort_by_key(|(_, concept)| concept.borrow().preferred_label(context.language));
-    for (relation, concept) in current_concepts {
+    for (relation, concept) in current_concepts.iter().filter(|(rel, _)| rel.is_narrower()) {
         let concept = concept.borrow();
         let label = concept.preferred_label(context.language);
 

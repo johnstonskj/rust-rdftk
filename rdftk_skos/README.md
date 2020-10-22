@@ -11,6 +11,11 @@ TBD
 
 ## Changes
 
+**Version 0.1.10**
+
+* Fixed bug in jump-to links
+* Fixed bug in tree generation, following non-narrower relationships.
+
 **Version 0.1.9**
 
 * Added links at the top to jump down to different sections.

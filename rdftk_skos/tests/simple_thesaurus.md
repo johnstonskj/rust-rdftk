@@ -21,7 +21,7 @@
 
 ----------
 
-Jump to: [Concepts Hierarchy](#concepts-hierarchy)] | [Concepts](#concepts)] | [Collections](#collections)] | [Appendix - RDF](#appendix-rdf)]
+Jump to: [Concepts Hierarchy](#concepts-hierarchy) | [Concepts](#concepts) | [Collections](#collections) | [Appendix - RDF](#appendix-rdf)
 
 ----------
 
