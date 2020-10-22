@@ -1,4 +1,4 @@
-# <a name="s__unesco_thesaurus">Scheme: UNESCO Thesaurus
+# Scheme: UNESCO Thesaurus
 
 [<http://vocabularies.unesco.org/thesaurus>](http://vocabularies.unesco.org/thesaurus)
 
@@ -23,14 +23,14 @@
 
 ## Concept Hierarchy
 
-* **[Computers](#c__computers)**
-  * [Analog Computers](#c__analog_computers)
+* **[Computers](#concept-computers)**
+  * [Analog Computers](#concept-analog-computers)
 
 ----------
 
 ## Concepts
 
-### <a name="c__analog_computers">Concept: Analog Computers
+### Concept: Analog Computers
 
 [<http://vocabularies.unesco.org/thesaurus/concept2258>](http://vocabularies.unesco.org/thesaurus/concept2258)
 
@@ -62,13 +62,13 @@
 
 > | Relationship | Concept IRI |
 > |--------------|-------------|
-> | skos:broader | [Computers](#c__computers) |
+> | skos:broader | [Computers](#concept-computers) |
 
 #### In Collections
 
-* [Information technology (hardware)](cc__information_technology_(hardware))
+* [Information technology (hardware)](#collection-information-technology-hardware)
 
-### <a name="c__computers">Concept: Computers
+### Concept: Computers
 
 [<http://vocabularies.unesco.org/thesaurus/concept534>](http://vocabularies.unesco.org/thesaurus/concept534)
 
@@ -87,13 +87,13 @@
 
 > | Relationship | Concept IRI |
 > |--------------|-------------|
-> | skos:narrower | [Analog Computers](#c__analog_computers) |
+> | skos:narrower | [Analog Computers](#concept-analog-computers) |
 
 ----------
 
 ## Collections
 
-### <a name="cc__information_and_communication">Collection: Information and communication
+### Collection: Information and communication
 
 [<http://vocabularies.unesco.org/thesaurus/domain5>](http://vocabularies.unesco.org/thesaurus/domain5)
 
@@ -111,9 +111,9 @@
 
 #### Members
 
-* Collection [Information technology (hardware)](cc__information_technology_(hardware))
+* Collection [Information technology (hardware)](#collection-information-technology-hardware)
 
-### <a name="cc__information_technology_(hardware)">Collection: Information technology (hardware)
+### Collection: Information technology (hardware)
 
 [<http://vocabularies.unesco.org/thesaurus/mt5.45>](http://vocabularies.unesco.org/thesaurus/mt5.45)
 
@@ -131,11 +131,11 @@
 
 #### Members
 
-* Concept [Analog Computers](c__analog_computers)
+* Concept [Analog Computers](#concept-analog-computers)
 
 #### In Collections
 
-* [Information and communication](cc__information_and_communication)
+* [Information and communication](#collection-information-and-communication)
 
 ----------
 

@@ -53,7 +53,7 @@ pub fn write_markdown(
 ) -> Result<()> {
     let context = Context::new(scheme, language);
 
-    write_entity_header(w, scheme, "s", "Scheme", 1, &context)?;
+    write_entity_header(w, scheme, "Scheme", 1, &context)?;
 
     if scheme.has_top_concepts() {
         write_line(w)?;
@@ -73,7 +73,7 @@ pub fn write_markdown(
                 if relation == &ConceptRelation::Narrower
                     || relation == &ConceptRelation::NarrowerPartitive
                     || relation == &ConceptRelation::NarrowerInstantial
-                //                    || relation == &ConceptRelation::Related
+                    || relation == &ConceptRelation::Related
                 {
                     related
                         .borrow_mut()
@@ -142,22 +142,12 @@ impl<'a> Context<'a> {
 fn write_entity_header<'a>(
     w: &mut impl Write,
     obj: &(impl Named + Labeled + Propertied),
-    anchor_prefix: &str,
     header_text: &str,
     depth: usize,
     context: &Context<'a>,
 ) -> Result<()> {
     let label = obj.preferred_label(context.language);
-    writeln!(
-        w,
-        "{}: {}",
-        anchored_header(
-            depth,
-            header_text,
-            &label_to_fragment(&label, anchor_prefix)
-        ),
-        label
-    )?;
+    writeln!(w, "{}: {}", header(depth, header_text,), label)?;
 
     writeln!(w)?;
     writeln!(w, "[<{}>]({})", obj.uri(), obj.uri())?;
@@ -275,7 +265,7 @@ fn data_type_uri(dt: &DataType) -> IRIRef {
 }
 
 fn write_concept<'a>(w: &mut impl Write, concept: &Concept, context: &Context<'a>) -> Result<()> {
-    write_entity_header(w, concept, "c", "Concept", 3, &context)?;
+    write_entity_header(w, concept, "Concept", 3, &context)?;
 
     if concept.has_concepts() {
         write_concept_relations(w, concept, context)?;
@@ -306,7 +296,7 @@ fn write_concept_relations<'a>(
                 Some(qname) => qname.to_string(),
             },
             label,
-            &label_to_fragment(&label, "c")
+            &label_to_fragment(&label, "concept")
         )?;
     }
     writeln!(w)?;
@@ -327,7 +317,7 @@ fn write_concept_tree<'a>(
             "{} **[{}](#{})**",
             list_item(0),
             label,
-            label_to_fragment(&label, "c")
+            label_to_fragment(&label, "concept")
         )?;
         if concept.has_concepts() {
             write_concept_tree_inner(w, concept.concepts().collect(), 1, context)?;
@@ -353,7 +343,7 @@ fn write_concept_tree_inner<'a>(
             "{} [{}](#{})",
             list_item(current_depth),
             label,
-            label_to_fragment(&label, "c")
+            label_to_fragment(&label, "concept")
         )?;
         if concept.has_concepts() {
             write_concept_tree_inner(w, concept.concepts().collect(), current_depth + 1, context)?;
@@ -371,18 +361,7 @@ fn write_collection<'a>(
     collection: &Collection,
     context: &Context<'a>,
 ) -> Result<()> {
-    write_entity_header(
-        w,
-        collection,
-        "cc",
-        if collection.is_ordered() {
-            "Ordered Collection"
-        } else {
-            "Collection"
-        },
-        3,
-        &context,
-    )?;
+    write_entity_header(w, collection, "Collection", 3, &context)?;
 
     if collection.has_members() {
         write_collection_members(w, collection.members(), context)?;
@@ -410,9 +389,9 @@ fn write_collection_membership<'a>(
             let pref_label = collection.preferred_label(context.language);
             writeln!(
                 w,
-                "* [{}]({})",
+                "* [{}](#{})",
                 pref_label,
-                label_to_fragment(&pref_label, "cc")
+                label_to_fragment(&pref_label, "collection")
             )?;
         }
         writeln!(w)?;
@@ -434,9 +413,9 @@ fn write_collection_members<'a>(
                 let pref_label = member.preferred_label(context.language);
                 writeln!(
                     w,
-                    "* Collection [{}]({})",
+                    "* Collection [{}](#{})",
                     pref_label,
-                    label_to_fragment(&pref_label, "cc")
+                    label_to_fragment(&pref_label, "collection")
                 )?;
             }
             Member::Concept(member) => {
@@ -444,9 +423,9 @@ fn write_collection_members<'a>(
                 let pref_label = member.preferred_label(context.language);
                 writeln!(
                     w,
-                    "* Concept [{}]({})",
+                    "* Concept [{}](#{})",
                     pref_label,
-                    label_to_fragment(&pref_label, "c")
+                    label_to_fragment(&pref_label, "concept")
                 )?;
             }
         }
@@ -466,16 +445,9 @@ fn write_line(w: &mut impl Write) -> Result<()> {
 }
 
 #[inline]
-fn anchored_header(depth: usize, text: &str, anchor: &str) -> String {
-    format!(
-        "{} <a name=\"{}\">{}",
-        format!("{:#<1$}", "", depth),
-        anchor,
-        text
-    )
-}
-
-#[inline]
 fn label_to_fragment(label: &str, prefix: &str) -> String {
-    format!("{}__{}", prefix, label.to_lowercase().replace(" ", "_"))
+    format!("{}-{}", prefix, label)
+        .to_lowercase()
+        .replace(" ", "-")
+        .replace(&['(', ')', ',', '\"', '.', ';', ':', '\''][..], "")
 }

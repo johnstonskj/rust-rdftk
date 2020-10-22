@@ -33,6 +33,7 @@ pub enum ConceptRelation {
     BroaderPartitive,
     BroaderInstantial,
     Related,
+    InverseRelated,
     //    Other(IRIRef),
 }
 
@@ -66,6 +67,7 @@ impl ToURI for ConceptRelation {
             Self::BroaderPartitive => ns::iso::broader_partitive(),
             Self::BroaderInstantial => ns::iso::broader_instantial(),
             Self::Related => ns::related(),
+            Self::InverseRelated => ns::related(),
             //            Self::Other(iri) => iri,
         }
         .clone()
@@ -81,7 +83,8 @@ impl ConceptRelation {
             Self::Broader => Self::Narrower,
             Self::BroaderPartitive => Self::NarrowerPartitive,
             Self::BroaderInstantial => Self::BroaderInstantial,
-            Self::Related => Self::Related,
+            Self::Related => Self::InverseRelated,
+            Self::InverseRelated => Self::Related,
         }
     }
 }

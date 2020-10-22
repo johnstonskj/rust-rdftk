@@ -11,6 +11,11 @@ TBD
 
 ## Changes
 
+**Version 0.1.7**
+
+* Fixed markdown generation of fragment links.
+* Fixed inverse relationship display for `ConceptRelation::Related`.
+
 **Version 0.1.6**
 
 * Explicit version management.

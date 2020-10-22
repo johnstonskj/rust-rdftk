@@ -104,7 +104,7 @@ fn test_simple_thesaurus_to_markdown_all() {
 
     assert!(result.is_ok());
 
-    //    assert_eq!(String::from_utf8(buffer.into_inner()).unwrap(), MARKDOWN);
+    //assert_eq!(String::from_utf8(buffer.into_inner()).unwrap(), MARKDOWN);
 
     assert!(String::from_utf8(buffer.into_inner())
         .unwrap()
