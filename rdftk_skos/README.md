@@ -11,6 +11,10 @@ TBD
 
 ## Changes
 
+**Version 0.1.9**
+
+* Added links at the top to jump down to different sections.
+
 **Version 0.1.8**
 
 * trim label string to get rid of trailing '-' in fragments.

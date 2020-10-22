@@ -21,7 +21,11 @@
 
 ----------
 
-## Concept Hierarchy
+Jump to: [Concepts Hierarchy](#concepts-hierarchy)] | [Concepts](#concepts)] | [Collections](#collections)] | [Appendix - RDF](#appendix-rdf)]
+
+----------
+
+## Concepts Hierarchy
 
 * **[Computers](#concept-computers)**
   * [Analog Computers](#concept-analog-computers)

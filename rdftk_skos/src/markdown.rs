@@ -58,6 +58,15 @@ pub fn write_markdown(
     if scheme.has_top_concepts() {
         write_line(w)?;
 
+        write!(w, "Jump to: ")?;
+        write!(w, "[Concepts Hierarchy](#concepts-hierarchy)] | ")?;
+        write!(w, "[Concepts](#concepts)] | ")?;
+        write!(w, "[Collections](#collections)] | ")?;
+        writeln!(w, "[Appendix - RDF](#appendix-rdf)]")?;
+        writeln!(w)?;
+
+        write_line(w)?;
+
         write_concept_tree(w, scheme, &context)?;
 
         write_line(w)?;
@@ -308,7 +317,7 @@ fn write_concept_tree<'a>(
     scheme: &Scheme,
     context: &Context<'a>,
 ) -> Result<()> {
-    writeln!(w, "{}", header(2, "Concept Hierarchy"))?;
+    writeln!(w, "{}", header(2, "Concepts Hierarchy"))?;
     writeln!(w)?;
     for concept in scheme.top_concepts().map(|concept| concept.borrow()) {
         let label = concept.preferred_label(context.language);
