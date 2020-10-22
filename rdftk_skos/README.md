@@ -11,6 +11,11 @@ TBD
 
 ## Changes
 
+**Version 0.1.12**
+
+* Enhancement; refactored traits, use `Resource` for `Named`, all resources are both _labeled_ and _propertied_.
+* Enhancement; copying constructors from `LiteralProperty` as methods on `Resource`.
+
 **Version 0.1.11**
 
 * Enhancement; added logic to pull `skos:definition` property and display as text for any resource.
@@ -67,6 +72,6 @@ TBD
 
 ## TODO
 
-1. Performance!!! 
+1. Performance!!!
 
 [![SKOS](https://www.w3.org/Icons/SW/Buttons/sw-skos-blue.png)](http://www.w3.org/2001/sw/wiki/SKOS)

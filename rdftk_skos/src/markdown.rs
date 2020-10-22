@@ -14,8 +14,8 @@ use crate::simple::collection::Member;
 use crate::simple::concept::ConceptRelation;
 use crate::simple::properties::LabelKind;
 use crate::simple::{
-    standard_mappings, to_rdf_graph, Collection, Concept, Label, Labeled, LiteralProperty, Named,
-    Propertied, Scheme, ToURI,
+    standard_mappings, to_rdf_graph, Collection, Concept, Label, Labeled, LiteralProperty,
+    Resource, Scheme, ToURI,
 };
 use rdftk_core::graph::PrefixMappings;
 use rdftk_core::DataType;
@@ -151,7 +151,7 @@ impl<'a> Context<'a> {
 
 fn write_entity_header<'a>(
     w: &mut impl Write,
-    obj: &(impl Named + Labeled + Propertied),
+    obj: &impl Resource,
     header_text: &str,
     depth: usize,
     context: &Context<'a>,

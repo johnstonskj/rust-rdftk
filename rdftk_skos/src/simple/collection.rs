@@ -13,7 +13,7 @@ TBD
 use crate::ns;
 use crate::simple::properties::final_preferred_label;
 use crate::simple::ToStatement;
-use crate::simple::{Concept, Label, Labeled, LiteralProperty, Named, Propertied, ToStatements};
+use crate::simple::{Concept, Label, Labeled, LiteralProperty, Resource, Propertied, ToStatements};
 use rdftk_core::{ObjectNode, Statement, SubjectNode};
 use rdftk_iri::IRIRef;
 use rdftk_names::rdf;
@@ -83,7 +83,7 @@ impl Member {
 
 // ------------------------------------------------------------------------------------------------
 
-impl Named for Collection {
+impl Resource for Collection {
     fn uri(&self) -> &IRIRef {
         &self.uri
     }

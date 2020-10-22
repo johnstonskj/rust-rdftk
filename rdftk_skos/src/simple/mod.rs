@@ -22,8 +22,28 @@ use std::rc::Rc;
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
-pub trait Named {
-    fn uri(&self) -> &IRIRef;
+pub trait Labeled {
+    fn add_label(&mut self, label: Label);
+
+    fn has_labels(&self) -> bool;
+
+    fn labels(&self) -> &Vec<Label>;
+
+    // --------------------------------------------------------------------------------------------
+
+    fn add_preferred_label(&mut self, text: &str, language: &str) {
+        self.add_label(Label::preferred(text, language))
+    }
+
+    fn add_alternative_label(&mut self, text: &str, language: &str) {
+        self.add_label(Label::alternative(text, language))
+    }
+
+    fn add_hidden_label(&mut self, text: &str, language: &str) {
+        self.add_label(Label::hidden(text, language))
+    }
+
+    fn preferred_label(&self, language: &str) -> String;
 }
 
 pub trait Propertied {
@@ -40,28 +60,28 @@ pub trait Propertied {
     }
 
     fn properties(&self) -> &Vec<LiteralProperty>;
+
+    // --------------------------------------------------------------------------------------------
+
+    fn define(&mut self, text: &str, language: &str) -> &mut Self {
+        self.add_property(LiteralProperty::definition_with(text, language));
+        self
+    }
+
+    fn notation(&mut self, notation: &str) -> &mut Self {
+        self.add_property(LiteralProperty::notation(notation));
+        self
+    }
+
+    fn copyright(&mut self, publisher: &str, rights: &str) -> &mut Self {
+        self.add_property(LiteralProperty::publisher(publisher));
+        self.add_property(LiteralProperty::rights(rights));
+        self
+    }
 }
 
-pub trait Labeled {
-    fn add_label(&mut self, label: Label);
-
-    fn add_preferred_label(&mut self, text: &str, language: &str) {
-        self.add_label(Label::preferred(text, language))
-    }
-
-    fn add_alternative_label(&mut self, text: &str, language: &str) {
-        self.add_label(Label::alternative(text, language))
-    }
-
-    fn add_hidden_label(&mut self, text: &str, language: &str) {
-        self.add_label(Label::hidden(text, language))
-    }
-
-    fn preferred_label(&self, language: &str) -> String;
-
-    fn has_labels(&self) -> bool;
-
-    fn labels(&self) -> &Vec<Label>;
+pub trait Resource: Labeled + Propertied {
+    fn uri(&self) -> &IRIRef;
 }
 
 pub trait ToStatements {

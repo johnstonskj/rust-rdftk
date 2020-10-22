@@ -14,7 +14,7 @@ use crate::ns;
 use crate::simple::properties::final_preferred_label;
 use crate::simple::ToStatement;
 use crate::simple::{
-    Collection, Concept, Label, Labeled, LiteralProperty, Named, Propertied, ToStatements,
+    Collection, Concept, Label, Labeled, LiteralProperty, Resource, Propertied, ToStatements,
 };
 use rdftk_core::{ObjectNode, Statement, SubjectNode};
 use rdftk_iri::IRIRef;
@@ -40,7 +40,7 @@ pub struct Scheme {
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl Named for Scheme {
+impl Resource for Scheme {
     fn uri(&self) -> &IRIRef {
         &self.uri
     }

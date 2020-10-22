@@ -124,6 +124,8 @@ impl Label {
         }
     }
 
+    // --------------------------------------------------------------------------------------------
+
     pub fn kind(&self) -> &LabelKind {
         &self.kind
     }
@@ -246,6 +248,8 @@ impl LiteralProperty {
     pub fn title(text: &str) -> Self {
         Self::new(dc::terms::title().clone(), Literal::new(text))
     }
+
+    // --------------------------------------------------------------------------------------------
 
     pub fn predicate(&self) -> &IRIRef {
         &self.predicate

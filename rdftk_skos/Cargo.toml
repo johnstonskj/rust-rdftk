@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_skos"
-version = "0.1.11"
+version = "0.1.12"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
 description = "A data model with RDF support for the Simple Knowledge Organization System (SKOS) vocabulary."

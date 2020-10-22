@@ -12,7 +12,7 @@ TBD
 
 use crate::ns;
 use crate::simple::properties::final_preferred_label;
-use crate::simple::{Label, Labeled, LiteralProperty, Named, Propertied, ToStatements};
+use crate::simple::{Label, Labeled, LiteralProperty, Propertied, Resource, ToStatements};
 use crate::simple::{ToStatement, ToURI};
 use rdftk_core::{ObjectNode, Statement, SubjectNode};
 use rdftk_iri::IRIRef;
@@ -105,7 +105,7 @@ impl ConceptRelation {
 
 // ------------------------------------------------------------------------------------------------
 
-impl Named for Concept {
+impl Resource for Concept {
     fn uri(&self) -> &IRIRef {
         &self.uri
     }
@@ -197,6 +197,8 @@ impl Concept {
         concept
     }
 
+    // --------------------------------------------------------------------------------------------
+
     pub fn add_related_concept(
         &mut self,
         relation: ConceptRelation,
@@ -204,8 +206,6 @@ impl Concept {
     ) {
         self.concepts.push((relation, related));
     }
-
-    // --------------------------------------------------------------------------------------------
 
     pub fn sub_concept(&mut self, uri: &IRIRef) -> Rc<RefCell<Self>> {
         let new_concept = Rc::from(RefCell::from(Self::new(uri)));
