@@ -1,0 +1,104 @@
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: "/rdftk_core"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "cargo prod"
+      prefix-development: "cargo dev"
+      include: "scope"
+    reviewers:
+      - johnstonskj
+
+updates:
+  - package-ecosystem: cargo
+    directory: "/rdftk_graph"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "cargo prod"
+      prefix-development: "cargo dev"
+      include: "scope"
+    reviewers:
+      - johnstonskj
+
+updates:
+  - package-ecosystem: cargo
+    directory: "/rdftk_io"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "cargo prod"
+      prefix-development: "cargo dev"
+      include: "scope"
+    reviewers:
+      - johnstonskj
+
+updates:
+  - package-ecosystem: cargo
+    directory: "/rdftk_iri"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "cargo prod"
+      prefix-development: "cargo dev"
+      include: "scope"
+    reviewers:
+      - johnstonskj
+
+updates:
+  - package-ecosystem: cargo
+    directory: "/rdftk_memgraph"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "cargo prod"
+      prefix-development: "cargo dev"
+      include: "scope"
+    reviewers:
+      - johnstonskj
+
+updates:
+  - package-ecosystem: cargo
+    directory: "/rdftk_names"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "cargo prod"
+      prefix-development: "cargo dev"
+      include: "scope"
+    reviewers:
+      - johnstonskj
+
+updates:
+  - package-ecosystem: cargo
+    directory: "/rdftk_query"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "cargo prod"
+      prefix-development: "cargo dev"
+      include: "scope"
+    reviewers:
+      - johnstonskj
+
+updates:
+  - package-ecosystem: cargo
+    directory: "/rdftk_skos"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "cargo prod"
+      prefix-development: "cargo dev"
+      include: "scope"
+    reviewers:
+      - johnstonskj
