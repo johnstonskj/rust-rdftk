@@ -14,7 +14,7 @@ use crate::ns;
 use crate::simple::properties::final_preferred_label;
 use crate::simple::ToStatement;
 use crate::simple::{
-    Collection, Concept, Label, Labeled, LiteralProperty, Resource, Propertied, ToStatements,
+    Collection, Concept, Label, Labeled, LiteralProperty, Propertied, Resource, ToStatements,
 };
 use rdftk_core::{ObjectNode, Statement, SubjectNode};
 use rdftk_iri::IRIRef;

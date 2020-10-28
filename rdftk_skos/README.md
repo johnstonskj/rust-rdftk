@@ -11,6 +11,11 @@ TBD
 
 ## Changes
 
+**Version 0.1.13**
+
+* Only show "jump to collections" if there are collections.
+* Fixed `fmt` issues.
+
 **Version 0.1.12**
 
 * Enhancement; refactored traits, use `Resource` for `Named`, all resources are both _labeled_ and _propertied_.

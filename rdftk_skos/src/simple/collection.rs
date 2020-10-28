@@ -13,7 +13,7 @@ TBD
 use crate::ns;
 use crate::simple::properties::final_preferred_label;
 use crate::simple::ToStatement;
-use crate::simple::{Concept, Label, Labeled, LiteralProperty, Resource, Propertied, ToStatements};
+use crate::simple::{Concept, Label, Labeled, LiteralProperty, Propertied, Resource, ToStatements};
 use rdftk_core::{ObjectNode, Statement, SubjectNode};
 use rdftk_iri::IRIRef;
 use rdftk_names::rdf;

@@ -62,7 +62,9 @@ pub fn write_markdown(
         write!(w, "Jump to: ")?;
         write!(w, "[Concepts Hierarchy](#concepts-hierarchy) | ")?;
         write!(w, "[Concepts](#concepts) | ")?;
-        write!(w, "[Collections](#collections) | ")?;
+        if scheme.has_top_collections() {
+            write!(w, "[Collections](#collections) | ")?;
+        }
         writeln!(w, "[Appendix - RDF](#appendix-rdf)")?;
         writeln!(w)?;
 
@@ -357,9 +359,12 @@ fn write_concept_tree_inner<'a>(
         let concept = concept.borrow();
         let label = concept.preferred_label(context.language);
 
-        let formatting = match relation {
-            ConceptRelation::NarrowerInstantial => "*",
-            _ => "",
+        let (_symbol, formatting) = match relation {
+            ConceptRelation::NarrowerPartitive => ("⨁ ", "*"),
+            ConceptRelation::NarrowerInstantial => ("∋ ", "*"),
+            ConceptRelation::Related => ("→ ", ""),
+            ConceptRelation::InverseRelated => ("→ ", ""),
+            _ => ("", ""),
         };
         writeln!(
             w,
