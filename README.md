@@ -6,7 +6,8 @@ consistent set of tools for reading and writing files, manipulating models progr
 
 ![MIT License](https://img.shields.io/badge/license-mit-118811.svg)
 ![Minimum Rust Version](https://img.shields.io/badge/Min%20Rust-1.40-green.svg)
-[![travis.ci](https://travis-ci.org/johnstonskj/rust-rdftk.svg?branch=master)](https://travis-ci.org/johnstonskj/rust-rdftk)
+![Build](https://github.com/johnstonskj/rust-rdftk/workflows/Rust/badge.svg)
+![Audit](https://github.com/johnstonskj/rust-rdftk/workflows/Security%20audit/badge.svg)
 ![mdbook to pages](https://github.com/johnstonskj/rust-rdftk/workflows/mdbook%20to%20pages/badge.svg)
 [![GitHub stars](https://img.shields.io/github/stars/johnstonskj/rust-rdftk.svg)](https://github.com/johnstonskj/rust-rdftk/stargazers)
 
@@ -24,12 +25,12 @@ probably be joined by others over time.
 
 * [`Core`](./rdftk_core): The core data model, concrete implementations for `Statement`s and `Literal`s, along with a concrete
   `Resource` type that provides a builder-like experience for models. 
-* [`Graph`](./rdftk_graph): Traits that describe the behavior of `Graph`s, these are implemented by different strategies such as `memgraph`.
 * [`IO`](./rdftk_io): Traits for reading/writing statements and graphs as well as implementations for several common formats.
 * [`IRI`](./rdftk_iri): An implementation of a true IRI type.
 * [`MemGraph`](./rdftk_memgraph): A simple in-memory graph.
 * [`Names`](./rdftk_names): Common vocabularies.
 * [`Query`](./rdftk_query): Placeholder for query APIs and SPARQL support.
+* [`SKOS`](./rdftk_skos): Support for the SKOS thesaurus vocabulary.
 
 The following diagram shows the crate dependencies, but for clarify it has combined `core` and `graph` into a single 
 unit.
@@ -42,7 +43,7 @@ unit.
         │                    │                    │
         ▼                    ▼                    ▼
 ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│     iri      │◀────│  core/graph  │────▶│    names     │
+│     iri      │◀────│     core     │────▶│    names     │
 └──────────────┘     └──────────────┘     └──────────────┘
    ▲    ▲                    ▲                    ▲
    │    │                    │                    │
