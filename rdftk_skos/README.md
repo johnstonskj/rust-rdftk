@@ -15,6 +15,7 @@ TBD
 
 * Only show "jump to collections" if there are collections.
 * Fixed `fmt` issues.
+* Updated [paste](https://crates.io/crates/paste) dependency.
 
 **Version 0.1.12**
 
