@@ -224,10 +224,6 @@ extern crate error_chain;
 #[macro_use]
 extern crate lazy_static;
 
-// #[cfg(feature = "new_parser")]
-// #[macro_use]
-// extern crate nom;
-
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
@@ -270,10 +266,6 @@ pub trait ValidateStr: FromStr {
 
 mod parse;
 
-// #[cfg(feature = "new_parser")]
-// #[doc(hidden)]
-// mod pname;
-
 // ------------------------------------------------------------------------------------------------
 
 pub mod error;
@@ -292,10 +284,6 @@ pub use authority::{Authority, Host, HostKind, Port, UserInfo};
 #[doc(hidden)]
 pub mod path;
 pub use path::Path;
-
-// #[cfg(feature = "pre_name")]
-// #[doc(hidden)]
-// pub mod prename;
 
 #[doc(hidden)]
 pub mod query;
