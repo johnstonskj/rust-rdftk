@@ -29,6 +29,15 @@ pub(crate) fn is_ihost(s: &str) -> bool {
         }) && is_correctly_escaped(s))
 }
 
+pub(crate) fn is_ireg_name(s: &str) -> bool {
+    // ireg-name      = *( iunreserved / pct-encoded / sub-delims )
+    s.is_empty()
+        || (s
+            .chars()
+            .all(|c| is_iunreserved(c) || is_sub_delims(c) || c == '.')
+            && is_correctly_escaped(s))
+}
+
 pub(crate) fn is_iuserinfo(s: &str) -> bool {
     s.is_empty()
         || (s.chars().all(|c| is_iunreserved(c) || is_sub_delims(c)) && is_correctly_escaped(s))

@@ -81,6 +81,7 @@ reference   :=   irelative-ref (as defined in IRI)
 */
 
 use crate::error::{Error as IriError, ErrorKind, Result as IriResult};
+use crate::ValidateStr;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
@@ -134,6 +135,8 @@ impl FromStr for Prefix {
         Self::new(s)
     }
 }
+
+impl ValidateStr for Prefix {}
 
 impl Prefix {
     pub fn new(prefix: &str) -> IriResult<Self> {
@@ -243,6 +246,8 @@ impl FromStr for PrefixedName {
         }
     }
 }
+
+impl ValidateStr for PrefixedName {}
 
 impl PrefixedName {
     pub fn new(name: &str) -> Self {

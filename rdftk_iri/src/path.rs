@@ -1,5 +1,12 @@
 /*!
-Provides the `Path` component of an `IRI`.
+A path is always defined for a URI, though the defined path may be empty (zero length). A
+segment may also be empty, resulting in two consecutive slashes (//) in the path component. A
+path component may resemble or map exactly to a file system path, but does not always imply a
+relation to one. If an authority component is present, then the path component must either be
+empty or begin with a slash (/). If an authority component is absent, then the path cannot
+begin with an empty segment, that is with two slashes (//), as the following characters would
+be interpreted as an authority component. The final segment of the path may be referred to as
+a 'slug'.
 
 # Example
 
@@ -10,8 +17,8 @@ TBD
 #![allow(clippy::module_name_repetitions)]
 
 use crate::error::{Component, Error as IriError, ErrorKind, Result as IriResult};
-use crate::parse;
 use crate::Normalize;
+use crate::{parse, ValidateStr};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
@@ -19,30 +26,59 @@ use std::str::FromStr;
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
+///
+/// The path is a component of the _"generic URI"_, per[RFC 3296](https://tools.ietf.org/html/rfc2396)
+/// §3:
+///
+/// > URI that are hierarchical in nature use the slash "/" character for
+/// > separating hierarchical components.  For some file systems, a "/"
+/// > character (used to denote the hierarchical structure of a URI) is the
+/// > delimiter used to construct a file name hierarchy, and thus the URI
+/// > path will look similar to a file pathname.  This does NOT imply that
+/// > the resource is a file or that the URI maps to an actual filesystem
+/// > pathname.
+///
+/// > URI that do not make use of the slash "/" character for separating
+/// > hierarchical components are considered opaque by the generic URI
+/// > parser.
+///
+/// Specifically, any absolute URI, that is one having a specified scheme, whose path portion
+/// **does not** start with a slash "/" character should be considered opaque.
+///
+///
+/// # Example
+///
+/// ```rust
+/// use rdftk_iri::Path;
+/// use std::str::FromStr;
+///
+/// let path = Path::from_str("foo").unwrap();
+/// println!("'{}'", path); // prints 'foo'
+///
+/// let path = Path::from_str("/foo/bar").unwrap();
+/// println!("'{}'", path); // prints '/foo/bar'
+/// ```
+///
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct Path {
-    inner: String,
-}
-
-// ------------------------------------------------------------------------------------------------
-// Public Functions
-// ------------------------------------------------------------------------------------------------
+pub struct Path(String);
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
+const PATH_SEP: &str = "/";
+const DOT: &str = ".";
+const DOT_DOT: &str = "..";
+
 impl Default for Path {
     fn default() -> Self {
-        Self {
-            inner: String::new(),
-        }
+        Self(String::new())
     }
 }
 
 impl Display for Path {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.inner)
+        write!(f, "{}", self.0)
     }
 }
 
@@ -50,28 +86,30 @@ impl FromStr for Path {
     type Err = IriError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if parse::is_path(s) {
-            Ok(Self {
-                inner: s.to_string(),
-            })
+        if Self::is_valid(s) {
+            Ok(Self(s.to_string()))
         } else {
             Err(ErrorKind::InvalidChar(Component::Path).into())
         }
     }
 }
 
+impl ValidateStr for Path {
+    fn is_valid(s: &str) -> bool {
+        parse::is_path(s)
+    }
+}
+
 impl Normalize for Path {
-    // RFC-3986§5.4
+    // SPEC: RFC-3986 §5.4
     fn normalize(self) -> IriResult<Self> {
-        let mut segments = self.segments();
+        let mut segments = self.hierarchical_segments();
         let mut index: usize = 0;
         while index < segments.len() {
             let segment = segments.get(index).unwrap();
-            if segment.is_empty() && index != 0 && index != segments.len() - 1 {
+            if (segment.is_empty() && index != 0 && index != segments.len() - 1) || segment == DOT {
                 segments.remove(index);
-            } else if segment == "." {
-                segments.remove(index);
-            } else if segment == ".." {
+            } else if segment == DOT_DOT {
                 segments.remove(index);
                 if index > 0 {
                     index -= 1;
@@ -81,64 +119,84 @@ impl Normalize for Path {
                 index += 1;
             }
         }
-        Ok(Self {
-            inner: segments.join("/"),
-        })
+        Ok(Self(segments.join(PATH_SEP)))
     }
 }
 
 impl Path {
-    pub fn resolve(&self, path: &Path) -> IriResult<Self> {
-        let new_path = if path.is_empty() {
+    ///
+    /// The root of a path is the path separator character "/", this will return a new path
+    /// consisting of only this character.
+    ///
+    pub fn root() -> Self {
+        Self(PATH_SEP.to_string())
+    }
+
+    // --------------------------------------------------------------------------------------------
+
+    ///
+    /// Return `true` if the path is the empty string `""` (which is a legal value), else `false`.
+    ///
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    ///
+    /// Returns `true` if this path is an absolute path, else `false`.
+    ///
+    pub fn is_absolute(&self) -> bool {
+        self.0.starts_with(PATH_SEP)
+    }
+
+    /// Returns the current value of the path as a String.
+    pub fn value(&self) -> &String {
+        &self.0
+    }
+
+    // --------------------------------------------------------------------------------------------
+
+    /// self = base
+    pub fn resolve(&self, relative_path: &Path) -> IriResult<Self> {
+        let new_path = if relative_path.is_empty() {
             self.clone()
-        } else if path.is_absolute() {
-            path.clone()
-        } else if self.inner.ends_with('/') {
+        } else if relative_path.is_absolute() {
+            relative_path.clone()
+        } else if self.0.ends_with(PATH_SEP) {
             let mut new = self.clone();
-            new.push(&path.inner)?;
+            new.push(&relative_path.0)?;
             new
         } else {
             let mut new = self.clone();
             let _ = new.pop_slug();
-            new.push(&path.inner)?;
+            new.push(&relative_path.0)?;
             new
         }
         .normalize()?;
         Ok(new_path)
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.inner.is_empty()
-    }
-
-    pub fn is_absolute(&self) -> bool {
-        self.inner.starts_with('/')
-    }
-
+    ///
+    /// Returns `true` if this path is fully normalized, else `false`.
+    ///
     pub fn is_normalized(&self) -> bool {
-        self.inner
-            .split('/')
-            .all(|segment| segment != "." && segment != "..")
+        self.0
+            .split(PATH_SEP)
+            .all(|segment| segment != DOT && segment != DOT_DOT)
     }
 
-    pub fn value(&self) -> &String {
-        &self.inner
+    // --------------------------------------------------------------------------------------------
+
+    fn hierarchical_segments(&self) -> Vec<String> {
+        self.0.split(PATH_SEP).map(|s| s.to_string()).collect()
     }
 
-    pub fn clear(&mut self) {
-        self.inner = String::new();
-    }
-
-    pub fn segments(&self) -> Vec<String> {
-        self.inner.split('/').map(|s| s.to_string()).collect()
-    }
-
+    /// Push a new segment onto the end of the path.
     pub fn push(&mut self, segment: &str) -> IriResult<()> {
         if parse::is_path(segment) {
-            if self.inner.ends_with('/') {
-                self.inner = format!("{}{}", self.inner, segment);
+            if self.0.ends_with(PATH_SEP) {
+                self.0 = format!("{}{}", self.0, segment);
             } else {
-                self.inner = format!("{}/{}", self.inner, segment);
+                self.0 = format!("{}/{}", self.0, segment);
             }
             Ok(())
         } else {
@@ -146,48 +204,40 @@ impl Path {
         }
     }
 
+    /// Pop the last segment from the end of the path, if present.
     pub fn pop(&mut self) -> Option<String> {
-        let mut segments = self.segments();
+        let mut segments = self.hierarchical_segments();
         let last = segments.pop();
-        self.inner = segments.join("/");
+        self.0 = segments.join(PATH_SEP);
         last
     }
 
+    /// Returns `true` if this path ends in a _slug_, else `false`.
     pub fn has_slug(&self) -> bool {
-        !self.inner.is_empty() && !self.inner.ends_with('/')
+        !self.0.is_empty() && !self.0.ends_with(PATH_SEP)
     }
 
+    /// Return the slug from the end of the path, if present.
     pub fn slug(&mut self) -> Option<String> {
         if self.has_slug() {
-            let segments = self.segments();
+            let segments = self.hierarchical_segments();
             segments.last().cloned()
         } else {
             None
         }
     }
 
+    /// Pop the slug from the end of the path, if present.
     pub fn pop_slug(&mut self) -> Option<String> {
-        let mut segments = self.segments();
+        let mut segments = self.hierarchical_segments();
         let last = segments.pop();
-        self.inner = segments.join("/");
-        if !self.inner.is_empty() {
-            self.inner = format!("{}/", self.inner);
+        self.0 = segments.join(PATH_SEP);
+        if !self.0.is_empty() {
+            self.0 = format!("{}{}", self.0, PATH_SEP);
         }
         last
     }
 }
-
-// ------------------------------------------------------------------------------------------------
-// Private Types
-// ------------------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------------------
-// Private Functions
-// ------------------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------------------
-// Modules
-// ------------------------------------------------------------------------------------------------
 
 // ------------------------------------------------------------------------------------------------
 // Unit Tests
@@ -265,6 +315,45 @@ mod tests {
         assert_eq!(
             base.resolve(&Path::from_str("../../g").unwrap()).unwrap(),
             Path::from_str("/g").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_normalize() {
+        assert_eq!(
+            Path::from_str("a/b/c").unwrap().normalize().unwrap(),
+            Path::from_str("a/b/c").unwrap()
+        );
+        assert_eq!(
+            Path::from_str("a/./b/c").unwrap().normalize().unwrap(),
+            Path::from_str("a/b/c").unwrap()
+        );
+        assert_eq!(
+            Path::from_str("a/./././b/c").unwrap().normalize().unwrap(),
+            Path::from_str("a/b/c").unwrap()
+        );
+        assert_eq!(
+            Path::from_str("a/../b/c").unwrap().normalize().unwrap(),
+            Path::from_str("b/c").unwrap()
+        );
+        assert_eq!(
+            Path::from_str("a/b/../../c").unwrap().normalize().unwrap(),
+            Path::from_str("c").unwrap()
+        );
+        assert_eq!(
+            Path::from_str("./a/./b/./c/.")
+                .unwrap()
+                .normalize()
+                .unwrap(),
+            Path::from_str("a/b/c").unwrap()
+        );
+        assert_eq!(
+            Path::from_str("a/b/c/..").unwrap().normalize().unwrap(),
+            Path::from_str("a/b").unwrap()
+        );
+        assert_eq!(
+            Path::from_str("../a/b/c").unwrap().normalize().unwrap(),
+            Path::from_str("a/b/c").unwrap()
         );
     }
 }

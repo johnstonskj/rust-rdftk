@@ -1,5 +1,7 @@
 /*!
-Provides the `Query` component of an `IRI`.
+The query component of an `IRI` is preceded by a question mark (?) and contains a query string of
+non-hierarchical data. Its syntax is not well defined, but by convention is most often a sequence
+of attribute–value pairs separated bya delimiter (&).
 
 # Example
 
@@ -10,8 +12,8 @@ TBD
 #![allow(clippy::module_name_repetitions)]
 
 use crate::error::{Component, Error as IriError, ErrorKind, Result as IriResult};
-use crate::parse;
 use crate::Normalize;
+use crate::{parse, ValidateStr};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
@@ -19,28 +21,42 @@ use std::str::FromStr;
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
+///
+/// This type holds the query component of the IRI. While it is common in URLs to see queries of
+/// the form `key=value&key=value...` this is not part of the specification which explicitly makes
+/// the format of queries opaque:
+///
+/// > The query component is a string of information to be interpreted by the resource.
+///
+/// # Example
+///
+/// ```rust
+/// use rdftk_iri::Query;
+/// use std::str::FromStr;
+///
+/// let query = Query::from_str("page1").unwrap();
+/// println!("'{}'", query); // prints '?page1'
+///
+/// let query = Query::from_str("page=1&size=20").unwrap();
+/// println!("'{}'", query); // prints '?page=1&size=20'
+/// ```
+///
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct Query {
-    inner: String,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct QueryPart {
-    key: String,
-    value: Option<String>,
-}
-
-// ------------------------------------------------------------------------------------------------
-// Public Functions
-// ------------------------------------------------------------------------------------------------
+pub struct Query(String);
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
+impl Default for Query {
+    fn default() -> Self {
+        Self(String::new())
+    }
+}
+
 impl Display for Query {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "?{}", self.inner)
+        write!(f, "?{}", self.0)
     }
 }
 
@@ -48,13 +64,17 @@ impl FromStr for Query {
     type Err = IriError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if parse::is_iquery(s) {
-            Ok(Self {
-                inner: s.to_string(),
-            })
+        if Self::is_valid(s) {
+            Ok(Self(s.to_string()))
         } else {
             Err(ErrorKind::InvalidChar(Component::Query).into())
         }
+    }
+}
+
+impl ValidateStr for Query {
+    fn is_valid(s: &str) -> bool {
+        parse::is_iquery(s)
     }
 }
 
@@ -65,59 +85,13 @@ impl Normalize for Query {
 }
 
 impl Query {
-    pub fn new(part: &QueryPart) -> Self {
-        Self {
-            inner: match &part.value {
-                None => part.key.clone(),
-                Some(value) => format!("{}={}", part.key, value),
-            },
-        }
-    }
-
-    pub fn push(&mut self, part: &QueryPart) {
-        self.inner = match &part.value {
-            None => part.key.clone(),
-            Some(value) => format!("{}={}", part.key, value),
-        }
-    }
-
+    /// Return `true` if the path is the empty string `""` (which is a legal value), else `false`.
     pub fn is_empty(&self) -> bool {
-        self.inner.is_empty()
+        self.0.is_empty()
     }
 
+    /// Return the current value of this fragment as a String.
     pub fn value(&self) -> &String {
-        &self.inner
-    }
-
-    pub fn clear(&mut self) {
-        self.inner = String::new();
+        &self.0
     }
 }
-
-// ------------------------------------------------------------------------------------------------
-
-impl QueryPart {
-    pub fn new(key: &str) -> Self {
-        Self {
-            key: key.to_string(),
-            value: None,
-        }
-    }
-    pub fn with_value(key: &str, value: &str) -> Self {
-        Self {
-            key: key.to_string(),
-            value: Some(value.to_string()),
-        }
-    }
-}
-// ------------------------------------------------------------------------------------------------
-// Private Types
-// ------------------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------------------
-// Private Functions
-// ------------------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------------------
-// Modules
-// ------------------------------------------------------------------------------------------------

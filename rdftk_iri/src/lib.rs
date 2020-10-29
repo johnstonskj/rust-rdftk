@@ -1,13 +1,93 @@
 /*!
-Another implementation of the `IRI` and URI specifications. It provides an `IRI` type that supports
-the semantics of the [IRI](https://en.wikipedia.org/wiki/Internationalized_Resource_Identifier),
+Another implementation of the IRI and URI specifications. It provides [`IRI`](struct.IRI.html) and
+[`IRIRef`](type.IRIRef.html) types that supports the semantics of the
+[IRI](https://en.wikipedia.org/wiki/Internationalized_Resource_Identifier),
 [URI](https://en.wikipedia.org/wiki/Uniform_Resource_Identifier),
 [URL](https://en.wikipedia.org/wiki/URL), and
 [URN](https://en.wikipedia.org/wiki/Uniform_Resource_Name) specifications.
 
-# Example
+# Examples
 
-TBD
+The most common use is the parsing of an [`IRI`](struct.IRI.html) value from a string.
+
+```rust
+use rdftk_iri::IRI;
+use std::str::FromStr;
+
+let result = IRI::from_str(
+    "https://john.doe@www.example.com:123/forum/questions/?tag=networking&order=newest#top",
+);
+```
+
+Once parsed it is easy to then extract the components of the [`IRI`](struct.IRI.html), as shown below.
+
+```rust
+use rdftk_iri::IRI;
+use std::str::FromStr;
+
+let result = IRI::from_str(
+    "https://john.doe@www.example.com:123/forum/questions/?tag=networking&order=newest#top",
+);
+
+let iri = result.unwrap();
+
+println!("scheme:   {}", iri.scheme().as_ref().unwrap());
+println!("user:     {}", iri.authority().as_ref().unwrap().user_info().as_ref().unwrap().user_name());
+println!("host:     {}", iri.authority().as_ref().unwrap().host());
+println!("port:     {}", iri.authority().as_ref().unwrap().port().as_ref().unwrap());
+println!("path:     {}", iri.path());
+println!("query:    {}", iri.query().as_ref().unwrap());
+println!("fragment: {}", iri.fragment().as_ref().unwrap());
+```
+
+The previous code should result in the following:
+
+```text
+scheme:   https
+user:     john.doe
+host:     www.example.com
+port:     123
+path:     /forum/questions/
+query:    tag=networking&order=newest
+fragment: top
+```
+
+The `builder` module allows for more programmatic construction of [`IRI`](struct.IRI.html)s.
+
+```rust
+use rdftk_iri::{IRI, Scheme};
+use rdftk_iri::builder::IriBuilder;
+use rdftk_iri::error::Result as IriResult;
+use std::convert::TryInto;
+
+# fn main() -> rdftk_iri::error::Result<()> {
+let mut builder = IriBuilder::default();
+let result: IriResult<IRI> = builder
+    .scheme(&Scheme::https())
+    .user_name("john.doe")
+    .host("www.example.com")?
+    .port(123.into())
+    .path_str("/forum/questions/")?
+    .query_str("tag=networking&order=newest")?
+    .fragment_str("top")?
+    .try_into();
+# Ok(())
+# }
+```
+
+Note also the use of `Scheme::https()`, both the [`Scheme`](struct.Scheme.html) and
+[`Port`](struct.Port.html) types include associated functions to construct well-known values.
+
+# Features
+
+The following features are present in this crate.
+
+* `builder` [default] -- include the [`builder`](builder/index.html) module, which in turn includes
+   the [`IriBuilder`](builder/struct.IriBuilder.html) type.
+* `path_iri` [default] -- provides an implementation of `TryFrom<&PathBuf>` and `TryFrom<PathBuf>`
+  for `IRI`.
+* `uuid_iri` [default] -- provides an implementation of `TryFrom<&Uuid>` and `TryFrom<Uuid>`
+  for `IRI`.
 
 # Specifications
 
@@ -141,18 +221,47 @@ and remove them from the 'unwise' set:
 #[macro_use]
 extern crate error_chain;
 
-#[cfg(feature = "new_parser")]
 #[macro_use]
-extern crate nom;
+extern crate lazy_static;
+
+// #[cfg(feature = "new_parser")]
+// #[macro_use]
+// extern crate nom;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
+///
+/// This trait is used on the [`IRI`](struct.IRI.html) and it's components to normalize their value
+/// according to the relevant RFC rules.
+///
+/// 1. Normalization will ensure the correct case of certain components.
+/// 1. Normalization will removing any unnecessary "." and ".." segments from the path component of
+///    a hierarchical URI.
+///
 pub trait Normalize {
+    /// Return a normalized version of `self`. The default for normalization is to do nothing and
+    /// return `self` unchanged.
     fn normalize(self) -> error::Result<Self>
     where
-        Self: Sized;
+        Self: Sized,
+    {
+        Ok(self)
+    }
+}
+
+///
+/// This trait is implemented by most components to provide a way to determine whether a string
+/// value is valid. It can be assumed that the action is less expensive than performing the
+/// [`FromStr`](https://doc.rust-lang.org/std/str/trait.FromStr.html) conversion and checking it's
+/// result.
+///
+pub trait ValidateStr: FromStr {
+    /// Return `true` if the string is a valid representation of `Self`, else `false`.
+    fn is_valid(s: &str) -> bool {
+        Self::from_str(s).is_ok()
+    }
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -161,31 +270,43 @@ pub trait Normalize {
 
 mod parse;
 
+// #[cfg(feature = "new_parser")]
+// #[doc(hidden)]
+// mod pname;
+
+// ------------------------------------------------------------------------------------------------
+
 pub mod error;
 
+#[cfg(feature = "builder")]
 pub mod builder;
 
+#[doc(hidden)]
 pub mod scheme;
-pub use scheme::{KnownSchemes, Scheme};
+pub use scheme::Scheme;
 
+#[doc(hidden)]
 pub mod authority;
-pub use authority::{Authority, Host, KnownPorts, Port};
+pub use authority::{Authority, Host, HostKind, Port, UserInfo};
 
+#[doc(hidden)]
 pub mod path;
 pub use path::Path;
 
+// #[cfg(feature = "pre_name")]
+// #[doc(hidden)]
 // pub mod prename;
-// pub use prename::{Prefix, PrefixedName};
 
-#[cfg(feature = "new_parser")]
-pub mod pname;
-
+#[doc(hidden)]
 pub mod query;
-pub use query::{Query, QueryPart};
+pub use query::Query;
 
+#[doc(hidden)]
 pub mod fragment;
 pub use fragment::Fragment;
 
 #[allow(clippy::module_inception)]
+#[doc(hidden)]
 pub mod iri;
 pub use iri::{IRIRef, IRI};
+use std::str::FromStr;
