@@ -490,7 +490,7 @@ impl IRI {
     ///
     pub fn is_opaque(&self) -> bool {
         let ssp = self.scheme_specific_part();
-        self.is_absolute() && !ssp.is_empty() && !ssp.starts_with("/")
+        self.is_absolute() && !ssp.is_empty() && !ssp.starts_with('/')
     }
 
     // --------------------------------------------------------------------------------------------

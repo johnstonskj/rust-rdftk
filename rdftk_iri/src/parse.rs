@@ -2,18 +2,20 @@
 Internal parsing functions.
 */
 
+use regex::Regex;
+
 // ------------------------------------------------------------------------------------------------
 // Public Functions
 // ------------------------------------------------------------------------------------------------
 
+lazy_static! {
+    static ref RE_SCHEME: Regex = Regex::new("^[[:alpha:]][[[:alnum:]]+-\\.]*$").unwrap();
+}
+
 pub(crate) fn is_scheme(s: &str) -> bool {
     // From RFC-2396, appendix A. _Collected BNF for URI_:
     // scheme = alpha *( alpha | digit | '+' | '-' | '.' )
-    !s.is_empty()
-        && s.starts_with(|c: char| c.is_alphabetic())
-        && s[1..]
-            .chars()
-            .all(|c| c.is_alphanumeric() || c == '+' || c == '-' || c == '.')
+    RE_SCHEME.is_match(s)
 }
 
 pub(crate) fn is_ihost(s: &str) -> bool {

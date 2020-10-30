@@ -855,6 +855,7 @@ fn parse_iuserinfo(s: &str) -> IriResult<(String, Option<String>)> {
     }
 }
 
+#[allow(clippy::unnecessary_unwrap)]
 fn parse_ihost(s: &str) -> IriResult<(Host, Option<Port>)> {
     if let Some(captures) = IPV4.captures(s) {
         let address = captures.get(1).unwrap().as_str();

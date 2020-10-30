@@ -579,25 +579,41 @@ mod tests {
 
     #[test]
     fn test_parse_illegal() {
-        assert_eq!(Scheme::is_valid(""), false);
+        assert_eq!(Scheme::is_valid(""), false, "should not be empty");
         assert!(Scheme::from_str("").is_err());
 
-        assert_eq!(Scheme::is_valid(" "), false);
+        assert_eq!(Scheme::is_valid(" "), false, "should not accept spaces");
         assert!(Scheme::from_str("").is_err());
 
-        assert_eq!(Scheme::is_valid(" aaa"), false);
+        assert_eq!(
+            Scheme::is_valid(" aaa"),
+            false,
+            "should not leading accept spaces"
+        );
         assert!(Scheme::from_str("").is_err());
 
-        assert_eq!(Scheme::is_valid("aa a"), false);
+        assert_eq!(
+            Scheme::is_valid("aa a"),
+            false,
+            "should not embedded accept spaces"
+        );
         assert!(Scheme::from_str("").is_err());
 
-        assert_eq!(Scheme::is_valid("123"), false);
+        assert_eq!(
+            Scheme::is_valid("123"),
+            false,
+            "should not accept all numbers"
+        );
         assert!(Scheme::from_str("123").is_err());
 
-        assert_eq!(Scheme::is_valid("123ab"), false);
+        assert_eq!(
+            Scheme::is_valid("123ab"),
+            false,
+            "should not accept leading numbers"
+        );
         assert!(Scheme::from_str("123ab").is_err());
 
-        assert_eq!(Scheme::is_valid("a!"), false);
+        assert_eq!(Scheme::is_valid("a!"), false, "should not accept !");
         assert!(Scheme::from_str("a!").is_err());
     }
 
