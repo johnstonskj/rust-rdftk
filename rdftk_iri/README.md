@@ -55,6 +55,13 @@ The following features are present in this crate.
 
 ## Changes
 
+**Version 0.1.3**
+
+* Mostly testing
+  1. Moved any tests out of the main code if they only use the public API.
+  1. Added a set of files for gathering whole `IRI` examples.
+  1. Added [proptest](https://docs.rs/proptest/0.10.1/proptest/index.html) for `Scheme`, will add for more.
+
 **Version 0.1.2**
 
 * Mostly documentation additions.
