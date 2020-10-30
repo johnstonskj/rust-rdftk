@@ -444,7 +444,7 @@ impl IRI {
 
     ///
     /// Returns `true` if this is an absolute `IRI`, else `false`. An `IRI` is absolute if, and only
-    /// if, it has a scheme component.
+    /// if, it has a scheme component and does not have a fragment component.
     ///
     /// # Examples
     ///
@@ -458,12 +458,42 @@ impl IRI {
     /// assert!(IRI::from_str("scheme:example.com").unwrap().is_absolute());
     /// assert!(IRI::from_str("scheme:example.com/path").unwrap().is_absolute());
     ///
+    /// assert!(!IRI::from_str("//example.com/path#foo").unwrap().is_absolute());
+    /// assert!(!IRI::from_str("http://example.com/path#foo").unwrap().is_absolute());
+    /// assert!(!IRI::from_str("scheme:example.com#foo").unwrap().is_absolute());
     /// assert!(!IRI::from_str("path").unwrap().is_absolute());
     /// assert!(!IRI::from_str("/path").unwrap().is_absolute());
     /// ```
     ///
     pub fn is_absolute(&self) -> bool {
-        self.has_scheme()
+        self.has_scheme() && !self.has_fragment()
+    }
+
+    ///
+    /// Returns `true` if this is a relative `IRI` reference, else `false`. An `IRI` is a relative
+    /// reference if, and only if, it does not have a scheme component.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use rdftk_iri::IRI;
+    /// # use std::str::FromStr;
+    /// assert!(IRI::from_str("//example.com/path#foo").unwrap().is_relative_reference());
+    /// assert!(IRI::from_str("path").unwrap().is_relative_reference());
+    /// assert!(IRI::from_str("/path").unwrap().is_relative_reference());
+    ///
+    /// assert!(!IRI::from_str("mailto:a@b.com").unwrap().is_relative_reference());
+    /// assert!(!IRI::from_str("http://example.com").unwrap().is_relative_reference());
+    /// assert!(!IRI::from_str("http://example.com/path").unwrap().is_relative_reference());
+    /// assert!(!IRI::from_str("scheme://example.com").unwrap().is_relative_reference());
+    /// assert!(!IRI::from_str("scheme:example.com").unwrap().is_relative_reference());
+    /// assert!(!IRI::from_str("scheme:example.com/path").unwrap().is_relative_reference());
+    /// assert!(!IRI::from_str("http://example.com/path#foo").unwrap().is_relative_reference());
+    /// assert!(!IRI::from_str("scheme:example.com#foo").unwrap().is_relative_reference());
+    /// ```
+    ///
+    pub fn is_relative_reference(&self) -> bool {
+        !self.has_scheme()
     }
 
     ///
