@@ -203,43 +203,48 @@ impl TryFrom<&uuid::Uuid> for IRI {
 
 impl Normalize for IRI {
     fn normalize(self) -> IriResult<Self> {
-        let mut normalized = Self {
-            scheme: match &self.scheme {
-                None => None,
-                Some(scheme) => Some(scheme.clone().normalize()?),
-            },
-            authority: match &self.authority {
-                None => None,
-                Some(authority) => {
-                    let mut authority = authority.clone().normalize()?;
-                    if self.has_scheme() && !authority.has_port() {
-                        if let Some(port) = Port::default_for(&self.scheme().as_ref().unwrap()) {
-                            authority.set_port(port);
-                        }
-                    }
-                    Some(authority)
-                }
-            },
-            path: self.path.normalize()?,
-            query: match self.query {
-                None => None,
-                Some(query) => Some(query.normalize()?),
-            },
-            fragment: match self.fragment {
-                None => None,
-                Some(fragment) => Some(fragment.normalize()?),
-            },
+        let scheme = match &self.scheme {
+            None => None,
+            Some(scheme) => Some(scheme.clone().normalize()?),
         };
-
-        if let Some(scheme) = normalized.scheme() {
+        let authority = match &self.authority {
+            None => None,
+            Some(authority) => {
+                let mut authority = authority.clone().normalize()?;
+                if self.has_scheme() && !authority.has_port() {
+                    let scheme = self.scheme().as_ref().unwrap();
+                    let scheme = scheme.clone().normalize().unwrap();
+                    if let Some(port) = Port::default_for(&scheme) {
+                        authority.set_port(port);
+                    }
+                }
+                Some(authority)
+            }
+        };
+        let mut path = self.path.normalize()?;
+        if let Some(scheme) = &scheme {
             if vec!["file", "ftp", "http", "https", "tftp"].contains(&scheme.value().as_str())
-                && normalized.path.is_empty()
+                && path.is_empty()
             {
-                normalized.path = Path::root();
+                path = Path::root();
             }
         }
+        let query = match self.query {
+            None => None,
+            Some(query) => Some(query.normalize()?),
+        };
+        let fragment = match self.fragment {
+            None => None,
+            Some(fragment) => Some(fragment.normalize()?),
+        };
 
-        Ok(normalized)
+        Ok(Self {
+            scheme,
+            authority,
+            path,
+            query,
+            fragment,
+        })
     }
 }
 
