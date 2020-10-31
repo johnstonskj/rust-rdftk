@@ -116,6 +116,11 @@ impl Scheme {
         "acct".parse().unwrap()
     }
 
+    /// Known Scheme for binary data access in browsers (http://www.w3.org/TR/FileAPI/#url)
+    pub fn blob() -> Self {
+        "blob".parse().unwrap()
+    }
+
     /// Known Scheme for Calendar Access Protocol, RFC 4324
     pub fn cap() -> Self {
         "cap".parse().unwrap()
@@ -363,7 +368,7 @@ impl Scheme {
 
     /// Known Scheme for Secure HTTP, RFC 2660
     pub fn shttp() -> Self {
-        "shhtp".parse().unwrap()
+        "shttp".parse().unwrap()
     }
 
     /// Known Scheme for ManageSieve protocol, RFC 5804

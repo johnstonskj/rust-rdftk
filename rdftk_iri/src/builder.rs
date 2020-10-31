@@ -1,27 +1,27 @@
 /*!
-Provides a builder experience for creating `IRI` instances. The [`IriBuilder`](builder/struct.IriBuilder.html)
-type provides a simple API to create new `IRI` instances in a fluent style.
-
-# Example
-
-```rust
-use rdftk_iri::{builder::IriBuilder, IRI, error::Result as IriResult, Scheme};
-use std::convert::TryInto;
-
-fn make_example_iri() -> IriResult<IRI> {
-    let mut builder = IriBuilder::default();
-    builder
-        .scheme(&Scheme::https())
-        .user_name("john.doe")
-        .host("www.example.com")?
-        .port(123.into())
-        .path_str("/forum/questions/")?
-        .query_str("tag=networking&order=newest")?
-        .fragment_str("top")?
-        .try_into()
-}
-```
-
+* Provides a builder experience for creating `IRI` instances. The [`IriBuilder`](builder/struct.IriBuilder.html)
+* type provides a simple API to create new `IRI` instances in a fluent style.
+*
+* # Example
+*
+* ```rust
+* use rdftk_iri::{builder::IriBuilder, IRI, error::Result as IriResult, Scheme};
+* use std::convert::TryInto;
+*
+* fn make_example_iri() -> IriResult<IRI> {
+*     let mut builder = IriBuilder::default();
+*     builder
+*         .scheme(&Scheme::https())
+*         .user_name("john.doe")
+*         .host_str("www.example.com")?
+*         .port(123.into())
+*         .path_str("/forum/questions/")?
+*         .query_str("tag=networking&order=newest")?
+*         .fragment_str("top")?
+*         .try_into()
+* }
+* ```
+*
 */
 
 #![allow(clippy::module_name_repetitions)]
@@ -121,19 +121,18 @@ impl IriBuilder {
 
     /// Use the provided scheme, parsed from a string, for this IRI.
     pub fn scheme_str(&mut self, scheme: &str) -> IriResult<&mut Self> {
-        self.scheme = Some(Scheme::from_str(scheme)?);
-        Ok(self)
+        Ok(self.scheme(&Scheme::from_str(scheme)?))
     }
 
-    /// Use the provided host name for this IRI's authority.
-    pub fn host(&mut self, host: &str) -> IriResult<&mut Self> {
-        match Host::from_str(host) {
-            Err(e) => Err(e),
-            Ok(host) => {
-                self.host = Some(host);
-                Ok(self)
-            }
-        }
+    /// Use the provided host name, parsed from a string, for this IRI's authority.
+    pub fn host(&mut self, host: &Host) -> &mut Self {
+        self.host = Some(host.clone());
+        self
+    }
+
+    /// Use the provided host name, parsed from a string, for this IRI's authority.
+    pub fn host_str(&mut self, host: &str) -> IriResult<&mut Self> {
+        Ok(self.host(&Host::from_str(host)?))
     }
 
     /// Use the provided port number for this IRI's authority.
@@ -162,6 +161,12 @@ impl IriBuilder {
     }
 
     /// Use the provided path for this IRI.
+    pub fn path_root(&mut self) -> &mut Self {
+        self.path = Some(Path::root());
+        self
+    }
+
+    /// Use the provided path for this IRI.
     pub fn path(&mut self, path: &Path) -> &mut Self {
         self.path = Some(path.clone());
         self
@@ -174,12 +179,12 @@ impl IriBuilder {
     }
 
     /// Append a segment to the path for this IRI.
-    pub fn append_segment(&mut self, segment: &str) -> &mut Self {
+    pub fn append_path_segment(&mut self, segment: &str) -> IriResult<&mut Self> {
         match &mut self.path {
-            None => self.path = Some(Path::from_str(segment).unwrap()),
-            Some(path) => path.push(segment).unwrap(),
+            None => self.path = Some(Path::from_str(segment)?),
+            Some(path) => path.push(segment)?,
         }
-        self
+        Ok(self)
     }
 
     /// Use the provided query for this IRI.
@@ -204,136 +209,5 @@ impl IriBuilder {
     pub fn fragment_str(&mut self, fragment: &str) -> IriResult<&mut Self> {
         self.fragment = Some(Fragment::from_str(fragment)?);
         Ok(self)
-    }
-}
-
-// ------------------------------------------------------------------------------------------------
-// Unit Tests
-// ------------------------------------------------------------------------------------------------
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::scheme::Scheme;
-    use std::convert::TryInto;
-
-    #[test]
-    fn test_http_url() {
-        fn inner() -> IriResult<IRI> {
-            let mut builder = IriBuilder::default();
-            let result: IriResult<IRI> = builder
-                .scheme(&Scheme::https())
-                .user_name("john.doe")
-                .host("www.example.com")?
-                .port(123.into())
-                .path_str("/forum/questions/")?
-                .query_str("tag=networking&order=newest")?
-                .fragment_str("top")?
-                .try_into();
-            assert!(result.is_ok());
-            result
-        }
-        let iri = inner().unwrap();
-        assert_eq!(
-            iri.to_string(),
-            "https://john.doe@www.example.com:123/forum/questions/?tag=networking&order=newest#top"
-                .to_string()
-        );
-    }
-
-    #[test]
-    fn test_ldap_url() {
-        let mut builder = IriBuilder::default();
-        let builder = builder
-            .scheme(&Scheme::ldap())
-            .host("[2001:db8::7]")
-            .unwrap()
-            .path_str("/c=GB")
-            .unwrap()
-            .query_str("objectClass?one")
-            .unwrap();
-        println!("{:#?}", builder);
-        let result: IriResult<IRI> = builder.try_into();
-        assert!(result.is_ok());
-        let iri = result.unwrap();
-        println!("{:#?}", iri);
-        assert_eq!(
-            iri.to_string(),
-            "ldap://[2001:db8::7]/c=GB?objectClass?one".to_string()
-        );
-    }
-
-    #[test]
-    fn test_mailto_iri() {
-        let mut builder = IriBuilder::default();
-        let result: IriResult<IRI> = builder
-            .scheme(&Scheme::mailto())
-            .path_str("John.Doe@example.com")
-            .unwrap()
-            .try_into();
-        assert!(result.is_ok());
-        let iri = result.unwrap();
-        assert_eq!(iri.to_string(), "mailto:John.Doe@example.com".to_string());
-    }
-
-    #[test]
-    fn test_news_iri() {
-        let mut builder = IriBuilder::default();
-        let result: IriResult<IRI> = builder
-            .scheme(&Scheme::news())
-            .path_str("comp.infosystems.www.servers.unix")
-            .unwrap()
-            .try_into();
-        assert!(result.is_ok());
-        let iri = result.unwrap();
-        assert_eq!(
-            iri.to_string(),
-            "news:comp.infosystems.www.servers.unix".to_string()
-        );
-    }
-
-    #[test]
-    fn test_tel_iri() {
-        let mut builder = IriBuilder::default();
-        let result: IriResult<IRI> = builder
-            .scheme(&Scheme::tel())
-            .path_str("+1-816-555-1212")
-            .unwrap()
-            .try_into();
-        assert!(result.is_ok());
-        let iri = result.unwrap();
-        assert_eq!(iri.to_string(), "tel:+1-816-555-1212".to_string());
-    }
-
-    #[test]
-    fn test_telnet_iri() {
-        let mut builder = IriBuilder::default();
-        let result: IriResult<IRI> = builder
-            .scheme(&Scheme::telnet())
-            .host("192.0.2.16")
-            .unwrap()
-            .port(80.into())
-            .path_str("/")
-            .unwrap()
-            .try_into();
-        assert!(result.is_ok());
-        let iri = result.unwrap();
-        assert_eq!(iri.to_string(), "telnet://192.0.2.16:80/".to_string());
-    }
-
-    #[test]
-    fn test_urn_iri() {
-        let mut builder = IriBuilder::default();
-        let result: IriResult<IRI> = builder
-            .scheme(&Scheme::urn())
-            .path_str("oasis:names:specification:docbook:dtd:xml:4.1.2")
-            .unwrap()
-            .try_into();
-        assert!(result.is_ok());
-        let iri = result.unwrap();
-        assert_eq!(
-            iri.to_string(),
-            "urn:oasis:names:specification:docbook:dtd:xml:4.1.2".to_string()
-        );
     }
 }

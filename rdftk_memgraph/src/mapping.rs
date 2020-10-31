@@ -68,7 +68,7 @@ impl PrefixMappings for Mappings {
             Some(namespace) => {
                 if namespace.has_fragment() {
                     Some(IRIRef::from(
-                        namespace.with_new_fragment(Some(qname.name().parse().unwrap())),
+                        namespace.with_new_fragment(qname.name().parse().unwrap()),
                     ))
                 } else {
                     let mut path = namespace.path().clone();
@@ -87,7 +87,7 @@ impl PrefixMappings for Mappings {
             let fragment = iri.fragment();
             let fragment = fragment.as_ref().unwrap();
             (
-                iri.with_new_fragment(Some(Fragment::default())),
+                iri.with_new_fragment(Fragment::default()),
                 fragment.value().clone(),
             )
         } else if iri.path().has_slug() {

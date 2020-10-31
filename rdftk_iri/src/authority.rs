@@ -566,7 +566,7 @@ impl Display for UserInfo {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.user_name)?;
         if let Some(password) = &self.password {
-            write!(f, "{}", password)?;
+            write!(f, ":{}", password)?;
         }
         write!(f, "@")
     }
@@ -881,7 +881,7 @@ fn parse_ihost(s: &str) -> IriResult<(Host, Option<Port>)> {
                 },
             ))
         } else {
-            let version = captures.get(1).unwrap().as_str();
+            let version = captures.get(2).unwrap().as_str();
             Ok((
                 Host(HostKind::IPVFuture(
                     version

@@ -1,3 +1,4 @@
+use proptest::prelude::*;
 use rdftk_iri::{Port, Scheme};
 use std::str::FromStr;
 
@@ -26,4 +27,23 @@ fn test_port_default_for() {
 #[test]
 fn test_port_display() {
     assert_eq!(Port::new(443).to_string(), ":443");
+}
+
+// ------------------------------------------------------------------------------------------------
+// Automated Property Tests
+// ------------------------------------------------------------------------------------------------
+
+proptest! {
+    #[test]
+    fn doesnt_crash(s in "\\PC*") {
+        let _ = Port::from_str(&s);
+    }
+
+    #[test]
+    fn valid_port_values(p in 0..u16::MAX) {
+        let s = p.to_string();
+        println!("valid_port_values {:?}", s);
+//        assert!(Port::is_valid(&s));
+        assert!(Port::from_str(&s).is_ok());
+    }
 }

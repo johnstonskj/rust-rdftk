@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_iri"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
 description = "Another implementation of the IRI/URI specifications"

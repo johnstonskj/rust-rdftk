@@ -1,3 +1,4 @@
+use proptest::prelude::*;
 use rdftk_iri::{Normalize, Path};
 use std::str::FromStr;
 
@@ -77,6 +78,22 @@ fn test_resolve_relatives() {
 }
 
 #[test]
+fn test_is_normalized() {
+    assert!(Path::from_str("/").unwrap().is_normalized());
+    assert!(Path::from_str("a").unwrap().is_normalized());
+    assert!(Path::from_str("/a").unwrap().is_normalized());
+    assert!(Path::from_str("a/b/c").unwrap().is_normalized());
+
+    assert!(!Path::from_str("a/./b/c").unwrap().is_normalized());
+    assert!(!Path::from_str("a/./././b/c").unwrap().is_normalized());
+    assert!(!Path::from_str("a/../b/c").unwrap().is_normalized());
+    assert!(!Path::from_str("a/b/../../c").unwrap().is_normalized());
+    assert!(!Path::from_str("./a/./b/./c/.").unwrap().is_normalized());
+    assert!(!Path::from_str("a/b/c/..").unwrap().is_normalized());
+    assert!(!Path::from_str("../a/b/c").unwrap().is_normalized());
+}
+
+#[test]
 fn test_normalize() {
     assert_eq!(
         Path::from_str("a/b/c").unwrap().normalize().unwrap(),
@@ -113,4 +130,15 @@ fn test_normalize() {
         Path::from_str("../a/b/c").unwrap().normalize().unwrap(),
         Path::from_str("a/b/c").unwrap()
     );
+}
+
+// ------------------------------------------------------------------------------------------------
+// Automated Property Tests
+// ------------------------------------------------------------------------------------------------
+
+proptest! {
+    #[test]
+    fn doesnt_crash(s in "\\PC*") {
+        let _ = Path::from_str(&s);
+    }
 }

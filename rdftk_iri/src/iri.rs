@@ -361,9 +361,9 @@ impl IRI {
     /// Return a new `IRI` as a copy of `self` with the query component replaced by the provided
     /// `query` value.
     ///
-    pub fn with_new_query(&self, query: Option<Query>) -> Self {
+    pub fn with_new_query(&self, query: Query) -> Self {
         Self {
-            query,
+            query: Some(query),
             ..self.clone()
         }
     }
@@ -382,9 +382,9 @@ impl IRI {
     /// Return a new `IRI` as a copy of `self` with the fragment component replaced by the provided
     /// `fragment` value.
     ///
-    pub fn with_new_fragment(&self, fragment: Option<Fragment>) -> Self {
+    pub fn with_new_fragment(&self, fragment: Fragment) -> Self {
         Self {
-            fragment,
+            fragment: Some(fragment),
             ..self.clone()
         }
     }
@@ -417,7 +417,7 @@ impl IRI {
             && !relative.has_query()
             && relative.has_fragment()
         {
-            Ok(self.with_new_fragment(relative.fragment().clone()))
+            Ok(self.with_new_fragment(relative.fragment().as_ref().unwrap().clone()))
         } else {
             // Otherwise construct a new hierarchical URI in a manner consistent with RFC 2396, section 5.2.
             unimplemented!()
