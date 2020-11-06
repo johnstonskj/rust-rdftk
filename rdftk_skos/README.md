@@ -11,6 +11,10 @@ TBD
 
 ## Changes
 
+**Version 0.1.14**
+
+* Moved to use the `somedoc` crate for document generation.
+
 **Version 0.1.13**
 
 * Only show "jump to collections" if there are collections.
