@@ -7,6 +7,10 @@ An implementation of the `Graph` traits for simple in-memory cases.
 
 ## Changes
 
+**Version 0.1.4**
+
+* API changes in IRI crate.
+
 **Version 0.1.3**
 
 * Explicit version management.
