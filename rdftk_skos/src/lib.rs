@@ -19,7 +19,7 @@ extern crate rdftk_names;
 // Modules
 // ------------------------------------------------------------------------------------------------
 
-pub mod markdown;
+pub mod document;
 
 pub mod simple;
 

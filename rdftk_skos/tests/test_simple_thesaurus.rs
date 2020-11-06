@@ -90,43 +90,19 @@ fn test_simple_thesaurus_to_rdf() {
     assert_eq!(statements.len(), 42);
 }
 
-const MARKDOWN: &str = include_str!("simple_thesaurus.md");
-
 #[test]
-fn test_simple_thesaurus_to_markdown_all() {
-    use rdftk_skos::markdown::write_markdown;
-    use std::io::Cursor;
+fn test_simple_thesaurus_to_markdown() {
+    use rdftk_skos::document::make_document;
+    use somedoc::write::markdown::MarkdownFlavor;
+    use somedoc::write::write_document_to_string;
 
     let scheme = make_unesco_computer();
 
-    let mut buffer = Cursor::new(Vec::new());
-    let result = write_markdown(&mut buffer, &scheme, "en", None);
+    let result = make_document(&scheme, "en", None);
 
     assert!(result.is_ok());
+    let doc = result.unwrap();
 
-    // assert_eq!(String::from_utf8(buffer.into_inner()).unwrap(), MARKDOWN);
-
-    assert!(String::from_utf8(buffer.into_inner())
-        .unwrap()
-        .starts_with(MARKDOWN));
-}
-
-const MARKDOWN_TREE: &str = include_str!("simple_thesaurus_tree.md");
-
-#[test]
-fn test_simple_thesaurus_to_markdown_tree() {
-    use rdftk_skos::markdown::write_concept_tree_markdown;
-    use std::io::Cursor;
-
-    let scheme = make_unesco_computer();
-
-    let mut buffer = Cursor::new(Vec::new());
-    let result = write_concept_tree_markdown(&mut buffer, &scheme, "en");
-
-    assert!(result.is_ok());
-
-    assert_eq!(
-        String::from_utf8(buffer.into_inner()).unwrap(),
-        MARKDOWN_TREE
-    );
+    let md = write_document_to_string(&doc, MarkdownFlavor::default().into()).unwrap();
+    println!("{}", md);
 }

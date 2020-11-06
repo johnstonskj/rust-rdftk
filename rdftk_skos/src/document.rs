@@ -1,0 +1,490 @@
+/*!
+Create a rich document for the provided scheme.
+
+Details TBD
+
+# Example
+
+TBD
+
+*/
+
+use crate::ns;
+use crate::simple::collection::Member;
+use crate::simple::concept::ConceptRelation;
+use crate::simple::properties::LabelKind;
+use crate::simple::{
+    standard_mappings, to_rdf_graph, Collection, Concept, Label, Labeled, LiteralProperty,
+    Resource, Scheme, ToURI,
+};
+use rdftk_core::graph::PrefixMappings;
+use rdftk_core::DataType;
+use rdftk_io::turtle::TurtleWriter;
+use rdftk_io::write_graph_to_string;
+use rdftk_iri::IRIRef;
+use rdftk_memgraph::Mappings;
+use rdftk_names::xsd;
+use somedoc::error::Error;
+use somedoc::model::block::{
+    Cell, CodeBlock, Column, HasBlockContent, Heading, HeadingKind, List, Paragraph, Quote, Row,
+    Table,
+};
+use somedoc::model::document::Document;
+use somedoc::model::inline::{Anchor, HasInlineContent, HyperLink, Span};
+use std::cell::RefCell;
+use std::rc::Rc;
+
+// ------------------------------------------------------------------------------------------------
+// Public Types
+// ------------------------------------------------------------------------------------------------
+
+// ------------------------------------------------------------------------------------------------
+// Private Types
+// ------------------------------------------------------------------------------------------------
+
+struct Context<'a> {
+    ns_mappings: Mappings,
+    collections: Vec<Rc<RefCell<Collection>>>,
+    language: &'a str,
+}
+
+// ------------------------------------------------------------------------------------------------
+// Public Functions
+// ------------------------------------------------------------------------------------------------
+
+pub fn make_document(
+    scheme: &Scheme,
+    language: &str,
+    default_namespace: Option<IRIRef>,
+) -> Result<Document, Error> {
+    let mut document: Document = Default::default();
+    let context = Context::new(scheme, language);
+
+    write_entity_header(&mut document, scheme, "Scheme", 1, &context)?;
+
+    if scheme.has_top_concepts() {
+        let mut links = Paragraph::default();
+        links.add_text_str("Jump to: ");
+        links.add_link(HyperLink::internal_with_label(
+            Anchor::new("concepts-hierarchy").unwrap(),
+            "Concepts Hierarchy",
+        ));
+        links.add_text_str(" | ");
+        links.add_link(HyperLink::internal_with_label(
+            Anchor::new("concepts").unwrap(),
+            "Concepts",
+        ));
+        links.add_text_str(" | ");
+        if scheme.has_top_collections() {
+            links.add_link(HyperLink::internal_with_label(
+                Anchor::new("collections").unwrap(),
+                "Collections",
+            ));
+        }
+        links.add_text_str(" | ");
+        links.add_link(HyperLink::internal_with_label(
+            Anchor::new("appendix-rdf").unwrap(),
+            "Appendix - RDF",
+        ));
+        document.add_paragraph(links);
+
+        write_concept_tree(&mut document, scheme, &context)?;
+
+        document.add_heading(Heading::heading_2("Concepts"));
+
+        let mut concepts = scheme.concepts_flattened();
+        concepts.sort_by_key(|concept| concept.borrow().preferred_label(language));
+
+        for concept in &concepts {
+            for (relation, related) in concept.borrow().concepts() {
+                if relation == &ConceptRelation::Narrower
+                    || relation == &ConceptRelation::NarrowerPartitive
+                    || relation == &ConceptRelation::NarrowerInstantial
+                    || relation == &ConceptRelation::Related
+                {
+                    related
+                        .borrow_mut()
+                        .add_related_concept(relation.inverse(), concept.clone());
+                }
+            }
+        }
+
+        for concept in &concepts {
+            write_concept(&mut document, &*concept.borrow(), &context)?;
+        }
+    }
+
+    if scheme.has_top_collections() {
+        document.add_heading(Heading::heading_2("Collections"));
+        for collection in &context.collections {
+            write_collection(&mut document, &collection.borrow(), &context)?;
+        }
+    }
+
+    document.add_heading(Heading::heading_2("Collections"));
+
+    let graph = to_rdf_graph(&scheme, default_namespace);
+    let writer = TurtleWriter::default();
+    let code = write_graph_to_string(&writer, &graph)?;
+
+    document.add_code_block(CodeBlock::new_with_language(code, "turtle".to_string()));
+
+    Ok(document)
+}
+
+// ------------------------------------------------------------------------------------------------
+// Implementations
+// ------------------------------------------------------------------------------------------------
+
+impl<'a> Context<'a> {
+    fn new(scheme: &'a Scheme, language: &'a str) -> Self {
+        // make collection mappings!
+        let mut collections = scheme.collections_flattened();
+        collections.sort_by_key(|collection| collection.borrow().preferred_label(language));
+        Self {
+            ns_mappings: standard_mappings(),
+            collections,
+            language,
+        }
+    }
+}
+
+// ------------------------------------------------------------------------------------------------
+// Private Functions
+// ------------------------------------------------------------------------------------------------
+
+fn write_entity_header<'a>(
+    document: &mut Document,
+    obj: &impl Resource,
+    header_text: &str,
+    depth: usize,
+    context: &Context<'a>,
+) -> Result<(), Error> {
+    let heading = format!("{}: {}", header_text, obj.preferred_label(context.language));
+
+    document.add_heading(Heading::new(&heading, HeadingKind::Heading(depth as u8)));
+
+    let for_language = Some(context.language.to_string());
+    if let Some(definition) = obj.properties().iter().find(|prop| {
+        prop.predicate() == ns::definition() && prop.value().language() == &for_language
+    }) {
+        document.add_paragraph(Paragraph::italic_str(definition.value().lexical_form()));
+    }
+
+    document.add_paragraph(Paragraph::link(obj.uri().to_string().into()));
+
+    if obj.has_labels() {
+        document.add_heading(Heading::new(
+            "Labels",
+            HeadingKind::Heading((depth + 1) as u8),
+        ));
+
+        write_labels(document, obj.labels().iter().collect(), &context)?;
+    }
+
+    if obj.has_properties() {
+        document.add_heading(Heading::new(
+            "Other Properties",
+            HeadingKind::Heading((depth + 1) as u8),
+        ));
+        write_other_properties(document, obj.properties().iter().collect(), &context)?;
+    }
+    Ok(())
+}
+
+fn write_labels<'a>(
+    document: &mut Document,
+    labels: Vec<&Label>,
+    context: &Context<'a>,
+) -> Result<(), Error> {
+    let mut labels = labels;
+    labels.sort_by_key(|label| label.kind());
+    let mut current_kind: Option<&LabelKind> = None;
+    let mut table: Table = Default::default();
+    for label in labels.iter() {
+        if Some(label.kind()) != current_kind {
+            if table.has_columns() {
+                document.add_table(table);
+            }
+            current_kind = Some(label.kind());
+            let mut quote = Quote::default();
+            quote.add_paragraph(Paragraph::bold_str(&match context
+                .ns_mappings
+                .compress(label.kind().to_uri())
+            {
+                None => label.kind().to_uri().to_string(),
+                Some(qname) => qname.to_string(),
+            }));
+            document.add_block_quote(quote);
+
+            table = Table::new(&[Column::from("Label text"), Column::from("Language")]);
+        }
+        let lang = label.language();
+
+        table.add_row(Row::new(&[
+            Cell::text_str(label.text()),
+            if lang == context.language {
+                Cell::plain_str(&lang.to_string())
+            } else {
+                Cell::bold_str(&lang.to_string())
+            },
+        ]));
+    }
+    if table.has_columns() {
+        document.add_table(table);
+    }
+    Ok(())
+}
+
+fn write_other_properties<'a>(
+    document: &mut Document,
+    properties: Vec<&LiteralProperty>,
+    context: &Context<'a>,
+) -> Result<(), Error> {
+    let mut properties = properties;
+    properties.sort_by_key(|property| property.predicate().to_string());
+    let mut table = Table::new(&[
+        Column::from("Predicate"),
+        Column::from("Literal Form"),
+        Column::from("Data Type"),
+        Column::from("Language"),
+    ]);
+    for property in properties.iter() {
+        table.add_row(Row::new(&[
+            Cell::text_str(
+                &match context.ns_mappings.compress(property.predicate().clone()) {
+                    None => property.predicate().to_string(),
+                    Some(qname) => qname.to_string(),
+                },
+            ),
+            Cell::text_str(&property.value().lexical_form()),
+            Cell::text_str(&match property.value().data_type() {
+                None => String::new(),
+                Some(dt) => match context.ns_mappings.compress(data_type_uri(dt)) {
+                    None => property.predicate().to_string(),
+                    Some(qname) => qname.to_string(),
+                },
+            }),
+            match property.value().language() {
+                None => Cell::empty(),
+                Some(lang) => {
+                    if lang == context.language {
+                        Cell::plain_str(&lang.to_string())
+                    } else {
+                        Cell::bold_str(&lang.to_string())
+                    }
+                }
+            },
+        ]));
+    }
+    document.add_table(table);
+    Ok(())
+}
+
+fn data_type_uri(dt: &DataType) -> IRIRef {
+    match dt {
+        DataType::String => xsd::string(),
+        DataType::QName => xsd::q_name(),
+        DataType::IRI => xsd::any_uri(),
+        DataType::Boolean => xsd::boolean(),
+        DataType::Float => xsd::float(),
+        DataType::Double => xsd::double(),
+        DataType::Long => xsd::long(),
+        DataType::Int => xsd::int(),
+        DataType::Short => xsd::short(),
+        DataType::Byte => xsd::byte(),
+        DataType::UnsignedLong => xsd::unsigned_long(),
+        DataType::UnsignedInt => xsd::unsigned_int(),
+        DataType::UnsignedShort => xsd::unsigned_short(),
+        DataType::UnsignedByte => xsd::unsigned_byte(),
+        DataType::Duration => xsd::duration(),
+        DataType::Other(iri) => iri,
+    }
+    .clone()
+}
+
+fn write_concept<'a>(
+    document: &mut Document,
+    concept: &Concept,
+    context: &Context<'a>,
+) -> Result<(), Error> {
+    write_entity_header(document, concept, "Concept", 3, &context)?;
+
+    if concept.has_concepts() {
+        write_concept_relations(document, concept, context)?;
+    }
+
+    write_collection_membership(document, concept.uri(), context)?;
+
+    Ok(())
+}
+
+fn write_concept_relations<'a>(
+    document: &mut Document,
+    concept: &Concept,
+    context: &Context<'a>,
+) -> Result<(), Error> {
+    document.add_heading(Heading::new("Related Concepts", HeadingKind::Heading(4)));
+    let mut table = Table::new(&[Column::from("Relationship"), Column::from("Concept IRI")]);
+    for (relation, related) in concept.concepts() {
+        let related = related.borrow();
+        let label = related.preferred_label(context.language);
+        table.add_row(Row::new(&[
+            Cell::text_str(&match context.ns_mappings.compress(relation.to_uri()) {
+                None => relation.to_uri().to_string(),
+                Some(qname) => qname.to_string(),
+            }),
+            Cell::link(HyperLink::internal_with_label(
+                Anchor::new(&label_to_fragment(&label, "concept")).unwrap(),
+                &label,
+            )),
+        ]));
+    }
+    document.add_table(table);
+    Ok(())
+}
+
+fn write_concept_tree<'a>(
+    document: &mut Document,
+    scheme: &Scheme,
+    context: &Context<'a>,
+) -> Result<(), Error> {
+    document.add_heading(Heading::new("Concepts Hierarchy", HeadingKind::Heading(4)));
+    for concept in scheme.top_concepts().map(|concept| concept.borrow()) {
+        let mut list = List::default();
+        let label = concept.preferred_label(context.language);
+        let link = HyperLink::internal_with_label(
+            Anchor::new(&label_to_fragment(&label, "concept")).unwrap(),
+            &label,
+        );
+        list.add_item_from(Span::bold(link.into()).into());
+        if concept.has_concepts() {
+            write_concept_tree_inner(document, &mut list, concept.concepts().collect(), context)?;
+        }
+        document.add_list(list);
+    }
+    Ok(())
+}
+
+fn write_concept_tree_inner<'a>(
+    document: &mut Document,
+    list: &mut List,
+    current_concepts: Vec<&(ConceptRelation, Rc<RefCell<Concept>>)>,
+    context: &Context<'a>,
+) -> Result<(), Error> {
+    let mut current_concepts = current_concepts;
+    current_concepts.sort_by_key(|(_, concept)| concept.borrow().preferred_label(context.language));
+    let mut sub_list = List::default();
+    for (relation, concept) in current_concepts.iter().filter(|(rel, _)| rel.is_narrower()) {
+        let concept = concept.borrow();
+        let pref_label = concept.preferred_label(context.language);
+        let link = label_to_link(&pref_label, "collection");
+        sub_list.add_item_from(
+            match relation {
+                ConceptRelation::NarrowerPartitive | ConceptRelation::NarrowerInstantial => {
+                    Span::italic(link.into())
+                }
+                _ => Span::plain(link.into()),
+            }
+            .into(),
+        );
+        if concept.has_concepts() {
+            write_concept_tree_inner(
+                document,
+                &mut sub_list,
+                concept.concepts().collect(),
+                context,
+            )?;
+        }
+    }
+    list.add_sub_list(sub_list);
+    Ok(())
+}
+
+fn write_collection<'a>(
+    document: &mut Document,
+    collection: &Collection,
+    context: &Context<'a>,
+) -> Result<(), Error> {
+    write_entity_header(document, collection, "Collection", 3, &context)?;
+
+    if collection.has_members() {
+        write_collection_members(document, collection.members(), context)?;
+    }
+
+    write_collection_membership(document, collection.uri(), context)
+}
+
+fn write_collection_membership<'a>(
+    document: &mut Document,
+    member_uri: &IRIRef,
+    context: &Context<'a>,
+) -> Result<(), Error> {
+    let in_collections: Vec<&Rc<RefCell<Collection>>> = context
+        .collections
+        .iter()
+        .filter(|collection| collection.borrow().has_member(member_uri))
+        .collect();
+
+    if !in_collections.is_empty() {
+        let mut list = List::default();
+        document.add_heading(Heading::new("In Collections", HeadingKind::Heading(4)));
+        for collection in in_collections {
+            let collection = collection.borrow();
+            let pref_label = collection.preferred_label(context.language);
+            list.add_item_from(label_to_link(&pref_label, "collection").into());
+        }
+        document.add_list(list);
+    }
+    Ok(())
+}
+
+fn write_collection_members<'a>(
+    document: &mut Document,
+    members: impl Iterator<Item = &'a Member>,
+    context: &Context<'a>,
+) -> Result<(), Error> {
+    document.add_heading(Heading::new("Members", HeadingKind::Heading(4)));
+    let mut list = List::default();
+    for member in members {
+        match member {
+            Member::Collection(member) => {
+                let member = member.borrow();
+                let pref_label = member.preferred_label(context.language);
+                let mut item_span = Span::default();
+                item_span.add_text("Collection ".into());
+                item_span.add_link(label_to_link(&pref_label, "collection"));
+                list.add_item_from(item_span.into());
+            }
+            Member::Concept(member) => {
+                let member = member.borrow();
+                let pref_label = member.preferred_label(context.language);
+                let mut item_span = Span::default();
+                item_span.add_text("Concept ".into());
+                item_span.add_link(label_to_link(&pref_label, "concept"));
+                list.add_item_from(item_span.into());
+            }
+        }
+    }
+    if list.has_inner() {
+        document.add_list(list);
+    }
+    Ok(())
+}
+
+#[inline]
+fn label_to_link(label: &str, prefix: &str) -> HyperLink {
+    HyperLink::internal_with_label(
+        Anchor::new(&label_to_fragment(label, prefix)).unwrap(),
+        label,
+    )
+}
+
+#[inline]
+fn label_to_fragment(label: &str, prefix: &str) -> String {
+    format!("{}-{}", prefix, label)
+        .to_lowercase()
+        .trim()
+        .replace(" ", "-")
+        .replace(&['(', ')', ',', '\"', '.', ';', ':', '\''][..], "")
+}
