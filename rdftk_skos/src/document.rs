@@ -66,24 +66,24 @@ pub fn make_document(
         let mut links = Paragraph::default();
         links.add_text_str("Jump to: ");
         links.add_link(HyperLink::internal_with_label(
-            Anchor::new("concepts-hierarchy").unwrap(),
+            Anchor::new("Concepts Hierarchy").unwrap(),
             "Concepts Hierarchy",
         ));
         links.add_text_str(" | ");
         links.add_link(HyperLink::internal_with_label(
-            Anchor::new("concepts").unwrap(),
+            Anchor::new("Concepts").unwrap(),
             "Concepts",
         ));
         if scheme.has_top_collections() {
             links.add_text_str(" | ");
             links.add_link(HyperLink::internal_with_label(
-                Anchor::new("collections").unwrap(),
+                Anchor::new("Collections").unwrap(),
                 "Collections",
             ));
         }
         links.add_text_str(" | ");
         links.add_link(HyperLink::internal_with_label(
-            Anchor::new("appendix-rdf").unwrap(),
+            Anchor::new("Appendix - RDF").unwrap(),
             "Appendix - RDF",
         ));
         document.add_paragraph(links);
@@ -335,7 +335,7 @@ fn write_concept_relations<'a>(
                 Some(qname) => qname.to_string(),
             }),
             Cell::link(HyperLink::internal_with_label(
-                Anchor::new(&label_to_fragment(&label, "concept")).unwrap(),
+                Anchor::new(&format!("Concept: {}", label)).unwrap(),
                 &label,
             )),
         ]));
@@ -354,7 +354,7 @@ fn write_concept_tree<'a>(
         let mut list = List::default();
         let label = concept.preferred_label(context.language);
         let link = HyperLink::internal_with_label(
-            Anchor::new(&label_to_fragment(&label, "concept")).unwrap(),
+            Anchor::new(&format!("Concept: {}", label)).unwrap(),
             &label,
         );
         list.add_item_from(Span::bold(link.into()).into());
@@ -378,7 +378,10 @@ fn write_concept_tree_inner<'a>(
     for (relation, concept) in current_concepts.iter().filter(|(rel, _)| rel.is_narrower()) {
         let concept = concept.borrow();
         let pref_label = concept.preferred_label(context.language);
-        let link = label_to_link(&pref_label, "collection");
+        let link = HyperLink::internal_with_label(
+            Anchor::new(&format!("Collection: {}", pref_label)).unwrap(),
+            &pref_label,
+        );
         sub_list.add_item_from(
             match relation {
                 ConceptRelation::NarrowerPartitive | ConceptRelation::NarrowerInstantial => {
@@ -432,7 +435,13 @@ fn write_collection_membership<'a>(
         for collection in in_collections {
             let collection = collection.borrow();
             let pref_label = collection.preferred_label(context.language);
-            list.add_item_from(label_to_link(&pref_label, "collection").into());
+            list.add_item_from(
+                HyperLink::internal_with_label(
+                    Anchor::new(&format!("Collection: {}", pref_label)).unwrap(),
+                    &pref_label,
+                )
+                .into(),
+            );
         }
         document.add_list(list);
     }
@@ -453,7 +462,10 @@ fn write_collection_members<'a>(
                 let pref_label = member.preferred_label(context.language);
                 let mut item_span = Span::default();
                 item_span.add_text("Collection ".into());
-                item_span.add_link(label_to_link(&pref_label, "collection"));
+                item_span.add_link(HyperLink::internal_with_label(
+                    Anchor::new(&format!("Collection: {}", pref_label)).unwrap(),
+                    &pref_label,
+                ));
                 list.add_item_from(item_span.into());
             }
             Member::Concept(member) => {
@@ -461,7 +473,10 @@ fn write_collection_members<'a>(
                 let pref_label = member.preferred_label(context.language);
                 let mut item_span = Span::default();
                 item_span.add_text("Concept ".into());
-                item_span.add_link(label_to_link(&pref_label, "concept"));
+                item_span.add_link(HyperLink::internal_with_label(
+                    Anchor::new(&format!("Concept: {}", pref_label)).unwrap(),
+                    &pref_label,
+                ));
                 list.add_item_from(item_span.into());
             }
         }
@@ -470,21 +485,4 @@ fn write_collection_members<'a>(
         document.add_list(list);
     }
     Ok(())
-}
-
-#[inline]
-fn label_to_link(label: &str, prefix: &str) -> HyperLink {
-    HyperLink::internal_with_label(
-        Anchor::new(&label_to_fragment(label, prefix)).unwrap(),
-        label,
-    )
-}
-
-#[inline]
-fn label_to_fragment(label: &str, prefix: &str) -> String {
-    format!("{}-{}", prefix, label)
-        .to_lowercase()
-        .trim()
-        .replace(" ", "-")
-        .replace(&['(', ')', ',', '\"', '.', ';', ':', '\''][..], "")
 }

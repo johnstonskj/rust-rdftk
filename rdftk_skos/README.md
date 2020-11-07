@@ -11,6 +11,10 @@ TBD
 
 ## Changes
 
+**Version 0.1.18**
+
+* No longer try to format anchor text, `somedoc` does it now.
+
 **Version 0.1.17**
 
 * Moved from `CodeBlock` to `Formatted`, XWiki is unpleasant when it doesn't know a language.
