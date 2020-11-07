@@ -11,6 +11,10 @@ TBD
 
 ## Changes
 
+**Version 0.1.19**
+
+* Fixed a bug in creating concept trees, links were going to "Collection:", not "Concept".
+
 **Version 0.1.18**
 
 * No longer try to format anchor text, `somedoc` does it now.

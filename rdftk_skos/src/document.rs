@@ -379,7 +379,7 @@ fn write_concept_tree_inner<'a>(
         let concept = concept.borrow();
         let pref_label = concept.preferred_label(context.language);
         let link = HyperLink::internal_with_label(
-            Anchor::new(&format!("Collection: {}", pref_label)).unwrap(),
+            Anchor::new(&format!("Concept: {}", pref_label)).unwrap(),
             &pref_label,
         );
         sub_list.add_item_from(
