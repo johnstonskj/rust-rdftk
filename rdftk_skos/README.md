@@ -11,6 +11,12 @@ TBD
 
 ## Changes
 
+**Version 0.1.17**
+
+* Moved from `CodeBlock` to `Formatted`, XWiki is unpleasant when it doesn't know a language.
+* Fixed a bug where "|" was written twice if no collections present.
+* Fixed a bug where the heading for the code block was "Collections", not "Appendix - RDF".
+
 **Version 0.1.16**
 
 * Fixed bug in document; highlighting the correct language.

@@ -26,7 +26,7 @@ use rdftk_memgraph::Mappings;
 use rdftk_names::xsd;
 use somedoc::error::Error;
 use somedoc::model::block::{
-    Cell, CodeBlock, Column, HasBlockContent, Heading, HeadingKind, List, Paragraph, Quote, Row,
+    Cell, Column, Formatted, HasBlockContent, Heading, HeadingKind, List, Paragraph, Quote, Row,
     Table,
 };
 use somedoc::model::document::Document;
@@ -74,8 +74,8 @@ pub fn make_document(
             Anchor::new("concepts").unwrap(),
             "Concepts",
         ));
-        links.add_text_str(" | ");
         if scheme.has_top_collections() {
+            links.add_text_str(" | ");
             links.add_link(HyperLink::internal_with_label(
                 Anchor::new("collections").unwrap(),
                 "Collections",
@@ -121,13 +121,13 @@ pub fn make_document(
         }
     }
 
-    document.add_heading(Heading::heading_2("Collections"));
+    document.add_heading(Heading::heading_2("Appendix - RDF"));
 
     let graph = to_rdf_graph(&scheme, default_namespace);
     let writer = TurtleWriter::default();
     let code = write_graph_to_string(&writer, &graph)?;
 
-    document.add_code_block(CodeBlock::new_with_language(code, "turtle".to_string()));
+    document.add_formatted(Formatted::new(&code));
 
     Ok(document)
 }
