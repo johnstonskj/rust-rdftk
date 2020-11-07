@@ -11,6 +11,10 @@ TBD
 
 ## Changes
 
+**Version 0.1.16**
+
+* Fixed bug in document; highlighting the correct language.
+
 **Version 0.1.15**
 
 * Updated the `somedoc` crate version.

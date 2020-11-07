@@ -224,9 +224,9 @@ fn write_labels<'a>(
         table.add_row(Row::new(&[
             Cell::text_str(label.text()),
             if lang == context.language {
-                Cell::plain_str(&lang.to_string())
-            } else {
                 Cell::bold_str(&lang.to_string())
+            } else {
+                Cell::plain_str(&lang.to_string())
             },
         ]));
     }
@@ -269,9 +269,9 @@ fn write_other_properties<'a>(
                 None => Cell::empty(),
                 Some(lang) => {
                     if lang == context.language {
-                        Cell::plain_str(&lang.to_string())
-                    } else {
                         Cell::bold_str(&lang.to_string())
+                    } else {
+                        Cell::plain_str(&lang.to_string())
                     }
                 }
             },
