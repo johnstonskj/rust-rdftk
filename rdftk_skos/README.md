@@ -11,6 +11,10 @@ TBD
 
 ## Changes
 
+**Version 0.1.15**
+
+* Updated the `somedoc` crate version.
+
 **Version 0.1.14**
 
 * Updated the `somedoc` crate version.
