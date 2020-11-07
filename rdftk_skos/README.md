@@ -13,6 +13,10 @@ TBD
 
 **Version 0.1.14**
 
+* Updated the `somedoc` crate version.
+
+**Version 0.1.14**
+
 * Moved to use the `somedoc` crate for document generation.
 
 **Version 0.1.13**
