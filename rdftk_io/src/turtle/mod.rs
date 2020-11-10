@@ -208,7 +208,7 @@ impl TurtleWriter {
         write!(
             w,
             "{} ",
-            match mappings.compress(iri.clone()) {
+            match mappings.compress(&iri) {
                 None => format!("<{}>", iri),
                 Some(qname) => qname.to_string(),
             }

@@ -28,6 +28,11 @@ Each module will also provide public constants `NAME`, `FILE_EXTENSION`, and `MI
 
 ## Changes
 
+**Version 0.1.4**
+
+* API changes in core crate:
+  * Altered `PrefixMappings::compress` and `PrefixMappings::expand` to take references.
+
 **Version 0.1.2**
 
 * Made all `IRI` into `IRIRef`.

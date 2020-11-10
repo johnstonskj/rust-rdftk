@@ -219,7 +219,7 @@ impl DotWriter {
                 self.options.node_prefix,
                 self.subject_id(statement.subject()),
                 self.object_id(statement.object()),
-                match mappings.compress(statement.predicate().clone()) {
+                match mappings.compress(&statement.predicate()) {
                     None => statement.predicate().to_string(),
                     Some(qname) => qname.to_string(),
                 }

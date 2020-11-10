@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_io"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
 description = "Traits for reading/wtiting Statements and Graphs as well as implementations for common file formats"
@@ -21,4 +21,4 @@ rdftk_core = { version = "0.1.6", path = "../rdftk_core" }
 rdftk_iri = { version = "0.1.2", path = "../rdftk_iri" }
 
 [dev-dependencies]
-rdftk_memgraph = { version = "0.1.3", path = "../rdftk_memgraph" }
+rdftk_memgraph = { version = "0.1.5", path = "../rdftk_memgraph" }
