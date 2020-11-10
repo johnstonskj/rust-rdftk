@@ -26,7 +26,7 @@ use rdftk_memgraph::Mappings;
 use rdftk_names::xsd;
 use somedoc::error::Error;
 use somedoc::model::block::{
-    Cell, Column, Formatted, HasBlockContent, Heading, HeadingKind, List, Paragraph, Quote, Row,
+    Cell, Column, Formatted, HasBlockContent, Heading, HeadingLevel, List, Paragraph, Quote, Row,
     Table,
 };
 use somedoc::model::document::Document;
@@ -67,30 +67,30 @@ pub fn make_document(
         links.add_text_str("Jump to: ");
         links.add_link(HyperLink::internal_with_label(
             Anchor::new("Concepts Hierarchy").unwrap(),
-            "Concepts Hierarchy",
+            "Concepts Hierarchy".into(),
         ));
         links.add_text_str(" | ");
         links.add_link(HyperLink::internal_with_label(
             Anchor::new("Concepts").unwrap(),
-            "Concepts",
+            "Concepts".into(),
         ));
         if scheme.has_top_collections() {
             links.add_text_str(" | ");
             links.add_link(HyperLink::internal_with_label(
                 Anchor::new("Collections").unwrap(),
-                "Collections",
+                "Collections".into(),
             ));
         }
         links.add_text_str(" | ");
         links.add_link(HyperLink::internal_with_label(
             Anchor::new("Appendix - RDF").unwrap(),
-            "Appendix - RDF",
+            "Appendix - RDF".into(),
         ));
         document.add_paragraph(links);
 
         write_concept_tree(&mut document, scheme, &context)?;
 
-        document.add_heading(Heading::heading_2("Concepts"));
+        document.add_heading(Heading::sub_section("Concepts"));
 
         let mut concepts = scheme.concepts_flattened();
         concepts.sort_by_key(|concept| concept.borrow().preferred_label(language));
@@ -115,13 +115,13 @@ pub fn make_document(
     }
 
     if scheme.has_top_collections() {
-        document.add_heading(Heading::heading_2("Collections"));
+        document.add_heading(Heading::sub_section("Collections"));
         for collection in &context.collections {
             write_collection(&mut document, &collection.borrow(), &context)?;
         }
     }
 
-    document.add_heading(Heading::heading_2("Appendix - RDF"));
+    document.add_heading(Heading::sub_section("Appendix - RDF"));
 
     let graph = to_rdf_graph(&scheme, default_namespace);
     let writer = TurtleWriter::default();
@@ -153,6 +153,16 @@ impl<'a> Context<'a> {
 // Private Functions
 // ------------------------------------------------------------------------------------------------
 
+fn level_to_heading(level: u8) -> HeadingLevel {
+    match level {
+        1 => HeadingLevel::Section,
+        2 => HeadingLevel::SubSection,
+        3 => HeadingLevel::SubSubSection,
+        4 => HeadingLevel::SubSubSubSection,
+        5 => HeadingLevel::SubSubSubSubSection,
+        _ => HeadingLevel::Paragraph,
+    }
+}
 fn write_entity_header<'a>(
     document: &mut Document,
     obj: &impl Resource,
@@ -162,7 +172,7 @@ fn write_entity_header<'a>(
 ) -> Result<(), Error> {
     let heading = format!("{}: {}", header_text, obj.preferred_label(context.language));
 
-    document.add_heading(Heading::new(&heading, HeadingKind::Heading(depth as u8)));
+    document.add_heading(Heading::new(&heading, level_to_heading(depth as u8)));
 
     let for_language = Some(context.language.to_string());
     if let Some(definition) = obj.properties().iter().find(|prop| {
@@ -171,13 +181,10 @@ fn write_entity_header<'a>(
         document.add_paragraph(Paragraph::italic_str(definition.value().lexical_form()));
     }
 
-    document.add_paragraph(Paragraph::link(obj.uri().to_string().into()));
+    document.add_paragraph(Paragraph::link(HyperLink::external(&obj.uri().to_string())));
 
     if obj.has_labels() {
-        document.add_heading(Heading::new(
-            "Labels",
-            HeadingKind::Heading((depth + 1) as u8),
-        ));
+        document.add_heading(Heading::new("Labels", level_to_heading((depth + 1) as u8)));
 
         write_labels(document, obj.labels().iter().collect(), &context)?;
     }
@@ -185,7 +192,7 @@ fn write_entity_header<'a>(
     if obj.has_properties() {
         document.add_heading(Heading::new(
             "Other Properties",
-            HeadingKind::Heading((depth + 1) as u8),
+            level_to_heading((depth + 1) as u8),
         ));
         write_other_properties(document, obj.properties().iter().collect(), &context)?;
     }
@@ -324,7 +331,7 @@ fn write_concept_relations<'a>(
     concept: &Concept,
     context: &Context<'a>,
 ) -> Result<(), Error> {
-    document.add_heading(Heading::new("Related Concepts", HeadingKind::Heading(4)));
+    document.add_heading(Heading::new("Related Concepts", level_to_heading(4)));
     let mut table = Table::new(&[Column::from("Relationship"), Column::from("Concept IRI")]);
     for (relation, related) in concept.concepts() {
         let related = related.borrow();
@@ -334,7 +341,7 @@ fn write_concept_relations<'a>(
                 None => relation.to_uri().to_string(),
                 Some(qname) => qname.to_string(),
             }),
-            Cell::link(HyperLink::internal_with_label(
+            Cell::link(HyperLink::internal_with_label_str(
                 Anchor::new(&format!("Concept: {}", label)).unwrap(),
                 &label,
             )),
@@ -349,11 +356,11 @@ fn write_concept_tree<'a>(
     scheme: &Scheme,
     context: &Context<'a>,
 ) -> Result<(), Error> {
-    document.add_heading(Heading::new("Concepts Hierarchy", HeadingKind::Heading(4)));
+    document.add_heading(Heading::sub_section("Concepts Hierarchy"));
     for concept in scheme.top_concepts().map(|concept| concept.borrow()) {
         let mut list = List::default();
         let label = concept.preferred_label(context.language);
-        let link = HyperLink::internal_with_label(
+        let link = HyperLink::internal_with_label_str(
             Anchor::new(&format!("Concept: {}", label)).unwrap(),
             &label,
         );
@@ -378,7 +385,7 @@ fn write_concept_tree_inner<'a>(
     for (relation, concept) in current_concepts.iter().filter(|(rel, _)| rel.is_narrower()) {
         let concept = concept.borrow();
         let pref_label = concept.preferred_label(context.language);
-        let link = HyperLink::internal_with_label(
+        let link = HyperLink::internal_with_label_str(
             Anchor::new(&format!("Concept: {}", pref_label)).unwrap(),
             &pref_label,
         );
@@ -431,12 +438,12 @@ fn write_collection_membership<'a>(
 
     if !in_collections.is_empty() {
         let mut list = List::default();
-        document.add_heading(Heading::new("In Collections", HeadingKind::Heading(4)));
+        document.add_heading(Heading::new("In Collections", level_to_heading(4)));
         for collection in in_collections {
             let collection = collection.borrow();
             let pref_label = collection.preferred_label(context.language);
             list.add_item_from(
-                HyperLink::internal_with_label(
+                HyperLink::internal_with_label_str(
                     Anchor::new(&format!("Collection: {}", pref_label)).unwrap(),
                     &pref_label,
                 )
@@ -453,7 +460,7 @@ fn write_collection_members<'a>(
     members: impl Iterator<Item = &'a Member>,
     context: &Context<'a>,
 ) -> Result<(), Error> {
-    document.add_heading(Heading::new("Members", HeadingKind::Heading(4)));
+    document.add_heading(Heading::new("Members", level_to_heading(4)));
     let mut list = List::default();
     for member in members {
         match member {
@@ -462,7 +469,7 @@ fn write_collection_members<'a>(
                 let pref_label = member.preferred_label(context.language);
                 let mut item_span = Span::default();
                 item_span.add_text("Collection ".into());
-                item_span.add_link(HyperLink::internal_with_label(
+                item_span.add_link(HyperLink::internal_with_label_str(
                     Anchor::new(&format!("Collection: {}", pref_label)).unwrap(),
                     &pref_label,
                 ));
@@ -473,7 +480,7 @@ fn write_collection_members<'a>(
                 let pref_label = member.preferred_label(context.language);
                 let mut item_span = Span::default();
                 item_span.add_text("Concept ".into());
-                item_span.add_link(HyperLink::internal_with_label(
+                item_span.add_link(HyperLink::internal_with_label_str(
                     Anchor::new(&format!("Concept: {}", pref_label)).unwrap(),
                     &pref_label,
                 ));

@@ -11,6 +11,10 @@ TBD
 
 ## Changes
 
+**Version 0.1.20**
+
+* upgraded `somedoc` dependency.
+
 **Version 0.1.19**
 
 * Fixed a bug in creating concept trees, links were going to "Collection:", not "Concept".

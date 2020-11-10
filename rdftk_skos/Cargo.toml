@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_skos"
-version = "0.1.19"
+version = "0.1.20"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
 description = "A data model with RDF support for the Simple Knowledge Organization System (SKOS) vocabulary."
@@ -23,4 +23,4 @@ rdftk_iri = { version = "0.1.2", path = "../rdftk_iri" }
 rdftk_core = { version = "0.1.6", path = "../rdftk_core" }
 rdftk_memgraph = { version = "0.1.3", path = "../rdftk_memgraph" }
 rdftk_names = { version = "0.1.6", path = "../rdftk_names" }
-somedoc = { version = "0.1.4" }
+somedoc = { version = "0.1.7" }
