@@ -7,7 +7,7 @@ TBD
 
 */
 
-use rdftk_core::graph::{Graph, NamedGraph, PrefixMappings};
+use rdftk_core::graph::{Graph, MutableGraph, MutableNamedGraph, NamedGraph, PrefixMappings};
 use rdftk_core::{ObjectNode, Resource, Statement, SubjectNode};
 use rdftk_iri::IRIRef;
 use std::collections::HashSet;
@@ -141,6 +141,12 @@ impl Graph for MemGraph {
         resource
     }
 
+    fn prefix_mappings(&self) -> Rc<dyn PrefixMappings> {
+        self.mappings.clone()
+    }
+}
+
+impl MutableGraph for MemGraph {
     fn insert(&mut self, statement: Statement) {
         self.statements.push(Rc::new(statement));
     }
@@ -167,17 +173,15 @@ impl Graph for MemGraph {
     fn clear(&mut self) {
         self.statements.clear()
     }
-
-    fn prefix_mappings(&self) -> Rc<dyn PrefixMappings> {
-        self.mappings.clone()
-    }
 }
 
 impl NamedGraph for MemGraph {
     fn name(&self) -> &Option<IRIRef> {
         &self.name
     }
+}
 
+impl MutableNamedGraph for MemGraph {
     fn set_name(&mut self, name: IRIRef) -> Option<IRIRef> {
         let old = self.name.clone();
         self.name = Some(name);

@@ -62,7 +62,7 @@ impl PrefixMappings for Mappings {
         self.forward.keys().collect()
     }
 
-    fn expand(&self, qname: QName) -> Option<IRIRef> {
+    fn expand(&self, qname: &QName) -> Option<IRIRef> {
         match self.get_namespace(&(qname.prefix().into())) {
             None => None,
             Some(namespace) => {
@@ -82,7 +82,7 @@ impl PrefixMappings for Mappings {
         }
     }
 
-    fn compress(&self, iri: IRIRef) -> Option<QName> {
+    fn compress(&self, iri: &IRIRef) -> Option<QName> {
         let (iri, name) = if iri.has_fragment() {
             let fragment = iri.fragment();
             let fragment = fragment.as_ref().unwrap();
@@ -193,25 +193,25 @@ mod tests {
         );
 
         assert_eq!(
-            mappings.expand(QName::with_prefix("rdf", "Bag")),
+            mappings.expand(&QName::with_prefix("rdf", "Bag")),
             Some(IRIRef::from(
                 IRI::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#Bag").unwrap()
             ))
         );
         assert_eq!(
-            mappings.expand(QName::new("knows")),
+            mappings.expand(&QName::new("knows")),
             Some(IRIRef::from(
                 IRI::from_str("http://xmlns.com/foaf/0.1/knows").unwrap()
             ))
         );
         assert_eq!(
-            mappings.expand(QName::with_prefix("foo", "Bar")),
+            mappings.expand(&QName::with_prefix("foo", "Bar")),
             Some(IRIRef::from(
                 IRI::from_str("http://example.com/schema/foo/1.0/Bar").unwrap()
             ))
         );
 
-        assert_eq!(mappings.expand(QName::with_prefix("rdfx", "Bag")), None);
+        assert_eq!(mappings.expand(&QName::with_prefix("rdfx", "Bag")), None);
     }
 
     #[test]
@@ -219,19 +219,19 @@ mod tests {
         let mappings = make_mappings();
 
         assert_eq!(
-            mappings.compress(IRIRef::from(
+            mappings.compress(&IRIRef::from(
                 IRI::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#Bag").unwrap()
             )),
             Some(QName::with_prefix("rdf", "Bag"))
         );
         assert_eq!(
-            mappings.compress(IRIRef::from(
+            mappings.compress(&IRIRef::from(
                 IRI::from_str("http://xmlns.com/foaf/0.1/knows").unwrap()
             )),
             Some(QName::new("knows"))
         );
         assert_eq!(
-            mappings.compress(IRIRef::from(
+            mappings.compress(&IRIRef::from(
                 IRI::from_str("http://www.w3.org/2003/01/geo/wgs84_pos#SpatialThing").unwrap()
             )),
             None

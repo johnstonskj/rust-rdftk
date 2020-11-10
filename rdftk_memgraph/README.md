@@ -7,6 +7,13 @@ An implementation of the `Graph` traits for simple in-memory cases.
 
 ## Changes
 
+**Version 0.1.5**
+
+* API changes in core crate:
+  * Split `Graph` into `Graph` and `MutableGraph`.
+  * Split `NamedGraph` into `NamedGraph` and `MutableNamedGraph`.
+  * Altered `PrefixMappings::compress` and `PrefixMappings::expand` to take references.
+  
 **Version 0.1.4**
 
 * API changes in IRI crate.
