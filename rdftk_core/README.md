@@ -29,6 +29,13 @@ pub fn make_statements() -> Vec<Rc<Statement>> {
 
 ## Changes
 
+**Version 0.1.7**
+
+* Split `Graph` into `Graph` and `MutableGraph`.
+* Split `NamedGraph` into `NamedGraph` and `MutableNamedGraph`.
+* Added `get_default_namespace` to the `PrefixMappings` trait as a helper function.
+* Altered `PrefixMappings::compress` and `PrefixMappings::expand` to take references.
+
 **Version 0.1.6**
 
 * Explicit version management.

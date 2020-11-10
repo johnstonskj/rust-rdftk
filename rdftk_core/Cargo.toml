@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_core"
-version = "0.1.6"
+version = "0.1.7"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
 description = "The core data model; concrete implementations for Statements and Literals, along with a concrete Resource type  that provides a builder-like experience for models."

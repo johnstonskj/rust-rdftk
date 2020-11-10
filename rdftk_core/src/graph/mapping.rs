@@ -29,15 +29,19 @@ pub trait PrefixMappings: Debug {
 
     fn len(&self) -> usize;
 
+    fn get_default_namespace(&self) -> Option<&IRIRef> {
+        self.get_namespace(&Prefix::Default)
+    }
+
     fn get_namespace(&self, prefix: &Prefix) -> Option<&IRIRef>;
 
     fn get_prefix(&self, namespace: &IRIRef) -> Option<&Prefix>;
 
     fn prefixes(&self) -> Vec<&Prefix>;
 
-    fn expand(&self, qname: QName) -> Option<IRIRef>;
+    fn expand(&self, qname: &QName) -> Option<IRIRef>;
 
-    fn compress(&self, iri: IRIRef) -> Option<QName>;
+    fn compress(&self, iri: &IRIRef) -> Option<QName>;
 
     fn insert_default(&mut self, iri: IRIRef) -> &mut Self
     where

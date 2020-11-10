@@ -16,7 +16,7 @@ use std::rc::Rc;
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
-/// The core `Graph` type implemented by all model providers.
+/// The core graph interface implemented by all model providers.
 pub trait Graph {
     fn is_empty(&self) -> bool;
 
@@ -42,6 +42,11 @@ pub trait Graph {
 
     fn resource_for(&self, subject: &SubjectNode) -> Resource;
 
+    fn prefix_mappings(&self) -> Rc<dyn PrefixMappings>;
+}
+
+/// The core graph interface interface implemented by all model providers.
+pub trait MutableGraph: Graph {
     fn insert(&mut self, statement: Statement);
 
     fn merge(&mut self, other: Rc<dyn Graph>);
@@ -53,8 +58,6 @@ pub trait Graph {
     fn remove_all_for(&mut self, subject: &SubjectNode);
 
     fn clear(&mut self);
-
-    fn prefix_mappings(&self) -> Rc<dyn PrefixMappings>;
 }
 
 // ------------------------------------------------------------------------------------------------
