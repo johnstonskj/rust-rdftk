@@ -57,8 +57,22 @@ pub fn make_document(
     language: &str,
     default_namespace: Option<IRIRef>,
 ) -> Result<Document, Error> {
+    let mut ns_mappings = standard_mappings();
+    if let Some(default_namespace) = default_namespace {
+        ns_mappings.insert_default(default_namespace);
+    }
+
+    make_document_with_mappings(scheme, language, ns_mappings)
+}
+
+pub fn make_document_with_mappings(
+    scheme: &Scheme,
+    language: &str,
+    ns_mappings: Mappings,
+) -> Result<Document, Error> {
+    let context = Context::new(scheme, language, ns_mappings);
+
     let mut document: Document = Default::default();
-    let context = Context::new(scheme, language);
 
     write_entity_header(&mut document, scheme, "Scheme", 1, &context)?;
 
@@ -123,7 +137,10 @@ pub fn make_document(
 
     document.add_heading(Heading::sub_section("Appendix - RDF"));
 
-    let graph = to_rdf_graph(&scheme, default_namespace);
+    let graph = to_rdf_graph(
+        &scheme,
+        context.ns_mappings.get_default_namespace().cloned(),
+    );
     let writer = TurtleWriter::default();
     let code = write_graph_to_string(&writer, &graph)?;
 
@@ -137,12 +154,12 @@ pub fn make_document(
 // ------------------------------------------------------------------------------------------------
 
 impl<'a> Context<'a> {
-    fn new(scheme: &'a Scheme, language: &'a str) -> Self {
+    fn new(scheme: &'a Scheme, language: &'a str, ns_mappings: Mappings) -> Self {
         // make collection mappings!
         let mut collections = scheme.collections_flattened();
         collections.sort_by_key(|collection| collection.borrow().preferred_label(language));
         Self {
-            ns_mappings: standard_mappings(),
+            ns_mappings,
             collections,
             language,
         }
@@ -217,7 +234,7 @@ fn write_labels<'a>(
             let mut quote = Quote::default();
             quote.add_paragraph(Paragraph::bold_str(&match context
                 .ns_mappings
-                .compress(label.kind().to_uri())
+                .compress(&label.kind().to_uri())
             {
                 None => label.kind().to_uri().to_string(),
                 Some(qname) => qname.to_string(),
@@ -258,16 +275,14 @@ fn write_other_properties<'a>(
     ]);
     for property in properties.iter() {
         table.add_row(Row::new(&[
-            Cell::text_str(
-                &match context.ns_mappings.compress(property.predicate().clone()) {
-                    None => property.predicate().to_string(),
-                    Some(qname) => qname.to_string(),
-                },
-            ),
+            Cell::text_str(&match context.ns_mappings.compress(&property.predicate()) {
+                None => property.predicate().to_string(),
+                Some(qname) => qname.to_string(),
+            }),
             Cell::text_str(&property.value().lexical_form()),
             Cell::text_str(&match property.value().data_type() {
                 None => String::new(),
-                Some(dt) => match context.ns_mappings.compress(data_type_uri(dt)) {
+                Some(dt) => match context.ns_mappings.compress(&data_type_uri(dt)) {
                     None => property.predicate().to_string(),
                     Some(qname) => qname.to_string(),
                 },
@@ -337,13 +352,29 @@ fn write_concept_relations<'a>(
         let related = related.borrow();
         let label = related.preferred_label(context.language);
         table.add_row(Row::new(&[
-            Cell::text_str(&match context.ns_mappings.compress(relation.to_uri()) {
+            Cell::text_str(&match context.ns_mappings.compress(&relation.to_uri()) {
                 None => relation.to_uri().to_string(),
                 Some(qname) => qname.to_string(),
             }),
             Cell::link(HyperLink::internal_with_label_str(
                 Anchor::new(&format!("Concept: {}", label)).unwrap(),
                 &label,
+            )),
+        ]));
+    }
+    for (relation, related) in concept.external_relations() {
+        let related_label = match context.ns_mappings.compress(&related.clone()) {
+            None => related.to_string(),
+            Some(qname) => qname.to_string(),
+        };
+        table.add_row(Row::new(&[
+            Cell::text_str(&match context.ns_mappings.compress(&relation) {
+                None => relation.to_string(),
+                Some(qname) => qname.to_string(),
+            }),
+            Cell::link(HyperLink::external_with_label_str(
+                &&related.to_string(),
+                &related_label,
             )),
         ]));
     }

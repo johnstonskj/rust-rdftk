@@ -11,7 +11,7 @@ TBD
 */
 
 use crate::ns;
-use rdftk_core::graph::{Graph, PrefixMappings};
+use rdftk_core::graph::{MutableGraph, PrefixMappings};
 use rdftk_core::{ObjectNode, Statement, SubjectNode};
 use rdftk_iri::IRIRef;
 use rdftk_memgraph::{Mappings, MemGraph};

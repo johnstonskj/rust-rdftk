@@ -34,14 +34,13 @@ pub enum ConceptRelation {
     BroaderInstantial,
     Related,
     InverseRelated,
-    //    Other(IRIRef),
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Concept {
     uri: IRIRef,
     concepts: Vec<(ConceptRelation, Rc<RefCell<Concept>>)>,
-    //    inverse: Vec<(ConceptRelation, Rc<RefCell<Concept>>)>,
+    external_relations: Vec<(IRIRef, IRIRef)>,
     preferred_label: Option<String>,
     labels: Vec<Label>,
     properties: Vec<LiteralProperty>,
@@ -68,7 +67,6 @@ impl ToURI for ConceptRelation {
             Self::BroaderInstantial => ns::iso::broader_instantial(),
             Self::Related => ns::related(),
             Self::InverseRelated => ns::related(),
-            //            Self::Other(iri) => iri,
         }
         .clone()
     }
@@ -89,17 +87,17 @@ impl ConceptRelation {
     }
 
     pub fn is_narrower(&self) -> bool {
-        match self {
-            Self::Narrower | Self::NarrowerPartitive | Self::NarrowerInstantial => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            Self::Narrower | Self::NarrowerPartitive | Self::NarrowerInstantial
+        )
     }
 
     pub fn is_broader(&self) -> bool {
-        match self {
-            Self::Broader | Self::BroaderPartitive | Self::BroaderInstantial => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            Self::Broader | Self::BroaderPartitive | Self::BroaderInstantial
+        )
     }
 }
 
@@ -126,23 +124,23 @@ impl Labeled for Concept {
         self.labels.push(label)
     }
 
-    fn preferred_label(&self, for_language: &str) -> String {
-        if let Some(label) = &self.preferred_label {
-            label.clone()
-        } else {
-            match final_preferred_label(self, for_language) {
-                None => self.uri().to_string(),
-                Some(s) => s.clone(),
-            }
-        }
-    }
-
     fn has_labels(&self) -> bool {
         !self.labels.is_empty()
     }
 
     fn labels(&self) -> &Vec<Label> {
         &self.labels
+    }
+
+    fn preferred_label(&self, for_language: &str) -> String {
+        if let Some(label) = &self.preferred_label {
+            label.clone()
+        } else {
+            match final_preferred_label(self, for_language) {
+                None => self.uri().to_string(),
+                Some(s) => s,
+            }
+        }
     }
 }
 
@@ -184,7 +182,7 @@ impl Concept {
         Self {
             uri: uri.clone(),
             concepts: Default::default(),
-            //            inverse: Default::default(),
+            external_relations: Default::default(),
             preferred_label: None,
             labels: Default::default(),
             properties: Default::default(),
@@ -279,6 +277,8 @@ impl Concept {
         self.add_related_concept(ConceptRelation::Related, concept)
     }
 
+    // --------------------------------------------------------------------------------------------
+
     pub fn has_concepts(&self) -> bool {
         !self.concepts.is_empty()
     }
@@ -302,5 +302,19 @@ impl Concept {
             })
             .flatten()
             .collect()
+    }
+
+    // --------------------------------------------------------------------------------------------
+
+    pub fn has_external_relations(&self) -> bool {
+        !self.external_relations.is_empty()
+    }
+
+    pub fn external_relations(&self) -> impl Iterator<Item = &(IRIRef, IRIRef)> {
+        self.external_relations.iter()
+    }
+
+    pub fn add_external_relation(&mut self, relation: IRIRef, related: IRIRef) {
+        self.external_relations.push((relation, related));
     }
 }

@@ -1,7 +1,13 @@
+use rdftk_core::graph::PrefixMappings;
 use rdftk_core::{DataType, Literal};
 use rdftk_iri::{IRIRef, IRI};
-use rdftk_names::{dc, xsd};
-use rdftk_skos::simple::{to_rdf_graph, Labeled, LiteralProperty, Propertied, Scheme};
+use rdftk_names::{dc, owl, xsd};
+use rdftk_skos::document::make_document_with_mappings;
+use rdftk_skos::simple::{
+    standard_mappings, to_rdf_graph, Labeled, LiteralProperty, Propertied, Scheme,
+};
+use somedoc::write::markdown::MarkdownFlavor;
+use somedoc::write::write_document_to_string;
 use std::str::FromStr;
 
 fn make_unesco_computer() -> Scheme {
@@ -23,6 +29,12 @@ fn make_unesco_computer() -> Scheme {
     computers.add_preferred_label("Computers", "en");
     computers.add_preferred_label("Ordinateur", "fr");
     computers.add_preferred_label("Компьютеры", "ru");
+    computers.add_external_relation(
+        owl::equivalent_class().clone(),
+        IRI::from_str("http://dbpedia.org/ontology/InformationAppliance")
+            .unwrap()
+            .into(),
+    );
 
     let analog_computers = computers.sub_concept(&IRIRef::from(
         IRI::from_str("http://vocabularies.unesco.org/thesaurus/concept2258").unwrap(),
@@ -90,19 +102,26 @@ fn test_simple_thesaurus_to_rdf() {
     assert_eq!(statements.len(), 42);
 }
 
+const MARKDOWN: &str = include_str!("simple_thesaurus.md");
+
 #[test]
 fn test_simple_thesaurus_to_markdown() {
-    use rdftk_skos::document::make_document;
-    use somedoc::write::markdown::MarkdownFlavor;
-    use somedoc::write::write_document_to_string;
-
     let scheme = make_unesco_computer();
 
-    let result = make_document(&scheme, "en", None);
+    let mut mappings = standard_mappings();
+    mappings.insert(
+        "dbpedia",
+        IRI::from_str("http://dbpedia.org/ontology/")
+            .unwrap()
+            .into(),
+    );
+    let result = make_document_with_mappings(&scheme, "en", mappings);
 
     assert!(result.is_ok());
     let doc = result.unwrap();
 
     let md = write_document_to_string(&doc, MarkdownFlavor::default().into()).unwrap();
     println!("{}", md);
+
+    assert!(md.starts_with(MARKDOWN));
 }

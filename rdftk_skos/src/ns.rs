@@ -1,12 +1,5 @@
 /*!
 Namespaces for SKOS, SKOS eXtension for Labels (SKOS-XL), and the ISO-25964 thesaurus vocabulary.
-
-Details TBD
-
-# Example
-
-TBD
-
 */
 
 namespace! {

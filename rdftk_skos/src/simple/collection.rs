@@ -53,10 +53,7 @@ impl Member {
     }
 
     pub fn is_concept(&self) -> bool {
-        match self {
-            Self::Concept(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Concept(_))
     }
 
     pub fn as_concept(&self) -> Option<&Rc<RefCell<Concept>>> {
@@ -67,10 +64,7 @@ impl Member {
     }
 
     pub fn is_collection(&self) -> bool {
-        match self {
-            Self::Collection(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Collection(_))
     }
 
     pub fn as_collection(&self) -> Option<&Rc<RefCell<Collection>>> {
@@ -104,23 +98,23 @@ impl Labeled for Collection {
         self.labels.push(label)
     }
 
-    fn preferred_label(&self, for_language: &str) -> String {
-        if let Some(label) = &self.preferred_label {
-            label.clone()
-        } else {
-            match final_preferred_label(self, for_language) {
-                None => self.uri().to_string(),
-                Some(s) => s.clone(),
-            }
-        }
-    }
-
     fn has_labels(&self) -> bool {
         !self.labels.is_empty()
     }
 
     fn labels(&self) -> &Vec<Label> {
         &self.labels
+    }
+
+    fn preferred_label(&self, for_language: &str) -> String {
+        if let Some(label) = &self.preferred_label {
+            label.clone()
+        } else {
+            match final_preferred_label(self, for_language) {
+                None => self.uri().to_string(),
+                Some(s) => s,
+            }
+        }
     }
 }
 
@@ -273,7 +267,7 @@ fn make_list_node(statements: &mut Vec<Statement>, from: Option<SubjectNode>) ->
     let new_node = SubjectNode::blank();
     if let Some(from) = from {
         statements.push(Statement::new(
-            from.clone(),
+            from,
             rdf::rest().clone(),
             new_node.clone().into(),
         ));

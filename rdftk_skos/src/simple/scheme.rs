@@ -61,23 +61,23 @@ impl Labeled for Scheme {
         self.labels.push(label)
     }
 
-    fn preferred_label(&self, for_language: &str) -> String {
-        if let Some(label) = &self.preferred_label {
-            label.clone()
-        } else {
-            match final_preferred_label(self, for_language) {
-                None => self.uri().to_string(),
-                Some(s) => s.clone(),
-            }
-        }
-    }
-
     fn has_labels(&self) -> bool {
         !self.labels.is_empty()
     }
 
     fn labels(&self) -> &Vec<Label> {
         &self.labels
+    }
+
+    fn preferred_label(&self, for_language: &str) -> String {
+        if let Some(label) = &self.preferred_label {
+            label.clone()
+        } else {
+            match final_preferred_label(self, for_language) {
+                None => self.uri().to_string(),
+                Some(s) => s,
+            }
+        }
     }
 }
 
@@ -107,7 +107,7 @@ impl ToStatements for Scheme {
                 statements.push(Statement::new(
                     subject.clone(),
                     ns::has_top_concept().clone(),
-                    ObjectNode::named(member.borrow().uri().clone()).into(),
+                    ObjectNode::named(member.borrow().uri().clone()),
                 ));
             }
         }

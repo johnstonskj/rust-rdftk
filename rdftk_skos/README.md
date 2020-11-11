@@ -11,6 +11,13 @@ TBD
 
 ## Changes
 
+**Version 0.1.21**
+
+* Added the notion of "_external relations_" to a concept.
+* Changed signatures on the document writer functions.
+* API changes in core crate:
+  * Altered `PrefixMappings::compress` and `PrefixMappings::expand` to take references.
+
 **Version 0.1.20**
 
 * upgraded `somedoc` dependency.
