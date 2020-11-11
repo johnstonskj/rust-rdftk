@@ -167,6 +167,13 @@ impl ToStatements for Concept {
                 to_concept.borrow().uri().clone().into(),
             ));
         }
+        for (relation, to_concept) in &self.external_relations {
+            statements.push(Statement::new(
+                subject.clone(),
+                relation.clone(),
+                to_concept.clone().into(),
+            ));
+        }
         for label in self.labels() {
             statements.push(label.to_statement(&subject));
         }

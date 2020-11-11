@@ -11,6 +11,10 @@ TBD
 
 ## Changes
 
+**Version 0.1.22**
+
+* Added "_external relations_" to `Concept::to_statements`.
+
 **Version 0.1.21**
 
 * Added the notion of "_external relations_" to a concept.

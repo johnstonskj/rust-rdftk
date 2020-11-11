@@ -99,7 +99,7 @@ fn test_simple_thesaurus_to_rdf() {
     for statement in &statements {
         println!("{}", statement);
     }
-    assert_eq!(statements.len(), 42);
+    assert_eq!(statements.len(), 43);
 }
 
 const MARKDOWN: &str = include_str!("simple_thesaurus.md");
