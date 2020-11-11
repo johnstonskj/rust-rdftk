@@ -115,6 +115,12 @@ fn test_simple_thesaurus_to_markdown() {
             .unwrap()
             .into(),
     );
+    mappings.insert_default(
+        IRI::from_str("http://vocabularies.unesco.org/thesaurus/")
+            .unwrap()
+            .into(),
+    );
+
     let result = make_document_with_mappings(&scheme, "en", mappings);
 
     assert!(result.is_ok());

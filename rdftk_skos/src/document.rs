@@ -14,8 +14,8 @@ use crate::simple::collection::Member;
 use crate::simple::concept::ConceptRelation;
 use crate::simple::properties::LabelKind;
 use crate::simple::{
-    standard_mappings, to_rdf_graph, Collection, Concept, Label, Labeled, LiteralProperty,
-    Resource, Scheme, ToURI,
+    standard_mappings, to_rdf_graph_with_mappings, Collection, Concept, Label, Labeled,
+    LiteralProperty, Resource, Scheme, ToURI,
 };
 use rdftk_core::graph::PrefixMappings;
 use rdftk_core::DataType;
@@ -137,10 +137,7 @@ pub fn make_document_with_mappings(
 
     document.add_heading(Heading::sub_section("Appendix - RDF"));
 
-    let graph = to_rdf_graph(
-        &scheme,
-        context.ns_mappings.get_default_namespace().cloned(),
-    );
+    let graph = to_rdf_graph_with_mappings(&scheme, context.ns_mappings);
     let writer = TurtleWriter::default();
     let code = write_graph_to_string(&writer, &graph)?;
 

@@ -101,13 +101,17 @@ pub trait ToURI {
 // ------------------------------------------------------------------------------------------------
 
 pub fn to_rdf_graph(scheme: &Scheme, default_namespace: Option<IRIRef>) -> MemGraph {
+    let mut ns_mappings = standard_mappings();
+    if let Some(default_namespace) = default_namespace {
+        ns_mappings.insert_default(default_namespace);
+    }
+    to_rdf_graph_with_mappings(scheme, ns_mappings)
+}
+
+pub fn to_rdf_graph_with_mappings(scheme: &Scheme, ns_mappings: Mappings) -> MemGraph {
     let mut graph = MemGraph::default();
 
-    let mut mappings = standard_mappings();
-    if let Some(default_namespace) = default_namespace {
-        mappings.insert_default(default_namespace.clone());
-    }
-    graph.mappings(Rc::new(mappings));
+    graph.mappings(Rc::new(ns_mappings));
 
     for statement in scheme.to_statements(None) {
         graph.insert(statement);
