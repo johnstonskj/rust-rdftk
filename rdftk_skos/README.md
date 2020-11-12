@@ -11,10 +11,13 @@ TBD
 
 ## Changes
 
+**Version 0.1.24**
+
+* De-dup the flattened list of concepts before documenting.
+
 **Version 0.1.23**
 
 * Added `to_rdf_graph_with_mappings` to allow for the mappings in `make_document_with_mappings` to flow through.
-* 
 
 **Version 0.1.22**
 

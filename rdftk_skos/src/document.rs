@@ -108,6 +108,7 @@ pub fn make_document_with_mappings(
 
         let mut concepts = scheme.concepts_flattened();
         concepts.sort_by_key(|concept| concept.borrow().preferred_label(language));
+        concepts.dedup();
 
         for concept in &concepts {
             for (relation, related) in concept.borrow().concepts() {
