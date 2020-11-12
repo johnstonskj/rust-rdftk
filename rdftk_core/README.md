@@ -29,6 +29,10 @@ pub fn make_statements() -> Vec<Rc<Statement>> {
 
 ## Changes
 
+**Version 0.1.8**
+
+* Explicit exports over `pub use *`.
+
 **Version 0.1.7**
 
 * Split `Graph` into `Graph` and `MutableGraph`.

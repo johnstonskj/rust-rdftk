@@ -65,10 +65,10 @@ pub trait MutableGraph: Graph {
 // ------------------------------------------------------------------------------------------------
 
 pub mod named;
-pub use named::*;
+pub use named::{MutableNamedGraph, NamedGraph};
 
 pub mod caching;
-pub use caching::*;
+pub use caching::CachingGraph;
 
 pub mod mapping;
-pub use mapping::*;
+pub use mapping::{Prefix, PrefixMappings};

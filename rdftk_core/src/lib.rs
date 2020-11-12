@@ -31,16 +31,16 @@ extern crate error_chain;
 pub mod error;
 
 pub mod graph;
-pub use graph::Graph;
+pub use graph::{Graph, PrefixMappings};
 
 pub mod literal;
-pub use literal::*;
+pub use literal::{DataType, Literal};
 
 pub mod qname;
-pub use qname::*;
+pub use qname::QName;
 
 pub mod resource;
-pub use resource::*;
+pub use resource::Resource;
 
 pub mod statement;
-pub use statement::*;
+pub use statement::{ObjectNode, Statement, SubjectNode};
