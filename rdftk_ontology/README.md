@@ -2,14 +2,14 @@
 
 Placeholder for an Ontology API.
 
-[![crates.io](https://img.shields.io/crates/v/rdftk_query.svg)](https://crates.io/crates/rdftk_query)
-[![docs.rs](https://docs.rs/rdftk_query/badge.svg)](https://docs.rs/rdftk_query)
+[![crates.io](https://img.shields.io/crates/v/rdftk_ontology.svg)](https://crates.io/crates/rdftk_ontology)
+[![docs.rs](https://docs.rs/rdftk_ontology/badge.svg)](https://docs.rs/rdftk_ontology)
 
 ## Changes
 
-**Version 0.1.0**
+**Version 0.1.0-pre**
 
-* First release
+* Creating framework, adding RDFS initially. 
 
 ## TODO
 

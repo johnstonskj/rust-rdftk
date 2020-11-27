@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_ontology"
-version = "0.1.0"
+version = "0.1.0-pre"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
 description = "Placeholder for an Ontology API"
