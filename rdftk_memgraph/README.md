@@ -7,6 +7,10 @@ An implementation of the `Graph` traits for simple in-memory cases.
 
 ## Changes
 
+**Version 0.1.6**
+
+* Simple rename in `MutableGraph`, `de_duplicate` -> `dedup`.
+
 **Version 0.1.5**
 
 * API changes in core crate:

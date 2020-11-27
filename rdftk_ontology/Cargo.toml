@@ -1,10 +1,10 @@
 [package]
-name = "rdftk_memgraph"
-version = "0.1.6"
+name = "rdftk_ontology"
+version = "0.1.0"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
-description = "An implementation of the`Graph traits for simple in-memory cases"
-documentation = "https://docs.rs/rdftk_core/"
+description = "Placeholder for an Ontology API"
+documentation = "https://docs.rs/rdftk_ontology/"
 repository = "https://github.com/johnstonskj/rust-rdftk.git"
 license = "MIT"
 readme = "README.md"
@@ -16,6 +16,7 @@ publish = true
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-rdftk_iri = { version = "0.1.2", path = "../rdftk_iri" }
-rdftk_core = { version = "0.1.7", path = "../rdftk_core" }
-rdftk_names = { version = "0.1.4", path = "../rdftk_names" }
+lazy_static = "1.4.0"
+rdftk_core = { version = "0.1", path = "../rdftk_core" }
+rdftk_iri = { version = "0.1", path = "../rdftk_iri" }
+rdftk_names = { version = "0.1", path = "../rdftk_names" }
