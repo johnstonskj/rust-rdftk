@@ -22,6 +22,10 @@ pub trait Graph {
 
     fn len(&self) -> usize;
 
+    fn contains_subject(&self, subject: &SubjectNode) -> bool;
+
+    fn contains_individual(&self, subject: &IRIRef) -> bool;
+
     fn contains(&self, statement: &Statement) -> bool;
 
     fn contains_all(&self, subject: &SubjectNode, predicate: &IRIRef, object: &ObjectNode) -> bool;
@@ -51,7 +55,7 @@ pub trait MutableGraph: Graph {
 
     fn merge(&mut self, other: Rc<dyn Graph>);
 
-    fn de_duplicate(&mut self);
+    fn dedup(&mut self);
 
     fn remove(&mut self, statement: &Statement);
 

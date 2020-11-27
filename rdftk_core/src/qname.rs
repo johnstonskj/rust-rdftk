@@ -56,10 +56,6 @@ pub struct QName {
 }
 
 // ------------------------------------------------------------------------------------------------
-// Public Functions
-// ------------------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
@@ -92,7 +88,7 @@ impl FromStr for QName {
             match parts.len() {
                 NAME_ONLY => {
                     let name = *parts.get(0).unwrap();
-                    if is_xml_name(name) {
+                    if QName::is_valid(name) {
                         Ok(QName {
                             prefix: None,
                             name: name.to_string(),
@@ -104,7 +100,7 @@ impl FromStr for QName {
                 PREFIX_AND_NAME => {
                     let prefix = *parts.get(0).unwrap();
                     let name = *parts.get(1).unwrap();
-                    if is_xml_name(prefix) && is_xml_name(name) {
+                    if QName::is_valid(prefix) && QName::is_valid(name) {
                         Ok(QName {
                             prefix: Some(prefix.to_string()),
                             name: name.to_string(),
@@ -121,7 +117,7 @@ impl FromStr for QName {
 
 impl QName {
     pub fn new(name: &str) -> Self {
-        assert!(is_xml_name(name));
+        assert!(QName::is_valid(name));
         Self {
             prefix: None,
             name: name.to_string(),
@@ -129,8 +125,8 @@ impl QName {
     }
 
     pub fn with_prefix(prefix: &str, name: &str) -> Self {
-        assert!(is_xml_name(prefix));
-        assert!(is_xml_name(name));
+        assert!(QName::is_valid(prefix));
+        assert!(QName::is_valid(name));
         Self {
             prefix: Some(prefix.to_string()),
             name: name.to_string(),
@@ -155,11 +151,11 @@ impl QName {
             &self.name
         )
     }
-}
 
-// ------------------------------------------------------------------------------------------------
-// Private Types
-// ------------------------------------------------------------------------------------------------
+    pub fn is_valid(part: &str) -> bool {
+        is_xml_name(part)
+    }
+}
 
 // ------------------------------------------------------------------------------------------------
 // Private Functions

@@ -68,6 +68,17 @@ impl Graph for MemGraph {
         self.statements.len()
     }
 
+    fn contains_subject(&self, subject: &SubjectNode) -> bool {
+        self.statements
+            .iter()
+            .any(|st| st.as_ref().subject() == subject)
+    }
+
+    fn contains_individual(&self, subject: &IRIRef) -> bool {
+        let subject: SubjectNode = subject.clone().into();
+        self.objects_for(&subject, rdf::a_type()).is_empty()
+    }
+
     fn contains(&self, statement: &Statement) -> bool {
         self.statements.iter().any(|st| st.as_ref() == statement)
     }
@@ -157,7 +168,7 @@ impl MutableGraph for MemGraph {
         }
     }
 
-    fn de_duplicate(&mut self) {
+    fn dedup(&mut self) {
         let mut sts: HashSet<Rc<Statement>> = self.statements.drain(..).collect();
         self.statements = sts.drain().collect()
     }
@@ -224,3 +235,4 @@ impl MemGraph {
 
 pub mod mapping;
 pub use mapping::*;
+use rdftk_names::rdf;

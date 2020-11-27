@@ -13,6 +13,7 @@ use crate::literal::Literal;
 use rdftk_iri::IRIRef;
 use rdftk_names::rdf;
 use std::fmt::{Display, Formatter};
+use std::rc::Rc;
 use unique_id::sequence::SequenceGenerator as IDGenerator;
 use unique_id::Generator;
 
@@ -24,6 +25,7 @@ use unique_id::Generator;
 enum Subject {
     BNode(String),
     IRI(IRIRef),
+    Star(Rc<Statement>),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -36,6 +38,7 @@ enum Object {
     BNode(String),
     IRI(IRIRef),
     Literal(Box<Literal>),
+    Star(Rc<Statement>),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -51,10 +54,6 @@ pub struct Statement {
 }
 
 // ------------------------------------------------------------------------------------------------
-// Public Functions
-// ------------------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
@@ -66,6 +65,7 @@ impl Display for SubjectNode {
             match &self.inner {
                 Subject::BNode(node) => format!("_:{}", node),
                 Subject::IRI(iri) => format!("<{}>", iri),
+                Subject::Star(st) => format!("<{}>", st),
             }
         )
     }
@@ -80,6 +80,24 @@ impl From<IRIRef> for SubjectNode {
 impl From<&IRIRef> for SubjectNode {
     fn from(iri: &IRIRef) -> Self {
         SubjectNode::named(iri.clone())
+    }
+}
+
+impl From<Statement> for SubjectNode {
+    fn from(st: Statement) -> Self {
+        SubjectNode::about(Rc::from(st))
+    }
+}
+
+impl From<&Statement> for SubjectNode {
+    fn from(st: &Statement) -> Self {
+        SubjectNode::about(Rc::from(st.clone()))
+    }
+}
+
+impl From<Rc<Statement>> for SubjectNode {
+    fn from(st: Rc<Statement>) -> Self {
+        SubjectNode::about(st)
     }
 }
 
@@ -102,11 +120,14 @@ impl SubjectNode {
         }
     }
 
-    pub fn is_blank(&self) -> bool {
-        match self.inner {
-            Subject::BNode(_) => true,
-            _ => false,
+    pub fn about(st: Rc<Statement>) -> Self {
+        Self {
+            inner: Subject::Star(st),
         }
+    }
+
+    pub fn is_blank(&self) -> bool {
+        matches!(self.inner, Subject::BNode(_))
     }
 
     pub fn as_blank(&self) -> Option<&String> {
@@ -117,10 +138,7 @@ impl SubjectNode {
     }
 
     pub fn is_iri(&self) -> bool {
-        match self.inner {
-            Subject::IRI(_) => true,
-            _ => false,
-        }
+        matches!(self.inner, Subject::IRI(_))
     }
 
     #[inline]
@@ -131,6 +149,17 @@ impl SubjectNode {
     pub fn as_iri(&self) -> Option<&IRIRef> {
         match &self.inner {
             Subject::IRI(u) => Some(u),
+            _ => None,
+        }
+    }
+
+    pub fn is_statement(&self) -> bool {
+        matches!(self.inner, Subject::Star(_))
+    }
+
+    pub fn as_statement(&self) -> Option<&Rc<Statement>> {
+        match &self.inner {
+            Subject::Star(st) => Some(st),
             _ => None,
         }
     }
@@ -147,6 +176,7 @@ impl Display for ObjectNode {
                 Object::BNode(node) => format!("_:{}", node),
                 Object::IRI(iri) => format!("<{}>", iri),
                 Object::Literal(literal) => literal.to_string(),
+                Object::Star(st) => format!("<{}>", st),
             }
         )
     }
@@ -164,6 +194,18 @@ impl From<&IRIRef> for ObjectNode {
     }
 }
 
+impl From<Statement> for ObjectNode {
+    fn from(st: Statement) -> Self {
+        ObjectNode::about(Rc::from(st))
+    }
+}
+
+impl From<Rc<Statement>> for ObjectNode {
+    fn from(st: Rc<Statement>) -> Self {
+        ObjectNode::about(st)
+    }
+}
+
 impl From<Literal> for ObjectNode {
     fn from(literal: Literal) -> Self {
         Self {
@@ -177,6 +219,7 @@ impl From<SubjectNode> for ObjectNode {
         match subject.inner {
             Subject::BNode(node) => ObjectNode::blank_named(&node),
             Subject::IRI(iri) => ObjectNode::named(iri),
+            Subject::Star(st) => ObjectNode::about(st),
         }
     }
 }
@@ -186,6 +229,7 @@ impl From<&SubjectNode> for ObjectNode {
         match &subject.inner {
             Subject::BNode(node) => ObjectNode::blank_named(node),
             Subject::IRI(iri) => ObjectNode::named(iri.clone()),
+            Subject::Star(st) => ObjectNode::about(st.clone()),
         }
     }
 }
@@ -209,11 +253,14 @@ impl ObjectNode {
         }
     }
 
-    pub fn is_blank(&self) -> bool {
-        match self.inner {
-            Object::BNode(_) => true,
-            _ => false,
+    pub fn about(st: Rc<Statement>) -> Self {
+        Self {
+            inner: Object::Star(st),
         }
+    }
+
+    pub fn is_blank(&self) -> bool {
+        matches!(self.inner, Object::BNode(_))
     }
 
     pub fn as_blank(&self) -> Option<&String> {
@@ -224,10 +271,7 @@ impl ObjectNode {
     }
 
     pub fn is_iri(&self) -> bool {
-        match self.inner {
-            Object::IRI(_) => true,
-            _ => false,
-        }
+        matches!(self.inner, Object::IRI(_))
     }
 
     pub fn as_iri(&self) -> Option<&IRIRef> {
@@ -244,16 +288,25 @@ impl ObjectNode {
             _ => None,
         }
     }
+
     pub fn is_literal(&self) -> bool {
-        match self.inner {
-            Object::Literal(_) => true,
-            _ => false,
-        }
+        matches!(self.inner, Object::Literal(_))
     }
 
     pub fn as_literal(&self) -> Option<&Literal> {
         match &self.inner {
             Object::Literal(l) => Some(l),
+            _ => None,
+        }
+    }
+
+    pub fn is_statement(&self) -> bool {
+        matches!(self.inner, Object::Star(_))
+    }
+
+    pub fn as_statement(&self) -> Option<&Rc<Statement>> {
+        match &self.inner {
+            Object::Star(st) => Some(st),
             _ => None,
         }
     }
@@ -282,6 +335,22 @@ impl Statement {
         }
     }
 
+    pub fn also(&self, predicate: IRIRef, object: ObjectNode) -> Self {
+        Self {
+            subject: self.subject.clone(),
+            predicate,
+            object,
+        }
+    }
+
+    pub fn about(&self, predicate: IRIRef, object: ObjectNode) -> Self {
+        Self {
+            subject: self.into(),
+            predicate,
+            object,
+        }
+    }
+
     pub fn subject(&self) -> &SubjectNode {
         &self.subject
     }
@@ -295,35 +364,13 @@ impl Statement {
     }
 
     pub fn reify(&self) -> Vec<Statement> {
-        let mut statements = Vec::default();
-        let new_subject = SubjectNode::blank();
-        statements.push(Statement::new(
-            new_subject.clone(),
-            rdf::a_type().clone(),
-            rdf::statement().into(),
-        ));
-        statements.push(Statement::new(
-            new_subject.clone(),
-            rdf::subject().clone(),
-            self.subject().into(),
-        ));
-        statements.push(Statement::new(
-            new_subject.clone(),
-            rdf::predicate().clone(),
-            self.predicate().into(),
-        ));
-        statements.push(Statement::new(
-            new_subject,
-            rdf::object().clone(),
-            self.object().clone(),
-        ));
-        statements
+        reify_statement(self).1
+    }
+
+    pub fn is_nested(&self) -> bool {
+        self.subject().is_statement() || self.object().is_statement()
     }
 }
-
-// ------------------------------------------------------------------------------------------------
-// Private Types
-// ------------------------------------------------------------------------------------------------
 
 // ------------------------------------------------------------------------------------------------
 // Private Functions
@@ -333,9 +380,51 @@ fn new_blank_node_id() -> String {
     format!("B{}", IDGenerator::default().next_id())
 }
 
-// ------------------------------------------------------------------------------------------------
-// Modules
-// ------------------------------------------------------------------------------------------------
+fn reify_statement(st: &Statement) -> (SubjectNode, Vec<Statement>) {
+    let mut statements = Vec::default();
+    let new_subject = SubjectNode::blank();
+    statements.push(Statement::new(
+        new_subject.clone(),
+        rdf::a_type().clone(),
+        rdf::statement().into(),
+    ));
+    if st.subject().is_statement() {
+        let nested = reify_statement(st.subject().as_statement().unwrap());
+        statements.extend(nested.1);
+        statements.push(Statement::new(
+            new_subject.clone(),
+            rdf::subject().clone(),
+            nested.0.into(),
+        ));
+    } else {
+        statements.push(Statement::new(
+            new_subject.clone(),
+            rdf::subject().clone(),
+            st.subject().into(),
+        ));
+    }
+    statements.push(Statement::new(
+        new_subject.clone(),
+        rdf::predicate().clone(),
+        st.predicate().into(),
+    ));
+    if st.object().is_statement() {
+        let nested = reify_statement(st.object().as_statement().unwrap());
+        statements.extend(nested.1);
+        statements.push(Statement::new(
+            new_subject.clone(),
+            rdf::object().clone(),
+            nested.0.into(),
+        ));
+    } else {
+        statements.push(Statement::new(
+            new_subject.clone(),
+            rdf::object().clone(),
+            st.object().clone(),
+        ));
+    }
+    (new_subject, statements)
+}
 
 // ------------------------------------------------------------------------------------------------
 // Unit Tests
@@ -354,7 +443,34 @@ mod tests {
             rdf::a_type().clone(),
             rdfs::class().into(),
         );
-        assert_eq!(st.to_string(), "_:01 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2000/01/rdf-schema#class> .");
+        assert_eq!(st.to_string(), "_:01 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2000/01/rdf-schema#Class> .");
+    }
+
+    #[test]
+    fn test_reify_a_statement() {
+        let st = Statement::new(
+            SubjectNode::blank_named("01"),
+            rdf::a_type().clone(),
+            rdfs::class().into(),
+        );
+        let sts = st.reify();
+        assert_eq!(sts.len(), 4);
+    }
+
+    #[test]
+    fn test_nested_statement() {
+        let st = Statement::new(
+            SubjectNode::blank_named("01"),
+            rdf::a_type().clone(),
+            rdfs::class().into(),
+        );
+        let st = Statement::new(st.into(), rdf::a_type().clone(), rdf::statement().into());
+        println!("{}", st);
+        let sts = st.reify();
+        for st in &sts {
+            println!("{}", st);
+        }
+        assert_eq!(sts.len(), 8);
     }
 
     #[test]

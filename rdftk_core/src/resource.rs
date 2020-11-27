@@ -125,10 +125,6 @@ struct Container<T> {
 }
 
 // ------------------------------------------------------------------------------------------------
-// Public Functions
-// ------------------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
@@ -317,6 +313,25 @@ impl Resource {
     // --------------------------------------------------------------------------------------------
 
     ///
+    /// Returns `true` if this instance is a resource in web terms, that is it's subject is an `IRI`.
+    ///
+    #[inline]
+    pub fn is_a_resource(&self) -> bool {
+        self.subject.is_iri()
+    }
+
+    ///
+    /// Returns `true` if this instance is an individual in RDFS terms, that is it has at least one
+    /// `rdf:type` predicate.
+    ///
+    #[inline]
+    pub fn is_an_individual(&self) -> bool {
+        self.predicates.keys().any(|p| p == rdf::a_type())
+    }
+
+    // --------------------------------------------------------------------------------------------
+
+    ///
     /// Add the `Predicate` instance to this resource.
     ///
     pub fn predicate(&mut self, predicate: Predicate) -> &mut Self {
@@ -463,7 +478,7 @@ impl Resource {
     ///
     /// Set the RDF type (classifier) of this resource.
     ///
-    pub fn rdf_type(&mut self, name: IRIRef) -> &mut Self {
+    pub fn instance_of(&mut self, name: IRIRef) -> &mut Self {
         self.insert(
             rdf::a_type().clone(),
             ResourceObject::Resource(Resource::named(name)),
@@ -487,10 +502,7 @@ impl Resource {
 
 impl ResourceObject {
     pub fn is_container(&self) -> bool {
-        match self {
-            ResourceObject::Resources(_) | ResourceObject::Literals(_) => true,
-            _ => false,
-        }
+        matches!(self, ResourceObject::Resources(_) | ResourceObject::Literals(_))
     }
 }
 
@@ -575,10 +587,6 @@ fn flatten(resource: &Resource, sts: &mut Vec<Statement>) {
 }
 
 // ------------------------------------------------------------------------------------------------
-// Modules
-// ------------------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------------------
 // Unit Tests
 // ------------------------------------------------------------------------------------------------
 
@@ -611,8 +619,8 @@ mod tests {
                 .unwrap()
                 .into(),
         )
-        .literal(contact("personalTitle").into(), "Dr.".into())
-        .rdf_type(contact("Person").into())
+        .literal(contact("personalTitle"), "Dr.".into())
+        .instance_of(contact("Person"))
         .to_owned();
         let sts: Vec<Statement> = resource.into();
         assert_eq!(sts.len(), 4);

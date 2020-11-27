@@ -29,6 +29,13 @@ pub fn make_statements() -> Vec<Rc<Statement>> {
 
 ## Changes
 
+**Version 0.1.9**
+
+* Support for [RDF*](https://w3c.github.io/rdf-star/) in `Statement`.
+* Added additional constructors to `Statement`.
+* Renamed Resource method `rdf_type` to `instance_of` for compatibility with RDF schema usage.
+* Added `is_valid` associated function to `QName`.
+
 **Version 0.1.8**
 
 * Explicit exports over `pub use *`.
