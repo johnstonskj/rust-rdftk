@@ -29,6 +29,11 @@ pub fn make_statements() -> Vec<Rc<Statement>> {
 
 ## Changes
 
+**Version 0.1.10**
+
+* Support for [Datasets](https://www.w3.org/TR/rdf11-concepts/#section-dataset) and Quads by adding a context
+  (type `ContextNode`) to `Statement`.
+
 **Version 0.1.9**
 
 * Support for [RDF*](https://w3c.github.io/rdf-star/) in `Statement`.

@@ -47,10 +47,23 @@ pub struct ObjectNode {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+enum Context {
+    Default,
+    BNode(String),
+    IRI(IRIRef),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct ContextNode {
+    inner: Context,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Statement {
     subject: SubjectNode,
     predicate: IRIRef,
     object: ObjectNode,
+    context: ContextNode,
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -65,7 +78,7 @@ impl Display for SubjectNode {
             match &self.inner {
                 Subject::BNode(node) => format!("_:{}", node),
                 Subject::IRI(iri) => format!("<{}>", iri),
-                Subject::Star(st) => format!("<{}>", st),
+                Subject::Star(st) => format!("<{}>", st.to_string_no_dot()),
             }
         )
     }
@@ -176,7 +189,7 @@ impl Display for ObjectNode {
                 Object::BNode(node) => format!("_:{}", node),
                 Object::IRI(iri) => format!("<{}>", iri),
                 Object::Literal(literal) => literal.to_string(),
-                Object::Star(st) => format!("<{}>", st),
+                Object::Star(st) => format!("<{}>", st.to_string_no_dot()),
             }
         )
     }
@@ -281,14 +294,6 @@ impl ObjectNode {
         }
     }
 
-    pub fn as_subject(&self) -> Option<SubjectNode> {
-        match &self.inner {
-            Object::IRI(iri) => Some(SubjectNode::named(iri.clone())),
-            Object::BNode(b) => Some(SubjectNode::blank_named(b)),
-            _ => None,
-        }
-    }
-
     pub fn is_literal(&self) -> bool {
         matches!(self.inner, Object::Literal(_))
     }
@@ -310,19 +315,104 @@ impl ObjectNode {
             _ => None,
         }
     }
+
+    pub fn as_subject(&self) -> Option<SubjectNode> {
+        match &self.inner {
+            Object::IRI(iri) => Some(SubjectNode::named(iri.clone())),
+            Object::BNode(b) => Some(SubjectNode::blank_named(b)),
+            _ => None,
+        }
+    }
+}
+
+// ------------------------------------------------------------------------------------------------
+
+impl Default for ContextNode {
+    fn default() -> Self {
+        Self {
+            inner: Context::Default,
+        }
+    }
+}
+
+impl Display for ContextNode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match &self.inner {
+                Context::Default => String::new(),
+                Context::BNode(node) => format!(" _:{}", node),
+                Context::IRI(iri) => format!(" <{}>", iri),
+            }
+        )
+    }
+}
+
+impl From<IRIRef> for ContextNode {
+    fn from(iri: IRIRef) -> Self {
+        ContextNode::named(iri)
+    }
+}
+
+impl From<&IRIRef> for ContextNode {
+    fn from(iri: &IRIRef) -> Self {
+        ContextNode::named(iri.clone())
+    }
+}
+
+impl ContextNode {
+    pub fn blank() -> Self {
+        Self {
+            inner: Context::BNode(new_blank_node_id()),
+        }
+    }
+
+    pub fn blank_named(name: &str) -> Self {
+        Self {
+            inner: Context::BNode(name.to_string()),
+        }
+    }
+
+    pub fn named(name: IRIRef) -> Self {
+        Self {
+            inner: Context::IRI(name),
+        }
+    }
+
+    pub fn is_blank(&self) -> bool {
+        matches!(self.inner, Context::BNode(_))
+    }
+
+    pub fn as_blank(&self) -> Option<&String> {
+        match &self.inner {
+            Context::BNode(s) => Some(s),
+            _ => None,
+        }
+    }
+
+    pub fn is_iri(&self) -> bool {
+        matches!(self.inner, Context::IRI(_))
+    }
+
+    #[inline]
+    pub fn is_named(&self) -> bool {
+        self.is_iri()
+    }
+
+    pub fn as_iri(&self) -> Option<&IRIRef> {
+        match &self.inner {
+            Context::IRI(u) => Some(u),
+            _ => None,
+        }
+    }
 }
 
 // ------------------------------------------------------------------------------------------------
 
 impl Display for Statement {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{} <{}> {} .",
-            &self.subject.to_string(),
-            &self.predicate.to_string(),
-            &self.object.to_string()
-        )
+        write!(f, "{} .", &self.to_string_no_dot())
     }
 }
 
@@ -332,6 +422,21 @@ impl Statement {
             subject,
             predicate,
             object,
+            context: ContextNode::default(),
+        }
+    }
+
+    pub fn with_context(
+        subject: SubjectNode,
+        predicate: IRIRef,
+        object: ObjectNode,
+        context: ContextNode,
+    ) -> Self {
+        Self {
+            subject,
+            predicate,
+            object,
+            context,
         }
     }
 
@@ -340,6 +445,7 @@ impl Statement {
             subject: self.subject.clone(),
             predicate,
             object,
+            context: self.context().clone(),
         }
     }
 
@@ -348,6 +454,7 @@ impl Statement {
             subject: self.into(),
             predicate,
             object,
+            context: self.context().clone(),
         }
     }
 
@@ -369,6 +476,20 @@ impl Statement {
 
     pub fn is_nested(&self) -> bool {
         self.subject().is_statement() || self.object().is_statement()
+    }
+
+    pub fn context(&self) -> &ContextNode {
+        &self.context
+    }
+
+    pub fn to_string_no_dot(&self) -> String {
+        format!(
+            "{} <{}> {}{}",
+            &self.subject.to_string(),
+            &self.predicate.to_string(),
+            &self.object.to_string(),
+            &self.context.to_string(),
+        )
     }
 }
 
@@ -483,6 +604,20 @@ mod tests {
         assert_eq!(
             st.to_string(),
             "_:01 <http://www.w3.org/2000/01/rdf-schema#label> \"some thing\" ."
+        );
+    }
+
+    #[test]
+    fn test_make_quad() {
+        let st = Statement::with_context(
+            SubjectNode::blank_named("01"),
+            rdfs::label().clone(),
+            Literal::new("some thing").into(),
+            ContextNode::blank_named("05"),
+        );
+        assert_eq!(
+            st.to_string(),
+            "_:01 <http://www.w3.org/2000/01/rdf-schema#label> \"some thing\" _:05 ."
         );
     }
 
