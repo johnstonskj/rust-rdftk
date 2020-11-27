@@ -71,6 +71,10 @@ namespace! {
 
 ## Changes
 
+**Version 0.1.7**
+
+* Added missing names in rdfs vocabulary.
+
 **Version 0.1.6**
 
 * Updated [paste](https://crates.io/crates/paste) dependency.
