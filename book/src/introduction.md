@@ -16,3 +16,16 @@ The RDF toolkit for Rust is a set of crates providing the ability to work with R
 
 1. **Performance**; in terms of implementation, the primary goals of the RDFtk project is to provide a consistent and complete set of crates for handling RDF data. To this end the crates will value readability and usability over runtime optimization (either memory, or speed) at this time. Getting the right interface will be the primary aim with those optimizations coming as necessary.
 1. **Productization**
+
+[![RDF](https://www.w3.org/Icons/SW/Buttons/sw-rdf-blue.png)](http://www.w3.org/2001/sw/wiki/RDF)
+[![OWL](https://www.w3.org/Icons/SW/Buttons/sw-owl-blue.png)](http://www.w3.org/2001/sw/wiki/OWL)
+[![SPARQL](https://www.w3.org/Icons/SW/Buttons/sw-sparql-blue.png)](http://www.w3.org/2001/sw/wiki/SPARQL/) | 
+[![PROV](https://www.w3.org/Icons/SW/Buttons/sw-prov-blue.png)](http://www.w3.org/2001/sw/wiki/PROV)
+[![RIF](https://www.w3.org/Icons/SW/Buttons/sw-rif-blue.png)](http://www.w3.org/2001/sw/wiki/RIF)
+[![SKOS](https://www.w3.org/Icons/SW/Buttons/sw-skos-blue.png)](http://www.w3.org/2001/sw/wiki/SKOS)
+
+<div style="font-size: small; font-style: italic;">
+
+All usage of the W3C Semantic Web Technology Buttons are in accordance with [W3C Semantic Web Logos and Policies](https://www.w3.org/2007/10/sw-logos.html).
+
+</div>

@@ -29,15 +29,24 @@ for the subject.
    1. The data type will be expressed as an IRI usually to one of the defined [XML Schema Data Types](https://www.w3.org/TR/xmlschema-2/)
       or a type expressed in XML Schema.
 
+Due to the three parts in each statement a statement may be referred to as a **Triple**.
+
+A set of statements is a **Graph**, 
+
 ### Visually
 
 It is common in RDF documents to see diagrams representing a statement such as that below. The predicate will be shown 
-as a directed, and annotated, arrow from subject to object.
+as a directed, and annotated, arrow from subject to object. This is similar to Chen's notation for [entity–relationship 
+modeling](http://bit.csc.lsu.edu/~chen/pdf/Chen_Pioneers.pdf), and as such demonstrates RDF's natural style in describing
+data.
+
+It is important to note that all predicates are directional implying that a bi-directional, or **Symmetric** relationship 
+requires two predicates -- see [Vocabulary Descriptions](#vocabulary-descriptions) below.
 
 <a name="fig_1_2"></a>![An RDF Statement](img/primer-spo.png)
 <div class="caption figure">1.2: An RDF Statement</div>
 
-To visually distinguish between named resources, blank nodes, and literals, the following conventions are used.
+To visually distinguish between named resources, blank nodes, and literals, the following conventions will be used.
 
 1. Named resources will be shown as large ovals, their inner name is some short form of the resource's IRI.
 1. Blank nodes will be shown as small ovals usually with no inner name (as they are effectively anonymous).
@@ -64,9 +73,6 @@ license = "MIT"
 readme = "README.md"
 publish = true
 
-[package.metadata.docs.rs]
-targets = ["x86_64-unknown-linux-gnu"]
-
 [dependencies]
 error-chain = "0.12.2"
 unique_id = "0.1.3"
@@ -84,19 +90,21 @@ additional meaning.
 <div class="caption figure">1.4: A Statement</div>
 
 Given this simple start we can begin adding other attributes from the *package* section of the file. These additional
-properties are literal values, so they have been drawn as rectangles.
+properties are literal values, so they have been drawn as rectangles. In this primer we will always show literal values
+in quotes, this is not necessary but adds clarity.
 
 <a name="fig_1_5"></a>![Properties as Statements](img/primer-props.png)
 <div class="caption figure">1.5: Properties as Statements</div>
 
 When we get to the attribute `publish` however we want to express that this is a boolean value and not just a string. 
-To do this we add a data type to the literal value, as shown below.
+To do this we add a data type from the XML Schema Datatypes (XSD) standard to the literal value, as shown below.
 
 <a name="fig_1_6"></a>![Typing a Property](img/primer-datatype.png)
 <div class="caption figure">1.6: Typing a Property</div>
 
 This kind of type annotation can also be applied to a resource, if that resource has an `rdf:type` predicate, thus 
-saving an arrow in the diagram. The different forms of annotation can be seen in the following figure. 
+saving an arrow in the diagram. The different forms of annotation can be seen in the following figure. As it is common 
+to not show the identifier for a blank node the annotation is the only value shown.
 
 <a name="fig_1_7"></a>![Type Annotations](img/primer-annotations.png)
 <div class="caption figure">1.7: Type Annotations</div>
@@ -129,24 +137,42 @@ containing other blank nodes from the previous author example.
 Finally, the real power of the RDF data model is that both subject and object can be resources, and in particular named
 resources, and we can therefore link statements via these. For example; let us assume that the `crates.io` site also
 describes users in RDF, now we can model our author predicate to *either* a blank node as shown above, or a named
-user by using their IRI.
+user by using their IRI. In this example the two sub-graphs are managed by different services but the ubiquitous use
+of the IRI as an identifier means the two are inherently linked.
 
 <a name="fig_1_11"></a>![Linking Statements](img/primer-linkage.png)
 <div class="caption figure">1.11: Linking Statements</div>
 
-## Graphs
-
-As you can hopefully see, the RDF data model is inherently graph-structured.
+This is an important consideration as RDF adheres to the [*Open-World Assumption*](https://en.wikipedia.org/wiki/Open-world_assumption)
+the implication of which is that the same IRI may be the subject of a sub-graph elsewhere, and that the graphs may in
+fact contradict each other.
 
 ## Vocabulary Descriptions
 
+While the term *Schema* is often used in conjunction with RDF the term is problematic for software folks as it has
+unfortunate connotations. For exaample, a database schema restricts the data that exists within its tables, a class in 
+a programming language restricts the shape of instances. In both of these cases the schema has a closed-world assumption
+that it can validate the shape of things and that no things exists outside of schema control.
+
 ### Common Vocabularies
+
+* [RDF](https://www.w3.org/TR/rdf11-concepts/) itself
+* [RDF Schema](https://www.w3.org/TR/rdf-schema/)
+* [XML Schema Datatypes](https://www.w3.org/TR/xmlschema-2/)
+* [OWL](https://www.w3.org/TR/owl2-overview/)
+* [Dublin Core](https://www.dublincore.org/specifications/dublin-core/)
+* [SKOS](https://www.w3.org/TR/skos-reference/)
+
+### Example Vocabulary Mapping
 
 | Section | Attribute | Predicate | Restriction |
 | ------- | ----- | -------- | -----------
 | package | name  | `dcterms:identifier` | |
 |         | version | `semver:version` | |
 |         | authors | `dcterms:contributor` | multiples |
+|         | author/name | `foaf:name` | |
+|         | author/email | `foaf:mbox` | |
+|         | author/image | `foaf:depiction` | |
 |         | edition | `cargo:edition` | |
 |         | description | `dcterms:description` | |
 |         | documentation | `crate:documentation` | |
@@ -158,54 +184,127 @@ As you can hopefully see, the RDF data model is inherently graph-structured.
 |          | *name* | `dcterms:identifier` | |
 |          | *parts* | `dcterms:requires` | `rdf:Bag` |
 | dependencies | | `dcterms:requires` | blank node |
-|              | *name* | `dcterms:identifier` | |
+|              | *name* | `dcterms:references` or `dcterms:identifier` | |
 |              | version | `semver:matches` |
 |              | path | `cargo:path` |
 
+In the table above we used two new namespaces `cargo:`, and `semver:`, the following listing is the RDF Schema for 
+the Cargo vocabulary we have introduced so far. Note that while we assert that the new entity `cargo:Crate` is **a** 
+(the value `a` in this representation is a shortcut for the property `rdf:type`) `rdfs:Class` we do not make assertions 
+about the type of the remaining entities. This is where the RDF entailment comes in, the predicates `rdfs:domain` and
+`rdfs:range` both have an assertion that `rdfs:domain` is `rdfs:Property` and therefore `edition` to `readme` must be
+properties.
+
+```turtle
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix cargo: <http://crates.io/rdf/cargo#> .
+
+<http://crates.io/rdf/cargo#>
+    dcterms:issued      "2020-12-02"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    dcterms:title       "Cargo crate vocabulary."@en .
+
+cargo:Crate
+    a                   rdfs:Class ;
+    rdfs:isDefinedBy    <http://crates.io/rdf/crates#> ;
+    rdfs:label          "A Crate resource"@en .
+
+cargo:edition
+    rdfs:isDefinedBy    <http://crates.io/rdf/crates#> ;
+    rdfs:label          "Rust Edition"@en ;
+    rdfs:domain         cargo:Crate ;
+    rdfs:range          xsd:gYear .
+
+cargo:documentation
+    rdfs:isDefinedBy    <http://crates.io/rdf/crates#> ;
+    rdfs:label          "URL for documentation."@en ;
+    rdfs:domain         cargo:Crate ;
+    rdfs:range          rdfs:Resource .
+
+cargo:repository
+    rdfs:isDefinedBy    <http://crates.io/rdf/crates#> ;
+    rdfs:label          "URL for source repository."@en ;
+    rdfs:domain         cargo:Crate ;
+    rdfs:range          rdfs:Resource .
+
+cargo:localPath
+    rdfs:isDefinedBy    <http://crates.io/rdf/crates#> ;
+    rdfs:label          "Local path for dependency resolution."@en ;
+    rdfs:domain         cargo:Crate ;
+    rdfs:range          rdfs:Literal .
+
+cargo:publish
+    rdfs:isDefinedBy    <http://crates.io/rdf/crates#> ;
+    rdfs:label          "Whether to publish this crate."@en ;
+    rdfs:domain         cargo:Crate ;
+    rdfs:range          xsd:boolean .
+
+cargo:readme
+    rdfs:isDefinedBy    <http://crates.io/rdf/crates#> ;
+    rdfs:label          "Path, relative to crate root, for a readme resource."@en ;
+    rdfs:domain         cargo:Crate ;
+    rdfs:range          rdfs:Literal .
+```
+
 ## Output Serialization
+
+Here is the complete version of the RDF representation of our crate's metadata. Note that we do not have a type asserted
+for the subject which can be implied to be `cargo:Crate` given that it is the `rdfs:domain` of some of the asserted
+properties.
 
 ```turtle
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
-@prefix vcard: <http://www.w3.org/2006/vcard/ns> .
-@prefix crate: <http://crates.io/rdf/crates#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix cargo: <http://crates.io/rdf/cargo#> .
 @prefix semver: <http://crates.io/rdf/semver#> .
 
 <http://crates.io/crates/rdftk_core>
     dcterms:identifier  "rdftk_core" ;
     dcterms:version     "0.1.10" ;
     dcterms:contributor [
-        vcard:fn        "Simon Johnston" ;
-        vcard:hasEmail  "johnstonskj@gmail.com" 
+        foaf:name       "Simon Johnston" ;
+        foaf:mbox       "johnstonskj@gmail.com" ;
+        foaf:depiction  <http://crates.io/u/johnstonskj/avatar>
     ] ;
-    crate:edition       "2018"^^xsd:gYear ;
+    cargo:edition       "2018"^^xsd:gYear ;
     dcterms:description "The core data model." ;
-    crate:documentation <https://docs.rs/rdftk_core/> ;
-    crate:repository    <https://github.com/johnstonskj/rust-rdftk.git> ;
+    cargo:documentation <https://docs.rs/rdftk_core/> ;
+    cargo:repository    <https://github.com/johnstonskj/rust-rdftk.git> ;
     dcterms:license     "MIT" ;
-    crate:readme        "README.md" ;
-    crate:publish       "true"^^xsd:boolean ;
+    cargo:readme        "README.md" ;
+    cargo:publish       "true"^^xsd:boolean ;
     dcterms:requires    [
         rdf:type        rdf:Bag ;
         rdf:_1          [
-            dcterms:identifier  "error-chain" ;
+            dcterms:references  <http://crates.io/crates/error-chain> ;
             semver:matches      "0.12.2"
         ] ;
         rdf:_2          [
-            dcterms:identifier  "unique_id" ;
+            dcterms:references  <http://crates.io/crates/unique_id> ;
             semver:matches      "0.1.3"
         ] ;
         rdf:_3          [
-            dcterms:identifier  "rdftk_iri" ;
+            dcterms:references  <http://crates.io/crates/rdftk_iri> ;
             semver:matches      "0.1.2" ;
-            cargo:path          "../rdftk_iri"
+            cargo:localPath     "../rdftk_iri"
         ] ;
         rdf:_4          [
             dcterms:identifier  "rdftk_names" ;
-            semver:matches      "0.1.5"
-            cargo:path          "../rdftk_names"
+            semver:matches      "0.1.5" ;
+            cargo:localPath     "../rdftk_names"
         ]
     ] 
 .
 ```
+
+## Query
+
+## Extensions
+
+### Quads
+
+### RDF*
