@@ -1,7 +1,8 @@
 [book]
-authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 title = "The RDFtk Book"
 description = "RDFtk: An RDF Toolkit for Rust"
+authors = ["Simon Johnston <johnstonskj@gmail.com>"]
+src = "src"
 language = "en"
 multilingual = false
 
@@ -14,6 +15,7 @@ edition = "2018"
 
 [output.html]
 git-repository-url = "https://github.com/johnstonskj/rust-rdftk"
+additional-css = ["src/additional.css"]
 mathjax-support = true
 curly-quotes = true
 
