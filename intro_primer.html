@@ -86,7 +86,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a><a class="toggle"><div>❱</div></a></li><li><ol class="section"><li class="chapter-item expanded "><a href="intro_primer.html" class="active"><strong aria-hidden="true">1.1.</strong> RDF Primer</a></li><li class="chapter-item expanded "><a href="intro_crates.html"><strong aria-hidden="true">1.2.</strong> Toolkit Overview</a></li></ol></li><li class="chapter-item expanded "><a href="crates.html"><strong aria-hidden="true">2.</strong> RDFtk Crates</a><a class="toggle"><div>❱</div></a></li><li><ol class="section"><li class="chapter-item expanded "><a href="crate_iri.html"><strong aria-hidden="true">2.1.</strong> rdftk_iri</a></li><li class="chapter-item expanded "><a href="crate_core.html"><strong aria-hidden="true">2.2.</strong> rdftk_core</a></li><li class="chapter-item expanded "><a href="crate_io.html"><strong aria-hidden="true">2.3.</strong> rdftk_io</a></li><li class="chapter-item expanded "><a href="crate_memgraph.html"><strong aria-hidden="true">2.4.</strong> rdftk_memgraph</a></li><li class="chapter-item expanded "><a href="crate_names.html"><strong aria-hidden="true">2.5.</strong> rdftk_names</a></li><li class="chapter-item expanded "><a href="crate_ontology.html"><strong aria-hidden="true">2.6.</strong> rdftk_ontology</a></li><li class="chapter-item expanded "><a href="crate_query.html"><strong aria-hidden="true">2.7.</strong> rdftk_query</a></li><li class="chapter-item expanded "><a href="crate_skos.html"><strong aria-hidden="true">2.8.</strong> rdftk_skos</a></li></ol></li><li class="chapter-item expanded "><a href="examples.html"><strong aria-hidden="true">3.</strong> Examples</a></li><li class="chapter-item expanded affix "><a href="references.html">References</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a><a class="toggle"><div>❱</div></a></li><li><ol class="section"><li class="chapter-item expanded "><a href="intro_primer.html" class="active"><strong aria-hidden="true">1.1.</strong> RDF Primer</a></li><li class="chapter-item expanded "><a href="overview.html"><strong aria-hidden="true">1.2.</strong> Toolkit Overview</a></li></ol></li><li class="chapter-item expanded "><a href="crates.html"><strong aria-hidden="true">2.</strong> RDFtk Crates</a><a class="toggle"><div>❱</div></a></li><li><ol class="section"><li class="chapter-item expanded "><a href="crate_iri.html"><strong aria-hidden="true">2.1.</strong> rdftk_iri</a></li><li class="chapter-item expanded "><a href="crate_core.html"><strong aria-hidden="true">2.2.</strong> rdftk_core</a></li><li class="chapter-item expanded "><a href="crate_io.html"><strong aria-hidden="true">2.3.</strong> rdftk_io</a></li><li class="chapter-item expanded "><a href="crate_memgraph.html"><strong aria-hidden="true">2.4.</strong> rdftk_memgraph</a></li><li class="chapter-item expanded "><a href="crate_names.html"><strong aria-hidden="true">2.5.</strong> rdftk_names</a></li><li class="chapter-item expanded "><a href="crate_ontology.html"><strong aria-hidden="true">2.6.</strong> rdftk_ontology</a></li><li class="chapter-item expanded "><a href="crate_query.html"><strong aria-hidden="true">2.7.</strong> rdftk_query</a></li><li class="chapter-item expanded "><a href="crate_skos.html"><strong aria-hidden="true">2.8.</strong> rdftk_skos</a></li></ol></li><li class="chapter-item expanded "><a href="examples.html"><strong aria-hidden="true">3.</strong> Examples</a></li><li class="chapter-item expanded affix "><a href="references.html">References</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -187,12 +187,18 @@ or a type expressed in XML Schema.</li>
 </ol>
 </li>
 </ol>
+<p>Due to the three parts in each statement a statement may be referred to as a <strong>Triple</strong>.</p>
+<p>A set of statements is a <strong>Graph</strong>, </p>
 <h3><a class="header" href="#visually" id="visually">Visually</a></h3>
 <p>It is common in RDF documents to see diagrams representing a statement such as that below. The predicate will be shown 
-as a directed, and annotated, arrow from subject to object.</p>
+as a directed, and annotated, arrow from subject to object. This is similar to Chen’s notation for <a href="http://bit.csc.lsu.edu/%7Echen/pdf/Chen_Pioneers.pdf">entity–relationship 
+modeling</a>, and as such demonstrates RDF’s natural style in describing
+data.</p>
+<p>It is important to note that all predicates are directional implying that a bi-directional, or <strong>Symmetric</strong> relationship 
+requires two predicates -- see <a href="#vocabulary-descriptions">Vocabulary Descriptions</a> below.</p>
 <p><a name="fig_1_2"></a><img src="img/primer-spo.png" alt="An RDF Statement" /></p>
 <div class="caption figure">1.2: An RDF Statement</div>
-<p>To visually distinguish between named resources, blank nodes, and literals, the following conventions are used.</p>
+<p>To visually distinguish between named resources, blank nodes, and literals, the following conventions will be used.</p>
 <ol>
 <li>Named resources will be shown as large ovals, their inner name is some short form of the resource’s IRI.</li>
 <li>Blank nodes will be shown as small ovals usually with no inner name (as they are effectively anonymous).</li>
@@ -215,9 +221,6 @@ license = &quot;MIT&quot;
 readme = &quot;README.md&quot;
 publish = true
 
-[package.metadata.docs.rs]
-targets = [&quot;x86_64-unknown-linux-gnu&quot;]
-
 [dependencies]
 error-chain = &quot;0.12.2&quot;
 unique_id = &quot;0.1.3&quot;
@@ -232,15 +235,17 @@ additional meaning.</p>
 <p><a name="fig_1_4"></a><img src="img/primer-statement.png" alt="A Statement" /></p>
 <div class="caption figure">1.4: A Statement</div>
 <p>Given this simple start we can begin adding other attributes from the <em>package</em> section of the file. These additional
-properties are literal values, so they have been drawn as rectangles.</p>
+properties are literal values, so they have been drawn as rectangles. In this primer we will always show literal values
+in quotes, this is not necessary but adds clarity.</p>
 <p><a name="fig_1_5"></a><img src="img/primer-props.png" alt="Properties as Statements" /></p>
 <div class="caption figure">1.5: Properties as Statements</div>
 <p>When we get to the attribute <code>publish</code> however we want to express that this is a boolean value and not just a string. 
-To do this we add a data type to the literal value, as shown below.</p>
+To do this we add a data type from the XML Schema Datatypes (XSD) standard to the literal value, as shown below.</p>
 <p><a name="fig_1_6"></a><img src="img/primer-datatype.png" alt="Typing a Property" /></p>
 <div class="caption figure">1.6: Typing a Property</div>
 <p>This kind of type annotation can also be applied to a resource, if that resource has an <code>rdf:type</code> predicate, thus 
-saving an arrow in the diagram. The different forms of annotation can be seen in the following figure. </p>
+saving an arrow in the diagram. The different forms of annotation can be seen in the following figure. As it is common 
+to not show the identifier for a blank node the annotation is the only value shown.</p>
 <p><a name="fig_1_7"></a><img src="img/primer-annotations.png" alt="Type Annotations" /></p>
 <div class="caption figure">1.7: Type Annotations</div>
 <p>Sometimes we want to have a resource with multiple predicates, but without the strong identity of an IRI. To do this 
@@ -264,17 +269,35 @@ containing other blank nodes from the previous author example.</p>
 <p>Finally, the real power of the RDF data model is that both subject and object can be resources, and in particular named
 resources, and we can therefore link statements via these. For example; let us assume that the <code>crates.io</code> site also
 describes users in RDF, now we can model our author predicate to <em>either</em> a blank node as shown above, or a named
-user by using their IRI.</p>
+user by using their IRI. In this example the two sub-graphs are managed by different services but the ubiquitous use
+of the IRI as an identifier means the two are inherently linked.</p>
 <p><a name="fig_1_11"></a><img src="img/primer-linkage.png" alt="Linking Statements" /></p>
 <div class="caption figure">1.11: Linking Statements</div>
-<h2><a class="header" href="#graphs" id="graphs">Graphs</a></h2>
-<p>As you can hopefully see, the RDF data model is inherently graph-structured.</p>
+<p>This is an important consideration as RDF adheres to the <a href="https://en.wikipedia.org/wiki/Open-world_assumption"><em>Open-World Assumption</em></a>
+the implication of which is that the same IRI may be the subject of a sub-graph elsewhere, and that the graphs may in
+fact contradict each other.</p>
 <h2><a class="header" href="#vocabulary-descriptions" id="vocabulary-descriptions">Vocabulary Descriptions</a></h2>
+<p>While the term <em>Schema</em> is often used in conjunction with RDF the term is problematic for software folks as it has
+unfortunate connotations. For exaample, a database schema restricts the data that exists within its tables, a class in 
+a programming language restricts the shape of instances. In both of these cases the schema has a closed-world assumption
+that it can validate the shape of things and that no things exists outside of schema control.</p>
 <h3><a class="header" href="#common-vocabularies" id="common-vocabularies">Common Vocabularies</a></h3>
+<ul>
+<li><a href="https://www.w3.org/TR/rdf11-concepts/">RDF</a> itself</li>
+<li><a href="https://www.w3.org/TR/rdf-schema/">RDF Schema</a></li>
+<li><a href="https://www.w3.org/TR/xmlschema-2/">XML Schema Datatypes</a></li>
+<li><a href="https://www.w3.org/TR/owl2-overview/">OWL</a></li>
+<li><a href="https://www.dublincore.org/specifications/dublin-core/">Dublin Core</a></li>
+<li><a href="https://www.w3.org/TR/skos-reference/">SKOS</a></li>
+</ul>
+<h3><a class="header" href="#example-vocabulary-mapping" id="example-vocabulary-mapping">Example Vocabulary Mapping</a></h3>
 <table><thead><tr><th>Section</th><th>Attribute</th><th>Predicate</th><th>Restriction</th></tr></thead><tbody>
 <tr><td>package</td><td>name</td><td><code>dcterms:identifier</code></td><td></td></tr>
 <tr><td></td><td>version</td><td><code>semver:version</code></td><td></td></tr>
 <tr><td></td><td>authors</td><td><code>dcterms:contributor</code></td><td>multiples</td></tr>
+<tr><td></td><td>author/name</td><td><code>foaf:name</code></td><td></td></tr>
+<tr><td></td><td>author/email</td><td><code>foaf:mbox</code></td><td></td></tr>
+<tr><td></td><td>author/image</td><td><code>foaf:depiction</code></td><td></td></tr>
 <tr><td></td><td>edition</td><td><code>cargo:edition</code></td><td></td></tr>
 <tr><td></td><td>description</td><td><code>dcterms:description</code></td><td></td></tr>
 <tr><td></td><td>documentation</td><td><code>crate:documentation</code></td><td></td></tr>
@@ -286,55 +309,120 @@ user by using their IRI.</p>
 <tr><td></td><td><em>name</em></td><td><code>dcterms:identifier</code></td><td></td></tr>
 <tr><td></td><td><em>parts</em></td><td><code>dcterms:requires</code></td><td><code>rdf:Bag</code></td></tr>
 <tr><td>dependencies</td><td></td><td><code>dcterms:requires</code></td><td>blank node</td></tr>
-<tr><td></td><td><em>name</em></td><td><code>dcterms:identifier</code></td><td></td></tr>
+<tr><td></td><td><em>name</em></td><td><code>dcterms:references</code> or <code>dcterms:identifier</code></td><td></td></tr>
 <tr><td></td><td>version</td><td><code>semver:matches</code></td><td></td></tr>
 <tr><td></td><td>path</td><td><code>cargo:path</code></td><td></td></tr>
 </tbody></table>
+<p>In the table above we used two new namespaces <code>cargo:</code>, and <code>semver:</code>, the following listing is the RDF Schema for 
+the Cargo vocabulary we have introduced so far. Note that while we assert that the new entity <code>cargo:Crate</code> is <strong>a</strong> 
+(the value <code>a</code> in this representation is a shortcut for the property <code>rdf:type</code>) <code>rdfs:Class</code> we do not make assertions 
+about the type of the remaining entities. This is where the RDF entailment comes in, the predicates <code>rdfs:domain</code> and
+<code>rdfs:range</code> both have an assertion that <code>rdfs:domain</code> is <code>rdfs:Property</code> and therefore <code>edition</code> to <code>readme</code> must be
+properties.</p>
+<pre><code class="language-turtle">@prefix rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
+@prefix rdfs: &lt;http://www.w3.org/2000/01/rdf-schema#&gt; .
+@prefix xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt; .
+@prefix dcterms: &lt;http://purl.org/dc/terms/&gt; .
+@prefix cargo: &lt;http://crates.io/rdf/cargo#&gt; .
+
+&lt;http://crates.io/rdf/cargo#&gt;
+    dcterms:issued      &quot;2020-12-02&quot;^^&lt;http://www.w3.org/2001/XMLSchema#date&gt; ;
+    dcterms:title       &quot;Cargo crate vocabulary.&quot;@en .
+
+cargo:Crate
+    a                   rdfs:Class ;
+    rdfs:isDefinedBy    &lt;http://crates.io/rdf/crates#&gt; ;
+    rdfs:label          &quot;A Crate resource&quot;@en .
+
+cargo:edition
+    rdfs:isDefinedBy    &lt;http://crates.io/rdf/crates#&gt; ;
+    rdfs:label          &quot;Rust Edition&quot;@en ;
+    rdfs:domain         cargo:Crate ;
+    rdfs:range          xsd:gYear .
+
+cargo:documentation
+    rdfs:isDefinedBy    &lt;http://crates.io/rdf/crates#&gt; ;
+    rdfs:label          &quot;URL for documentation.&quot;@en ;
+    rdfs:domain         cargo:Crate ;
+    rdfs:range          rdfs:Resource .
+
+cargo:repository
+    rdfs:isDefinedBy    &lt;http://crates.io/rdf/crates#&gt; ;
+    rdfs:label          &quot;URL for source repository.&quot;@en ;
+    rdfs:domain         cargo:Crate ;
+    rdfs:range          rdfs:Resource .
+
+cargo:localPath
+    rdfs:isDefinedBy    &lt;http://crates.io/rdf/crates#&gt; ;
+    rdfs:label          &quot;Local path for dependency resolution.&quot;@en ;
+    rdfs:domain         cargo:Crate ;
+    rdfs:range          rdfs:Literal .
+
+cargo:publish
+    rdfs:isDefinedBy    &lt;http://crates.io/rdf/crates#&gt; ;
+    rdfs:label          &quot;Whether to publish this crate.&quot;@en ;
+    rdfs:domain         cargo:Crate ;
+    rdfs:range          xsd:boolean .
+
+cargo:readme
+    rdfs:isDefinedBy    &lt;http://crates.io/rdf/crates#&gt; ;
+    rdfs:label          &quot;Path, relative to crate root, for a readme resource.&quot;@en ;
+    rdfs:domain         cargo:Crate ;
+    rdfs:range          rdfs:Literal .
+</code></pre>
 <h2><a class="header" href="#output-serialization" id="output-serialization">Output Serialization</a></h2>
+<p>Here is the complete version of the RDF representation of our crate’s metadata. Note that we do not have a type asserted
+for the subject which can be implied to be <code>cargo:Crate</code> given that it is the <code>rdfs:domain</code> of some of the asserted
+properties.</p>
 <pre><code class="language-turtle">@prefix rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
 @prefix xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt; .
 @prefix dcterms: &lt;http://purl.org/dc/terms/&gt; .
-@prefix vcard: &lt;http://www.w3.org/2006/vcard/ns&gt; .
-@prefix crate: &lt;http://crates.io/rdf/crates#&gt; .
+@prefix foaf: &lt;http://xmlns.com/foaf/0.1/&gt; .
+@prefix cargo: &lt;http://crates.io/rdf/cargo#&gt; .
 @prefix semver: &lt;http://crates.io/rdf/semver#&gt; .
 
 &lt;http://crates.io/crates/rdftk_core&gt;
     dcterms:identifier  &quot;rdftk_core&quot; ;
     dcterms:version     &quot;0.1.10&quot; ;
     dcterms:contributor [
-        vcard:fn        &quot;Simon Johnston&quot; ;
-        vcard:hasEmail  &quot;johnstonskj@gmail.com&quot; 
+        foaf:name       &quot;Simon Johnston&quot; ;
+        foaf:mbox       &quot;johnstonskj@gmail.com&quot; ;
+        foaf:depiction  &lt;http://crates.io/u/johnstonskj/avatar&gt;
     ] ;
-    crate:edition       &quot;2018&quot;^^xsd:gYear ;
+    cargo:edition       &quot;2018&quot;^^xsd:gYear ;
     dcterms:description &quot;The core data model.&quot; ;
-    crate:documentation &lt;https://docs.rs/rdftk_core/&gt; ;
-    crate:repository    &lt;https://github.com/johnstonskj/rust-rdftk.git&gt; ;
+    cargo:documentation &lt;https://docs.rs/rdftk_core/&gt; ;
+    cargo:repository    &lt;https://github.com/johnstonskj/rust-rdftk.git&gt; ;
     dcterms:license     &quot;MIT&quot; ;
-    crate:readme        &quot;README.md&quot; ;
-    crate:publish       &quot;true&quot;^^xsd:boolean ;
+    cargo:readme        &quot;README.md&quot; ;
+    cargo:publish       &quot;true&quot;^^xsd:boolean ;
     dcterms:requires    [
         rdf:type        rdf:Bag ;
         rdf:_1          [
-            dcterms:identifier  &quot;error-chain&quot; ;
+            dcterms:references  &lt;http://crates.io/crates/error-chain&gt; ;
             semver:matches      &quot;0.12.2&quot;
         ] ;
         rdf:_2          [
-            dcterms:identifier  &quot;unique_id&quot; ;
+            dcterms:references  &lt;http://crates.io/crates/unique_id&gt; ;
             semver:matches      &quot;0.1.3&quot;
         ] ;
         rdf:_3          [
-            dcterms:identifier  &quot;rdftk_iri&quot; ;
+            dcterms:references  &lt;http://crates.io/crates/rdftk_iri&gt; ;
             semver:matches      &quot;0.1.2&quot; ;
-            cargo:path          &quot;../rdftk_iri&quot;
+            cargo:localPath     &quot;../rdftk_iri&quot;
         ] ;
         rdf:_4          [
             dcterms:identifier  &quot;rdftk_names&quot; ;
-            semver:matches      &quot;0.1.5&quot;
-            cargo:path          &quot;../rdftk_names&quot;
+            semver:matches      &quot;0.1.5&quot; ;
+            cargo:localPath     &quot;../rdftk_names&quot;
         ]
     ] 
 .
 </code></pre>
+<h2><a class="header" href="#query" id="query">Query</a></h2>
+<h2><a class="header" href="#extensions" id="extensions">Extensions</a></h2>
+<h3><a class="header" href="#quads" id="quads">Quads</a></h3>
+<h3><a class="header" href="#rdf" id="rdf">RDF*</a></h3>
 
                     </main>
 
@@ -347,7 +435,7 @@ user by using their IRI.</p>
                         
 
                         
-                            <a rel="next" href="intro_crates.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="overview.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
                         
@@ -365,7 +453,7 @@ user by using their IRI.</p>
                 
 
                 
-                    <a rel="next" href="intro_crates.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="overview.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
                 
