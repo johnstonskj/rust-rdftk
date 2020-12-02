@@ -203,6 +203,7 @@ properties.
 @prefix cargo: <http://crates.io/rdf/cargo#> .
 
 <http://crates.io/rdf/cargo#>
+    # Properties about the vocabulary itself.
     dcterms:issued      "2020-12-02"^^<http://www.w3.org/2001/XMLSchema#date> ;
     dcterms:title       "Cargo crate vocabulary."@en .
 
