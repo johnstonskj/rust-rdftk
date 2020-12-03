@@ -306,6 +306,8 @@ properties.
 
 ## Extensions
 
+The following are commonly
+
 ### Quads
 
 ### RDF*

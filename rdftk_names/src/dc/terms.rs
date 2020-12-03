@@ -50,6 +50,7 @@ namespace! {
         udc_classify, "UDC",
         uri, "URI",
         w3c_dtf, "W3CDTF",
+
         an_abstract, "abstract",
         access_rights, "accessRights",
         accrual_method, "accrualMethod",

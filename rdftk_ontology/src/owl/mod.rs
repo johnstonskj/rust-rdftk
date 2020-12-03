@@ -7,22 +7,69 @@ More detailed description, with
 
 */
 
+use crate::LabelProperty;
+use rdftk_core::{Literal, Statement};
 use rdftk_iri::IRIRef;
+use std::collections::HashMap;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
+// Thing
+
+// Nothing
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum HeaderProperty {
+    VersionInfo(Literal),
+    PriorVersion(IRIRef),
+    BackwardCompatibleWith(IRIRef),
+    IncompatibleWith(IRIRef),
+    Imports(IRIRef),
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub struct Ontology {
-    prior_version: Vec<IRIRef>,
-    compatible_with: Vec<IRIRef>,
-    incompatible_with: Vec<IRIRef>,
-    import: Vec<IRIRef>,
+    uri: IRIRef,
+    label_properties: Vec<LabelProperty>,
+    header_properties: Vec<HeaderProperty>,
+    classes: HashMap<IRIRef, Class>,
+    properties: HashMap<IRIRef, Property>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Class {
+    description: ClassDescription,
+    axioms: Vec<ClassAxiom>,
+    deprecated: bool,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Property {
+    deprecated: bool,
 }
 
 // ------------------------------------------------------------------------------------------------
 // Private Types
 // ------------------------------------------------------------------------------------------------
+
+#[derive(Clone, Debug, PartialEq)]
+enum ClassDescription {
+    Identifier(IRIRef),
+    Enumeration(Vec<ClassDescription>),
+    PropertyRestriction,
+    Intersection(Vec<ClassDescription>),
+    Union(Vec<ClassDescription>),
+    Compliment(Box<ClassDescription>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+enum ClassAxiom {
+    SubClassOf(ClassDescription),
+    EquivalentClass(ClassDescription),
+    DisjointWith(ClassDescription),
+}
 
 // ------------------------------------------------------------------------------------------------
 // Public Functions
