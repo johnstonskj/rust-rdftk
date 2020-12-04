@@ -1,17 +1,25 @@
 /*
-Language: Turtle
-Website: https://www.w3.org/TR/turtle/
-Category: idl
+Language: SPARQL
+Website: https://www.w3.org/TR/rdf-sparql-query/
+Category: query
 */
 
-hljsTurtle = function(hljs) {
+hljsSparql = function(hljs) {
   var IDENT_RE = /[a-zA-Z_][a-zA-Z0-9_:]*/;
   var KEYWORDS =
-    'prefix base a';
+    'BASE PREFIX ' +
+    'SELECT CONSTRUCT DESCRIBE ASK ' +
+    'ORDER BY ASC DESC LIMIT OFFSET REDUCED DISTINCT ' +
+    'FROM NAMED WHERE ' +
+    'GRAPH OPTIONAL UNION FILTER a ' +
+    'STR LANG LANGMATCHES DATATYPE BOUND sameTERM ' +
+    'iURI isIRI isBLANK isLITERAL REGEX ';
   return {
-    name: 'Turtle',
+    name: 'SPARQL',
+    case_insensitive: true,
     keywords: {
       keyword: KEYWORDS,
+      literals: 'true false'
     },
     contains: [
       {
@@ -33,6 +41,11 @@ hljsTurtle = function(hljs) {
       {
         className: 'title',
         begin: /(rdf|rdfs|xsd|owl):[a-zA-Z_]+[a-zA-Z0-9_-]*/
+      },
+      // Variable
+      {
+        className: 'variable',
+        begin: /\?[a-zA-Z_]+[a-zA-Z0-9_-]*/
       },
       // URI
       {
