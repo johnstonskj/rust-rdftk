@@ -59,6 +59,9 @@ To visually distinguish between named resources, blank nodes, and literals, the 
 <a name="fig_1_3"></a>![Statement Node Types](img/primer-nodes.png)
 <div class="caption figure">1.3: Statement Node Types</div>
 
+The following is a pretty good representation of the complete RDF data model, hopefully most of which will be clear by
+the end of this primer.
+
 <a name="fig_1_3b"></a>![Complete Data Model](img/primer-data-model.png)
 <div class="caption figure">1.3b: Complete Data Model</div>
 
