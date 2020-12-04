@@ -16,7 +16,7 @@ edition = "2018"
 [output.html]
 git-repository-url = "https://github.com/johnstonskj/rust-rdftk"
 additional-css = ["src/additional.css"]
-additional-js = ["src/turtle.js", "src/custom.js"]
+additional-js = ["src/sparql.js", "src/turtle.js", "src/custom.js"]
 mathjax-support = true
 curly-quotes = true
 
