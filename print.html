@@ -196,13 +196,14 @@ introduced in crate-specific sections. There is a more complete <a href="https:/
 that has a lot more information than presented here.</p>
 <h2><a class="header" href="#resources-statements-and-literals" id="resources-statements-and-literals">Resources, Statements, and Literals</a></h2>
 <p>The data model for RDF is surprisingly simple, the core component of which is the <strong>Statement</strong>. A statement asserts
-a fact based on the linguistic form <em>subject</em> <em>predicate</em> <em>object</em> (Property is sometimes used instead of the more
+a fact based on the linguistic form <em>subject</em> <em>predicate</em> <em>object</em> (property will sometimes be used instead of the more
 formal predicate). Examples might be:</p>
 <ul>
 <li><em>Simon</em> <em>authored</em> <em>this</em></li>
 <li>&lt;<a href="https://github.com/johnstonskj/rust-rdftk.git">https://github.com/johnstonskj/rust-rdftk.git</a>&gt; <em>is-a</em> <em>repository</em></li>
 <li>&lt;<a href="http://crates.io/crates/rdftk_core">http://crates.io/crates/rdftk_core</a>&gt; <em>description</em> “The core data model.”</li>
 </ul>
+<p>This structure can be more formally described as:</p>
 <ol>
 <li>The <strong>Subject</strong> of a statement is a <strong>Resource</strong> which is either addressed with an <a href="https://tools.ietf.org/html/rfc3987">IRI</a>
 (Internationalized Resource Identifiers), or an internally generated identifier commonly known as a <strong>Blank Node</strong>.</li>
@@ -218,7 +219,9 @@ or a type expressed in XML Schema.</li>
 </li>
 </ol>
 <p>Due to the three parts in each statement a statement may be referred to as a <strong>Triple</strong>.</p>
-<p>A set of statements is a <strong>Graph</strong>, </p>
+<p>A collection of statements is a <strong>Graph</strong>, and if this graph itself is addressable (has an IRI itself) it is termed a 
+<strong>Named Graph</strong>. This inherently graph nature means that RDF stores and graph stores such as AWS Neptune are a great 
+match.</p>
 <h3><a class="header" href="#visually" id="visually">Visually</a></h3>
 <p>It is common in RDF documents to see diagrams representing a statement such as that below. The predicate will be shown 
 as a directed, and annotated, arrow from subject to object. This is similar to Chen’s notation for <a href="http://bit.csc.lsu.edu/%7Echen/pdf/Chen_Pioneers.pdf">entity–relationship 
@@ -236,6 +239,8 @@ requires two predicates -- see <a href="intro_primer.html#vocabulary-description
 </ol>
 <p><a name="fig_1_3"></a><img src="img/primer-nodes.png" alt="Statement Node Types" /></p>
 <div class="caption figure">1.3: Statement Node Types</div>
+<p><a name="fig_1_3b"></a><img src="img/primer-data-model.png" alt="Complete Data Model" /></p>
+<div class="caption figure">1.3b: Complete Data Model</div>
 <h2><a class="header" href="#an-annotated-example" id="an-annotated-example">An Annotated Example</a></h2>
 <p>As a simple, and easy to approach, example let us consider the <code>Cargo.toml</code> file for the core crate. This is a set of 
 facts stated about a Cargo crate, and we will work up to an RDF representation of it.</p>
@@ -299,28 +304,185 @@ containing other blank nodes from the previous author example.</p>
 <p>Finally, the real power of the RDF data model is that both subject and object can be resources, and in particular named
 resources, and we can therefore link statements via these. For example; let us assume that the <code>crates.io</code> site also
 describes users in RDF, now we can model our author predicate to <em>either</em> a blank node as shown above, or a named
-user by using their IRI. In this example the two sub-graphs are managed by different services but the ubiquitous use
+user by using their IRI. In this example the two sub-graphs are managed by different services, but the ubiquitous use
 of the IRI as an identifier means the two are inherently linked.</p>
 <p><a name="fig_1_11"></a><img src="img/primer-linkage.png" alt="Linking Statements" /></p>
 <div class="caption figure">1.11: Linking Statements</div>
 <p>This is an important consideration as RDF adheres to the <a href="https://en.wikipedia.org/wiki/Open-world_assumption"><em>Open-World Assumption</em></a>
 the implication of which is that the same IRI may be the subject of a sub-graph elsewhere, and that the graphs may in
 fact contradict each other.</p>
+<h3><a class="header" href="#statements-about-statements" id="statements-about-statements">Statements about Statements</a></h3>
+<p>A great advantage of both the flexibility of the RDF data model, and the open-world assumption, is that we can make 
+statements about other statements. Why is this useful? Think about the following “<em>Joe said, Jane said something</em>“, Joe is the
+subject of a statement, “said” is the predicate, but the object is a statement; in this case we can infer that this
+is second-hand information. This means that both data and metadata as well as data and provenance information can all 
+be described in the same language and at the same level (no getting lost in meta- and meta-meta- languages).</p>
+<p>So, let’s take a look at at how this works, because if we look at figure 1.12 you can see we have an issue, how do we
+attach the outer <em>said</em> predicate to complete inner statement?</p>
+<p><a name="fig_1_12"></a><img src="img/primer-reify-before.png" alt="Statements about Statements" /></p>
+<div class="caption figure">1.12: Statements about Statements</div>
+<p>The answer is a procedure called <em>Reification</em> (which the dictionary describes as <em>to consider or represent 
+(something abstract) as a material or concrete thing</em>) that turns a single statement into an entity on it’s own. To 
+accomplish this, simply follow these steps:</p>
+<ol>
+<li>Create a new blank node as the subject for the following.</li>
+<li>Create a statement with the predicate <code>rdf:type</code> and object <code>rdf:Statement</code>.</li>
+<li>Create a statement with the predicate <code>rdf:subject</code> and object being the original statement’s subject.</li>
+<li>Create a statement with the predicate <code>rdf:predicate</code> and object being the original statement’s predicate.</li>
+<li>Create a statement with the predicate <code>rdf:object</code> and object being the original statement’s object.</li>
+</ol>
+<p>With this in place we can create new statements whose object is the new blank node, as shown below.</p>
+<p><a name="fig_1_13"></a><img src="img/primer-reify-after.png" alt="Statement Reification" /></p>
+<div class="caption figure">1.13: Statement Reification</div>
+<h2><a class="header" href="#representations" id="representations">Representations</a></h2>
+<p>As mentioned above, RDF does not dictate a representational form, although the early RDF specifications used XML as an
+example or canonical form. Today there are a number of common representations with RDF/XML, JSON-LD, NT/NQ, N3, and 
+Turtle/Trig being the most common. Some vocabularies have their own specific representational forms, but that is outside our
+scope here. Most of the examples in this document will use Turtle (Terse RDF Triple Language), but we will take our last 
+example from Joe and Jane and show some different forms.</p>
+<p>In <a href="https://www.w3.org/TR/rdf-syntax-grammar/">RDF/XML</a>:</p>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
+&lt;rdf:RDF xmlns:rdf=&quot;http://www.w3.org/1999/02/22-rdf-syntax-ns#&quot;
+         xmlns:ns0=&quot;http://example.org/actions/&quot;&gt;
+
+  &lt;rdf:Description rdf:about=&quot;http://example.org/peeps/Joe&quot;&gt;
+    &lt;ns0:said&gt;
+      &lt;rdf:Statement&gt;
+        &lt;rdf:subject rdf:resource=&quot;http://example.org/peeps/Jane&quot;/&gt;
+        &lt;rdf:predicate rdf:resource=&quot;http://example.org/actions/said&quot;/&gt;
+        &lt;rdf:object&gt;something&lt;/rdf:object&gt;
+      &lt;/rdf:Statement&gt;
+    &lt;/ns0:said&gt;
+
+  &lt;/rdf:Description&gt;
+
+&lt;/rdf:RDF&gt;
+</code></pre>
+<p>In <a href="https://www.w3.org/TR/rdf-json/">RDF/JSON</a>:</p>
+<pre><code class="language-json">{
+  &quot;http://example.org/peeps/Joe&quot;: {
+    &quot;http://example.org/actions/said&quot;: [
+      {
+        &quot;type&quot;: &quot;bnode&quot;,
+        &quot;value&quot;: &quot;_:genid1&quot;
+      }
+    ]
+  },
+  &quot;_:genid1&quot;: {
+    &quot;http://www.w3.org/1999/02/22-rdf-syntax-ns#type&quot;: [
+      {
+        &quot;type&quot;: &quot;uri&quot;,
+        &quot;value&quot;: &quot;http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement&quot;
+      }
+    ],
+    &quot;http://www.w3.org/1999/02/22-rdf-syntax-ns#subject&quot;: [
+      {
+        &quot;type&quot;: &quot;uri&quot;,
+        &quot;value&quot;: &quot;http://example.org/peeps/Jane&quot;
+      }
+    ],
+    &quot;http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate&quot;: [
+      {
+        &quot;type&quot;: &quot;uri&quot;,
+        &quot;value&quot;: &quot;http://example.org/actions/said&quot;
+      }
+    ],
+    &quot;http://www.w3.org/1999/02/22-rdf-syntax-ns#object&quot;: [
+      {
+        &quot;type&quot;: &quot;literal&quot;,
+        &quot;value&quot;: &quot;something&quot;
+      }
+    ]
+  }
+}
+</code></pre>
+<p>In <a href="https://www.w3.org/TR/json-ld/">JSON-LD</a>:</p>
+<pre><code class="language-json">[
+  {
+    &quot;@id&quot;: &quot;_:b0&quot;,
+    &quot;@type&quot;: [
+      &quot;http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement&quot;
+    ],
+    &quot;http://www.w3.org/1999/02/22-rdf-syntax-ns#subject&quot;: [
+      {
+        &quot;@id&quot;: &quot;http://example.org/peeps/Jane&quot;
+      }
+    ],
+    &quot;http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate&quot;: [
+      {
+        &quot;@id&quot;: &quot;http://example.org/actions/said&quot;
+      }
+    ],
+    &quot;http://www.w3.org/1999/02/22-rdf-syntax-ns#object&quot;: [
+      {
+        &quot;@value&quot;: &quot;something&quot;
+      }
+    ]
+  },
+  {
+    &quot;@id&quot;: &quot;http://example.org/actions/said&quot;
+  },
+  {
+    &quot;@id&quot;: &quot;http://example.org/peeps/Jane&quot;
+  },
+  {
+    &quot;@id&quot;: &quot;http://example.org/peeps/Joe&quot;,
+    &quot;http://example.org/actions/said&quot;: [
+      {
+        &quot;@id&quot;: &quot;_:b0&quot;
+      }
+    ]
+  },
+  { 
+    &quot;@id&quot;: &quot;http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement&quot;
+  }
+]
+</code></pre>
+<p>In <a href="https://www.w3.org/TR/n-triples/">N-Triples</a>/<a href="https://www.w3.org/TR/n-quads/">N-Quads</a>:</p>
+<pre><code class="language-turtle">&lt;http://example.org/peeps/Joe&gt; &lt;http://example.org/actions/said&gt; _:B1 .
+_:B1 &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#type&gt; &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement&gt; .
+_:B1 &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#subject&gt; &lt;http://example.org/peeps/Jane&gt; .
+_:B1 &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate&gt; &lt;http://example.org/actions/said&gt; .
+_:B1 &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#object&gt; &quot;something&quot; .
+</code></pre>
+<blockquote>
+<p>N-Triples are a very <em>raw</em> form of the data in a line-oriented form that isn’t terribly readable. On the other hand
+it is easy and fast to parse and so tends to be used for data extract/load operations.</p>
+</blockquote>
+<p>In <a href="https://www.w3.org/TeamSubmission/n3/">Notation3</a>/<a href="https://www.w3.org/TR/turtle/">Turtle</a>/<a href="https://www.w3.org/TR/trig/">TriG</a>:</p>
+<pre><code class="language-turtle">@prefix ns0: &lt;http://example.org/actions/&gt; .
+@prefix rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
+
+&lt;http://example.org/peeps/Joe&gt; ns0:said [
+    a rdf:Statement ;
+    rdf:subject &lt;http://example.org/peeps/Jane&gt; ;
+    rdf:predicate ns0:said ;
+    rdf:object &quot;something&quot;
+  ] .
+</code></pre>
+<p>You can experiment with some of these representations using the online <a href="https://www.easyrdf.org/converter">EasyRdf Converter</a>.</p>
 <h2><a class="header" href="#vocabulary-descriptions" id="vocabulary-descriptions">Vocabulary Descriptions</a></h2>
 <p>While the term <em>Schema</em> is often used in conjunction with RDF the term is problematic for software folks as it has
-unfortunate connotations. For exaample, a database schema restricts the data that exists within its tables, a class in 
+unfortunate connotations. For example, a database schema restricts the data that exists within its tables, a class in 
 a programming language restricts the shape of instances. In both of these cases the schema has a closed-world assumption
 that it can validate the shape of things and that no things exists outside of schema control.</p>
 <h3><a class="header" href="#common-vocabularies" id="common-vocabularies">Common Vocabularies</a></h3>
+<p>The following are a number of vocabularies often used when making statements, or used to develop our own vocabularies.</p>
 <ul>
-<li><a href="https://www.w3.org/TR/rdf11-concepts/">RDF</a> itself</li>
-<li><a href="https://www.w3.org/TR/rdf-schema/">RDF Schema</a></li>
-<li><a href="https://www.w3.org/TR/xmlschema-2/">XML Schema Datatypes</a></li>
-<li><a href="https://www.w3.org/TR/owl2-overview/">OWL</a></li>
-<li><a href="https://www.dublincore.org/specifications/dublin-core/">Dublin Core</a></li>
-<li><a href="https://www.w3.org/TR/skos-reference/">SKOS</a></li>
+<li><a href="https://www.w3.org/TR/rdf11-concepts/">RDF</a> itself (used below).</li>
+<li><a href="https://www.w3.org/TR/rdf-schema/">RDF Schema</a> the original way to describe RDF vocabularies (used below).</li>
+<li><a href="https://www.w3.org/TR/xmlschema-2/">XML Schema Datatypes</a> not truly and RDF vocabulary but adopted as the data type
+specification for RDF literals (used below).</li>
+<li><a href="https://www.w3.org/TR/owl2-overview/">OWL</a> the web ontology language is a much more complete way to describe vocabularies
+ands uses parts of RDF Schema but goes way beyond it in terms of its ability to support inferencing.</li>
+<li><a href="https://www.dublincore.org/specifications/dublin-core/">Dublin Core</a> A commonly used vocabulary for defining metadata
+and annotations (used below).</li>
+<li><a href="http://xmlns.com/foaf/spec/">FOAF: Friend of a Friend</a> an older vocabulary used to create network of social connections.</li>
+<li><a href="https://www.w3.org/TR/prov-o/">PROV-O The PROV Ontology</a> A vocabulary for asserting provenance about subjects.</li>
+<li><a href="https://www.w3.org/TR/skos-reference/">SKOS</a> A vocabulary for the development of thesauri.</li>
 </ul>
 <h3><a class="header" href="#example-vocabulary-mapping" id="example-vocabulary-mapping">Example Vocabulary Mapping</a></h3>
+<p>Below is a mapping from the TOML file (left two columns) to predicates we will reuse or invent. </p>
 <table><thead><tr><th>Section</th><th>Attribute</th><th>Predicate</th><th>Restriction</th></tr></thead><tbody>
 <tr><td>package</td><td>name</td><td><code>dcterms:identifier</code></td><td></td></tr>
 <tr><td></td><td>version</td><td><code>semver:version</code></td><td></td></tr>
@@ -343,6 +505,13 @@ that it can validate the shape of things and that no things exists outside of sc
 <tr><td></td><td>version</td><td><code>semver:matches</code></td><td></td></tr>
 <tr><td></td><td>path</td><td><code>cargo:path</code></td><td></td></tr>
 </tbody></table>
+<blockquote>
+<p>Note that we use <code>foaf:name</code>, <code>foaf:mbox</code>, and <code>foaf:depiction</code> for modeling our user, one might also use the PROV-O
+Person class which also has a name and email address. Which to choose sometimes becomes a bit of guesswork, but 
+often depends on any additional semantics one gets with the parts of a vocabulary we decide to use. In this case
+FOAF has a lot less semantics than PROV-O for <em>this problem</em>. On the other hand PROV-O is exactly intended to solve 
+our “<em>Joe said...</em>“ example above.</p>
+</blockquote>
 <p>In the table above we used two new namespaces <code>cargo:</code>, and <code>semver:</code>, the following listing is the RDF Schema for 
 the Cargo vocabulary we have introduced so far. Note that while we assert that the new entity <code>cargo:Crate</code> is <strong>a</strong> 
 (the value <code>a</code> in this representation is a shortcut for the property <code>rdf:type</code>) <code>rdfs:Class</code> we do not make assertions 
@@ -451,27 +620,108 @@ properties.</p>
 .
 </code></pre>
 <h2><a class="header" href="#query" id="query">Query</a></h2>
-<pre><code class="language-sparql">PREFIX foaf: &lt;http://xmlns.com/foaf/0.1/&gt;
-PREFIX func: &lt;http://example.org/functions#&gt;
-SELECT ?name ?id
-WHERE { ?x foaf:name  ?name ;
-           func:empId   ?id .
-        FILTER (func:even(?id)) }
+<p><a href="https://www.w3.org/TR/sparql11-overview/">SPARQL</a> is the query language for RDF, and hopefully if you’ve seen SQL, and 
+followed along with this primer so far, the following example should be pretty easy to follow. As there are no tables
+and columns the specifics of query matching are different and make use of <em>basic graph patterns</em> (BGP)s to match 
+statements within a graph. The structure of these patterns is very similar to the syntax we’ve seen for Turtle, but 
+include variables, identifiers that start with “?” or “$”. These variables not only determine what is included in the 
+projection but also how graph patterns will be matched.</p>
+<pre><code class="language-sparql">PREFIX dcterms: &lt;http://purl.org/dc/terms/&gt; .
 
-PREFIX  dc: &lt;http://purl.org/dc/elements/1.1/&gt;
-PREFIX app: &lt;http://example.org/ns#&gt;
-CONSTRUCT { ?s ?p ?o } WHERE
- {
-   GRAPH ?g { ?s ?p ?o } .
-   { ?g dc:publisher &lt;http://www.w3.org/&gt; } .
-   { ?g dc:date ?date } .
-   FILTER ( app:customDate(?date) &gt; &quot;2005-02-28T00:00:00Z&quot;^^xsd:dateTime ) .
- }
+SELECT ?id ?descr ?ver
+WHERE {
+    ?s  dcterms:identifier  ?id ;
+        dcterms:description ?desc ;
+        dcterms:version     ?ver .
+} LIMIT 100
 </code></pre>
+<p>In this example the variable <code>?s</code> is not returned in the projection, however its position in the match denotes the fact 
+that the identifier, description, and version all have the same subject regardless of what it is.</p>
+<blockquote>
+<p>SPARQL has a number of query forms not just <code>SELECT</code>; <code>CONSTRUCT</code> returns a single RDF graph specified by a graph 
+template, <code>ASK</code> to test whether or not a query pattern has a solution, and <code>DESCRIBE</code> which returns processor-dependent
+information on the resources required to complete a query.</p>
+</blockquote>
+<p>The <code>FROM</code> clause in SPARQL identifies a graph to scope a query, and multiple graphs can be specified to produce results
+across them.</p>
+<pre><code class="language-sparql">PREFIX dcterms: &lt;http://purl.org/dc/terms/&gt; .
+
+SELECT ?id ?descr ?ver
+FROM &lt;https://crates.io/rdf/crates/&gt;
+WHERE {
+    ?s  dcterms:identifier  ?id ;
+        dcterms:description ?desc ;
+        dcterms:version     ?ver .
+} LIMIT 100
+</code></pre>
+<p>A number of SPARQL tutorials exist, and the SPARQL specification itself has many good examples.</p>
+<h3><a class="header" href="#update" id="update">Update</a></h3>
+<p>TBD</p>
 <h2><a class="header" href="#extensions" id="extensions">Extensions</a></h2>
-<p>The following are commonly</p>
+<p>The following are some commonly used extensions to RDF, some of which may of course be a part of future standards
+versions.</p>
 <h3><a class="header" href="#quads" id="quads">Quads</a></h3>
+<p>One issue with RDF is that, in general, the representations do not carry with them any identifier of the graph, or
+context, from which they came. Graphs and <strong>Datasets</strong> (collections of graphs) are a part of the broader RDF data model
+but this information can be lost along the way. Consider the following subset of our example Cargo file from above. We
+know, because we designed it, that these statements exist in the <em>crates graph</em> <code>&lt;https://crates.io/rdf/crates/&gt;</code> but how
+would you know from looking at this?</p>
+<pre><code class="language-turtle">&lt;http://crates.io/crates/rdftk_core&gt; 
+  &lt;http://purl.org/dc/terms/identifier&gt; 
+  &quot;rdftk_core&quot; .
+&lt;http://crates.io/crates/rdftk_core&gt; 
+  &lt;http://purl.org/dc/terms/version&gt; 
+  &quot;0.1.10&quot; .
+</code></pre>
+<p>To allow the transport of this graph identifier the N-Triples language has been extended into <a href="https://www.w3.org/TR/n-quads/">N-Quads</a>
+by allowing for an optional IRI or blank node as the fourth element in a serialized statement. </p>
+<pre><code class="language-turtle">&lt;http://crates.io/crates/rdftk_core&gt; 
+  &lt;http://purl.org/dc/terms/identifier&gt; 
+  &quot;rdftk_core&quot; 
+  &lt;https://crates.io/rdf/crates/&gt; .
+&lt;http://crates.io/crates/rdftk_core&gt; 
+  &lt;http://purl.org/dc/terms/version&gt; 
+  &quot;0.1.10&quot; 
+  &lt;https://crates.io/rdf/crates/&gt; .
+</code></pre>
+<p>Similarly, the Turtle language has been extended into <a href="https://www.w3.org/TR/trig/">TriG</a> which defines a syntax that 
+wraps a set of statements in braces preceded by a graph identifier.</p>
+<pre><code class="language-turtle">@prefix dcterms: &lt;http://purl.org/dc/terms/&gt; .
+
+&lt;https://crates.io/rdf/crates/&gt;
+  {
+    &lt;http://crates.io/crates/rdftk_core&gt;
+        dcterms:identifier  &quot;rdftk_core&quot; ;
+        dcterms:version     &quot;0.1.10&quot; ;
+  }
+</code></pre>
 <h3><a class="header" href="#rdf" id="rdf">RDF*</a></h3>
+<p>RDF*, or <a href="https://w3c.github.io/rdf-star/">RDF-star</a>, is an effort to make the reification of statements more ergonomic
+in RDF. The current <a href="https://w3c.github.io/rdf-star/rdf-star-cg-spec.html">specification</a> has been implemented by a 
+number of frameworks, including RDFtk, and allows for an entire statement to be written in-line in representations such
+as Turtle, and expressed directly in SPARQL.</p>
+<p>For example, the following is a textual representation of our “<em>Joe said...</em>“ reification example.</p>
+<pre><code class="language-turtle">_:S1
+    a               rdf:Statement ;
+    rdf:subject     :Jane ;
+    rdf:predicate   :said ;
+    rdf:object      &quot;something&quot; .
+
+:Joe    :said       _:S1 .
+</code></pre>
+<p>Turtle does however have a short-cut for the representation of the blank node <code>_:S1</code> above, which does make the 
+example somewhat more readable, but still verbose.</p>
+<pre><code class="language-turtle">:Joe    
+    :said [
+        a               rdf:Statement ;
+        rdf:subject     :Jane ;
+        rdf:predicate   :said ;
+        rdf:object      &quot;something&quot; .
+    ] .
+</code></pre>
+<p>RDF* allows the inner statement to be included directly by enclosed within “&lt;&lt;“ and “&gt;&gt;”, as shown below.</p>
+<pre><code class="language-turtle">:Joe    :said       &lt;&lt; :Jane :said &quot;something&quot; &gt;&gt; .
+</code></pre>
 <h1><a class="header" href="#toolkit-overview" id="toolkit-overview">Toolkit Overview</a></h1>
 <h1><a class="header" href="#toolkit-crates" id="toolkit-crates">Toolkit Crates</a></h1>
 <p>The following lists the set of crates currently included in this repository (and Rust workspace), they are not yet 
