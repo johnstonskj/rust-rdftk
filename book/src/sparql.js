@@ -40,7 +40,7 @@ hljsSparql = function(hljs) {
       // Known prefixes
       {
         className: 'title',
-        begin: /(rdf|rdfs|xsd|owl):[a-zA-Z_]+[a-zA-Z0-9_-]*/
+        begin: /(rdf|rdfs|xsd|owl):([a-zA-Z_]+[a-zA-Z0-9_-]*)?/
       },
       // Variable
       {
