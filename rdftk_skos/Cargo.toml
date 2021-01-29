@@ -23,4 +23,4 @@ rdftk_iri = { version = "0.1.2", path = "../rdftk_iri" }
 rdftk_core = { version = "0.1.7", path = "../rdftk_core" }
 rdftk_memgraph = { version = "0.1.5", path = "../rdftk_memgraph" }
 rdftk_names = { version = "0.1.6", path = "../rdftk_names" }
-somedoc = { version = "0.1.7" }
+somedoc = { version = "0.2.0" }
