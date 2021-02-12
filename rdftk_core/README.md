@@ -9,25 +9,29 @@ This crate provides the core RDF data model; concrete implementations for `State
 ## Example
 
 ```rust
-use rdftk_core::{Literal, Statement, SubjectNode};
+use rdftk_core::{Literal, Statement, StatementList, SubjectNode};
 use rdftk_iri::IRI;
 use std::rc::Rc;
 use std::str::FromStr;
 
-pub fn make_statements() -> Vec<Rc<Statement>> {
-    let mut statements: Vec<Rc<Statement>> = Default::default();
+pub fn make_statements() -> StatementList {
+    let mut statements: StatementList = Default::default();
     
-    statements.push(Rc::new(Statement::new(
+    statements.push(Statement::new(
         SubjectNode::named(IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap()),
         IRI::from_str("http://purl.org/dc/elements/1.1/title").unwrap(),
         Literal::new("Tony Benn").into(),
-    )));
+    ).into());
     // ...
     statements
 }
 ```
 
 ## Changes
+
+**Version 0.1.11**
+
+* Added: public types `StatementRef` and `StatementList` rather than having `Rc` obviously in all APIs.
 
 **Version 0.1.10**
 

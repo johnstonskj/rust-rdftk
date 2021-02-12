@@ -30,9 +30,9 @@ pub trait Graph {
 
     fn contains_all(&self, subject: &SubjectNode, predicate: &IRIRef, object: &ObjectNode) -> bool;
 
-    fn statements(&self) -> Vec<Rc<Statement>>;
+    fn statements(&self) -> StatementList;
 
-    fn statements_for(&self, subject: &SubjectNode) -> Vec<Rc<Statement>>;
+    fn statements_for(&self, subject: &SubjectNode) -> StatementList;
 
     fn subjects(&self) -> HashSet<&SubjectNode>;
 
@@ -75,4 +75,5 @@ pub mod caching;
 pub use caching::CachingGraph;
 
 pub mod mapping;
+use crate::statement::StatementList;
 pub use mapping::{Prefix, PrefixMappings};

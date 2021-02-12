@@ -21,11 +21,15 @@ use unique_id::Generator;
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
+pub type StatementRef = Rc<Statement>;
+
+pub type StatementList = Vec<StatementRef>;
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 enum Subject {
     BNode(String),
     IRI(IRIRef),
-    Star(Rc<Statement>),
+    Star(StatementRef),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -38,7 +42,7 @@ enum Object {
     BNode(String),
     IRI(IRIRef),
     Literal(Box<Literal>),
-    Star(Rc<Statement>),
+    Star(StatementRef),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -108,8 +112,8 @@ impl From<&Statement> for SubjectNode {
     }
 }
 
-impl From<Rc<Statement>> for SubjectNode {
-    fn from(st: Rc<Statement>) -> Self {
+impl From<StatementRef> for SubjectNode {
+    fn from(st: StatementRef) -> Self {
         SubjectNode::about(st)
     }
 }
@@ -133,7 +137,7 @@ impl SubjectNode {
         }
     }
 
-    pub fn about(st: Rc<Statement>) -> Self {
+    pub fn about(st: StatementRef) -> Self {
         Self {
             inner: Subject::Star(st),
         }
@@ -170,7 +174,7 @@ impl SubjectNode {
         matches!(self.inner, Subject::Star(_))
     }
 
-    pub fn as_statement(&self) -> Option<&Rc<Statement>> {
+    pub fn as_statement(&self) -> Option<&StatementRef> {
         match &self.inner {
             Subject::Star(st) => Some(st),
             _ => None,
@@ -213,8 +217,8 @@ impl From<Statement> for ObjectNode {
     }
 }
 
-impl From<Rc<Statement>> for ObjectNode {
-    fn from(st: Rc<Statement>) -> Self {
+impl From<StatementRef> for ObjectNode {
+    fn from(st: StatementRef) -> Self {
         ObjectNode::about(st)
     }
 }
@@ -266,7 +270,7 @@ impl ObjectNode {
         }
     }
 
-    pub fn about(st: Rc<Statement>) -> Self {
+    pub fn about(st: StatementRef) -> Self {
         Self {
             inner: Object::Star(st),
         }
@@ -309,7 +313,7 @@ impl ObjectNode {
         matches!(self.inner, Object::Star(_))
     }
 
-    pub fn as_statement(&self) -> Option<&Rc<Statement>> {
+    pub fn as_statement(&self) -> Option<&StatementRef> {
         match &self.inner {
             Object::Star(st) => Some(st),
             _ => None,

@@ -20,6 +20,7 @@ extern crate rdftk_names;
 // Modules
 // ------------------------------------------------------------------------------------------------
 
+#[cfg(feature = "documentation")]
 pub mod document;
 
 pub mod simple;

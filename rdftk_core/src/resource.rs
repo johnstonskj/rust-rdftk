@@ -67,6 +67,7 @@ _:B1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.
 
 */
 
+use crate::statement::StatementList;
 use crate::{Literal, Statement, SubjectNode};
 use rdftk_iri::IRIRef;
 use rdftk_names::rdf;
@@ -261,8 +262,8 @@ impl Into<Vec<Statement>> for Resource {
     }
 }
 
-impl Into<Vec<Rc<Statement>>> for Resource {
-    fn into(self) -> Vec<Rc<Statement>> {
+impl Into<StatementList> for Resource {
+    fn into(self) -> StatementList {
         let sts: Vec<Statement> = self.into();
         sts.iter().cloned().map(Rc::new).collect()
     }
