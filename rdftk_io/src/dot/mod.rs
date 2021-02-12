@@ -15,7 +15,8 @@ let writer = DotWriter::new(options);
 
 use crate::GraphWriter;
 use rdftk_core::graph::{Graph, PrefixMappings};
-use rdftk_core::{ObjectNode, Statement, SubjectNode};
+use rdftk_core::statement::StatementRef;
+use rdftk_core::{ObjectNode, SubjectNode};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io::Write;
@@ -205,7 +206,7 @@ impl DotWriter {
     fn write_statements<W: Write>(
         &self,
         w: &mut W,
-        statements: &[Rc<Statement>],
+        statements: &[StatementRef],
         mappings: Rc<dyn PrefixMappings>,
     ) -> std::io::Result<()> {
         writeln!(w, "digraph {{\n    rankdir=BT\n    charset=\"utf-8\";")?;

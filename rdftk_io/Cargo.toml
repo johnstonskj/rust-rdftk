@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_io"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
 description = "This crate provides traits for reading and writing Statements and Graphs as well as implementations of these for common representations."

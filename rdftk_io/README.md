@@ -29,6 +29,10 @@ Each module will also provide public constants `NAME`, `FILE_EXTENSION`, and `MI
 
 ## Changes
 
+**Version 0.1.5**
+
+* Internal change to use `StatementRef`.
+
 **Version 0.1.4**
 
 * API changes in core crate:
