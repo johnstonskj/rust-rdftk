@@ -24,7 +24,7 @@ use std::rc::Rc;
 #[derive(Clone, Debug)]
 pub struct MemGraph {
     name: Option<IRIRef>,
-    statements: Vec<Rc<Statement>>,
+    statements: StatementList,
     mappings: Rc<dyn PrefixMappings>,
 }
 
@@ -54,8 +54,8 @@ impl From<Vec<Statement>> for MemGraph {
     }
 }
 
-impl From<Vec<Rc<Statement>>> for MemGraph {
-    fn from(sts: Vec<Rc<Statement>>) -> Self {
+impl From<StatementList> for MemGraph {
+    fn from(sts: StatementList) -> Self {
         MemGraph::default().with(sts).to_owned()
     }
 }
@@ -90,11 +90,11 @@ impl Graph for MemGraph {
         })
     }
 
-    fn statements(&self) -> Vec<Rc<Statement>> {
+    fn statements(&self) -> StatementList {
         self.statements.to_vec()
     }
 
-    fn statements_for(&self, subject: &SubjectNode) -> Vec<Rc<Statement>> {
+    fn statements_for(&self, subject: &SubjectNode) -> StatementList {
         self.statements
             .iter()
             .filter(|st| st.subject() == subject)
@@ -170,7 +170,7 @@ impl MutableGraph for MemGraph {
     }
 
     fn dedup(&mut self) {
-        let mut sts: HashSet<Rc<Statement>> = self.statements.drain(..).collect();
+        let mut sts: HashSet<StatementRef> = self.statements.drain(..).collect();
         self.statements = sts.drain().collect()
     }
 
@@ -212,7 +212,7 @@ impl MemGraph {
         self.name = Some(name);
         self
     }
-    pub fn with(&mut self, statements: Vec<Rc<Statement>>) -> &mut Self {
+    pub fn with(&mut self, statements: StatementList) -> &mut Self {
         self.statements = statements;
         self
     }
@@ -236,4 +236,5 @@ impl MemGraph {
 
 pub mod mapping;
 pub use mapping::*;
+use rdftk_core::statement::{StatementList, StatementRef};
 use rdftk_names::rdf;

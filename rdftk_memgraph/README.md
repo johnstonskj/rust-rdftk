@@ -8,6 +8,10 @@ This crate provides an implementation of the `Graph` traits from `rdftk_core::gr
 
 ## Changes
 
+**Version 0.1.8**
+
+* Using new core types `StatementRef` and `StatementList`.
+
 **Version 0.1.6**
 
 * Simple rename in `MutableGraph`, `de_duplicate` -> `dedup`.
