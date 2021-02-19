@@ -503,7 +503,10 @@ impl Resource {
 
 impl ResourceObject {
     pub fn is_container(&self) -> bool {
-        matches!(self, ResourceObject::Resources(_) | ResourceObject::Literals(_))
+        matches!(
+            self,
+            ResourceObject::Resources(_) | ResourceObject::Literals(_)
+        )
     }
 }
 

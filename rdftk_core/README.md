@@ -29,6 +29,10 @@ pub fn make_statements() -> StatementList {
 
 ## Changes
 
+**Version 0.1.12**
+
+* Fixed: cargo fmt error.
+
 **Version 0.1.11**
 
 * Added: public types `StatementRef` and `StatementList` rather than having `Rc` obviously in all APIs.
