@@ -10,8 +10,8 @@ TBD
 
 */
 
+use crate::model::{Labeled, ToStatement, ToURI};
 use crate::ns;
-use crate::simple::{Labeled, ToStatement, ToURI};
 use rdftk_core::{Literal, Statement, SubjectNode};
 use rdftk_iri::IRIRef;
 use rdftk_names::dc;

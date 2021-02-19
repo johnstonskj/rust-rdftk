@@ -12,6 +12,12 @@ TBD
 
 ## Changes
 
+**Version 0.1.25**
+
+* Added: a feature to wrap the documentation writer.
+* Refactor: renamed module `simple` to `model`.
+* Dependency: updated `somedoc` dependency; this had breaking API changes.
+
 **Version 0.1.24**
 
 * De-dup the flattened list of concepts before documenting.

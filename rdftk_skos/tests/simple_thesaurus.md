@@ -1,139 +1,155 @@
-# Scheme: UNESCO Thesaurus
 
-*The UNESCO thesaurus.*
+{{id name="scheme:UNESCO_Thesaurus" /}}
+= Scheme: UNESCO Thesaurus =
 
-<http://vocabularies.unesco.org/thesaurus>
+//The UNESCO thesaurus.//
 
-## Labels
+[[http://vocabularies.unesco.org/thesaurus]]
 
-> **skos:prefLabel**
+== Labels ==
 
-| Label text | Language |
-| ---- | ----  |
-| UNESCO Thesaurus | **en** |
-| Thésaurus de l'UNESCO | fr |
-| Тезаурус ЮНЕСКО | ru |
-| Tesauro de la UNESCO | es |
+**skos:prefLabel**
 
-## Other Properties
+|=Label text|=Language
+|UNESCO Thesaurus|**en**
+|Thésaurus de l'UNESCO|fr
+|Тезаурус ЮНЕСКО|ru
+|Tesauro de la UNESCO|es
 
-| Predicate | Literal Form | Data Type | Language |
-| ---- | ---- | ---- | ----  |
-| skos:definition | The UNESCO thesaurus. |  | **en** |
 
-Jump to: [Concepts Hierarchy](#concepts-hierarchy) | [Concepts](#concepts) | [Collections](#collections) | [Appendix - RDF](#appendix---rdf)
+== Other Properties ==
 
-## Concepts Hierarchy
+|=Predicate|=Literal Form|=Data Type|=Language
+|skos:definition|The UNESCO thesaurus.||**en**
 
-* **[Computers](#concept-computers)**
-  * [Analog Computers](#concept-analog-computers)
 
-## Concepts
+Jump to: [[Concepts Hierarchy>>||anchor=ConceptsHierarchy]] | [[Concepts>>||anchor=Concepts]] | [[Collections>>||anchor=Collections]] | [[Appendix - RDF>>||anchor=Appendix-RDF]]
 
-### Concept: Analog Computers
+{{id name="ConceptsHierarchy" /}}
+== Concepts Hierarchy ==
 
-<http://vocabularies.unesco.org/thesaurus/concept2258>
+* **[[Computers>>||anchor=concept:Computers]]**
+** [[Analog Computers>>||anchor=concept:Analog_Computers]]
 
-#### Labels
 
-> **skos:prefLabel**
+{{id name="Concepts" /}}
+== Concepts ==
 
-| Label text | Language |
-| ---- | ----  |
-| Calculateur analogique | fr |
-| Аналоговые компьютеры | ru |
-| Analog Computers | **en** |
-| Ordenador analógico | es |
-| حواسب تناظرية | ar |
+{{id name="concept:Analog_Computers" /}}
+=== Concept: Analog Computers ===
 
-> **skos:hiddenLabel**
+[[http://vocabularies.unesco.org/thesaurus/concept2258]]
 
-| Label text | Language |
-| ---- | ----  |
-| Ordenador analogico | es |
+==== Labels ====
 
-#### Other Properties
+**skos:prefLabel**
 
-| Predicate | Literal Form | Data Type | Language |
-| ---- | ---- | ---- | ----  |
-| dcterms:modified | 2019-12-15T14:00:02Z | xsd:dateTime |   |
+|=Label text|=Language
+|Calculateur analogique|fr
+|Аналоговые компьютеры|ru
+|Analog Computers|**en**
+|Ordenador analógico|es
+|حواسب تناظرية|ar
 
-#### Related Concepts
 
-| Relationship | Concept IRI |
-| ---- | ----  |
-| skos:broader | [Computers](#concept-computers) |
+**skos:hiddenLabel**
 
-#### In Collections
+|=Label text|=Language
+|Ordenador analogico|es
 
-* [Information technology (hardware)](#collection-information-technology-hardware)
 
-### Concept: Computers
+==== Other Properties ====
 
-<http://vocabularies.unesco.org/thesaurus/concept534>
+|=Predicate|=Literal Form|=Data Type|=Language
+|dcterms:modified|2019-12-15T14:00:02Z|xsd:dateTime|&nbsp;
 
-#### Labels
 
-> **skos:prefLabel**
+==== Related Concepts ====
 
-| Label text | Language |
-| ---- | ----  |
-| حواسيب | ar |
-| Computers | **en** |
-| Ordinateur | fr |
-| Компьютеры | ru |
+|=Relationship|=Concept IRI
+|skos:broader|[[Computers>>||anchor=concept:Computers]]
 
-#### Related Concepts
 
-| Relationship | Concept IRI |
-| ---- | ----  |
-| skos:narrower | [Analog Computers](#concept-analog-computers) |
-| owl:equivalentClass | [dbpedia:InformationAppliance](http://dbpedia.org/ontology/InformationAppliance) |
+{{id name="Collections" /}}
+==== In Collections ====
 
-## Collections
+* [[Information technology (hardware)>>||anchor=collection:Information_technology__hardware_]]
 
-### Collection: Information and communication
 
-<http://vocabularies.unesco.org/thesaurus/domain5>
+{{id name="concept:Computers" /}}
+=== Concept: Computers ===
 
-#### Labels
+[[http://vocabularies.unesco.org/thesaurus/concept534]]
 
-> **skos:prefLabel**
+==== Labels ====
 
-| Label text | Language |
-| ---- | ----  |
-| معلومات واتصالات | ar |
-| Информация и коммуникация | ru |
-| Information et communication | fr |
-| Information and communication | **en** |
-| Información y comunicación | es |
+**skos:prefLabel**
 
-#### Members
+|=Label text|=Language
+|حواسيب|ar
+|Computers|**en**
+|Ordinateur|fr
+|Компьютеры|ru
 
-* Collection [Information technology (hardware)](#collection-information-technology-hardware)
 
-### Collection: Information technology (hardware)
+==== Related Concepts ====
 
-<http://vocabularies.unesco.org/thesaurus/mt5.45>
+|=Relationship|=Concept IRI
+|skos:narrower|[[Analog Computers>>||anchor=concept:Analog_Computers]]
+|owl:equivalentClass|[[dbpedia:InformationAppliance>>http://dbpedia.org/ontology/InformationAppliance]]
 
-#### Labels
 
-> **skos:prefLabel**
+== Collections ==
 
-| Label text | Language |
-| ---- | ----  |
-| تكنولوجيا المعلومات (الأجهزة) | ar |
-| Информационная технология (технические средства) | ru |
-| Technologie de l'information (équipements) | fr |
-| Information technology (hardware) | **en** |
-| Tecnología de la información (equipos) | es |
+{{id name="collection:Information_and_communication" /}}
+=== Collection: Information and communication ===
 
-#### Members
+[[http://vocabularies.unesco.org/thesaurus/domain5]]
 
-* Concept [Analog Computers](#concept-analog-computers)
+==== Labels ====
 
-#### In Collections
+**skos:prefLabel**
 
-* [Information and communication](#collection-information-and-communication)
+|=Label text|=Language
+|معلومات واتصالات|ar
+|Информация и коммуникация|ru
+|Information et communication|fr
+|Information and communication|**en**
+|Información y comunicación|es
 
-## Appendix - RDF
+
+==== Members ====
+
+* Collection [[Information technology (hardware)>>||anchor=collection:Information_technology__hardware_]]
+
+
+{{id name="collection:Information_technology__hardware_" /}}
+=== Collection: Information technology (hardware) ===
+
+[[http://vocabularies.unesco.org/thesaurus/mt5.45]]
+
+==== Labels ====
+
+**skos:prefLabel**
+
+|=Label text|=Language
+|تكنولوجيا المعلومات (الأجهزة)|ar
+|Информационная технология (технические средства)|ru
+|Technologie de l'information (équipements)|fr
+|Information technology (hardware)|**en**
+|Tecnología de la información (equipos)|es
+
+
+==== Members ====
+
+* Concept [[Analog Computers>>||anchor=concept:Analog_Computers]]
+
+
+{{id name="Collections" /}}
+==== In Collections ====
+
+* [[Information and communication>>||anchor=collection:Information_and_communication]]
+
+
+{{id name="Appendix-RDF" /}}
+== Appendix - RDF ==

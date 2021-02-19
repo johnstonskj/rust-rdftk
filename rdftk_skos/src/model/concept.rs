@@ -10,10 +10,10 @@ TBD
 
 */
 
+use crate::model::properties::final_preferred_label;
+use crate::model::{Label, Labeled, LiteralProperty, Propertied, Resource, ToStatements};
+use crate::model::{ToStatement, ToURI};
 use crate::ns;
-use crate::simple::properties::final_preferred_label;
-use crate::simple::{Label, Labeled, LiteralProperty, Propertied, Resource, ToStatements};
-use crate::simple::{ToStatement, ToURI};
 use rdftk_core::{ObjectNode, Statement, SubjectNode};
 use rdftk_iri::IRIRef;
 use rdftk_names::rdf;

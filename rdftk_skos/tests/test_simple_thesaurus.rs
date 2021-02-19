@@ -1,9 +1,10 @@
+use pretty_assertions::assert_eq;
 use rdftk_core::graph::PrefixMappings;
 use rdftk_core::{DataType, Literal};
 use rdftk_iri::{IRIRef, IRI};
 use rdftk_names::{dc, owl, xsd};
 use rdftk_skos::document::make_document_with_mappings;
-use rdftk_skos::simple::{
+use rdftk_skos::model::{
     standard_mappings, to_rdf_graph, Labeled, LiteralProperty, Propertied, Scheme,
 };
 use somedoc::write::markdown::MarkdownFlavor;
@@ -126,8 +127,10 @@ fn test_simple_thesaurus_to_markdown() {
     assert!(result.is_ok());
     let doc = result.unwrap();
 
-    let md = write_document_to_string(&doc, MarkdownFlavor::default().into()).unwrap();
+    let md = write_document_to_string(&doc, MarkdownFlavor::XWiki.into()).unwrap();
     println!("{}", md);
 
-    assert!(md.starts_with(MARKDOWN));
+    // This allows the use of pretty_assertions to produce a nice diff if the assert_eq fails.
+    let md = &md[0..MARKDOWN.len()];
+    assert_eq!(md, MARKDOWN);
 }
