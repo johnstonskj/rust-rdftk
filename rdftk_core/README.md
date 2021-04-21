@@ -29,6 +29,10 @@ pub fn make_statements() -> StatementList {
 
 ## Changes
 
+**Version 0.1.13**
+
+* Bug: fixed Literal constructors to produce an escape-safe literal form for strings.
+
 **Version 0.1.12**
 
 * Fixed: cargo fmt error.

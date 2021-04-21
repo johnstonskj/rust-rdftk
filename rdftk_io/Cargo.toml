@@ -17,8 +17,8 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 error-chain = "0.12.2"
-rdftk_core = { version = "0.1.6", path = "../rdftk_core" }
-rdftk_iri = { version = "0.1.2", path = "../rdftk_iri" }
+rdftk_core = { version = "0.1.11", path = "../rdftk_core" }
+rdftk_iri = { version = "0.1.4", path = "../rdftk_iri" }
 
 [dev-dependencies]
-rdftk_memgraph = { version = "0.1.5", path = "../rdftk_memgraph" }
+rdftk_memgraph = { version = "0.1.8", path = "../rdftk_memgraph" }

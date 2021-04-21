@@ -108,7 +108,7 @@ impl Display for Literal {
 impl From<String> for Literal {
     fn from(value: String) -> Self {
         Self {
-            lexical_form: value,
+            lexical_form: Self::escape_string(&value),
             data_type: Some(DataType::String),
             language: None,
         }
@@ -118,7 +118,7 @@ impl From<String> for Literal {
 impl From<&str> for Literal {
     fn from(value: &str) -> Self {
         Self {
-            lexical_form: value.to_string(),
+            lexical_form: Self::escape_string(value),
             data_type: Some(DataType::String),
             language: None,
         }
@@ -268,7 +268,7 @@ impl From<Duration> for Literal {
 impl Literal {
     pub fn new(value: &str) -> Self {
         Self {
-            lexical_form: value.to_string(),
+            lexical_form: Self::escape_string(value),
             data_type: None,
             language: None,
         }
@@ -276,7 +276,7 @@ impl Literal {
 
     pub fn with_type(value: &str, data_type: DataType) -> Self {
         Self {
-            lexical_form: value.to_string(),
+            lexical_form: Self::escape_string(value),
             data_type: Some(data_type),
             language: None,
         }
@@ -284,7 +284,7 @@ impl Literal {
 
     pub fn with_language(value: &str, language: &str) -> Self {
         Self {
-            lexical_form: value.to_string(),
+            lexical_form: Self::escape_string(value),
             data_type: None,
             language: Some(language.to_string()),
         }
@@ -309,6 +309,11 @@ impl Literal {
     pub fn language(&self) -> &Option<String> {
         &self.language
     }
+
+    fn escape_string(value: &str) -> String {
+        let formatted = format!("{:?}", value);
+        formatted[1..formatted.len() - 1].to_string()
+    }
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -327,6 +332,15 @@ mod tests {
         assert!(!value.has_language());
         assert_eq!(value.lexical_form(), "a string");
         assert_eq!(value.to_string(), "\"a string\"");
+    }
+
+    #[test]
+    fn test_needs_escape() {
+        let value = Literal::new(r#"\ta "string"#);
+        assert!(!value.has_data_type());
+        assert!(!value.has_language());
+        assert_eq!(value.lexical_form(), "\\\\ta \\\"string");
+        assert_eq!(value.to_string(), "\"\\\\ta \\\"string\"");
     }
 
     #[test]

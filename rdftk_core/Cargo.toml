@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_core"
-version = "0.1.12"
+version = "0.1.13"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
 description = "This crate provides the core RDF data model; concrete implementations for Statements and Literals, along with a Resource type that provides a builder-like experience for models."

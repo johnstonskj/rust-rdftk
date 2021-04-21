@@ -8,7 +8,7 @@ More detailed description, with
 */
 
 use crate::LabelProperty;
-use rdftk_core::{Literal, Statement};
+use rdftk_core::Literal;
 use rdftk_iri::IRIRef;
 use std::collections::HashMap;
 
@@ -54,6 +54,7 @@ pub struct Property {
 // Private Types
 // ------------------------------------------------------------------------------------------------
 
+#[allow(dead_code)]
 #[derive(Clone, Debug, PartialEq)]
 enum ClassDescription {
     Identifier(IRIRef),
@@ -64,6 +65,7 @@ enum ClassDescription {
     Compliment(Box<ClassDescription>),
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Debug, PartialEq)]
 enum ClassAxiom {
     SubClassOf(ClassDescription),
