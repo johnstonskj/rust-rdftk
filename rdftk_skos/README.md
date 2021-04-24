@@ -14,6 +14,10 @@ TBD
 
 **Version 0.1.25**
 
+* Responding to module name changes in IO.
+
+**Version 0.1.25**
+
 * Added: a feature to wrap the documentation writer.
 * Refactor: renamed module `simple` to `model`.
 * Dependency: updated `somedoc` dependency; this had breaking API changes.

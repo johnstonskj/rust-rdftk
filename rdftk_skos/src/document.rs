@@ -18,13 +18,11 @@ use crate::model::{
 };
 use crate::ns;
 use rdftk_core::graph::PrefixMappings;
-use rdftk_core::DataType;
-use rdftk_io::turtle::TurtleWriter;
+use rdftk_io::turtle::writer::TurtleWriter;
 use rdftk_io::write_graph_to_string;
 use rdftk_iri::IRIRef;
 use rdftk_memgraph::Mappings;
-use rdftk_names::xsd;
-use somedoc::error::Error;
+use somedoc::error::{Error, ErrorKind, ResultExt};
 use somedoc::model::block::{
     Cell, Column, Formatted, HasBlockContent, HasLabel, Heading, HeadingLevel, Label as Anchor,
     List, Paragraph, Row, Table,
@@ -149,7 +147,8 @@ pub fn make_document_with_mappings(
 
     let graph = to_rdf_graph_with_mappings(&scheme, context.ns_mappings);
     let writer = TurtleWriter::default();
-    let code = write_graph_to_string(&writer, &graph)?;
+    let code = write_graph_to_string(&writer, &graph)
+        .chain_err(|| ErrorKind::Msg("Could not serialize graph".to_string()))?;
 
     document.add_formatted(Formatted::from(code));
 
@@ -294,7 +293,7 @@ fn write_other_properties<'a>(
             Cell::text_str(&property.value().lexical_form()),
             Cell::text_str(&match property.value().data_type() {
                 None => String::new(),
-                Some(dt) => match context.ns_mappings.compress(&data_type_uri(dt)) {
+                Some(dt) => match context.ns_mappings.compress(dt.as_iri()) {
                     None => property.predicate().to_string(),
                     Some(qname) => qname.to_string(),
                 },
@@ -313,28 +312,6 @@ fn write_other_properties<'a>(
     }
     document.add_table(table);
     Ok(())
-}
-
-fn data_type_uri(dt: &DataType) -> IRIRef {
-    match dt {
-        DataType::String => xsd::string(),
-        DataType::QName => xsd::q_name(),
-        DataType::IRI => xsd::any_uri(),
-        DataType::Boolean => xsd::boolean(),
-        DataType::Float => xsd::float(),
-        DataType::Double => xsd::double(),
-        DataType::Long => xsd::long(),
-        DataType::Int => xsd::int(),
-        DataType::Short => xsd::short(),
-        DataType::Byte => xsd::byte(),
-        DataType::UnsignedLong => xsd::unsigned_long(),
-        DataType::UnsignedInt => xsd::unsigned_int(),
-        DataType::UnsignedShort => xsd::unsigned_short(),
-        DataType::UnsignedByte => xsd::unsigned_byte(),
-        DataType::Duration => xsd::duration(),
-        DataType::Other(iri) => iri,
-    }
-    .clone()
 }
 
 fn write_concept<'a>(
