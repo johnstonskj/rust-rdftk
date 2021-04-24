@@ -29,6 +29,16 @@ Each module will also provide public constants `NAME`, `FILE_EXTENSION`, and `MI
 
 ## Changes
 
+**Version 0.1.6**
+
+* Made all modules have separate reader/writer sub-modules.
+* Put all modules behind features.
+* Added JSON writer.
+* Re-write NQuad writer to write datasets.
+* Re-wrote NTripe writer to use NQuad writer.
+* Fixed formatting in Turtle writer.
+* Added XML writer.
+
 **Version 0.1.5**
 
 * Internal change to use `StatementRef`.
