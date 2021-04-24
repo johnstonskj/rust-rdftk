@@ -1,10 +1,17 @@
 /*!
-Provides for reading and writing a `Graph` instance in the
-proposed W3C [Notation3 (N3)](https://www.w3.org/TeamSubmission/n3/), _a readable RDF syntax_,
-format.
+Provides support for the W3C's
+[JSON-LD 1.1](https://www.w3.org/TR/json-ld/), _A JSON-based Serialization for Linked Data_, format.
+
 */
 
-// use ...
+/// The display name of this serialization format.
+pub const NAME: &str = "JSON-LD";
+
+/// The common file extension for this serialization format.
+pub const FILE_EXTENSION: &str = "jsonld";
+
+/// The MIME type used for this serialization format.
+pub const MIME_TYPE: &str = "application/ld+json";
 
 // ------------------------------------------------------------------------------------------------
 // Public Types

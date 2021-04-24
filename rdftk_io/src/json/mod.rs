@@ -1,15 +1,16 @@
 /*!
-Provides for writing out in both the
-[JSON-LD 1.1](https://www.w3.org/TR/json-ld/), _A JSON-based Serialization for Linked Data_, and
-[RDF 1.1 JSON Alternate Serialization (RDF/JSON)](https://www.w3.org/TR/rdf-json/) formats.
-
-# Example
-
-TBD
-
+Provides for writing a `Graph` instance in the
+W3C [RDF 1.1 JSON Alternate Serialization (RDF/JSON)](https://www.w3.org/TR/rdf-json/) format.
 */
 
-// use ...
+/// The display name of this serialization format.
+pub const NAME: &str = "JSON";
+
+/// The common file extension for this serialization format.
+pub const FILE_EXTENSION: &str = "json";
+
+/// The MIME type used for this serialization format.
+pub const MIME_TYPE: &str = "application/rdf+json";
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -34,3 +35,8 @@ TBD
 // ------------------------------------------------------------------------------------------------
 // Modules
 // ------------------------------------------------------------------------------------------------
+
+#[doc(hidden)]
+pub mod reader;
+
+pub mod writer;

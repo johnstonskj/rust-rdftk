@@ -1,26 +1,12 @@
 /*!
-Provides for writing a `NamedGraph` instance in the
-[RDF 1.1 N-Quads](https://www.w3.org/TR/n-quads/), _a line-based syntax for RDF datasets_,
+Provides for reading and writing a `Graph` instance in the
+W3C [RDF 1.1 N-Quads](https://www.w3.org/TR/n-quads/), _a line-based syntax for RDF datasets_,
 format.
 */
 
-use crate::NamedGraphWriter;
-use rdftk_core::graph::NamedGraph;
-use std::io::Write;
-use std::marker::PhantomData;
-
 // ------------------------------------------------------------------------------------------------
-// Public Types
+// Public Values
 // ------------------------------------------------------------------------------------------------
-
-///
-/// This struct implements the `NamedGraphWriter` trait and will write out a serialized form of the
-/// entire graph.
-///
-#[derive(Debug)]
-pub struct NQuadWriter {
-    inner: PhantomData<u8>,
-}
 
 /// The display name of this serialization format.
 pub const NAME: &str = "N-Quads";
@@ -31,30 +17,14 @@ pub const FILE_EXTENSION: &str = "nq";
 /// The MIME type used for this serialization format.
 pub const MIME_TYPE: &str = "application/n-quads";
 
+/// An IRI that defines the language.
+pub const FORMAT_IRI: &str = "http://www.w3.org/ns/formats/N-Quads";
+
 // ------------------------------------------------------------------------------------------------
-// Implementations
+// Modules
 // ------------------------------------------------------------------------------------------------
 
-impl Default for NQuadWriter {
-    fn default() -> Self {
-        Self {
-            inner: Default::default(),
-        }
-    }
-}
+#[doc(hidden)]
+pub mod reader;
 
-impl NamedGraphWriter for NQuadWriter {
-    fn write(&self, w: &mut impl Write, graph: &impl NamedGraph) -> std::io::Result<()> {
-        for statement in graph.statements() {
-            write!(
-                w,
-                "{} <{}> {} {} .",
-                statement.subject(),
-                statement.predicate(),
-                statement.object(),
-                graph.name().as_ref().unwrap(),
-            )?;
-        }
-        Ok(())
-    }
-}
+pub mod writer;

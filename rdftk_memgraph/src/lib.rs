@@ -8,9 +8,11 @@ TBD
 
 */
 
-use rdftk_core::graph::{Graph, MutableGraph, MutableNamedGraph, NamedGraph, PrefixMappings};
+use rdftk_core::graph::{Graph, MutableGraph, PrefixMappings};
+use rdftk_core::statement::{StatementList, StatementRef};
 use rdftk_core::{ObjectNode, Resource, Statement, SubjectNode};
 use rdftk_iri::IRIRef;
+use rdftk_names::rdf;
 use std::collections::HashSet;
 use std::rc::Rc;
 
@@ -23,7 +25,6 @@ use std::rc::Rc;
 ///
 #[derive(Clone, Debug)]
 pub struct MemGraph {
-    name: Option<IRIRef>,
     statements: StatementList,
     mappings: Rc<dyn PrefixMappings>,
 }
@@ -39,7 +40,6 @@ pub struct MemGraph {
 impl Default for MemGraph {
     fn default() -> Self {
         Self {
-            name: None,
             statements: Default::default(),
             mappings: Rc::new(Mappings::default()),
         }
@@ -187,31 +187,7 @@ impl MutableGraph for MemGraph {
     }
 }
 
-impl NamedGraph for MemGraph {
-    fn name(&self) -> &Option<IRIRef> {
-        &self.name
-    }
-}
-
-impl MutableNamedGraph for MemGraph {
-    fn set_name(&mut self, name: IRIRef) -> Option<IRIRef> {
-        let old = self.name.clone();
-        self.name = Some(name);
-        old
-    }
-
-    fn unset_name(&mut self) -> Option<IRIRef> {
-        let old = self.name.clone();
-        self.name = None;
-        old
-    }
-}
-
 impl MemGraph {
-    pub fn named(&mut self, name: IRIRef) -> &mut Self {
-        self.name = Some(name);
-        self
-    }
     pub fn with(&mut self, statements: StatementList) -> &mut Self {
         self.statements = statements;
         self
@@ -234,7 +210,7 @@ impl MemGraph {
 // Modules
 // ------------------------------------------------------------------------------------------------
 
+pub mod data_set;
+
 pub mod mapping;
 pub use mapping::*;
-use rdftk_core::statement::{StatementList, StatementRef};
-use rdftk_names::rdf;

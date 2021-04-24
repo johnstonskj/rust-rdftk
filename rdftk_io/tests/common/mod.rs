@@ -1,4 +1,4 @@
-use rdftk_core::graph::{Graph, PrefixMappings};
+use rdftk_core::graph::PrefixMappings;
 use rdftk_core::statement::StatementRef;
 use rdftk_core::{Literal, ObjectNode, Statement, SubjectNode};
 use rdftk_iri::{IRIRef, IRI};
@@ -6,7 +6,7 @@ use rdftk_memgraph::{Mappings, MemGraph};
 use std::rc::Rc;
 use std::str::FromStr;
 
-pub fn tony_benn_graph() -> impl Graph {
+pub fn tony_benn_graph() -> MemGraph {
     let mut mappings = Mappings::default();
     mappings.include_rdf();
     mappings.insert(

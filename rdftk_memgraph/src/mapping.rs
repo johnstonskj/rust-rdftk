@@ -11,6 +11,7 @@ use rdftk_core::graph::{Prefix, PrefixMappings};
 use rdftk_core::QName;
 use rdftk_iri::{Fragment, IRIRef};
 use std::collections::HashMap;
+use std::rc::Rc;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -142,6 +143,14 @@ impl Mappings {
         let mut new = Mappings::default();
         new.insert_default(iri);
         new
+    }
+
+    pub fn merge(&mut self, other: Rc<dyn PrefixMappings>) {
+        for prefix in other.prefixes() {
+            if let Prefix::Some(prefix_str) = prefix {
+                self.insert(prefix_str, other.get_namespace(prefix).unwrap().clone());
+            }
+        }
     }
 }
 

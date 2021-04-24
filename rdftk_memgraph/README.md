@@ -8,6 +8,11 @@ This crate provides an implementation of the `Graph` traits from `rdftk_core::gr
 
 ## Changes
 
+**Version 0.1.9**
+
+* Removed NamedGraph implementations
+* Added DataSet implementations
+
 **Version 0.1.8**
 
 * Using new core types `StatementRef` and `StatementList`.

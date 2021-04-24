@@ -29,7 +29,11 @@ TBD
 
 */
 
-use rdftk_core::graph::{Graph, NamedGraph};
+#[macro_use]
+extern crate error_chain;
+
+use rdftk_core::data_set::DataSet;
+use rdftk_core::graph::Graph;
 use std::io::{Read, Write};
 use std::rc::Rc;
 
@@ -42,7 +46,7 @@ use std::rc::Rc;
 /// [`Read`](https://doc.rust-lang.org/std/io/trait.Read.html).
 ///
 pub trait GraphReader {
-    fn read<G: Graph>(&self, r: &mut impl Read) -> std::io::Result<Rc<G>>;
+    fn read<G: Graph>(&self, r: &mut impl Read) -> error::Result<Rc<G>>;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -54,17 +58,20 @@ pub trait GraphReader {
 ///
 pub trait GraphWriter {
     /// Write the formatted graph `Graph` using the write implementation `w`.
-    fn write(&self, w: &mut impl Write, graph: &impl Graph) -> std::io::Result<()>;
+    fn write(&self, w: &mut impl Write, graph: &impl Graph) -> error::Result<()>;
 }
 
 ///
-/// Write all [`Statement`](../rdftk_core/statement/struct.Statement.html)s in the
-/// [`NamedGraph`](../rdftk_graph/graph/trait.NamedGraph.html) using the provided implementation of
+/// Write all [`Graph`](../rdftk_graph/graph/trait.Graph.html)s in the
+/// [`DataSet`](../rdftk_graph/data_set/trait.DataSet.html) using the provided implementation of
 /// [`Write`](https://doc.rust-lang.org/std/io/trait.Write.html).
 ///
-pub trait NamedGraphWriter {
+pub trait DataSetWriter<G>
+where
+    G: Graph,
+{
     /// Write the formatted graph `NamedGraph` using the write implementation `w`.
-    fn write(&self, w: &mut impl Write, graph: &impl NamedGraph) -> std::io::Result<()>;
+    fn write(&self, w: &mut impl Write, data_set: &impl DataSet<G>) -> error::Result<()>;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -75,7 +82,7 @@ pub trait NamedGraphWriter {
 /// A convenience function that will return a String containing the output of the `GraphWriter`
 /// for the given `Graph` instance.
 ///
-pub fn write_graph_to_string(w: &impl GraphWriter, graph: &impl Graph) -> std::io::Result<String> {
+pub fn write_graph_to_string(w: &impl GraphWriter, graph: &impl Graph) -> error::Result<String> {
     use std::io::Cursor;
     let mut buffer = Cursor::new(Vec::new());
     w.write(&mut buffer, graph)?;
@@ -86,13 +93,16 @@ pub fn write_graph_to_string(w: &impl GraphWriter, graph: &impl Graph) -> std::i
 /// A convenience function that will return a String containing the output of the `NamedGraphWriter`
 /// for the given `NamedGraph` instance.
 ///
-pub fn write_named_graph_to_string(
-    w: &impl NamedGraphWriter,
-    graph: &impl NamedGraph,
-) -> std::io::Result<String> {
+pub fn write_data_set_to_string<G>(
+    w: &impl DataSetWriter<G>,
+    data_set: &impl DataSet<G>,
+) -> error::Result<String>
+where
+    G: Graph,
+{
     use std::io::Cursor;
     let mut buffer = Cursor::new(Vec::new());
-    w.write(&mut buffer, graph)?;
+    w.write(&mut buffer, data_set)?;
     Ok(String::from_utf8(buffer.into_inner()).unwrap())
 }
 
@@ -100,20 +110,37 @@ pub fn write_named_graph_to_string(
 // Modules
 // ------------------------------------------------------------------------------------------------
 
+mod common;
+
+pub mod error;
+
+#[cfg(feature = "dot")]
 pub mod dot;
 
-#[doc(hidden)]
+#[cfg(feature = "json")]
 pub mod json;
 
+#[cfg(feature = "json-ld")]
+#[doc(hidden)]
+pub mod json_ld;
+
+#[cfg(feature = "n3")]
 #[doc(hidden)]
 pub mod n3;
 
+#[cfg(feature = "nq")]
 pub mod nq;
 
+#[cfg(feature = "nt")]
 pub mod nt;
 
+#[cfg(feature = "trig")]
+#[doc(hidden)]
+pub mod trig;
+
+#[cfg(feature = "turtle")]
 #[doc(hidden)]
 pub mod turtle;
 
-#[doc(hidden)]
+#[cfg(feature = "xml")]
 pub mod xml;

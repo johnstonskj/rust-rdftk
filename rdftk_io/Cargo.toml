@@ -11,14 +11,30 @@ readme = "README.md"
 publish = true
 
 [package.metadata.docs.rs]
-# This sets the default target to `x86_64-unknown-linux-gnu`
-# and only builds that target for documentation.
 targets = ["x86_64-unknown-linux-gnu"]
+
+[features]
+default = ["json", "n3", "nq", "nt", "turtle", "xml"]
+dot = []
+json = ["serde_json"]
+json-ld = ["serde_json"]
+n3 = []
+nq = []
+nt = []
+trig = []
+turtle = []
+xml = ["xml-rs", "rdftk_names"]
 
 [dependencies]
 error-chain = "0.12.2"
-rdftk_core = { version = "0.1.11", path = "../rdftk_core" }
-rdftk_iri = { version = "0.1.4", path = "../rdftk_iri" }
+rdftk_core = { version = "0.1", path = "../rdftk_core" }
+rdftk_iri = { version = "0.1", path = "../rdftk_iri" }
+
+
+rdftk_names = { version = "0.1", path = "../rdftk_names", optional = true }
+serde_json = { version = "1.0.64", optional = true }
+xml-rs = { version = "0.8.3", optional = true }
 
 [dev-dependencies]
+pretty_assertions = "0.7.2"
 rdftk_memgraph = { version = "0.1.8", path = "../rdftk_memgraph" }
