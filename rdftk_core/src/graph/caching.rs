@@ -1,14 +1,7 @@
 /*!
-An extension to the core `Graph` to support graphs that cache literal and resource values to
-reduce memory use/fragmentation.
-
-# Example
-
+A trait for implementations that can cache values and save space.
 */
 
-#![allow(clippy::module_name_repetitions)]
-
-use crate::Graph;
 use crate::{Literal, SubjectNode};
 use rdftk_iri::IRIRef;
 use std::time::Duration;
@@ -17,7 +10,7 @@ use std::time::Duration;
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
-pub trait CachingGraph: Graph {
+pub trait ValueFactory {
     fn blank_subject_named(&self, name: &str) -> &SubjectNode;
     fn subject(&self, iri: &IRIRef) -> &SubjectNode;
 

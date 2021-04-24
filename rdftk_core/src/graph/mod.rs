@@ -7,6 +7,7 @@ TBD
 
 */
 
+use crate::statement::StatementList;
 use crate::{ObjectNode, Resource, Statement, SubjectNode};
 use rdftk_iri::IRIRef;
 use std::collections::HashSet;
@@ -68,12 +69,8 @@ pub trait MutableGraph: Graph {
 // Modules
 // ------------------------------------------------------------------------------------------------
 
-pub mod named;
-pub use named::{MutableNamedGraph, NamedGraph};
-
 pub mod caching;
-pub use caching::CachingGraph;
+pub use caching::ValueFactory;
 
 pub mod mapping;
-use crate::statement::StatementList;
 pub use mapping::{Prefix, PrefixMappings};

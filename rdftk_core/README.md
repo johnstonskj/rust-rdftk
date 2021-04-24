@@ -29,6 +29,12 @@ pub fn make_statements() -> StatementList {
 
 ## Changes
 
+**Version 0.1.14**
+
+* Removed stand-alone named graph.
+* Added DataSet as a way to associate names to graphs.
+* Renamed CachingGraph to ValueFactory and made stand-alone.
+
 **Version 0.1.13**
 
 * Bug: fixed Literal constructors to produce an escape-safe literal form for strings.

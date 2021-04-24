@@ -10,7 +10,7 @@ TBD
 #![allow(clippy::module_name_repetitions)]
 
 use crate::literal::Literal;
-use rdftk_iri::IRIRef;
+use rdftk_iri::{IRIRef, IRI};
 use rdftk_names::rdf;
 use std::fmt::{Display, Formatter};
 use std::rc::Rc;
@@ -25,6 +25,7 @@ pub type StatementRef = Rc<Statement>;
 
 pub type StatementList = Vec<StatementRef>;
 
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 enum Subject {
     BNode(String),
@@ -37,6 +38,7 @@ pub struct SubjectNode {
     inner: Subject,
 }
 
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 enum Object {
     BNode(String),
@@ -50,6 +52,7 @@ pub struct ObjectNode {
     inner: Object,
 }
 
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 enum Context {
     Default,
@@ -85,6 +88,12 @@ impl Display for SubjectNode {
                 Subject::Star(st) => format!("<{}>", st.to_string_no_dot()),
             }
         )
+    }
+}
+
+impl From<IRI> for SubjectNode {
+    fn from(iri: IRI) -> Self {
+        SubjectNode::named(iri.into())
     }
 }
 
@@ -196,6 +205,12 @@ impl Display for ObjectNode {
                 Object::Star(st) => format!("<{}>", st.to_string_no_dot()),
             }
         )
+    }
+}
+
+impl From<IRI> for ObjectNode {
+    fn from(iri: IRI) -> Self {
+        ObjectNode::named(iri.into())
     }
 }
 
@@ -350,6 +365,12 @@ impl Display for ContextNode {
                 Context::IRI(iri) => format!(" <{}>", iri),
             }
         )
+    }
+}
+
+impl From<IRI> for ContextNode {
+    fn from(iri: IRI) -> Self {
+        ContextNode::named(iri.into())
     }
 }
 

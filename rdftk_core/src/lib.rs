@@ -30,6 +30,8 @@ extern crate error_chain;
 
 pub mod error;
 
+pub mod data_set;
+
 pub mod graph;
 pub use graph::{Graph, PrefixMappings};
 

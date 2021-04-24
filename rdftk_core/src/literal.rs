@@ -27,6 +27,7 @@ pub enum DataType {
     /// Denotes a literal of type `xsd::qname`.
     QName,
     /// Denotes a literal of type `xsd::anyURI`.
+    #[allow(clippy::upper_case_acronyms)]
     IRI,
     /// Denotes a literal of type `xsd::boolean`.
     Boolean,
@@ -68,6 +69,49 @@ pub struct Literal {
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
+// ------------------------------------------------------------------------------------------------
+
+impl Display for DataType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_iri())
+    }
+}
+
+impl From<IRIRef> for DataType {
+    fn from(v: IRIRef) -> Self {
+        DataType::Other(v)
+    }
+}
+
+impl From<DataType> for IRIRef {
+    fn from(v: DataType) -> Self {
+        v.as_iri().clone()
+    }
+}
+
+impl DataType {
+    pub fn as_iri(&self) -> &IRIRef {
+        match &self {
+            DataType::String => xsd::string(),
+            DataType::QName => xsd::q_name(),
+            DataType::IRI => xsd::any_uri(),
+            DataType::Boolean => xsd::boolean(),
+            DataType::Float => xsd::float(),
+            DataType::Double => xsd::double(),
+            DataType::Long => xsd::long(),
+            DataType::Int => xsd::int(),
+            DataType::Short => xsd::short(),
+            DataType::Byte => xsd::byte(),
+            DataType::UnsignedLong => xsd::unsigned_long(),
+            DataType::UnsignedInt => xsd::unsigned_int(),
+            DataType::UnsignedShort => xsd::unsigned_short(),
+            DataType::UnsignedByte => xsd::unsigned_byte(),
+            DataType::Duration => xsd::duration(),
+            DataType::Other(iri) => iri,
+        }
+    }
+}
+
 // ------------------------------------------------------------------------------------------------
 
 impl Display for Literal {

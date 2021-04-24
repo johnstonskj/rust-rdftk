@@ -1,10 +1,5 @@
 /*!
-Te `Error` and `Result` types for the entire toolkit.
-
-# Example
-
-TBD
-
+The shared `Error`, `ErrorKind`, and `Result` common to the entire toolkit.
 */
 
 // ------------------------------------------------------------------------------------------------
