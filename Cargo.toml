@@ -2,7 +2,6 @@
 
 members = [
     "rdftk_core",
-    "rdftk_graph",
     "rdftk_io",
     "rdftk_iri",
     "rdftk_memgraph",
