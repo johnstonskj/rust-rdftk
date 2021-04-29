@@ -56,6 +56,10 @@ The following features are present in this crate.
 
 ## Changes
 
+**Version 0.1.5**
+
+* Applied all Clippy suggestions.
+
 **Version 0.1.4**
 
 * A lot more testing, and local coverage reporting.

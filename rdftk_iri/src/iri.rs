@@ -104,6 +104,7 @@ use std::sync::Arc;
 /// most characters from the Universal Character Set (Unicode/ISO 10646), including Chinese,
 /// Japanese, Korean, and Cyrillic characters.
 ///
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct IRI {
     scheme: Option<Scheme>,
@@ -119,6 +120,7 @@ pub struct IRI {
 ///
 /// As such, the APIs across the RDFtk crates use `IRIRef` exclusively.
 ///
+#[allow(clippy::upper_case_acronyms)]
 pub type IRIRef = Arc<IRI>;
 
 // ------------------------------------------------------------------------------------------------
@@ -293,6 +295,7 @@ impl IRI {
     ///
     /// This results in the `IRI`  `file://Documents/test-plan.md`.
     ///
+    #[allow(clippy::ptr_arg)]
     pub fn new_file(path: &PathBuf) -> IriResult<Self> {
         Ok(Self {
             scheme: Some(Scheme::file()),

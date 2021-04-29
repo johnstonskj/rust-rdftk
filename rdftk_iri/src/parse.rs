@@ -136,28 +136,28 @@ pub(crate) fn is_unreserved(c: char) -> bool {
 
 #[inline]
 pub(crate) fn is_ucschar(c: char) -> bool {
-    c >= '\u{00A0}' && c <= '\u{D7FF}'
-        || c >= '\u{F900}' && c <= '\u{FDCF}'
-        || c >= '\u{FDF0}' && c <= '\u{FFEF}'
-        || c >= '\u{10000}' && c <= '\u{1FFFD}'
-        || c >= '\u{20000}' && c <= '\u{2FFFD}'
-        || c >= '\u{30000}' && c <= '\u{3FFFD}'
-        || c >= '\u{40000}' && c <= '\u{4FFFD}'
-        || c >= '\u{50000}' && c <= '\u{5FFFD}'
-        || c >= '\u{60000}' && c <= '\u{6FFFD}'
-        || c >= '\u{70000}' && c <= '\u{7FFFD}'
-        || c >= '\u{80000}' && c <= '\u{8FFFD}'
-        || c >= '\u{90000}' && c <= '\u{9FFFD}'
-        || c >= '\u{A0000}' && c <= '\u{AFFFD}'
-        || c >= '\u{B0000}' && c <= '\u{BFFFD}'
-        || c >= '\u{C0000}' && c <= '\u{CFFFD}'
-        || c >= '\u{D0000}' && c <= '\u{DFFFD}'
-        || c >= '\u{E0000}' && c <= '\u{EFFFD}'
+    ('\u{00A0}'..='\u{D7FF}').contains(&c)
+        || ('\u{F900}'..='\u{FDCF}').contains(&c)
+        || ('\u{FDF0}'..='\u{FFEF}').contains(&c)
+        || ('\u{10000}'..='\u{1FFFD}').contains(&c)
+        || ('\u{20000}'..='\u{2FFFD}').contains(&c)
+        || ('\u{30000}'..='\u{3FFFD}').contains(&c)
+        || ('\u{40000}'..='\u{4FFFD}').contains(&c)
+        || ('\u{50000}'..='\u{5FFFD}').contains(&c)
+        || ('\u{60000}'..='\u{6FFFD}').contains(&c)
+        || ('\u{70000}'..='\u{7FFFD}').contains(&c)
+        || ('\u{80000}'..='\u{8FFFD}').contains(&c)
+        || ('\u{90000}'..='\u{9FFFD}').contains(&c)
+        || ('\u{A0000}'..='\u{AFFFD}').contains(&c)
+        || ('\u{B0000}'..='\u{BFFFD}').contains(&c)
+        || ('\u{C0000}'..='\u{CFFFD}').contains(&c)
+        || ('\u{D0000}'..='\u{DFFFD}').contains(&c)
+        || ('\u{E0000}'..='\u{EFFFD}').contains(&c)
 }
 
 #[inline]
 pub(crate) fn is_iprivate(c: char) -> bool {
-    c >= '\u{E000}' && c <= '\u{F8FF}'
-        || c >= '\u{F0000}' && c <= '\u{FFFFD}'
-        || c >= '\u{100000}' && c <= '\u{10FFFD}'
+    ('\u{E000}'..='\u{F8FF}').contains(&c)
+        || ('\u{F0000}'..='\u{FFFFD}').contains(&c)
+        || ('\u{100000}'..='\u{10FFFD}').contains(&c)
 }

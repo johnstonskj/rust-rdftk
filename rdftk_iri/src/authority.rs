@@ -522,34 +522,22 @@ impl Host {
 
     /// Returns `true` if this is a named host, else `false`.
     pub fn is_domain_name(&self) -> bool {
-        match &self.0 {
-            HostKind::DomainName(_) => true,
-            _ => false,
-        }
+        matches!(&self.0, HostKind::DomainName(_))
     }
 
     /// Returns `true` if this is an IPv4 address, else `false`.
     pub fn is_ipv4_address(&self) -> bool {
-        match &self.0 {
-            HostKind::IPV4(_) => true,
-            _ => false,
-        }
+        matches!(&self.0, HostKind::IPV4(_))
     }
 
     /// Returns `true` if this is an IPv6 address, else `false`.
     pub fn is_ipv6_address(&self) -> bool {
-        match &self.0 {
-            HostKind::IPV6(_) => true,
-            _ => false,
-        }
+        matches!(&self.0, HostKind::IPV6(_))
     }
 
     /// Returns `true` if this is an IPvFuture address, else `false`.
     pub fn is_ip_future_address(&self) -> bool {
-        match &self.0 {
-            HostKind::IPVFuture(_, _) => true,
-            _ => false,
-        }
+        matches!(&self.0, HostKind::IPVFuture(_, _))
     }
 
     ///
