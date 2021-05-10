@@ -56,7 +56,7 @@ pub mod xl {
     }
 }
 
-pub(crate) mod iso {
+pub mod iso {
     namespace! {
         "isothes",
         "http://purl.org/iso25964/skos-thes#",
@@ -82,4 +82,21 @@ pub(crate) mod iso {
             narrower_partitive, "narrowerPartitive"
         }
     }
+}
+
+// see https://www.w3.org/2003/06/sw-vocab-status/note.html
+pub mod term_status {
+    namespace! {
+        "status",
+        "http://www.w3.org/2003/06/sw-vocab-status/ns#",
+        {
+            term_status, "term_status"
+        }
+    }
+    pub const STATUS_ARCHAIC: &str = "archaic";
+    pub const STATUS_DEPRECATED: &str = "deprecated";
+    pub const STATUS_PROPOSED: &str = "proposed";
+    pub const STATUS_STABLE: &str = "stable";
+    pub const STATUS_TESTING: &str = "testing";
+    pub const STATUS_UNSTABLE: &str = "unstable";
 }

@@ -12,6 +12,10 @@ TBD
 
 ## Changes
 
+**Version 0.1.27**
+
+* Added support for the term_status namespace.
+
 **Version 0.1.25**
 
 * Responding to module name changes in IO.

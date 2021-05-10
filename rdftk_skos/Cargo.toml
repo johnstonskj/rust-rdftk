@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_skos"
-version = "0.1.26"
+version = "0.1.27"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
 description = "This crate provides a data model for the Simple Knowledge Organization System (SKOS) vocabulary."

@@ -156,6 +156,8 @@ impl LiteralProperty {
         Self { predicate, value }
     }
 
+    // SKOS properties
+
     pub fn change_note(text: &str) -> Self {
         Self::new(ns::change_note().clone(), text.into())
     }
@@ -221,14 +223,22 @@ impl LiteralProperty {
         Self::new(ns::notation().clone(), Literal::new(text))
     }
 
+    // Dublin Core properties
+
+    pub fn available(text: &str) -> Self {
+        Self::new(dc::terms::created().clone(), Literal::new(text))
+    }
     pub fn created(text: &str) -> Self {
         Self::new(dc::terms::created().clone(), Literal::new(text))
     }
     pub fn creator(text: &str) -> Self {
         Self::new(dc::terms::creator().clone(), Literal::new(text))
     }
-    pub fn description(text: &str) -> Self {
-        Self::new(dc::terms::description().clone(), Literal::new(text))
+    pub fn date_accepted(text: &str) -> Self {
+        Self::new(dc::terms::date_accepted().clone(), Literal::new(text))
+    }
+    pub fn date_submitted(text: &str) -> Self {
+        Self::new(dc::terms::date_submitted().clone(), Literal::new(text))
     }
     pub fn issued(text: &str) -> Self {
         Self::new(dc::terms::issued().clone(), Literal::new(text))
@@ -242,11 +252,20 @@ impl LiteralProperty {
     pub fn rights(text: &str) -> Self {
         Self::new(dc::terms::rights().clone(), Literal::new(text))
     }
+    pub fn source(text: &str) -> Self {
+        Self::new(dc::terms::source().clone(), Literal::new(text))
+    }
     pub fn subject(text: &str) -> Self {
         Self::new(dc::terms::subject().clone(), Literal::new(text))
     }
     pub fn title(text: &str) -> Self {
         Self::new(dc::terms::title().clone(), Literal::new(text))
+    }
+
+    // Term Status properties
+
+    pub fn term_status(text: &str) -> Self {
+        Self::new(ns::term_status::term_status().clone(), Literal::new(text))
     }
 
     // --------------------------------------------------------------------------------------------
