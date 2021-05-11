@@ -7,20 +7,22 @@ Additional semantics taken from [RDF 1.1 TriG](https://www.w3.org/TR/trig/), _RD
 
 */
 
-use crate::{Mappings, MemGraph};
-use rdftk_core::data_set::{DataSet, GraphName, MutableDataSet};
-use rdftk_core::{Graph, PrefixMappings};
+use crate::MemGraph;
+use rdftk_core::data_set::{DataSet, DataSetIndex, GraphNameRef, MutableDataSet};
 use std::collections::HashMap;
-use std::rc::Rc;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
+///
+/// This implementation of the core `DataSet` and `MutableDataSet` traits is a simple in-memory hash
+/// from graph name to a `MemGraph` implementation.
+///
 #[derive(Debug)]
 pub struct MemDataSet {
     default_graph: Option<MemGraph>,
-    graphs: HashMap<GraphName, MemGraph>,
+    graphs: HashMap<GraphNameRef, MemGraph>,
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -45,8 +47,8 @@ impl From<MemGraph> for MemDataSet {
     }
 }
 
-impl From<HashMap<GraphName, MemGraph>> for MemDataSet {
-    fn from(graphs: HashMap<GraphName, MemGraph>) -> Self {
+impl From<HashMap<GraphNameRef, MemGraph>> for MemDataSet {
+    fn from(graphs: HashMap<GraphNameRef, MemGraph>) -> Self {
         Self {
             default_graph: None,
             graphs,
@@ -54,7 +56,17 @@ impl From<HashMap<GraphName, MemGraph>> for MemDataSet {
     }
 }
 
-impl DataSet<MemGraph> for MemDataSet {
+impl<'a> DataSet<'a, MemGraph> for MemDataSet {
+    type GraphIter = std::collections::hash_map::Iter<'a, GraphNameRef, MemGraph>;
+
+    fn is_empty(&self) -> bool {
+        todo!()
+    }
+
+    fn len(&self) -> usize {
+        todo!()
+    }
+
     fn has_default_graph(&self) -> bool {
         self.default_graph.is_some()
     }
@@ -63,31 +75,24 @@ impl DataSet<MemGraph> for MemDataSet {
         &self.default_graph
     }
 
-    fn has_graph_named(&self, name: &GraphName) -> bool {
+    fn has_graph_named(&self, name: &GraphNameRef) -> bool {
         self.graphs.contains_key(name)
     }
 
-    fn graph_named(&self, name: &GraphName) -> Option<&MemGraph> {
+    fn graph_named(&self, name: &GraphNameRef) -> Option<&MemGraph> {
         self.graphs.get(name)
     }
 
-    fn graphs(&self) -> Vec<(&GraphName, &MemGraph)> {
-        self.graphs.iter().collect()
+    fn graphs(&'a self) -> Self::GraphIter {
+        self.graphs.iter()
     }
 
-    fn all_prefix_mappings(&self) -> Rc<dyn PrefixMappings> {
-        let mut mappings = Mappings::default();
-        if let Some(graph) = &self.default_graph {
-            mappings.merge(graph.prefix_mappings());
-        }
-        for graph in self.graphs.values() {
-            mappings.merge(graph.prefix_mappings());
-        }
-        Rc::from(mappings)
+    fn has_index(&self, _: &DataSetIndex) -> bool {
+        false
     }
 }
 
-impl MutableDataSet<MemGraph> for MemDataSet {
+impl<'a> MutableDataSet<'a, MemGraph> for MemDataSet {
     fn set_default_graph(&mut self, graph: MemGraph) {
         self.default_graph = Some(graph);
     }
@@ -96,11 +101,16 @@ impl MutableDataSet<MemGraph> for MemDataSet {
         self.default_graph = None;
     }
 
-    fn insert_graph(&mut self, name: GraphName, graph: MemGraph) {
+    fn insert(&mut self, name: GraphNameRef, graph: MemGraph) {
         let _ = self.graphs.insert(name, graph);
     }
 
-    fn remove_graph(&mut self, name: &GraphName) {
+    fn remove(&mut self, name: &GraphNameRef) {
         let _ = self.graphs.remove(name);
+    }
+
+    fn clear(&mut self) {
+        self.graphs.clear();
+        self.default_graph = None;
     }
 }

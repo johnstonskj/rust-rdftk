@@ -8,15 +8,17 @@ TBD
 */
 
 use rdftk_core::graph::{Prefix, PrefixMappings};
-use rdftk_core::QName;
+use rdftk_core::qname::QName;
 use rdftk_iri::{Fragment, IRIRef};
 use std::collections::HashMap;
-use std::rc::Rc;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
+///
+/// A simple bi-directional hash implementation between prefixes and IRI references.
+///
 #[derive(Clone, Debug)]
 pub struct Mappings {
     forward: HashMap<Prefix, IRIRef>,
@@ -51,6 +53,12 @@ impl PrefixMappings for Mappings {
         self.forward.len()
     }
 
+    fn set_default_namespace(&mut self, iri: IRIRef) -> &mut Self {
+        let _ = self.forward.insert(Prefix::Default, iri.clone());
+        let _ = self.reverse.insert(iri, Prefix::Default);
+        self
+    }
+
     fn get_namespace(&self, prefix: &Prefix) -> Option<&IRIRef> {
         self.forward.get(prefix)
     }
@@ -61,6 +69,30 @@ impl PrefixMappings for Mappings {
 
     fn prefixes(&self) -> Vec<&Prefix> {
         self.forward.keys().collect()
+    }
+
+    fn insert(&mut self, prefix: &str, iri: IRIRef) -> &mut Self {
+        assert!(!prefix.is_empty());
+        let prefix = Prefix::Some(prefix.to_string());
+        let _ = self.forward.insert(prefix.clone(), iri.clone());
+        let _ = self.reverse.insert(iri, prefix);
+        self
+    }
+
+    fn remove(&mut self, prefix: &Prefix) {
+        let existing = self.forward.get(prefix).cloned();
+        match &existing {
+            None => (),
+            Some(namespace) => {
+                let _ = self.forward.remove(prefix);
+                let _ = self.reverse.remove(namespace);
+            }
+        }
+    }
+
+    fn clear(&mut self) {
+        self.forward.clear();
+        self.reverse.clear();
     }
 
     fn expand(&self, qname: &QName) -> Option<IRIRef> {
@@ -101,56 +133,21 @@ impl PrefixMappings for Mappings {
         match self.get_prefix(&IRIRef::from(iri)) {
             None => None,
             Some(prefix) => match prefix {
-                Prefix::Default => Some(QName::new(&name)),
-                Prefix::Some(prefix) => Some(QName::with_prefix(prefix, &name)),
+                Prefix::Default => Some(QName::new(&name).unwrap()),
+                Prefix::Some(prefix) => Some(QName::with_prefix(prefix, &name).unwrap()),
             },
         }
-    }
-
-    fn insert_default(&mut self, iri: IRIRef) -> &mut Self {
-        self.forward.insert(Prefix::Default, iri.clone());
-        self.reverse.insert(iri, Prefix::Default);
-        self
-    }
-
-    fn insert(&mut self, prefix: &str, iri: IRIRef) -> &mut Self {
-        assert!(!prefix.is_empty());
-        let prefix = Prefix::Some(prefix.to_string());
-        self.forward.insert(prefix.clone(), iri.clone());
-        self.reverse.insert(iri, prefix);
-        self
-    }
-
-    fn remove(&mut self, prefix: &Prefix) {
-        let existing = self.forward.get(prefix).cloned();
-        match &existing {
-            None => (),
-            Some(namespace) => {
-                self.forward.remove(prefix);
-                self.reverse.remove(namespace);
-            }
-        }
-    }
-
-    fn clear(&mut self) {
-        self.forward.clear();
-        self.reverse.clear();
     }
 }
 
 impl Mappings {
+    ///
+    /// Construct a new mapping instance with the provided default namespace.
+    ///
     pub fn with_default(iri: IRIRef) -> Self {
         let mut new = Mappings::default();
-        new.insert_default(iri);
+        let _ = new.set_default_namespace(iri);
         new
-    }
-
-    pub fn merge(&mut self, other: Rc<dyn PrefixMappings>) {
-        for prefix in other.prefixes() {
-            if let Prefix::Some(prefix_str) = prefix {
-                self.insert(prefix_str, other.get_namespace(prefix).unwrap().clone());
-            }
-        }
     }
 }
 
@@ -166,10 +163,10 @@ mod tests {
 
     fn make_mappings() -> Mappings {
         let mut mappings = Mappings::default();
-        mappings.include_xsd();
-        mappings.include_rdf();
-        mappings.include_rdfs();
-        mappings.insert_default(IRIRef::from(
+        let _ = mappings.include_xsd();
+        let _ = mappings.include_rdf();
+        let _ = mappings.include_rdfs();
+        let _ = mappings.set_default_namespace(IRIRef::from(
             IRI::from_str("http://xmlns.com/foaf/0.1/").unwrap(),
         ));
         mappings
@@ -196,31 +193,34 @@ mod tests {
     #[test]
     fn test_mapping_expand() {
         let mut mappings = make_mappings();
-        mappings.insert(
+        let _ = mappings.insert(
             "foo",
             IRIRef::from(IRI::from_str("http://example.com/schema/foo/1.0").unwrap()),
         );
 
         assert_eq!(
-            mappings.expand(&QName::with_prefix("rdf", "Bag")),
+            mappings.expand(&QName::new_unchecked(Some("rdf"), "Bag")),
             Some(IRIRef::from(
                 IRI::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#Bag").unwrap()
             ))
         );
         assert_eq!(
-            mappings.expand(&QName::new("knows")),
+            mappings.expand(&QName::new_unchecked(None, "knows")),
             Some(IRIRef::from(
                 IRI::from_str("http://xmlns.com/foaf/0.1/knows").unwrap()
             ))
         );
         assert_eq!(
-            mappings.expand(&QName::with_prefix("foo", "Bar")),
+            mappings.expand(&QName::new_unchecked(Some("foo"), "Bar")),
             Some(IRIRef::from(
                 IRI::from_str("http://example.com/schema/foo/1.0/Bar").unwrap()
             ))
         );
 
-        assert_eq!(mappings.expand(&QName::with_prefix("rdfx", "Bag")), None);
+        assert_eq!(
+            mappings.expand(&QName::new_unchecked(Some("rdfx"), "Bag")),
+            None
+        );
     }
 
     #[test]
@@ -231,13 +231,13 @@ mod tests {
             mappings.compress(&IRIRef::from(
                 IRI::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#Bag").unwrap()
             )),
-            Some(QName::with_prefix("rdf", "Bag"))
+            Some(QName::new_unchecked(Some("rdf"), "Bag"))
         );
         assert_eq!(
             mappings.compress(&IRIRef::from(
                 IRI::from_str("http://xmlns.com/foaf/0.1/knows").unwrap()
             )),
-            Some(QName::new("knows"))
+            Some(QName::new_unchecked(None, "knows"))
         );
         assert_eq!(
             mappings.compress(&IRIRef::from(

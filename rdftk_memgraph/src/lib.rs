@@ -8,9 +8,29 @@ TBD
 
 */
 
-use rdftk_core::graph::{Graph, MutableGraph, PrefixMappings};
-use rdftk_core::statement::{StatementList, StatementRef};
-use rdftk_core::{ObjectNode, Resource, Statement, SubjectNode};
+#![warn(
+    // ---------- Stylistic
+    future_incompatible,
+    nonstandard_style,
+    rust_2018_idioms,
+    trivial_casts,
+    trivial_numeric_casts,
+    // ---------- Public
+    missing_debug_implementations,
+    missing_docs,
+    unreachable_pub,
+    // ---------- Unsafe
+    unsafe_code,
+    // ---------- Unused
+    unused_extern_crates,
+    unused_import_braces,
+    unused_qualifications,
+    unused_results,
+)]
+
+use rdftk_core::graph::{Graph, GraphIndex, MutableGraph, PrefixMappings};
+use rdftk_core::statement::{ObjectNodeRef, StatementList, StatementRef, SubjectNodeRef};
+use rdftk_core::{Statement, SubjectNode};
 use rdftk_iri::IRIRef;
 use rdftk_names::rdf;
 use std::collections::HashSet;
@@ -28,10 +48,6 @@ pub struct MemGraph {
     statements: StatementList,
     mappings: Rc<dyn PrefixMappings>,
 }
-
-// ------------------------------------------------------------------------------------------------
-// Public Functions
-// ------------------------------------------------------------------------------------------------
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
@@ -60,7 +76,11 @@ impl From<StatementList> for MemGraph {
     }
 }
 
-impl Graph for MemGraph {
+impl<'a> Graph<'a> for MemGraph {
+    type StatementIter = std::slice::Iter<'a, StatementRef>;
+    type FilteredIter =
+        std::iter::Filter<std::slice::Iter<'a, StatementRef>, fn(&&StatementRef) -> bool>;
+
     fn is_empty(&self) -> bool {
         self.statements.is_empty()
     }
@@ -69,40 +89,41 @@ impl Graph for MemGraph {
         self.statements.len()
     }
 
-    fn contains_subject(&self, subject: &SubjectNode) -> bool {
+    fn contains_subject(&self, subject: &SubjectNodeRef) -> bool {
         self.statements
             .iter()
             .any(|st| st.as_ref().subject() == subject)
     }
 
     fn contains_individual(&self, subject: &IRIRef) -> bool {
-        let subject: SubjectNode = subject.clone().into();
+        let subject: SubjectNodeRef = SubjectNode::named(subject.clone()).into();
         self.objects_for(&subject, rdf::a_type()).is_empty()
     }
 
-    fn contains(&self, statement: &Statement) -> bool {
-        self.statements.iter().any(|st| st.as_ref() == statement)
+    fn contains(&self, statement: &StatementRef) -> bool {
+        self.statements.iter().any(|st| st == statement)
     }
 
-    fn contains_all(&self, subject: &SubjectNode, predicate: &IRIRef, object: &ObjectNode) -> bool {
+    fn contains_all(
+        &self,
+        subject: &SubjectNodeRef,
+        predicate: &IRIRef,
+        object: &ObjectNodeRef,
+    ) -> bool {
         self.statements.iter().any(|st| {
             st.subject() == subject && st.predicate() == predicate && st.object() == object
         })
     }
 
-    fn statements(&self) -> StatementList {
-        self.statements.to_vec()
+    fn statements(&'a self) -> Self::StatementIter {
+        self.statements.iter()
     }
 
-    fn statements_for(&self, subject: &SubjectNode) -> StatementList {
-        self.statements
-            .iter()
-            .filter(|st| st.subject() == subject)
-            .cloned()
-            .collect()
+    fn filter(&'a self, filter: fn(&&StatementRef) -> bool) -> Self::FilteredIter {
+        self.statements.iter().filter(filter)
     }
 
-    fn subjects(&self) -> HashSet<&SubjectNode> {
+    fn subjects(&self) -> HashSet<&SubjectNodeRef> {
         self.statements.iter().map(|st| st.subject()).collect()
     }
 
@@ -110,7 +131,7 @@ impl Graph for MemGraph {
         self.statements.iter().map(|st| st.predicate()).collect()
     }
 
-    fn predicates_for(&self, subject: &SubjectNode) -> HashSet<&IRIRef> {
+    fn predicates_for(&self, subject: &SubjectNodeRef) -> HashSet<&IRIRef> {
         self.statements
             .iter()
             .filter_map(|st| {
@@ -123,11 +144,11 @@ impl Graph for MemGraph {
             .collect()
     }
 
-    fn objects(&self) -> HashSet<&ObjectNode> {
+    fn objects(&self) -> HashSet<&ObjectNodeRef> {
         self.statements.iter().map(|st| st.object()).collect()
     }
 
-    fn objects_for(&self, subject: &SubjectNode, predicate: &IRIRef) -> HashSet<&ObjectNode> {
+    fn objects_for(&self, subject: &SubjectNodeRef, predicate: &IRIRef) -> HashSet<&ObjectNodeRef> {
         self.statements
             .iter()
             .filter_map(|st| {
@@ -140,17 +161,8 @@ impl Graph for MemGraph {
             .collect()
     }
 
-    fn resource_for(&self, subject: &SubjectNode) -> Resource {
-        let mut resource = Resource::new(subject.clone());
-        for st in &self.statements_for(subject) {
-            let object = st.object();
-            if object.is_literal() {
-                resource.literal(st.predicate().clone(), object.as_literal().unwrap().clone());
-            } else {
-                resource.resource(st.predicate().clone(), Resource::new(subject.clone()));
-            }
-        }
-        resource
+    fn has_index(&self, _: &GraphIndex) -> bool {
+        false
     }
 
     fn prefix_mappings(&self) -> Rc<dyn PrefixMappings> {
@@ -158,14 +170,19 @@ impl Graph for MemGraph {
     }
 }
 
-impl MutableGraph for MemGraph {
-    fn insert(&mut self, statement: Statement) {
-        self.statements.push(Rc::new(statement));
+impl<'a> MutableGraph<'a> for MemGraph {
+    fn insert(&mut self, statement: StatementRef) {
+        self.statements.push(statement);
     }
 
-    fn merge(&mut self, other: Rc<dyn Graph>) {
+    fn merge(
+        &mut self,
+        other: &'a Rc<
+            dyn Graph<'a, StatementIter = Self::StatementIter, FilteredIter = Self::FilteredIter>,
+        >,
+    ) {
         for st in other.statements() {
-            self.statements.push(st)
+            self.statements.push(st.clone())
         }
     }
 
@@ -174,11 +191,11 @@ impl MutableGraph for MemGraph {
         self.statements = sts.drain().collect()
     }
 
-    fn remove(&mut self, statement: &Statement) {
-        self.statements.retain(|st| st.as_ref() != statement);
+    fn remove(&mut self, statement: &StatementRef) {
+        self.statements.retain(|st| st != statement);
     }
 
-    fn remove_all_for(&mut self, subject: &SubjectNode) {
+    fn remove_all_for(&mut self, subject: &SubjectNodeRef) {
         self.statements.retain(|st| st.subject() != subject);
     }
 
@@ -187,11 +204,18 @@ impl MutableGraph for MemGraph {
     }
 }
 
-impl MemGraph {
+impl<'a> MemGraph {
+    ///
+    /// Construct a new `MemGraph` from the list of statements.
+    ///
     pub fn with(&mut self, statements: StatementList) -> &mut Self {
         self.statements = statements;
         self
     }
+
+    ///
+    /// Construct a new empty `MemGraph` with the provided mappings.
+    ///
     pub fn mappings(&mut self, mappings: Rc<dyn PrefixMappings>) -> &mut Self {
         self.mappings = mappings;
         self
@@ -199,18 +223,13 @@ impl MemGraph {
 }
 
 // ------------------------------------------------------------------------------------------------
-// Private Types
-// ------------------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------------------
-// Private Functions
-// ------------------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------------------
 // Modules
 // ------------------------------------------------------------------------------------------------
 
 pub mod data_set;
+pub use data_set::MemDataSet;
+
+pub mod indexed;
 
 pub mod mapping;
-pub use mapping::*;
+pub use mapping::Mappings;

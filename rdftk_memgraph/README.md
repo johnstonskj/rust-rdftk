@@ -8,6 +8,12 @@ This crate provides an implementation of the `Graph` traits from `rdftk_core::gr
 
 ## Changes
 
+**Version 0.1.10**
+
+* Using rdftk_core 0.2, this has changes in the signature of both Graph and DataSet traits.
+* Applied a lot more warnings in lib.rs
+* Fixed resulting Clippy suggestions.
+
 **Version 0.1.9**
 
 * Removed NamedGraph implementations
