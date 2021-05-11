@@ -12,8 +12,9 @@ TBD
 
 use crate::model::properties::final_preferred_label;
 use crate::model::{Label, Labeled, LiteralProperty, Propertied, Resource, ToStatements};
-use crate::model::{ToStatement, ToURI};
+use crate::model::{ToStatement, ToUri};
 use crate::ns;
+use rdftk_core::statement::{ObjectNodeRef, StatementList};
 use rdftk_core::{ObjectNode, Statement, SubjectNode};
 use rdftk_iri::IRIRef;
 use rdftk_names::rdf;
@@ -56,7 +57,7 @@ impl Default for ConceptRelation {
     }
 }
 
-impl ToURI for ConceptRelation {
+impl ToUri for ConceptRelation {
     fn to_uri(&self) -> IRIRef {
         match self {
             Self::Narrower => ns::narrower(),
@@ -145,33 +146,33 @@ impl Labeled for Concept {
 }
 
 impl ToStatements for Concept {
-    fn to_statements(&self, in_scheme: Option<&ObjectNode>) -> Vec<Statement> {
-        let mut statements: Vec<Statement> = Default::default();
-        let subject = SubjectNode::named(self.uri().clone());
-        statements.push(Statement::new(
+    fn to_statements(&self, in_scheme: Option<&ObjectNodeRef>) -> StatementList {
+        let mut statements: StatementList = Default::default();
+        let subject = SubjectNode::named_ref(self.uri().clone());
+        statements.push(Statement::new_ref(
             subject.clone(),
             rdf::a_type().clone(),
-            ns::concept().into(),
+            ObjectNode::named_ref(ns::concept().clone()),
         ));
         if let Some(in_scheme) = in_scheme {
-            statements.push(Statement::new(
+            statements.push(Statement::new_ref(
                 subject.clone(),
                 ns::in_scheme().clone(),
                 in_scheme.clone(),
             ));
         }
         for (relation, to_concept) in &self.concepts {
-            statements.push(Statement::new(
+            statements.push(Statement::new_ref(
                 subject.clone(),
                 relation.to_uri(),
-                to_concept.borrow().uri().clone().into(),
+                ObjectNode::named_ref(to_concept.borrow().uri().clone()),
             ));
         }
         for (relation, to_concept) in &self.external_relations {
-            statements.push(Statement::new(
+            statements.push(Statement::new_ref(
                 subject.clone(),
                 relation.clone(),
-                to_concept.clone().into(),
+                ObjectNode::named_ref(to_concept.clone()),
             ));
         }
         for label in self.labels() {

@@ -12,6 +12,12 @@ TBD
 
 ## Changes
 
+**Version 0.1.28**
+
+* Using rdftk_core 0.2, this has changes in the signature of both Graph and DataSet traits.
+* Applied a lot more warnings in lib.rs
+* Fixed resulting Clippy suggestions.
+
 **Version 0.1.27**
 
 * Added support for the term_status namespace.

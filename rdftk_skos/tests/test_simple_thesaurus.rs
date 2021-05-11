@@ -95,12 +95,12 @@ fn test_simple_thesaurus_to_rdf() {
 
     let scheme = make_unesco_computer();
 
-    let statements = to_rdf_graph(&scheme, None).statements();
+    let graph = to_rdf_graph(&scheme, None);
+    assert_eq!(graph.len(), 43);
 
-    for statement in &statements {
+    for statement in graph.statements() {
         println!("{}", statement);
     }
-    assert_eq!(statements.len(), 43);
 }
 
 const MARKDOWN: &str = include_str!("simple_thesaurus.md");
@@ -116,7 +116,7 @@ fn test_simple_thesaurus_to_markdown() {
             .unwrap()
             .into(),
     );
-    mappings.insert_default(
+    mappings.set_default_namespace(
         IRI::from_str("http://vocabularies.unesco.org/thesaurus/")
             .unwrap()
             .into(),

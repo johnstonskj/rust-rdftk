@@ -14,6 +14,7 @@ use crate::model::properties::final_preferred_label;
 use crate::model::ToStatement;
 use crate::model::{Concept, Label, Labeled, LiteralProperty, Propertied, Resource, ToStatements};
 use crate::ns;
+use rdftk_core::statement::{ObjectNodeRef, StatementList, SubjectNodeRef};
 use rdftk_core::{ObjectNode, Statement, SubjectNode};
 use rdftk_iri::IRIRef;
 use rdftk_names::rdf;
@@ -119,24 +120,24 @@ impl Labeled for Collection {
 }
 
 impl ToStatements for Collection {
-    fn to_statements(&self, in_scheme: Option<&ObjectNode>) -> Vec<Statement> {
-        let mut statements: Vec<Statement> = Default::default();
-        let subject = SubjectNode::named(self.uri().clone());
+    fn to_statements(&self, in_scheme: Option<&ObjectNodeRef>) -> StatementList {
+        let mut statements: StatementList = Default::default();
+        let subject = SubjectNode::named_ref(self.uri().clone());
         if self.ordered {
-            statements.push(Statement::new(
+            statements.push(Statement::new_ref(
                 subject.clone(),
                 rdf::a_type().clone(),
-                ns::ordered_collection().into(),
+                ObjectNode::named_ref(ns::ordered_collection().clone()),
             ));
         } else {
-            statements.push(Statement::new(
+            statements.push(Statement::new_ref(
                 subject.clone(),
                 rdf::a_type().clone(),
-                ns::collection().into(),
+                ObjectNode::named_ref(ns::collection().clone()),
             ));
         }
         if let Some(in_scheme) = in_scheme {
-            statements.push(Statement::new(
+            statements.push(Statement::new_ref(
                 subject.clone(),
                 ns::in_scheme().clone(),
                 in_scheme.clone(),
@@ -145,7 +146,7 @@ impl ToStatements for Collection {
 
         if self.has_members() {
             if self.ordered {
-                let mut list_node: SubjectNode = make_list_node(&mut statements, None);
+                let mut list_node = make_list_node(&mut statements, None);
                 for (i, member) in self.members.iter().enumerate() {
                     add_to_list_node(&mut statements, &list_node, &member.uri());
                     if i < self.members.len() {
@@ -155,10 +156,10 @@ impl ToStatements for Collection {
                 make_list_end(&mut statements, &list_node);
             } else {
                 for member in &self.members {
-                    statements.push(Statement::new(
+                    statements.push(Statement::new_ref(
                         subject.clone(),
                         ns::member().clone(),
-                        member.uri().into(),
+                        ObjectNode::named_ref(member.uri().clone()),
                     ));
                 }
             }
@@ -263,40 +264,40 @@ impl Collection {
 // Private Functions
 // ------------------------------------------------------------------------------------------------
 
-fn make_list_node(statements: &mut Vec<Statement>, from: Option<SubjectNode>) -> SubjectNode {
-    let new_node = SubjectNode::blank();
+fn make_list_node(statements: &mut StatementList, from: Option<SubjectNodeRef>) -> SubjectNodeRef {
+    let new_node = SubjectNode::blank_ref();
     if let Some(from) = from {
-        statements.push(Statement::new(
+        statements.push(Statement::new_ref(
             from,
             rdf::rest().clone(),
-            new_node.clone().into(),
+            new_node.as_object(),
         ));
     }
-    statements.push(Statement::new(
+    statements.push(Statement::new_ref(
         new_node.clone(),
         rdf::a_type().clone(),
-        rdf::list().clone().into(),
+        ObjectNode::named_ref(rdf::list().clone()),
     ));
     new_node
 }
 
-fn add_to_list_node(statements: &mut Vec<Statement>, current: &SubjectNode, member_uri: &IRIRef) {
-    statements.push(Statement::new(
+fn add_to_list_node(statements: &mut StatementList, current: &SubjectNodeRef, member_uri: &IRIRef) {
+    statements.push(Statement::new_ref(
         current.clone(),
         rdf::first().clone(),
-        member_uri.into(),
+        ObjectNode::named_ref(member_uri.clone()),
     ));
 }
 
-fn make_list_end(statements: &mut Vec<Statement>, last: &SubjectNode) {
-    statements.push(Statement::new(
+fn make_list_end(statements: &mut StatementList, last: &SubjectNodeRef) {
+    statements.push(Statement::new_ref(
         last.clone(),
         rdf::a_type().clone(),
-        rdf::list().clone().into(),
+        ObjectNode::named_ref(rdf::list().clone()),
     ));
-    statements.push(Statement::new(
+    statements.push(Statement::new_ref(
         last.clone(),
         rdf::rest().clone(),
-        rdf::nil().clone().into(),
+        ObjectNode::named_ref(rdf::nil().clone()),
     ));
 }

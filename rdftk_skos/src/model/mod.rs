@@ -12,7 +12,7 @@ TBD
 
 use crate::ns;
 use rdftk_core::graph::{MutableGraph, PrefixMappings};
-use rdftk_core::{ObjectNode, Statement, SubjectNode};
+use rdftk_core::Graph;
 use rdftk_iri::IRIRef;
 use rdftk_memgraph::{Mappings, MemGraph};
 use rdftk_names::{dc, owl, rdf, xsd};
@@ -85,14 +85,14 @@ pub trait Resource: Labeled + Propertied {
 }
 
 pub trait ToStatements {
-    fn to_statements(&self, in_scheme: Option<&ObjectNode>) -> Vec<Statement>;
+    fn to_statements(&self, in_scheme: Option<&ObjectNodeRef>) -> StatementList;
 }
 
 pub trait ToStatement {
-    fn to_statement(&self, subject: &SubjectNode) -> Statement;
+    fn to_statement(&self, subject: &SubjectNodeRef) -> StatementRef;
 }
 
-pub trait ToURI {
+pub trait ToUri {
     fn to_uri(&self) -> IRIRef;
 }
 
@@ -103,7 +103,7 @@ pub trait ToURI {
 pub fn to_rdf_graph(scheme: &Scheme, default_namespace: Option<IRIRef>) -> MemGraph {
     let mut ns_mappings = standard_mappings();
     if let Some(default_namespace) = default_namespace {
-        ns_mappings.insert_default(default_namespace);
+        let _ = ns_mappings.set_default_namespace(default_namespace);
     }
     to_rdf_graph_with_mappings(scheme, ns_mappings)
 }
@@ -111,27 +111,48 @@ pub fn to_rdf_graph(scheme: &Scheme, default_namespace: Option<IRIRef>) -> MemGr
 pub fn to_rdf_graph_with_mappings(scheme: &Scheme, ns_mappings: Mappings) -> MemGraph {
     let mut graph = MemGraph::default();
 
-    graph.mappings(Rc::new(ns_mappings));
+    let _ = graph.mappings(Rc::new(ns_mappings));
 
     for statement in scheme.to_statements(None) {
-        graph.insert(statement);
+        graph.insert(statement.into());
     }
 
     graph
 }
 
+pub fn from_rdf_graph<'a>(graph: &'a impl Graph<'a>) -> Vec<Scheme> {
+    let schemes = Default::default();
+    let scheme_subjects: Vec<&SubjectNodeRef> = graph
+        .statements()
+        .filter_map(|st| {
+            if st.predicate() == rdf::a_type() && st.object().eq_iri(ns::concept_scheme()) {
+                Some(st.subject())
+            } else {
+                None
+            }
+        })
+        .collect();
+    for subject in scheme_subjects {}
+    todo!();
+    schemes
+}
+
 pub fn standard_mappings() -> Mappings {
     let mut mappings = Mappings::default();
-    mappings.insert(ns::default_prefix(), ns::namespace_iri().clone());
-    mappings.insert(ns::xl::default_prefix(), ns::xl::namespace_iri().clone());
-    mappings.insert(ns::iso::default_prefix(), ns::iso::namespace_iri().clone());
-    mappings.insert(
+    let _ = mappings.insert(ns::default_prefix(), ns::namespace_iri().clone());
+    let _ = mappings.insert(ns::xl::default_prefix(), ns::xl::namespace_iri().clone());
+    let _ = mappings.insert(ns::iso::default_prefix(), ns::iso::namespace_iri().clone());
+    let _ = mappings.insert(
+        ns::term_status::default_prefix(),
+        ns::term_status::namespace_iri().clone(),
+    );
+    let _ = mappings.insert(
         dc::terms::default_prefix(),
         dc::terms::namespace_iri().clone(),
     );
-    mappings.insert(rdf::default_prefix(), rdf::namespace_iri().clone());
-    mappings.insert(owl::default_prefix(), owl::namespace_iri().clone());
-    mappings.insert(xsd::default_prefix(), xsd::namespace_iri().clone());
+    let _ = mappings.insert(rdf::default_prefix(), rdf::namespace_iri().clone());
+    let _ = mappings.insert(owl::default_prefix(), owl::namespace_iri().clone());
+    let _ = mappings.insert(xsd::default_prefix(), xsd::namespace_iri().clone());
     mappings
 }
 
@@ -150,3 +171,4 @@ pub use collection::Collection;
 
 pub mod properties;
 pub use properties::{Label, LiteralProperty};
+use rdftk_core::statement::{ObjectNodeRef, StatementList, StatementRef, SubjectNodeRef};

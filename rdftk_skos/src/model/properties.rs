@@ -10,9 +10,10 @@ TBD
 
 */
 
-use crate::model::{Labeled, ToStatement, ToURI};
+use crate::model::{Labeled, ToStatement, ToUri};
 use crate::ns;
-use rdftk_core::{Literal, Statement, SubjectNode};
+use rdftk_core::statement::{StatementRef, SubjectNodeRef};
+use rdftk_core::{Literal, Statement};
 use rdftk_iri::IRIRef;
 use rdftk_names::dc;
 
@@ -72,7 +73,7 @@ impl Default for LabelKind {
     }
 }
 
-impl ToURI for LabelKind {
+impl ToUri for LabelKind {
     fn to_uri(&self) -> IRIRef {
         match self {
             Self::Preferred => ns::pref_label(),
@@ -87,8 +88,8 @@ impl ToURI for LabelKind {
 // ------------------------------------------------------------------------------------------------
 
 impl ToStatement for Label {
-    fn to_statement(&self, subject: &SubjectNode) -> Statement {
-        Statement::new(
+    fn to_statement(&self, subject: &SubjectNodeRef) -> StatementRef {
+        Statement::new_ref(
             subject.clone(),
             match self.kind {
                 LabelKind::Preferred => ns::pref_label(),
@@ -142,8 +143,8 @@ impl Label {
 // ------------------------------------------------------------------------------------------------
 
 impl ToStatement for LiteralProperty {
-    fn to_statement(&self, subject: &SubjectNode) -> Statement {
-        Statement::new(
+    fn to_statement(&self, subject: &SubjectNodeRef) -> StatementRef {
+        Statement::new_ref(
             subject.clone(),
             self.predicate.clone(),
             self.value.clone().into(),

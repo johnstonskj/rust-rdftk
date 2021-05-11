@@ -16,6 +16,7 @@ use crate::model::{
     Collection, Concept, Label, Labeled, LiteralProperty, Propertied, Resource, ToStatements,
 };
 use crate::ns;
+use rdftk_core::statement::{ObjectNodeRef, StatementList};
 use rdftk_core::{ObjectNode, Statement, SubjectNode};
 use rdftk_iri::IRIRef;
 use rdftk_names::rdf;
@@ -82,41 +83,41 @@ impl Labeled for Scheme {
 }
 
 impl ToStatements for Scheme {
-    fn to_statements(&self, _: Option<&ObjectNode>) -> Vec<Statement> {
-        let mut statements: Vec<Statement> = Default::default();
-        let subject = SubjectNode::named(self.uri().clone());
-        statements.push(Statement::new(
+    fn to_statements(&self, _: Option<&ObjectNodeRef>) -> StatementList {
+        let mut statements: StatementList = Default::default();
+        let subject = SubjectNode::named_ref(self.uri().clone());
+        statements.push(Statement::new_ref(
             subject.clone(),
             rdf::a_type().clone(),
-            ns::concept_scheme().into(),
+            ObjectNode::named_ref(ns::concept_scheme().clone()),
         ));
         let top_concepts: Vec<String> = self
             .concepts
             .iter()
             .map(|concept| concept.borrow().uri().to_string())
             .collect();
-        let in_scheme = ObjectNode::named(self.uri().clone());
+        let in_scheme = ObjectNode::named_ref(self.uri().clone());
         for member in &self.concepts_flattened() {
             statements.extend(member.borrow().to_statements(Some(&in_scheme)).drain(..));
             if top_concepts.contains(&member.borrow().uri().to_string()) {
-                statements.push(Statement::new(
-                    SubjectNode::named(member.borrow().uri().clone()),
+                statements.push(Statement::new_ref(
+                    SubjectNode::named_ref(member.borrow().uri().clone()),
                     ns::top_concept_of().clone(),
-                    subject.clone().into(),
+                    subject.as_object(),
                 ));
-                statements.push(Statement::new(
+                statements.push(Statement::new_ref(
                     subject.clone(),
                     ns::has_top_concept().clone(),
-                    ObjectNode::named(member.borrow().uri().clone()),
+                    ObjectNode::named_ref(member.borrow().uri().clone()),
                 ));
             }
         }
         for member in &self.collections_flattened() {
             statements.extend(member.borrow().to_statements(Some(&in_scheme)).drain(..));
-            statements.push(Statement::new(
-                SubjectNode::named(member.borrow().uri().clone()),
+            statements.push(Statement::new_ref(
+                SubjectNode::named_ref(member.borrow().uri().clone()),
                 ns::in_scheme().clone(),
-                ObjectNode::named(self.uri().clone().clone()),
+                ObjectNode::named_ref(self.uri().clone().clone()),
             ));
         }
         for label in self.labels() {
