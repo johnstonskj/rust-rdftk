@@ -219,6 +219,26 @@ and remove them from the 'unwise' set:
 
 */
 
+#![warn(
+    // ---------- Stylistic
+    future_incompatible,
+    nonstandard_style,
+    rust_2018_idioms,
+    trivial_casts,
+    trivial_numeric_casts,
+    // ---------- Public
+    missing_debug_implementations,
+    missing_docs,
+    unreachable_pub,
+    // ---------- Unsafe
+    unsafe_code,
+    // ---------- Unused
+    unused_extern_crates,
+    unused_import_braces,
+    unused_qualifications,
+    unused_results,
+)]
+
 #[macro_use]
 extern crate error_chain;
 

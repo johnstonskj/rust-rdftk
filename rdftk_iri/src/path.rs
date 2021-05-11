@@ -108,12 +108,12 @@ impl Normalize for Path {
         while index < segments.len() {
             let segment = segments.get(index).unwrap();
             if (segment.is_empty() && index != 0 && index != segments.len() - 1) || segment == DOT {
-                segments.remove(index);
+                let _ = segments.remove(index);
             } else if segment == DOT_DOT {
-                segments.remove(index);
+                let _ = segments.remove(index);
                 if index > 0 {
                     index -= 1;
-                    segments.remove(index);
+                    let _ = segments.remove(index);
                 }
             } else {
                 index += 1;

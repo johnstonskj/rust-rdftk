@@ -62,11 +62,11 @@ pub struct Port(u16);
 #[derive(Clone, Debug, Eq)]
 pub enum HostKind {
     /// Holds a parsed IPv4 address; e.g. `127.0.0.1`, `192.0.0.10`, `16.38.10.112`.
-    IPV4(Ipv4Addr),
+    Ipv4(Ipv4Addr),
     /// Holds a parsed IPv6 address; e.g. `[2001:db8::ff00:42:8329]`.
-    IPV6(Ipv6Addr),
+    Ipv6(Ipv6Addr),
     /// Holds a parsed IP future address; e.g. `[v7.2001:db8::ff00:42:8329]`.
-    IPVFuture(u16, String),
+    IpvFuture(u16, String),
     /// Holds a validated domain name; e.g. `localhost`, `example.com`, `node01.us.example.org`.
     DomainName(String),
 }
@@ -354,9 +354,9 @@ impl PartialEq for HostKind {
             (Self::DomainName(lhs), Self::DomainName(rhs)) => {
                 lhs.to_lowercase() == rhs.to_lowercase()
             }
-            (Self::IPV4(lhs), Self::IPV4(rhs)) => lhs == rhs,
-            (Self::IPV6(lhs), Self::IPV6(rhs)) => lhs == rhs,
-            (Self::IPVFuture(lv, ld), Self::IPVFuture(rv, rd)) => {
+            (Self::Ipv4(lhs), Self::Ipv4(rhs)) => lhs == rhs,
+            (Self::Ipv6(lhs), Self::Ipv6(rhs)) => lhs == rhs,
+            (Self::IpvFuture(lv, ld), Self::IpvFuture(rv, rd)) => {
                 lv == rv && ld.to_uppercase() == rd.to_uppercase()
             }
             _ => false,
@@ -368,9 +368,9 @@ impl Hash for HostKind {
     fn hash<H: Hasher>(&self, state: &mut H) {
         match self {
             Self::DomainName(v) => v.to_lowercase().hash(state),
-            Self::IPV4(v) => v.hash(state),
-            Self::IPV6(v) => v.hash(state),
-            Self::IPVFuture(v, vv) => {
+            Self::Ipv4(v) => v.hash(state),
+            Self::Ipv6(v) => v.hash(state),
+            Self::IpvFuture(v, vv) => {
                 v.hash(state);
                 vv.to_uppercase().hash(state)
             }
@@ -381,9 +381,9 @@ impl Hash for HostKind {
 impl Display for HostKind {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            HostKind::IPV4(address) => write!(f, "{}", address),
-            HostKind::IPV6(address) => write!(f, "[{}]", address),
-            HostKind::IPVFuture(version, address) => write!(f, "[v{:X}.{}]", version, address),
+            HostKind::Ipv4(address) => write!(f, "{}", address),
+            HostKind::Ipv6(address) => write!(f, "[{}]", address),
+            HostKind::IpvFuture(version, address) => write!(f, "[v{:X}.{}]", version, address),
             HostKind::DomainName(address) => write!(f, "{}", address),
         }
     }
@@ -396,8 +396,8 @@ impl Normalize for HostKind {
     {
         // SPEC: RFC-3986 §6.2.2
         Ok(match self {
-            HostKind::IPVFuture(version, address) => {
-                HostKind::IPVFuture(version, address.to_uppercase())
+            HostKind::IpvFuture(version, address) => {
+                HostKind::IpvFuture(version, address.to_uppercase())
             }
             HostKind::DomainName(name) => HostKind::DomainName(name.to_lowercase()),
             _ => self,
@@ -478,7 +478,7 @@ impl Host {
     /// ```
     ///
     pub fn new_ipv4_address(address: Ipv4Addr) -> IriResult<Self> {
-        Ok(Self(HostKind::IPV4(address)))
+        Ok(Self(HostKind::Ipv4(address)))
     }
 
     ///
@@ -496,7 +496,7 @@ impl Host {
     /// ```
     ///
     pub fn new_ipv6_address(address: Ipv6Addr) -> IriResult<Self> {
-        Ok(Self(HostKind::IPV6(address)))
+        Ok(Self(HostKind::Ipv6(address)))
     }
 
     ///
@@ -514,7 +514,7 @@ impl Host {
     ///
     pub fn new_ipv_future_address(version: u16, address: &str) -> IriResult<Self> {
         if IP_FUTURE.is_match(address) {
-            Ok(Self(HostKind::IPVFuture(version, address.to_string())))
+            Ok(Self(HostKind::IpvFuture(version, address.to_string())))
         } else {
             Err(ErrorKind::ParseIpAddressError(address.to_string()).into())
         }
@@ -527,17 +527,17 @@ impl Host {
 
     /// Returns `true` if this is an IPv4 address, else `false`.
     pub fn is_ipv4_address(&self) -> bool {
-        matches!(&self.0, HostKind::IPV4(_))
+        matches!(&self.0, HostKind::Ipv4(_))
     }
 
     /// Returns `true` if this is an IPv6 address, else `false`.
     pub fn is_ipv6_address(&self) -> bool {
-        matches!(&self.0, HostKind::IPV6(_))
+        matches!(&self.0, HostKind::Ipv6(_))
     }
 
     /// Returns `true` if this is an IPvFuture address, else `false`.
     pub fn is_ip_future_address(&self) -> bool {
-        matches!(&self.0, HostKind::IPVFuture(_, _))
+        matches!(&self.0, HostKind::IpvFuture(_, _))
     }
 
     ///
@@ -848,7 +848,7 @@ fn parse_ihost(s: &str) -> IriResult<(Host, Option<Port>)> {
     if let Some(captures) = IPV4.captures(s) {
         let address = captures.get(1).unwrap().as_str();
         Ok((
-            Host(HostKind::IPV4(address.parse().chain_err(|| {
+            Host(HostKind::Ipv4(address.parse().chain_err(|| {
                 ErrorKind::ParseIpAddressError(address.to_string())
             })?)),
             match captures.get(3) {
@@ -860,7 +860,7 @@ fn parse_ihost(s: &str) -> IriResult<(Host, Option<Port>)> {
         if captures.get(2).is_none() {
             let address = captures.get(3).unwrap().as_str();
             Ok((
-                Host(HostKind::IPV6(address.parse().chain_err(|| {
+                Host(HostKind::Ipv6(address.parse().chain_err(|| {
                     ErrorKind::ParseIpAddressError(address.to_string())
                 })?)),
                 match captures.get(5) {
@@ -871,7 +871,7 @@ fn parse_ihost(s: &str) -> IriResult<(Host, Option<Port>)> {
         } else {
             let version = captures.get(2).unwrap().as_str();
             Ok((
-                Host(HostKind::IPVFuture(
+                Host(HostKind::IpvFuture(
                     version
                         .parse()
                         .chain_err(|| ErrorKind::ParseIpAddressError(version.to_string()))?,

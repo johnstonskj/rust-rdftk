@@ -56,6 +56,11 @@ The following features are present in this crate.
 
 ## Changes
 
+**Version 0.1.6**
+
+* Applied a lot more warnings in lib.rs
+* Applied more Clippy suggestions.
+
 **Version 0.1.5**
 
 * Applied all Clippy suggestions.

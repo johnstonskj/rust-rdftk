@@ -27,10 +27,15 @@ fn some_operation() -> IriResult<IRI> {
 ///
 #[derive(Debug)]
 pub enum Component {
+    /// The 'scheme' component of the IRI.
     Scheme,
+    /// The 'authority' component of the IRI.
     Authority,
+    /// The 'path' component of the IRI.
     Path,
+    /// The 'query' component of the IRI.
     Query,
+    /// The 'fragment' component of the IRI.
     Fragment,
 }
 
