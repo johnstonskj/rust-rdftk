@@ -1,13 +1,45 @@
 /*!
-The `Literal` type used in the object component of a statement.
+The `Literal` type used in the object component of a statement. Literal values are always strings,
+although an optional data type can be provided to allow consumers to convert from string
+lexical forms.
+
+Note that duration values can be provided using `std::time::Duration`, however the
+[chrono](https://crates.io/crates/chrono) crate's `chrono::Duration` may also be used. This
+additional dependency also allows for correct formatting of duration lexical forms by converting
+all standard duration values to chrono durations which support the correct `to_string` form.
 
 # Example
 
-TBD
+```rust
+use rdftk_core::{Literal, DataType};
+let string_literal: Literal = "string value".into();
+assert_eq!(string_literal.lexical_form(), "string value");
+assert_eq!(string_literal.data_type().as_ref(), None);
+
+let string_literal: Literal = Literal::with_language("string value", "en_US");
+assert_eq!(string_literal.language().as_ref().unwrap(), "en_US");
+assert_eq!(string_literal.data_type().as_ref(), None);
+
+let typed_string_literal: Literal = Literal::string("string value");
+assert_eq!(typed_string_literal.data_type().as_ref().unwrap(), &DataType::String);
+
+let long_literal: Literal = Literal::with_type("212", DataType::Long);
+assert_eq!(long_literal.data_type().as_ref().unwrap(), &DataType::Long);
+
+let long_literal: Literal = 212u64.into();
+assert_eq!(long_literal.lexical_form(), "212");
+
+use std::time::Duration;
+
+let duration_literal: Literal = Duration::from_secs(63542).into();
+assert_eq!(duration_literal.lexical_form(), "PT63542S");
+assert_eq!(duration_literal.data_type().as_ref().unwrap(), &DataType::Duration);
+```
 
 */
 
-use crate::QName;
+use crate::qname::QName;
+use crate::statement::ObjectNodeRef;
 use rdftk_iri::IRIRef;
 use rdftk_names::xsd;
 use std::fmt::{Display, Formatter};
@@ -90,6 +122,10 @@ impl From<DataType> for IRIRef {
 }
 
 impl DataType {
+    ///
+    /// Return the IRI representing this data type. Primarily these are the XML Schema data types
+    /// used for literal values.
+    ///
     pub fn as_iri(&self) -> &IRIRef {
         match &self {
             DataType::String => xsd::string(),
@@ -151,51 +187,31 @@ impl Display for Literal {
 
 impl From<String> for Literal {
     fn from(value: String) -> Self {
-        Self {
-            lexical_form: Self::escape_string(&value),
-            data_type: Some(DataType::String),
-            language: None,
-        }
+        Self::new(&value)
     }
 }
 
 impl From<&str> for Literal {
     fn from(value: &str) -> Self {
-        Self {
-            lexical_form: Self::escape_string(value),
-            data_type: Some(DataType::String),
-            language: None,
-        }
+        Self::new(&value)
     }
 }
 
 impl From<IRIRef> for Literal {
     fn from(value: IRIRef) -> Self {
-        Self {
-            lexical_form: value.to_string(),
-            data_type: Some(DataType::IRI),
-            language: None,
-        }
+        Self::iri(value)
     }
 }
 
 impl From<QName> for Literal {
     fn from(value: QName) -> Self {
-        Self {
-            lexical_form: value.to_string(),
-            data_type: Some(DataType::QName),
-            language: None,
-        }
+        Self::qname(value)
     }
 }
 
 impl From<bool> for Literal {
     fn from(value: bool) -> Self {
-        Self {
-            lexical_form: value.to_string(),
-            data_type: Some(DataType::Boolean),
-            language: None,
-        }
+        Self::boolean(value)
     }
 }
 
@@ -301,15 +317,18 @@ impl From<u8> for Literal {
 
 impl From<Duration> for Literal {
     fn from(value: Duration) -> Self {
-        Self {
-            lexical_form: format!("T{}.{:09}S", value.as_secs(), value.subsec_nanos()),
-            data_type: Some(DataType::Duration),
-            language: None,
-        }
+        Self::duration(value)
+    }
+}
+
+impl From<chrono::Duration> for Literal {
+    fn from(value: chrono::Duration) -> Self {
+        Self::chrono_duration(value)
     }
 }
 
 impl Literal {
+    /// Construct a new, untyped, literal value.
     pub fn new(value: &str) -> Self {
         Self {
             lexical_form: Self::escape_string(value),
@@ -318,6 +337,7 @@ impl Literal {
         }
     }
 
+    /// Construct a new typed literal value.
     pub fn with_type(value: &str, data_type: DataType) -> Self {
         Self {
             lexical_form: Self::escape_string(value),
@@ -326,6 +346,7 @@ impl Literal {
         }
     }
 
+    /// Construct a new string literal value with the associated language.
     pub fn with_language(value: &str, language: &str) -> Self {
         Self {
             lexical_form: Self::escape_string(value),
@@ -334,118 +355,68 @@ impl Literal {
         }
     }
 
+    /// Construct a new `DataType::String` value.
+    pub fn string(value: &str) -> Self {
+        Self::with_type(value, DataType::String)
+    }
+
+    /// Construct a new `DataType::QName` value.
+    pub fn qname(value: QName) -> Self {
+        Self::with_type(&value.to_string(), DataType::QName)
+    }
+
+    /// Construct a new `DataType::IRI` value.
+    pub fn iri(value: IRIRef) -> Self {
+        Self::with_type(&value.to_string(), DataType::IRI)
+    }
+
+    /// Construct a new `DataType::Boolean` value.
+    pub fn boolean(value: bool) -> Self {
+        Self::with_type(&value.to_string(), DataType::Boolean)
+    }
+
+    /// Construct a new `DataType::Duration` value.
+    pub fn duration(value: Duration) -> Self {
+        Self::chrono_duration(chrono::Duration::from_std(value).unwrap())
+    }
+
+    /// Construct a new `DataType::Duration` value.
+    pub fn chrono_duration(value: chrono::Duration) -> Self {
+        Self::with_type(&value.to_string(), DataType::Duration)
+    }
+
+    /// Return the lexical form of this literal.
     pub fn lexical_form(&self) -> &String {
         &self.lexical_form
     }
 
+    /// Returns `true` if this literal has a specified data type, else `false`.
     pub fn has_data_type(&self) -> bool {
         self.data_type.is_some()
     }
 
+    /// Returns this literal's data type, if present.
     pub fn data_type(&self) -> &Option<DataType> {
         &self.data_type
     }
 
+    /// Returns `true` if this literal has a specified language, else `false`.
     pub fn has_language(&self) -> bool {
         self.language.is_some()
     }
 
+    /// Returns this literal's language, if present.
     pub fn language(&self) -> &Option<String> {
         &self.language
+    }
+
+    /// Create a new object node from this literal.
+    pub fn as_object(&self) -> ObjectNodeRef {
+        ObjectNodeRef::from(self.clone())
     }
 
     fn escape_string(value: &str) -> String {
         let formatted = format!("{:?}", value);
         formatted[1..formatted.len() - 1].to_string()
-    }
-}
-
-// ------------------------------------------------------------------------------------------------
-// Unit Tests
-// ------------------------------------------------------------------------------------------------
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::time::Instant;
-
-    #[test]
-    fn test_untyped() {
-        let value = Literal::new("a string");
-        assert!(!value.has_data_type());
-        assert!(!value.has_language());
-        assert_eq!(value.lexical_form(), "a string");
-        assert_eq!(value.to_string(), "\"a string\"");
-    }
-
-    #[test]
-    fn test_needs_escape() {
-        let value = Literal::new(r#"\ta "string"#);
-        assert!(!value.has_data_type());
-        assert!(!value.has_language());
-        assert_eq!(value.lexical_form(), "\\\\ta \\\"string");
-        assert_eq!(value.to_string(), "\"\\\\ta \\\"string\"");
-    }
-
-    #[test]
-    fn test_language_string() {
-        let value = Literal::with_language("a string", "en_us");
-        assert!(!value.has_data_type());
-        assert!(value.has_language());
-        assert_eq!(value.lexical_form(), "a string");
-        assert_eq!(value.to_string(), "\"a string\"@en_us");
-    }
-
-    #[test]
-    fn test_typed_as_string() {
-        let value: Literal = "a string".to_string().into();
-        assert!(value.has_data_type());
-        assert!(!value.has_language());
-        assert_eq!(value.lexical_form(), "a string");
-        assert_eq!(
-            value.to_string(),
-            "\"a string\"^^<http://www.w3.org/2001/XMLSchema#string>"
-        );
-    }
-
-    #[test]
-    fn test_typed_as_boolean() {
-        let value: Literal = true.into();
-        assert!(value.has_data_type());
-        assert!(!value.has_language());
-        assert_eq!(value.lexical_form(), "true");
-        assert_eq!(
-            value.to_string(),
-            "\"true\"^^<http://www.w3.org/2001/XMLSchema#boolean>"
-        );
-    }
-
-    #[test]
-    fn test_typed_as_long() {
-        let value: Literal = 1u64.into();
-        assert!(value.has_data_type());
-        assert!(!value.has_language());
-        assert_eq!(value.lexical_form(), "1");
-        assert_eq!(
-            value.to_string(),
-            "\"1\"^^<http://www.w3.org/2001/XMLSchema#unsignedLong>"
-        );
-    }
-
-    #[test]
-    fn test_typed_as_duration() {
-        let start = Instant::now();
-        std::thread::sleep(Duration::from_secs(2));
-        let duration = start.elapsed();
-        println!("Duration  In: {:#?}", duration);
-
-        let value: Literal = duration.into();
-        println!("Duration Out: {}", value);
-        assert!(value.has_data_type());
-        assert!(!value.has_language());
-
-        let value_str = value.to_string();
-        assert!(value_str.starts_with("\"T2."));
-        assert!(value_str.ends_with("S\"^^<http://www.w3.org/2001/XMLSchema#duration>"));
     }
 }

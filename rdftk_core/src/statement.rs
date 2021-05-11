@@ -1,15 +1,41 @@
 /*!
-A single statement (subject, predicate, object) in the RDF data mode.
+This module provides types for the RDF Statement (triple) concept.
+
+1. A **statement** comprises a subject, a predicate, and an object.
+1. A **subject** may be a blank (unnamed) node, an IRI (named node), or a statement reference
+   according to RDF-star.
+1. A **predicate** is an IRI.
+1. An **object** may be a blank (unnamed) node, an IRI (named node), a literal value, or a statement
+   reference according to RDF-star.
+1. A **literal** has a string-like *lexical form* and may have an asserted data type or a language
+   identifier.
 
 # Example
 
-TBD
+
+```rust
+use rdftk_core::{Statement, SubjectNode, ObjectNode};
+use rdftk_core::statement::StatementList;
+use rdftk_iri::IRI;
+use std::rc::Rc;
+use std::str::FromStr;
+
+let mut statements: StatementList = Default::default();
+
+statements.push(Statement::new_ref(
+    SubjectNode::from(IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap()).into(),
+    IRI::from_str("http://purl.org/dc/elements/1.1/title").unwrap().into(),
+    ObjectNode::literal_str("Tony Benn").into(),
+));
+```
+
 
 */
 
 #![allow(clippy::module_name_repetitions)]
 
 use crate::literal::Literal;
+use crate::DataType;
 use rdftk_iri::{IRIRef, IRI};
 use rdftk_names::rdf;
 use std::fmt::{Display, Formatter};
@@ -21,9 +47,57 @@ use unique_id::Generator;
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
+///
+/// A subject node anchors one or more statements in a graph such that all statements with a common
+/// subject are considered to be statements about the same thing.
+///
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct SubjectNode {
+    inner: Subject,
+}
+
+///
+/// The actual subject storage type, reference counted for memory management.
+///
+pub type SubjectNodeRef = Rc<SubjectNode>;
+
+///
+/// An object node may be another resource, or a literal value. In this way graphs can easily be
+/// made using resource links.
+///
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct ObjectNode {
+    inner: Object,
+}
+
+///
+/// The actual object storage type, reference counted for memory management.
+///
+pub type ObjectNodeRef = Rc<ObjectNode>;
+
+///
+/// A statement comprises a subject, a predicate, and an object.
+///
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Statement {
+    subject: SubjectNodeRef,
+    predicate: IRIRef,
+    object: ObjectNodeRef,
+}
+
+///
+/// The actual statement storage type, reference counted for memory management.
+///
 pub type StatementRef = Rc<Statement>;
 
+///
+/// A list of statements, this can be used to pass non-graph sets of statements.
+///
 pub type StatementList = Vec<StatementRef>;
+
+// ------------------------------------------------------------------------------------------------
+// Private Types
+// ------------------------------------------------------------------------------------------------
 
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -33,44 +107,13 @@ enum Subject {
     Star(StatementRef),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct SubjectNode {
-    inner: Subject,
-}
-
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 enum Object {
     BNode(String),
     IRI(IRIRef),
-    Literal(Box<Literal>),
+    Literal(Literal),
     Star(StatementRef),
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct ObjectNode {
-    inner: Object,
-}
-
-#[allow(clippy::upper_case_acronyms)]
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-enum Context {
-    Default,
-    BNode(String),
-    IRI(IRIRef),
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct ContextNode {
-    inner: Context,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct Statement {
-    subject: SubjectNode,
-    predicate: IRIRef,
-    object: ObjectNode,
-    context: ContextNode,
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -109,15 +152,9 @@ impl From<&IRIRef> for SubjectNode {
     }
 }
 
-impl From<Statement> for SubjectNode {
-    fn from(st: Statement) -> Self {
-        SubjectNode::about(Rc::from(st))
-    }
-}
-
-impl From<&Statement> for SubjectNode {
-    fn from(st: &Statement) -> Self {
-        SubjectNode::about(Rc::from(st.clone()))
+impl From<&StatementRef> for SubjectNode {
+    fn from(st: &StatementRef) -> Self {
+        SubjectNode::about(st.clone())
     }
 }
 
@@ -128,34 +165,100 @@ impl From<StatementRef> for SubjectNode {
 }
 
 impl SubjectNode {
+    ///
+    /// Construct a new subject node, as a blank node with a randomly assigned name.
+    ///
     pub fn blank() -> Self {
-        Self {
-            inner: Subject::BNode(new_blank_node_id()),
-        }
+        Self::blank_named(&new_blank_node_id())
     }
 
+    ///
+    /// Construct a new subject node reference, as a blank node with a randomly assigned name.
+    ///
+    pub fn blank_ref() -> SubjectNodeRef {
+        Rc::from(Self::blank())
+    }
+
+    ///
+    /// Construct a new subject node, as a blank node with the specified name.
+    ///
     pub fn blank_named(name: &str) -> Self {
         Self {
             inner: Subject::BNode(name.to_string()),
         }
     }
 
+    /// Is this object a blank node, with the provided name value?
+    pub fn eq_blank(&self, other: &str) -> bool {
+        if let Some(value) = self.as_blank() {
+            value == other
+        } else {
+            false
+        }
+    }
+
+    ///
+    /// Construct a new subject node, with an IRI naming a resource.
+    ///
     pub fn named(name: IRIRef) -> Self {
         Self {
             inner: Subject::IRI(name),
         }
     }
 
+    ///
+    /// Construct a new subject node reference, with an IRI naming a resource.
+    ///
+    pub fn named_ref(name: IRIRef) -> SubjectNodeRef {
+        Rc::from(Self::named(name))
+    }
+
+    /// Is this object a named node, with the provided IRI value?
+    pub fn eq_iri(&self, other: &IRIRef) -> bool {
+        if let Some(value) = self.as_iri() {
+            value == other
+        } else {
+            false
+        }
+    }
+
+    ///
+    /// Construct a new subject node, where the subject **is an** existing statement. This is
+    /// an extension specified by [RDF-star](https://w3c.github.io/rdf-star/cg-spec/editors_draft.html).
+    ///
     pub fn about(st: StatementRef) -> Self {
         Self {
             inner: Subject::Star(st),
         }
     }
 
+    ///
+    /// Construct a new subject node reference, where the subject **is an** existing statement.
+    /// This is an extension specified by [RDF-star](https://w3c.github.io/rdf-star/cg-spec/editors_draft.html).
+    ///
+    pub fn about_ref(st: StatementRef) -> SubjectNodeRef {
+        Rc::from(Self::about(st))
+    }
+
+    /// Is this object a literal, with the provided value?
+    pub fn eq_statement(&self, other: &StatementRef) -> bool {
+        if let Some(value) = self.as_statement() {
+            value == other
+        } else {
+            false
+        }
+    }
+
+    ///
+    /// Return `true` if this subject is a blank node, else `false`.
+    ///
     pub fn is_blank(&self) -> bool {
         matches!(self.inner, Subject::BNode(_))
     }
 
+    ///
+    /// Return a blank node string, if `self.is_blank()`, else `None`.
+    ///
     pub fn as_blank(&self) -> Option<&String> {
         match &self.inner {
             Subject::BNode(s) => Some(s),
@@ -163,15 +266,24 @@ impl SubjectNode {
         }
     }
 
+    ///
+    /// Return `true` if this subject is an IRI, else `false`.
+    ///
     pub fn is_iri(&self) -> bool {
         matches!(self.inner, Subject::IRI(_))
     }
 
+    ///
+    /// Return `true` if this subject is an IRI, else `false`.
+    ///
     #[inline]
     pub fn is_named(&self) -> bool {
         self.is_iri()
     }
 
+    ///
+    /// Return a named node IRI, if `self.is_iri()`, else `None`.
+    ///
     pub fn as_iri(&self) -> Option<&IRIRef> {
         match &self.inner {
             Subject::IRI(u) => Some(u),
@@ -179,15 +291,33 @@ impl SubjectNode {
         }
     }
 
+    ///
+    /// Return `true` if this subject is an [RDF-star](https://w3c.github.io/rdf-star/cg-spec/editors_draft.html) statement, else `false`.
+    ///
     pub fn is_statement(&self) -> bool {
         matches!(self.inner, Subject::Star(_))
     }
 
+    ///
+    /// Return a statement reference, if `self.is_statement()`, else `None`.
+    ///
     pub fn as_statement(&self) -> Option<&StatementRef> {
         match &self.inner {
             Subject::Star(st) => Some(st),
             _ => None,
         }
+    }
+
+    ///
+    /// Return a new object node reference, which refers to this subject.
+    ///
+    pub fn as_object(&self) -> ObjectNodeRef {
+        match &self.inner {
+            Subject::BNode(node) => ObjectNode::blank_named(node),
+            Subject::IRI(iri) => ObjectNode::named(iri.clone()),
+            Subject::Star(st) => ObjectNode::about(st.clone()),
+        }
+        .into()
     }
 }
 
@@ -202,7 +332,7 @@ impl Display for ObjectNode {
                 Object::BNode(node) => format!("_:{}", node),
                 Object::IRI(iri) => format!("<{}>", iri),
                 Object::Literal(literal) => literal.to_string(),
-                Object::Star(st) => format!("<{}>", st.to_string_no_dot()),
+                Object::Star(st) => format!("<< {} >>", st.to_string_no_dot()),
             }
         )
     }
@@ -226,75 +356,159 @@ impl From<&IRIRef> for ObjectNode {
     }
 }
 
-impl From<Statement> for ObjectNode {
+impl From<Statement> for ObjectNodeRef {
     fn from(st: Statement) -> Self {
-        ObjectNode::about(Rc::from(st))
+        ObjectNode::about_ref(Rc::from(st))
     }
 }
 
-impl From<StatementRef> for ObjectNode {
-    fn from(st: StatementRef) -> Self {
-        ObjectNode::about(st)
-    }
-}
-
-impl From<Literal> for ObjectNode {
-    fn from(literal: Literal) -> Self {
-        Self {
-            inner: Object::Literal(Box::new(literal)),
-        }
-    }
-}
-
-impl From<SubjectNode> for ObjectNode {
-    fn from(subject: SubjectNode) -> Self {
-        match subject.inner {
-            Subject::BNode(node) => ObjectNode::blank_named(&node),
-            Subject::IRI(iri) => ObjectNode::named(iri),
-            Subject::Star(st) => ObjectNode::about(st),
-        }
-    }
-}
-
-impl From<&SubjectNode> for ObjectNode {
-    fn from(subject: &SubjectNode) -> Self {
-        match &subject.inner {
-            Subject::BNode(node) => ObjectNode::blank_named(node),
-            Subject::IRI(iri) => ObjectNode::named(iri.clone()),
-            Subject::Star(st) => ObjectNode::about(st.clone()),
-        }
+impl From<Literal> for ObjectNodeRef {
+    fn from(v: Literal) -> Self {
+        ObjectNode::literal_ref(v)
     }
 }
 
 impl ObjectNode {
+    ///
+    /// Construct a new object node, as a blank node with a randomly assigned name.
+    ///
     pub fn blank() -> Self {
-        Self {
-            inner: Object::BNode(new_blank_node_id()),
-        }
+        Self::blank_named(&new_blank_node_id())
     }
 
+    ///
+    /// Construct a new object node reference, as a blank node with a randomly assigned name.
+    ///
+    pub fn blank_ref() -> ObjectNodeRef {
+        Rc::from(Self::blank())
+    }
+
+    ///
+    /// Construct a new object node, as a blank node with the specified name.
+    ///
     pub fn blank_named(name: &str) -> Self {
         Self {
             inner: Object::BNode(name.to_string()),
         }
     }
 
+    /// Is this object a blank node, with the provided name value?
+    pub fn eq_blank(&self, other: &str) -> bool {
+        if let Some(value) = self.as_blank() {
+            value == other
+        } else {
+            false
+        }
+    }
+
+    ///
+    /// Construct a new object node, with an IRI naming a resource.
+    ///
     pub fn named(name: IRIRef) -> Self {
         Self {
             inner: Object::IRI(name),
         }
     }
 
+    ///
+    /// Construct a new object node reference, with an IRI naming a resource.
+    ///
+    pub fn named_ref(name: IRIRef) -> ObjectNodeRef {
+        Rc::from(Self::named(name))
+    }
+
+    /// Is this object a named node, with the provided IRI value?
+    pub fn eq_iri(&self, other: &IRIRef) -> bool {
+        if let Some(value) = self.as_iri() {
+            value == other
+        } else {
+            false
+        }
+    }
+
+    ///
+    /// Construct a new object node, with a literal value.
+    ///
+    pub fn literal(literal: Literal) -> Self {
+        Self {
+            inner: Object::Literal(literal),
+        }
+    }
+
+    ///
+    /// Construct a new object node reference, with a literal value.
+    ///
+    pub fn literal_ref(literal: Literal) -> ObjectNodeRef {
+        Rc::from(Self::literal(literal))
+    }
+
+    ///
+    /// Construct a new object node, with an untyped literal value.
+    ///
+    pub fn literal_str(value: &str) -> Self {
+        Self::literal(Literal::new(value))
+    }
+
+    ///
+    /// Construct a new object node, with an typed literal value.
+    ///
+    pub fn literal_with_type(value: &str, data_type: DataType) -> Self {
+        Self::literal(Literal::with_type(value, data_type))
+    }
+
+    ///
+    /// Construct a new object node, with an untyped literal value with language identifier.
+    ///
+    pub fn literal_with_language(value: &str, language: &str) -> Self {
+        Self::literal(Literal::with_language(value, language))
+    }
+
+    /// Is this object a literal, with the provided value?
+    pub fn eq_literal(&self, other: &Literal) -> bool {
+        if let Some(value) = self.as_literal() {
+            value == other
+        } else {
+            false
+        }
+    }
+
+    ///
+    /// Construct a new object node, where the object **is an** existing statement. This is
+    /// an extension specified by [RDF-star](https://w3c.github.io/rdf-star/cg-spec/editors_draft.html).
+    ///
     pub fn about(st: StatementRef) -> Self {
         Self {
             inner: Object::Star(st),
         }
     }
 
+    ///
+    /// Construct a new object node reference, where the object **is an** existing statement. This is
+    /// an extension specified by [RDF-star](https://w3c.github.io/rdf-star/cg-spec/editors_draft.html).
+    ///
+    pub fn about_ref(st: StatementRef) -> ObjectNodeRef {
+        Rc::from(Self::about(st))
+    }
+
+    /// Is this object a literal, with the provided value?
+    pub fn eq_statement(&self, other: &StatementRef) -> bool {
+        if let Some(value) = self.as_statement() {
+            value == other
+        } else {
+            false
+        }
+    }
+
+    ///
+    /// Return `true` if this object is a blank node, else `false`.
+    ///
     pub fn is_blank(&self) -> bool {
         matches!(self.inner, Object::BNode(_))
     }
 
+    ///
+    /// Return a blank node string, if `self.is_blank()`, else `None`.
+    ///
     pub fn as_blank(&self) -> Option<&String> {
         match &self.inner {
             Object::BNode(s) => Some(s),
@@ -302,10 +516,16 @@ impl ObjectNode {
         }
     }
 
+    ///
+    /// Return `true` if this object is an IRI, else `false`.
+    ///
     pub fn is_iri(&self) -> bool {
         matches!(self.inner, Object::IRI(_))
     }
 
+    ///
+    /// Return a named node IRI, if `self.is_iri()`, else `None`.
+    ///
     pub fn as_iri(&self) -> Option<&IRIRef> {
         match &self.inner {
             Object::IRI(u) => Some(u),
@@ -313,10 +533,16 @@ impl ObjectNode {
         }
     }
 
+    ///
+    /// Return `true` if this object is a literal value, else `false`.
+    ///
     pub fn is_literal(&self) -> bool {
         matches!(self.inner, Object::Literal(_))
     }
 
+    ///
+    /// Return a literal value, if `self.is_literal()`, else `None`.
+    ///
     pub fn as_literal(&self) -> Option<&Literal> {
         match &self.inner {
             Object::Literal(l) => Some(l),
@@ -324,10 +550,16 @@ impl ObjectNode {
         }
     }
 
+    ///
+    /// Return `true` if this object is an [RDF-star](https://w3c.github.io/rdf-star/cg-spec/editors_draft.html) statement, else `false`.
+    ///
     pub fn is_statement(&self) -> bool {
         matches!(self.inner, Object::Star(_))
     }
 
+    ///
+    /// Return a statement reference, if `self.is_statement()`, else `None`.
+    ///
     pub fn as_statement(&self) -> Option<&StatementRef> {
         match &self.inner {
             Object::Star(st) => Some(st),
@@ -335,99 +567,15 @@ impl ObjectNode {
         }
     }
 
+    ///
+    /// Return a new subject node reference, which refers to this object, if it is not
+    /// a literal.
+    ///
     pub fn as_subject(&self) -> Option<SubjectNode> {
         match &self.inner {
             Object::IRI(iri) => Some(SubjectNode::named(iri.clone())),
             Object::BNode(b) => Some(SubjectNode::blank_named(b)),
-            _ => None,
-        }
-    }
-}
-
-// ------------------------------------------------------------------------------------------------
-
-impl Default for ContextNode {
-    fn default() -> Self {
-        Self {
-            inner: Context::Default,
-        }
-    }
-}
-
-impl Display for ContextNode {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match &self.inner {
-                Context::Default => String::new(),
-                Context::BNode(node) => format!(" _:{}", node),
-                Context::IRI(iri) => format!(" <{}>", iri),
-            }
-        )
-    }
-}
-
-impl From<IRI> for ContextNode {
-    fn from(iri: IRI) -> Self {
-        ContextNode::named(iri.into())
-    }
-}
-
-impl From<IRIRef> for ContextNode {
-    fn from(iri: IRIRef) -> Self {
-        ContextNode::named(iri)
-    }
-}
-
-impl From<&IRIRef> for ContextNode {
-    fn from(iri: &IRIRef) -> Self {
-        ContextNode::named(iri.clone())
-    }
-}
-
-impl ContextNode {
-    pub fn blank() -> Self {
-        Self {
-            inner: Context::BNode(new_blank_node_id()),
-        }
-    }
-
-    pub fn blank_named(name: &str) -> Self {
-        Self {
-            inner: Context::BNode(name.to_string()),
-        }
-    }
-
-    pub fn named(name: IRIRef) -> Self {
-        Self {
-            inner: Context::IRI(name),
-        }
-    }
-
-    pub fn is_blank(&self) -> bool {
-        matches!(self.inner, Context::BNode(_))
-    }
-
-    pub fn as_blank(&self) -> Option<&String> {
-        match &self.inner {
-            Context::BNode(s) => Some(s),
-            _ => None,
-        }
-    }
-
-    pub fn is_iri(&self) -> bool {
-        matches!(self.inner, Context::IRI(_))
-    }
-
-    #[inline]
-    pub fn is_named(&self) -> bool {
-        self.is_iri()
-    }
-
-    pub fn as_iri(&self) -> Option<&IRIRef> {
-        match &self.inner {
-            Context::IRI(u) => Some(u),
+            Object::Star(st) => Some(SubjectNode::about(st.clone())),
             _ => None,
         }
     }
@@ -442,78 +590,99 @@ impl Display for Statement {
 }
 
 impl Statement {
-    pub fn new(subject: SubjectNode, predicate: IRIRef, object: ObjectNode) -> Self {
+    ///
+    /// Construct a new statement from the provided subject, predicate, and object.
+    ///
+    pub fn new(subject: SubjectNodeRef, predicate: IRIRef, object: ObjectNodeRef) -> Self {
         Self {
             subject,
             predicate,
             object,
-            context: ContextNode::default(),
         }
     }
 
-    pub fn with_context(
-        subject: SubjectNode,
+    ///
+    /// Construct a new statement reference from the provided subject, predicate, and object.
+    ///
+    pub fn new_ref(
+        subject: SubjectNodeRef,
         predicate: IRIRef,
-        object: ObjectNode,
-        context: ContextNode,
-    ) -> Self {
-        Self {
-            subject,
-            predicate,
-            object,
-            context,
-        }
+        object: ObjectNodeRef,
+    ) -> StatementRef {
+        Rc::from(Self::new(subject, predicate, object))
     }
 
-    pub fn also(&self, predicate: IRIRef, object: ObjectNode) -> Self {
+    ///
+    /// Construct a new statement with the provided predicate and object but using self's
+    /// subject.
+    ///
+    pub fn also(&self, predicate: IRIRef, object: ObjectNodeRef) -> Self {
         Self {
             subject: self.subject.clone(),
             predicate,
             object,
-            context: self.context().clone(),
         }
     }
 
-    pub fn about(&self, predicate: IRIRef, object: ObjectNode) -> Self {
+    ///
+    /// Construct a new statement from the provided predicate, and object, but using self
+    /// as the subject ([RDF-star](https://w3c.github.io/rdf-star/cg-spec/editors_draft.html)).
+    ///
+    pub fn about(&self, predicate: IRIRef, object: ObjectNodeRef) -> Self {
         Self {
-            subject: self.into(),
+            subject: SubjectNode::about(self.clone().into()).into(),
             predicate,
             object,
-            context: self.context().clone(),
         }
     }
 
-    pub fn subject(&self) -> &SubjectNode {
+    ///
+    /// Return the subject of this statement.
+    ///
+    pub fn subject(&self) -> &SubjectNodeRef {
         &self.subject
     }
 
+    ///
+    /// Return the predicate of this statement.
+    ///
     pub fn predicate(&self) -> &IRIRef {
         &self.predicate
     }
 
-    pub fn object(&self) -> &ObjectNode {
+    ///
+    /// Return the object of this statement.
+    ///
+    pub fn object(&self) -> &ObjectNodeRef {
         &self.object
     }
 
-    pub fn reify(&self) -> Vec<Statement> {
+    ///
+    /// RDF Reification is the process of turning a single statement into a set of statements, and
+    /// more importantly giving an identity (in the form of a blank node) to the statement.
+    ///
+    pub fn reify(&self) -> Vec<StatementRef> {
         reify_statement(self).1
     }
 
+    ///
+    /// This statement is considered nested if *either* subject or object is itself a statement
+    /// ([RDF-star](https://w3c.github.io/rdf-star/cg-spec/editors_draft.html))
+    ///
     pub fn is_nested(&self) -> bool {
         self.subject().is_statement() || self.object().is_statement()
     }
 
-    pub fn context(&self) -> &ContextNode {
-        &self.context
-    }
-
+    ///
+    /// Return a string form of a statement, in this case it does not terminate with a "."
+    /// character in the usual style.
+    ///
     pub fn to_string_no_dot(&self) -> String {
         format!(
-            "{} <{}> {}{}",
+            "{} <{}> {}",
             &self.subject.to_string(),
             &self.predicate.to_string(),
             &self.object.to_string(),
-            &self.context.to_string(),
         )
     }
 }
@@ -526,136 +695,66 @@ fn new_blank_node_id() -> String {
     format!("B{}", IDGenerator::default().next_id())
 }
 
-fn reify_statement(st: &Statement) -> (SubjectNode, Vec<Statement>) {
-    let mut statements = Vec::default();
-    let new_subject = SubjectNode::blank();
-    statements.push(Statement::new(
-        new_subject.clone(),
-        rdf::a_type().clone(),
-        rdf::statement().into(),
-    ));
+fn reify_statement(st: &Statement) -> (SubjectNodeRef, Vec<StatementRef>) {
+    let mut statements: Vec<StatementRef> = Default::default();
+    let new_subject = Rc::from(SubjectNode::blank());
+    statements.push(
+        Statement::new(
+            new_subject.clone(),
+            rdf::a_type().clone(),
+            ObjectNode::named(rdf::statement().clone()).into(),
+        )
+        .into(),
+    );
     if st.subject().is_statement() {
         let nested = reify_statement(st.subject().as_statement().unwrap());
         statements.extend(nested.1);
-        statements.push(Statement::new(
-            new_subject.clone(),
-            rdf::subject().clone(),
-            nested.0.into(),
-        ));
+        statements.push(
+            Statement::new(
+                new_subject.clone(),
+                rdf::subject().clone(),
+                nested.0.as_object(),
+            )
+            .into(),
+        );
     } else {
-        statements.push(Statement::new(
-            new_subject.clone(),
-            rdf::subject().clone(),
-            st.subject().into(),
-        ));
+        statements.push(
+            Statement::new(
+                new_subject.clone(),
+                rdf::subject().clone(),
+                st.subject().as_object(),
+            )
+            .into(),
+        );
     }
-    statements.push(Statement::new(
-        new_subject.clone(),
-        rdf::predicate().clone(),
-        st.predicate().into(),
-    ));
+    statements.push(
+        Statement::new(
+            new_subject.clone(),
+            rdf::predicate().clone(),
+            ObjectNode::named(st.predicate().clone()).into(),
+        )
+        .into(),
+    );
     if st.object().is_statement() {
         let nested = reify_statement(st.object().as_statement().unwrap());
         statements.extend(nested.1);
-        statements.push(Statement::new(
-            new_subject.clone(),
-            rdf::object().clone(),
-            nested.0.into(),
-        ));
+        statements.push(
+            Statement::new(
+                new_subject.clone(),
+                rdf::object().clone(),
+                nested.0.as_object(),
+            )
+            .into(),
+        );
     } else {
-        statements.push(Statement::new(
-            new_subject.clone(),
-            rdf::object().clone(),
-            st.object().clone(),
-        ));
+        statements.push(
+            Statement::new(
+                new_subject.clone(),
+                rdf::object().clone(),
+                st.object().clone(),
+            )
+            .into(),
+        );
     }
     (new_subject, statements)
-}
-
-// ------------------------------------------------------------------------------------------------
-// Unit Tests
-// ------------------------------------------------------------------------------------------------
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::DataType;
-    use rdftk_names::{rdf, rdfs};
-
-    #[test]
-    fn test_make_a_statement() {
-        let st = Statement::new(
-            SubjectNode::blank_named("01"),
-            rdf::a_type().clone(),
-            rdfs::class().into(),
-        );
-        assert_eq!(st.to_string(), "_:01 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2000/01/rdf-schema#Class> .");
-    }
-
-    #[test]
-    fn test_reify_a_statement() {
-        let st = Statement::new(
-            SubjectNode::blank_named("01"),
-            rdf::a_type().clone(),
-            rdfs::class().into(),
-        );
-        let sts = st.reify();
-        assert_eq!(sts.len(), 4);
-    }
-
-    #[test]
-    fn test_nested_statement() {
-        let st = Statement::new(
-            SubjectNode::blank_named("01"),
-            rdf::a_type().clone(),
-            rdfs::class().into(),
-        );
-        let st = Statement::new(st.into(), rdf::a_type().clone(), rdf::statement().into());
-        println!("{}", st);
-        let sts = st.reify();
-        for st in &sts {
-            println!("{}", st);
-        }
-        assert_eq!(sts.len(), 8);
-    }
-
-    #[test]
-    fn test_make_literal_statement() {
-        let st = Statement::new(
-            SubjectNode::blank_named("01"),
-            rdfs::label().clone(),
-            Literal::new("some thing").into(),
-        );
-        assert_eq!(
-            st.to_string(),
-            "_:01 <http://www.w3.org/2000/01/rdf-schema#label> \"some thing\" ."
-        );
-    }
-
-    #[test]
-    fn test_make_quad() {
-        let st = Statement::with_context(
-            SubjectNode::blank_named("01"),
-            rdfs::label().clone(),
-            Literal::new("some thing").into(),
-            ContextNode::blank_named("05"),
-        );
-        assert_eq!(
-            st.to_string(),
-            "_:01 <http://www.w3.org/2000/01/rdf-schema#label> \"some thing\" _:05 ."
-        );
-    }
-
-    #[test]
-    fn test_make_typed_literal_statement() {
-        let st = Statement::new(
-            SubjectNode::blank_named("01"),
-            rdfs::label().clone(),
-            Literal::with_type("2020", DataType::Int).into(),
-        );
-        assert_eq!(
-            st.to_string(),
-            "_:01 <http://www.w3.org/2000/01/rdf-schema#label> \"2020\"^^<http://www.w3.org/2001/XMLSchema#int> ."
-        );
-    }
 }
