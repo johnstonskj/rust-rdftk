@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_ontology"
-version = "0.1.0-pre"
+version = "0.1.0-pre2"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
 description = "This crate provides a data model for creating ontologies using RDF Schema and OWL 2 Web Ontology Language (OWL)."
@@ -17,6 +17,6 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 lazy_static = "1.4.0"
-rdftk_core = { version = "0.1", path = "../rdftk_core" }
+rdftk_core = { version = "0.2", path = "../rdftk_core" }
 rdftk_iri = { version = "0.1", path = "../rdftk_iri" }
 rdftk_names = { version = "0.1", path = "../rdftk_names" }

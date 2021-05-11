@@ -8,6 +8,12 @@ This crate provides a data model for creating ontologies using [RDF Schema](http
 
 ## Changes
 
+**Version 0.1.0-pre2**
+
+* Using rdftk_core 0.2, this has changes in the signature of both Graph and DataSet traits.
+* Applied a lot more warnings in lib.rs
+* Fixed resulting Clippy suggestions.
+
 **Version 0.1.0-pre**
 
 * Creating framework, adding RDF Schema initially. 

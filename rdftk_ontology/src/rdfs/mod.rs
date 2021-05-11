@@ -11,7 +11,7 @@ More detailed description, with
 */
 
 use crate::{Individual, LabelProperty, Labeled, Resource, Subclassed, ToStatements};
-use rdftk_core::{Statement, SubjectNode};
+use rdftk_core::{ObjectNode, Statement, SubjectNode};
 use rdftk_iri::{IRIRef, IRI};
 use rdftk_names::{rdf, rdfs};
 use std::collections::HashMap;
@@ -380,19 +380,19 @@ impl ToStatements for Vocabulary {
         for property in self.properties.values() {
             to_label_statements(property, &mut results);
             to_statements(property, &mut results);
-            let subject: SubjectNode = property.uri.clone().into();
+            let subject = SubjectNode::named_ref(property.uri.clone());
             for uri in &property.domain {
                 results.push(Statement::new(
                     subject.clone(),
                     rdfs::domain().clone(),
-                    uri.clone().into(),
+                    ObjectNode::named_ref(uri.clone()),
                 ));
             }
             for uri in &property.range {
                 results.push(Statement::new(
                     subject.clone(),
                     rdfs::range().clone(),
-                    uri.clone().into(),
+                    ObjectNode::named_ref(uri.clone()),
                 ));
             }
         }
@@ -447,47 +447,47 @@ impl Vocabulary {
 // ------------------------------------------------------------------------------------------------
 
 fn to_label_statements(thing: &dyn Labeled, results: &mut Vec<Statement>) {
-    let subject: SubjectNode = thing.uri().clone().into();
+    let subject = SubjectNode::named_ref(thing.uri().clone());
     for label in thing.label_properties() {
         match label {
             LabelProperty::Label(v) => results.push(Statement::new(
                 subject.clone(),
                 rdfs::label().clone(),
-                v.clone().into(),
+                ObjectNode::literal_ref(v.clone()),
             )),
             LabelProperty::Comment(v) => results.push(Statement::new(
                 subject.clone(),
                 rdfs::comment().clone(),
-                v.clone().into(),
+                ObjectNode::literal_ref(v.clone()),
             )),
             LabelProperty::SeeAlso(v) => results.push(Statement::new(
                 subject.clone(),
                 rdfs::see_also().clone(),
-                v.clone().into(),
+                ObjectNode::named_ref(v.clone()),
             )),
             LabelProperty::IsDefinedBy(v) => results.push(Statement::new(
                 subject.clone(),
                 rdfs::is_defined_by().clone(),
-                v.clone().into(),
+                ObjectNode::named_ref(v.clone()),
             )),
         }
     }
 }
 
 fn to_statements(thing: &dyn Subclassed, results: &mut Vec<Statement>) {
-    let subject: SubjectNode = thing.uri().clone().into();
+    let subject = SubjectNode::named_ref(thing.uri().clone());
     for parent in thing.instance_of() {
         results.push(Statement::new(
             subject.clone(),
             rdf::a_type().clone(),
-            parent.clone().into(),
+            ObjectNode::named_ref(parent.clone()),
         ));
     }
     for parent in thing.parents() {
         results.push(Statement::new(
             subject.clone(),
             rdf::a_type().clone(),
-            parent.clone().into(),
+            ObjectNode::named_ref(parent.clone()),
         ));
     }
 }
