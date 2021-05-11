@@ -1,6 +1,6 @@
 #![cfg(feature = "nq")]
 
-use rdftk_core::data_set::MutableDataSet;
+use rdftk_core::data_set::{GraphName, MutableDataSet};
 use rdftk_io::nq::writer::NQuadDataSetWriter;
 use rdftk_io::write_data_set_to_string;
 use rdftk_iri::IRI;
@@ -13,10 +13,12 @@ mod common;
 fn write_to_nquads() {
     let graph = common::tony_benn_graph();
     let mut data_set = MemDataSet::default();
-    data_set.insert_graph(
-        IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn")
-            .unwrap()
-            .into(),
+    data_set.insert(
+        GraphName::named_ref(
+            IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn")
+                .unwrap()
+                .into(),
+        ),
         graph,
     );
 

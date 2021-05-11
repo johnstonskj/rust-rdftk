@@ -44,7 +44,7 @@ impl Default for NTripleWriter {
 }
 
 impl GraphWriter for NTripleWriter {
-    fn write(&self, w: &mut impl Write, graph: &impl Graph) -> Result<()> {
+    fn write<'a>(&self, w: &mut impl Write, graph: &'a impl Graph<'a>) -> Result<()> {
         let inner_writer = NQuadGraphWriter::default();
         inner_writer.write(w, graph)
     }

@@ -9,6 +9,7 @@ More detailed description, with
 
 use crate::error::{ErrorKind, Result};
 use crate::GraphWriter;
+use rdftk_core::statement::SubjectNodeRef;
 use rdftk_core::{Graph, SubjectNode};
 use rdftk_iri::IRIRef;
 use rdftk_names::{dc, foaf, geo, owl, rdf, rdfs, xsd};
@@ -22,19 +23,33 @@ use xml::EmitterConfig;
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
+///
+/// Determines the style of the generated XML.
+///
 #[derive(Debug, PartialEq)]
 pub enum XmlStyle {
+    /// Flatten the graph so all subjects are at the same level in the document.
     Flat,
+    /// Nest blank nodes so that the document only has IRI subjects at the some level.
     Striped,
 }
 
+///
+/// Options that control how the XML writer will render a graph.
+///
 #[derive(Debug)]
 pub struct XmlOptions {
+    /// Determines the style of the generated XML. Default is `Flat`.
     pub style: XmlStyle,
+    /// Should the output be pretty-printed, including indentation. Default is `false`.
     pub pretty: bool,
+    /// The encoding to specify in the XML declaration. Default is "utf-8".
     pub encoding: String,
 }
 
+///
+/// A Writer to output RDF/XML.
+///
 #[derive(Debug)]
 pub struct XmlWriter {
     mappings: HashMap<String, String>,
@@ -75,7 +90,7 @@ impl Default for XmlWriter {
 }
 
 impl GraphWriter for XmlWriter {
-    fn write(&self, w: &mut impl Write, graph: &impl Graph) -> Result<()> {
+    fn write<'a>(&self, w: &mut impl Write, graph: &impl Graph<'a>) -> Result<()> {
         let config = EmitterConfig::new()
             .perform_indent(self.options.pretty)
             .normalize_empty_elements(self.options.pretty);
@@ -109,6 +124,7 @@ impl GraphWriter for XmlWriter {
 }
 
 impl XmlWriter {
+    /// Create a new writer with the specified options, over-writing the default.
     pub fn new(options: XmlOptions) -> Self {
         Self {
             mappings: Self::default_mappings(),
@@ -152,11 +168,12 @@ impl XmlWriter {
         .collect();
         mappings
     }
-    fn write_subject<W: Write>(
+
+    fn write_subject<'a, W: Write>(
         &self,
         writer: &mut EventWriter<W>,
-        graph: &impl Graph,
-        subject: &SubjectNode,
+        graph: &impl Graph<'a>,
+        subject: &SubjectNodeRef,
         flat: bool,
     ) -> Result<()> {
         if let Some(blank) = subject.as_blank() {
@@ -195,7 +212,12 @@ impl XmlWriter {
                         writer.write(event)?;
                     } else {
                         writer.write(event)?;
-                        self.write_subject(writer, graph, &SubjectNode::blank_named(blank), flat)?;
+                        self.write_subject(
+                            writer,
+                            graph,
+                            &SubjectNode::blank_named(blank).into(),
+                            flat,
+                        )?;
                     }
                 } else if let Some(literal) = object.as_literal() {
                     let event = if let Some(language) = literal.language() {

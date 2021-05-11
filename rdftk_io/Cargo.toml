@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_io"
-version = "0.1.6"
+version = "0.1.7"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
 description = "This crate provides traits for reading and writing Statements and Graphs as well as implementations of these for common representations."
@@ -27,7 +27,7 @@ xml = ["xml-rs", "rdftk_names"]
 
 [dependencies]
 error-chain = "0.12.2"
-rdftk_core = { version = "0.1", path = "../rdftk_core" }
+rdftk_core = { version = "0.2", path = "../rdftk_core" }
 rdftk_iri = { version = "0.1", path = "../rdftk_iri" }
 
 

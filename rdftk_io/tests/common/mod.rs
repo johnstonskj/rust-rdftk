@@ -25,41 +25,45 @@ pub fn tony_benn_graph() -> MemGraph {
 
     statements.push(
         Statement::new(
-            SubjectNode::named(subject_iri.clone()),
+            SubjectNode::named(subject_iri.clone()).into(),
             IRIRef::from(IRI::from_str("http://purl.org/dc/elements/1.1/title").unwrap()),
-            Literal::new("Tony Benn").into(),
+            ObjectNode::literal_ref(Literal::new("Tony Benn")),
         )
         .into(),
     );
     statements.push(
         Statement::new(
-            SubjectNode::named(subject_iri.clone()),
+            SubjectNode::named(subject_iri.clone()).into(),
             IRIRef::from(IRI::from_str("http://purl.org/dc/elements/1.1/publisher").unwrap()),
-            Literal::new("Wikipedia").into(),
+            ObjectNode::literal_ref(Literal::new("Wikipedia")),
         )
         .into(),
     );
     statements.push(
         Statement::new(
-            SubjectNode::named(subject_iri),
+            SubjectNode::named(subject_iri).into(),
             IRIRef::from(IRI::from_str("http://purl.org/dc/elements/1.1/description").unwrap()),
-            ObjectNode::blank_named("B1"),
+            ObjectNode::blank_named("B1").into(),
         )
         .into(),
     );
     statements.push(
         Statement::new(
-            SubjectNode::blank_named("B1"),
+            SubjectNode::blank_named("B1").into(),
             IRIRef::from(IRI::from_str("http://xmlns.com/foaf/0.1/name").unwrap()),
-            Literal::new("Tony Benn").into(),
+            ObjectNode::literal_ref(Literal::new("Tony Benn")),
         )
         .into(),
     );
     statements.push(
         Statement::new(
-            SubjectNode::blank_named("B1"),
+            SubjectNode::blank_named("B1").into(),
             IRIRef::from(IRI::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#type").unwrap()),
-            IRIRef::from(IRI::from_str("http://xmlns.com/foaf/0.1/Person").unwrap()).into(),
+            ObjectNode::named_ref(
+                IRI::from_str("http://xmlns.com/foaf/0.1/Person")
+                    .unwrap()
+                    .into(),
+            ),
         )
         .into(),
     );

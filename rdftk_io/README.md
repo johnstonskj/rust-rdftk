@@ -11,23 +11,30 @@ for a description of different serializations), support is indicated in the fina
 an **R** for read support and **W** for write support. One additional module, `dot` allows for the
 creation of [GraphViz](https://graphviz.gitlab.io/) dot files for a visualization of a graph's structure.
 
-| Module   | Name          | MIME Type                                       | Specification | R/W |
-|----------|---------------|-------------------------------------------------|---------------|-----|
-| `nt`     | [![N-Triples](https://img.shields.io/badge/RDF-N--Triples-blue)](https://www.w3.org/TR/n-triples/) | `application/n-triples` | [W3C](https://www.w3.org/TR/n-triples/) | **W** |
-| `nq`     | [![N-Quads](https://img.shields.io/badge/RDF-N--Quads-blue)](https://www.w3.org/TR/n-quads/)       | `application/n-quads`   | [W3C](https://www.w3.org/TR/n-quads/) | **W** |
-| `n3`     | [![N3](https://img.shields.io/badge/RDF-N3-blue)](https://www.w3.org/TeamSubmission/n3/)           | `text/rdf+n3`           | [W3C Submission](https://www.w3.org/TeamSubmission/n3/) |     |
-| `turtle` | [![Turtle](https://img.shields.io/badge/RDF-Turtle-blue)](https://www.w3.org/TR/turtle/)            | `text/turtle`           | [W3C](https://www.w3.org/TR/turtle/) | **W** |
-| `json`   | RDF/JSON      | `application/rdf+json`      | [W3C](https://www.w3.org/TR/rdf-json/) |     |
-| `json_ld`   | JSON-LD       | `application/ld+json`       | [W3C](https://www.w3.org/TR/json-ld/) |     |
-| `xml`    | RDF/XML       | `application/rdf+xml`       | [W3C](https://www.w3.org/TR/rdf-syntax-grammar/) |     |
-| TBD      | [![RDFa](https://www.w3.org/Icons/SW/Buttons/sw-rdfa-blue.png)](http://www.w3.org/2001/sw/wiki/RDFa) | `text/html`                            | [W3C](https://www.w3.org/TR/rdfa-core/) |     |
-| TBD      | TriG          | `application/trig`          | [W3C](https://www.w3.org/TR/trig/) |     |
-| TBD      | HDT           |                             | [W3C Submission](https://www.w3.org/Submission/2011/SUBM-HDT-20110330/) |     |
-| TBD      | BinaryRDF     | `application/x-binary-rdf`  | [Community](https://afs.github.io/rdf-thrift/rdf-binary-thrift.html) |     |
+| Module    | Name                                                                                                | MIME Type                   | R/W     |
+|-----------|---------------------------------------------------------------------------------------------------- |-----------------------------|---------|
+| `nt`      | [RDF 1.1 N-Triples](https://www.w3.org/TR/n-triples/); A line-based syntax for an RDF graph         | `application/n-triples`     | **W**   |
+| `nq`      | [RDF 1.1 N-Quads](https://www.w3.org/TR/n-quads/); A line-based syntax for RDF datasets             | `application/n-quads`       | **W**   |
+| `turtle`  | [RDF 1.1 Turtle](https://www.w3.org/TR/turtle/); Terse RDF Triple Language                          | `text/turtle`               | **W**   |
+| `trig`    | [RDF 1.1 TriG](https://www.w3.org/TR/trig/); RDF Dataset Language                                   | `application/trig`          |         |
+| `xml`     | [RDF 1.1 XML Syntax](https://www.w3.org/TR/rdf-syntax-grammar/)                                     | `application/rdf+xml`       | **W**   |
+| `json`    | [RDF 1.1 JSON Alternate Serialization](https://www.w3.org/TR/rdf-json/)                             | `application/rdf+json`      | **W**   |
+| `n3`      | [Notation3 (N3): A readable RDF syntax](https://www.w3.org/TeamSubmission/n3/)                      | `text/rdf+n3`               | **W**   |
+| TBD       | [Binary RDF Representation for Publication and Exchange (HDT)](https://www.w3.org/Submission/HDT/)  | N/A                         |         |
+| TBD       | [RDF Binary using Apache Thrift](https://afs.github.io/rdf-thrift/)                                 | `application/x-binary-rdf`  |         |
+| TBD       | [JSON-LD 1.1](https://www.w3.org/TR/json-ld/); A JSON-based Serialization for Linked Data           | `application/ld+json`       |         |
+| TBD       | [RDFa Core 1.1 - Third Edition](https://www.w3.org/TR/rdfa-core/)                                   | `text/html`                 |         |
 
 Each module will also provide public constants `NAME`, `FILE_EXTENSION`, and `MIME_TYPE`.
 
 ## Changes
+
+**Version 0.1.7**
+
+* Using rdftk_core 0.2, this has changes in the signature of both Graph and DataSet traits.
+  * This results in changes to both GraphWriter and DataSetWriter traits.
+* Applied a lot more warnings in lib.rs
+* Fixed resulting Clippy suggestions.
 
 **Version 0.1.6**
 

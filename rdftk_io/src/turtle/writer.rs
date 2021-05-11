@@ -27,7 +27,8 @@ let result = write_graph_to_string(&writer, &make_graph());
 use crate::common::Indenter;
 use crate::GraphWriter;
 use rdftk_core::graph::{Graph, Prefix, PrefixMappings};
-use rdftk_core::{Literal, SubjectNode};
+use rdftk_core::statement::SubjectNodeRef;
+use rdftk_core::Literal;
 use rdftk_iri::IRIRef;
 use std::io::Write;
 use std::rc::Rc;
@@ -73,7 +74,7 @@ impl Default for TurtleWriter {
 }
 
 impl GraphWriter for TurtleWriter {
-    fn write(&self, w: &mut impl Write, graph: &impl Graph) -> crate::error::Result<()> {
+    fn write<'a>(&self, w: &mut impl Write, graph: &'a impl Graph<'a>) -> crate::error::Result<()> {
         //
         // Write out the graph base IRI
         //
@@ -105,8 +106,8 @@ impl GraphWriter for TurtleWriter {
         //
         // Write statements, start with those where subject is an IRI
         //
-        let mut blanks_to_write: Vec<&SubjectNode> = Default::default();
-        let mut blanks_written: Vec<SubjectNode> = Default::default();
+        let mut blanks_to_write: Vec<&SubjectNodeRef> = Default::default();
+        let mut blanks_written: Vec<SubjectNodeRef> = Default::default();
         for subject in graph.subjects() {
             if subject.is_blank() {
                 blanks_to_write.push(subject);
@@ -122,7 +123,7 @@ impl GraphWriter for TurtleWriter {
         //
         blanks_to_write.retain(|subject| !blanks_written.contains(subject));
         for subject in blanks_to_write {
-            self.write_sub_graph(w, subject, graph, Indenter::default())?;
+            let _ = self.write_sub_graph(w, subject, graph, Indenter::default())?;
         }
         Ok(())
     }
@@ -146,16 +147,16 @@ impl TurtleWriter {
         }
     }
 
-    fn write_sub_graph(
+    fn write_sub_graph<'a>(
         &self,
         w: &mut impl Write,
-        subject: &SubjectNode,
-        in_graph: &impl Graph,
+        subject: &SubjectNodeRef,
+        in_graph: &impl Graph<'a>,
         indenter: Indenter,
-    ) -> std::io::Result<Vec<SubjectNode>> {
+    ) -> std::io::Result<Vec<SubjectNodeRef>> {
         write!(w, "{}", indenter)?;
         let mut indenter = indenter;
-        let mut blanks_written = Vec::default();
+        let mut blanks_written: Vec<SubjectNodeRef> = Default::default();
         let mappings = in_graph.prefix_mappings();
         if subject.is_blank() && indenter.depth() == 0 {
             write!(w, "_:{} ", subject.as_blank().unwrap())?;
@@ -175,7 +176,7 @@ impl TurtleWriter {
             while let Some(object) = o_iter.next() {
                 if object.is_blank() && self.options.nest_blank_nodes {
                     write!(w, "[\n{}", indenter.one())?;
-                    let inner_subject = object.as_subject().unwrap();
+                    let inner_subject: SubjectNodeRef = object.as_subject().unwrap().into();
                     let mut inner_written =
                         self.write_sub_graph(w, &inner_subject, in_graph, indenter.clone())?;
                     blanks_written.push(inner_subject);

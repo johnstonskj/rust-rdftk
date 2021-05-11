@@ -19,7 +19,7 @@
 
 use crate::error::Result;
 use crate::{DataSetWriter, GraphWriter};
-use rdftk_core::data_set::{DataSet, GraphName};
+use rdftk_core::data_set::{DataSet, GraphNameRef};
 use rdftk_core::Graph;
 use std::io::Write;
 
@@ -40,7 +40,7 @@ pub struct NQuadDataSetWriter {}
 ///
 #[derive(Debug)]
 pub struct NQuadGraphWriter {
-    name: Option<GraphName>,
+    name: Option<GraphNameRef>,
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -53,8 +53,11 @@ impl Default for NQuadDataSetWriter {
     }
 }
 
-impl<G: Graph> DataSetWriter<G> for NQuadDataSetWriter {
-    fn write(&self, w: &mut impl Write, data_set: &impl DataSet<G>) -> Result<()> {
+impl<'a, G: 'a> DataSetWriter<'a, G> for NQuadDataSetWriter
+where
+    G: Graph<'a>,
+{
+    fn write(&self, w: &mut impl Write, data_set: &'a impl DataSet<'a, G>) -> Result<()> {
         if let Some(graph) = data_set.default_graph() {
             let inner_writer = NQuadGraphWriter::default();
             inner_writer.write(w, graph)?;
@@ -76,7 +79,7 @@ impl Default for NQuadGraphWriter {
 }
 
 impl GraphWriter for NQuadGraphWriter {
-    fn write(&self, w: &mut impl Write, graph: &impl Graph) -> Result<()> {
+    fn write<'a>(&self, w: &mut impl Write, graph: &impl Graph<'a>) -> Result<()> {
         for subject in graph.subjects() {
             for predicate in graph.predicates_for(subject) {
                 for object in graph.objects_for(subject, predicate) {
@@ -93,7 +96,8 @@ impl GraphWriter for NQuadGraphWriter {
 }
 
 impl NQuadGraphWriter {
-    pub fn named(name: GraphName) -> Self {
+    /// Construct a new quad writer with the provided graph name.
+    pub fn named(name: GraphNameRef) -> Self {
         Self { name: Some(name) }
     }
 }

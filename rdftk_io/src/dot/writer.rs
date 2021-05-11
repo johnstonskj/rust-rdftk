@@ -18,13 +18,11 @@ let result = write_graph_to_string(&writer, &make_graph());
 */
 
 use crate::GraphWriter;
-use rdftk_core::graph::{Graph, PrefixMappings};
-use rdftk_core::statement::StatementRef;
+use rdftk_core::graph::Graph;
 use rdftk_core::{ObjectNode, SubjectNode};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io::Write;
-use std::rc::Rc;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -114,101 +112,13 @@ impl Default for DotWriter {
 }
 
 impl GraphWriter for DotWriter {
-    fn write(&self, w: &mut impl Write, graph: &impl Graph) -> crate::error::Result<()> {
-        self.write_statements(w, &graph.statements(), graph.prefix_mappings().clone())
-    }
-}
-
-impl DotWriter {
-    ///
-    /// Create a new writer with the provided options, this is used to override the default
-    /// options that are used when calling `Default::default`.
-    ///
-    pub fn new(options: DotOptions) -> Self {
-        Self {
-            nodes: Default::default(),
-            options,
-        }
-    }
-
-    fn subject_id(&self, node: &SubjectNode) -> String {
-        let mut nodes = self.nodes.borrow_mut();
-        if let Some(node) = nodes.get(&node.to_string()) {
-            node.id.clone()
-        } else {
-            let id = format!("{}", nodes.len() + 1);
-            if node.is_blank() {
-                nodes.insert(
-                    node.to_string(),
-                    Node {
-                        id: id.clone(),
-                        kind: NodeKind::Blank,
-                        label: node.as_blank().unwrap().clone(),
-                    },
-                );
-            } else if node.is_iri() {
-                nodes.insert(
-                    node.to_string(),
-                    Node {
-                        id: id.clone(),
-                        kind: NodeKind::IRI,
-                        label: node.as_iri().unwrap().to_string(),
-                    },
-                );
-            }
-            id
-        }
-    }
-
-    fn object_id(&self, node: &ObjectNode) -> String {
-        let mut nodes = self.nodes.borrow_mut();
-        if let Some(node) = nodes.get(&node.to_string()) {
-            node.id.clone()
-        } else {
-            let id = format!("{}", nodes.len() + 1);
-            if node.is_blank() {
-                nodes.insert(
-                    node.to_string(),
-                    Node {
-                        id: id.clone(),
-                        kind: NodeKind::Blank,
-                        label: node.as_blank().unwrap().clone(),
-                    },
-                );
-            } else if node.is_iri() {
-                nodes.insert(
-                    node.to_string(),
-                    Node {
-                        id: id.clone(),
-                        kind: NodeKind::IRI,
-                        label: node.as_iri().unwrap().to_string(),
-                    },
-                );
-            } else if node.is_literal() {
-                nodes.insert(
-                    node.to_string(),
-                    Node {
-                        id: id.clone(),
-                        kind: NodeKind::Literal,
-                        label: node.as_literal().unwrap().lexical_form().clone(),
-                    },
-                );
-            }
-            id
-        }
-    }
-
-    fn write_statements<W: Write>(
-        &self,
-        w: &mut W,
-        statements: &[StatementRef],
-        mappings: Rc<dyn PrefixMappings>,
-    ) -> crate::error::Result<()> {
+    fn write<'a>(&self, w: &mut impl Write, graph: &'a impl Graph<'a>) -> crate::error::Result<()> {
         writeln!(w, "digraph {{\n    rankdir=BT\n    charset=\"utf-8\";")?;
 
         writeln!(w)?;
 
-        for statement in statements {
+        let mappings = graph.prefix_mappings();
+        for statement in graph.statements() {
             writeln!(
                 w,
                 "    \"{}{}\" -> \"node_{}\" [label=\"{}\"];",
@@ -276,5 +186,85 @@ impl DotWriter {
         }
         writeln!(w, "}}")?;
         Ok(())
+    }
+}
+
+impl DotWriter {
+    ///
+    /// Create a new writer with the provided options, this is used to override the default
+    /// options that are used when calling `Default::default`.
+    ///
+    pub fn new(options: DotOptions) -> Self {
+        Self {
+            nodes: Default::default(),
+            options,
+        }
+    }
+
+    fn subject_id(&self, node: &SubjectNode) -> String {
+        let mut nodes = self.nodes.borrow_mut();
+        if let Some(node) = nodes.get(&node.to_string()) {
+            node.id.clone()
+        } else {
+            let id = format!("{}", nodes.len() + 1);
+            if node.is_blank() {
+                let _ = nodes.insert(
+                    node.to_string(),
+                    Node {
+                        id: id.clone(),
+                        kind: NodeKind::Blank,
+                        label: node.as_blank().unwrap().clone(),
+                    },
+                );
+            } else if node.is_iri() {
+                let _ = nodes.insert(
+                    node.to_string(),
+                    Node {
+                        id: id.clone(),
+                        kind: NodeKind::IRI,
+                        label: node.as_iri().unwrap().to_string(),
+                    },
+                );
+            }
+            id
+        }
+    }
+
+    fn object_id(&self, node: &ObjectNode) -> String {
+        let mut nodes = self.nodes.borrow_mut();
+        if let Some(node) = nodes.get(&node.to_string()) {
+            node.id.clone()
+        } else {
+            let id = format!("{}", nodes.len() + 1);
+            if node.is_blank() {
+                let _ = nodes.insert(
+                    node.to_string(),
+                    Node {
+                        id: id.clone(),
+                        kind: NodeKind::Blank,
+                        label: node.as_blank().unwrap().clone(),
+                    },
+                );
+            } else if node.is_iri() {
+                let _ = nodes.insert(
+                    node.to_string(),
+                    Node {
+                        id: id.clone(),
+                        kind: NodeKind::IRI,
+                        label: node.as_iri().unwrap().to_string(),
+                    },
+                );
+            } else if node.is_literal() {
+                let _ = nodes.insert(
+                    node.to_string(),
+                    Node {
+                        id: id.clone(),
+                        kind: NodeKind::Literal,
+                        label: node.as_literal().unwrap().lexical_form().clone(),
+                    },
+                );
+            }
+            id
+        }
     }
 }

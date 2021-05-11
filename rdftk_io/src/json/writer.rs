@@ -62,7 +62,7 @@ impl Default for JsonWriter {
 }
 
 impl GraphWriter for JsonWriter {
-    fn write(&self, w: &mut impl Write, graph: &impl Graph) -> Result<()> {
+    fn write<'a>(&self, w: &mut impl Write, graph: &impl Graph<'a>) -> Result<()> {
         let mut json_graph = Map::new();
         for subject in graph.subjects() {
             let mut predicate_map = Map::new();
@@ -71,41 +71,41 @@ impl GraphWriter for JsonWriter {
                 for object in graph.objects_for(subject, predicate) {
                     let mut object_map = Map::new();
                     if object.is_blank() {
-                        object_map.insert(
+                        let _ = object_map.insert(
                             OBJ_KEY_TYPE.to_string(),
                             Value::String(OBJ_TYPE_BNODE.to_string()),
                         );
-                        object_map.insert(
+                        let _ = object_map.insert(
                             OBJ_KEY_VALUE.to_string(),
                             Value::String(object.as_blank().unwrap().to_string()),
                         );
                     } else if object.is_iri() {
-                        object_map.insert(
+                        let _ = object_map.insert(
                             OBJ_KEY_TYPE.to_string(),
                             Value::String(OBJ_TYPE_URI.to_string()),
                         );
-                        object_map.insert(
+                        let _ = object_map.insert(
                             OBJ_KEY_VALUE.to_string(),
                             Value::String(object.as_iri().unwrap().to_string()),
                         );
                     } else if object.is_literal() {
                         let literal = object.as_literal().unwrap();
-                        object_map.insert(
+                        let _ = object_map.insert(
                             OBJ_KEY_TYPE.to_string(),
                             Value::String(OBJ_TYPE_LITERAL.to_string()),
                         );
-                        object_map.insert(
+                        let _ = object_map.insert(
                             OBJ_KEY_VALUE.to_string(),
                             Value::String(literal.lexical_form().to_string()),
                         );
                         if let Some(language) = literal.language() {
-                            object_map.insert(
+                            let _ = object_map.insert(
                                 OBJ_KEY_LANG.to_string(),
                                 Value::String(language.to_string()),
                             );
                         }
                         if let Some(data_type) = literal.data_type() {
-                            object_map.insert(
+                            let _ = object_map.insert(
                                 OBJ_KEY_DATATYPE.to_string(),
                                 Value::String(data_type.to_string()),
                             );
@@ -115,9 +115,9 @@ impl GraphWriter for JsonWriter {
                     }
                     objects.push(Value::Object(object_map));
                 }
-                predicate_map.insert(predicate.to_string(), Value::Array(objects));
+                let _ = predicate_map.insert(predicate.to_string(), Value::Array(objects));
             }
-            json_graph.insert(subject.to_string(), Value::Object(predicate_map));
+            let _ = json_graph.insert(subject.to_string(), Value::Object(predicate_map));
         }
         if self.pretty {
             serde_json::to_writer_pretty(w, &Value::Object(json_graph))?;
@@ -130,6 +130,7 @@ impl GraphWriter for JsonWriter {
 }
 
 impl JsonWriter {
+    /// Construct a writer that will output a pretty-printed form.
     pub fn pretty() -> Self {
         Self { pretty: true }
     }

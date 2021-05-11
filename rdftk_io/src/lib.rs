@@ -7,19 +7,20 @@ for a description of different serializations), support is indicated in the fina
 an **R** for read support and **W** for write support. One additional module, `dot` allows for the
 creation of [GraphViz](https://graphviz.gitlab.io/) dot files for a visualization of a graph's structure.
 
-| Module   | Name          | MIME Type                                       | Specification | R/W |
-|----------|---------------|-------------------------------------------------|---------------|-----|
-| `nt`     | [![N-Triples](https://img.shields.io/badge/RDF-N--Triples-blue)](https://www.w3.org/TR/n-triples/) | `application/n-triples` | [W3C](https://www.w3.org/TR/n-triples/) | **W** |
-| `nq`     | [![N-Quads](https://img.shields.io/badge/RDF-N--Quads-blue)](https://www.w3.org/TR/n-quads/)       | `application/n-quads`   | [W3C](https://www.w3.org/TR/n-quads/) | **W** |
-| `n3`     | [![N3](https://img.shields.io/badge/RDF-N3-blue)](https://www.w3.org/TeamSubmission/n3/)           | `text/rdf+n3`           | [W3C Submission](https://www.w3.org/TeamSubmission/n3/) |     |
-| `turtle` |[![Turtle](https://img.shields.io/badge/RDF-Turtle-blue)](https://www.w3.org/TR/turtle/)            | `text/turtle`           | [W3C](https://www.w3.org/TR/turtle/) | **W** |
-| `xml`    | RDF/XML       | `application/rdf+xml`       | [W3C](https://www.w3.org/TR/rdf-syntax-grammar/) |     |
-| `json`   | JSON-LD       | `application/ld+json`       | [W3C](https://www.w3.org/TR/json-ld/) |     |
-| TBD      | [![RDFa](https://www.w3.org/Icons/SW/Buttons/sw-rdfa-blue.png)](http://www.w3.org/2001/sw/wiki/RDFa) | `text/html`                            | [W3C](https://www.w3.org/TR/rdfa-core/) |     |
-| TBD      | RDF/JSON      | `application/rdf+json`      | [W3C](https://www.w3.org/TR/rdf-json/) |     |
-| TBD      | TriG          | `application/trig`          | [W3C](https://www.w3.org/TR/trig/) |     |
-| TBD      | HDT           | ?                           | [W3C Submission](https://www.w3.org/Submission/2011/SUBM-HDT-20110330/) |     |
-| TBD      | BinaryRDF     | `application/x-binary-rdf`  | [Community](https://afs.github.io/rdf-thrift/rdf-binary-thrift.html) |     |
+
+| Module    | Name                                                                                                | MIME Type                   | R/W     |
+|-----------|---------------------------------------------------------------------------------------------------- |-----------------------------|---------|
+| `nt`      | [RDF 1.1 N-Triples](https://www.w3.org/TR/n-triples/); A line-based syntax for an RDF graph         | `application/n-triples`     | **W**   |
+| `nq`      | [RDF 1.1 N-Quads](https://www.w3.org/TR/n-quads/); A line-based syntax for RDF datasets             | `application/n-quads`       | **W**   |
+| `turtle`  | [RDF 1.1 Turtle](https://www.w3.org/TR/turtle/); Terse RDF Triple Language                          | `text/turtle`               | **W**   |
+| `trig`    | [RDF 1.1 TriG](https://www.w3.org/TR/trig/); RDF Dataset Language                                   | `application/trig`          |         |
+| `xml`     | [RDF 1.1 XML Syntax](https://www.w3.org/TR/rdf-syntax-grammar/)                                     | `application/rdf+xml`       | **W**   |
+| `json`    | [RDF 1.1 JSON Alternate Serialization](https://www.w3.org/TR/rdf-json/)                             | `application/rdf+json`      | **W**   |
+| `n3`      | [Notation3 (N3): A readable RDF syntax](https://www.w3.org/TeamSubmission/n3/)                      | `text/rdf+n3`               | **W**   |
+| TBD       | [Binary RDF Representation for Publication and Exchange (HDT)](https://www.w3.org/Submission/HDT/)  | N/A                         |         |
+| TBD       | [RDF Binary using Apache Thrift](https://afs.github.io/rdf-thrift/)                                 | `application/x-binary-rdf`  |         |
+| TBD       | [JSON-LD 1.1](https://www.w3.org/TR/json-ld/); A JSON-based Serialization for Linked Data           | `application/ld+json`       |         |
+| TBD       | [RDFa Core 1.1 - Third Edition](https://www.w3.org/TR/rdfa-core/)                                   | `text/html`                 |         |
 
 Each module will also provide public constants `NAME`, `FILE_EXTENSION`, and `MIME_TYPE`.
 
@@ -28,6 +29,26 @@ Each module will also provide public constants `NAME`, `FILE_EXTENSION`, and `MI
 TBD
 
 */
+
+#![warn(
+    // ---------- Stylistic
+    future_incompatible,
+    nonstandard_style,
+    rust_2018_idioms,
+    trivial_casts,
+    trivial_numeric_casts,
+    // ---------- Public
+    missing_debug_implementations,
+    missing_docs,
+    unreachable_pub,
+    // ---------- Unsafe
+    unsafe_code,
+    // ---------- Unused
+    unused_extern_crates,
+    unused_import_braces,
+    unused_qualifications,
+    unused_results,
+)]
 
 #[macro_use]
 extern crate error_chain;
@@ -46,7 +67,8 @@ use std::rc::Rc;
 /// [`Read`](https://doc.rust-lang.org/std/io/trait.Read.html).
 ///
 pub trait GraphReader {
-    fn read<G: Graph>(&self, r: &mut impl Read) -> error::Result<Rc<G>>;
+    /// Read a graph from the read implementation `r`.
+    fn read<'a, G: Graph<'a>>(&self, r: &mut impl Read) -> error::Result<Rc<G>>;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -58,7 +80,7 @@ pub trait GraphReader {
 ///
 pub trait GraphWriter {
     /// Write the formatted graph `Graph` using the write implementation `w`.
-    fn write(&self, w: &mut impl Write, graph: &impl Graph) -> error::Result<()>;
+    fn write<'a>(&self, w: &mut impl Write, graph: &'a impl Graph<'a>) -> error::Result<()>;
 }
 
 ///
@@ -66,12 +88,12 @@ pub trait GraphWriter {
 /// [`DataSet`](../rdftk_graph/data_set/trait.DataSet.html) using the provided implementation of
 /// [`Write`](https://doc.rust-lang.org/std/io/trait.Write.html).
 ///
-pub trait DataSetWriter<G>
+pub trait DataSetWriter<'a, G: 'a>
 where
-    G: Graph,
+    G: Graph<'a>,
 {
     /// Write the formatted graph `NamedGraph` using the write implementation `w`.
-    fn write(&self, w: &mut impl Write, data_set: &impl DataSet<G>) -> error::Result<()>;
+    fn write(&self, w: &mut impl Write, data_set: &'a impl DataSet<'a, G>) -> error::Result<()>;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -82,7 +104,10 @@ where
 /// A convenience function that will return a String containing the output of the `GraphWriter`
 /// for the given `Graph` instance.
 ///
-pub fn write_graph_to_string(w: &impl GraphWriter, graph: &impl Graph) -> error::Result<String> {
+pub fn write_graph_to_string<'a>(
+    w: &impl GraphWriter,
+    graph: &'a impl Graph<'a>,
+) -> error::Result<String> {
     use std::io::Cursor;
     let mut buffer = Cursor::new(Vec::new());
     w.write(&mut buffer, graph)?;
@@ -93,12 +118,12 @@ pub fn write_graph_to_string(w: &impl GraphWriter, graph: &impl Graph) -> error:
 /// A convenience function that will return a String containing the output of the `NamedGraphWriter`
 /// for the given `NamedGraph` instance.
 ///
-pub fn write_data_set_to_string<G>(
-    w: &impl DataSetWriter<G>,
-    data_set: &impl DataSet<G>,
+pub fn write_data_set_to_string<'a, G: 'a>(
+    w: &impl DataSetWriter<'a, G>,
+    data_set: &'a impl DataSet<'a, G>,
 ) -> error::Result<String>
 where
-    G: Graph,
+    G: Graph<'a>,
 {
     use std::io::Cursor;
     let mut buffer = Cursor::new(Vec::new());
@@ -119,10 +144,6 @@ pub mod dot;
 
 #[cfg(feature = "json")]
 pub mod json;
-
-#[cfg(feature = "json-ld")]
-#[doc(hidden)]
-pub mod json_ld;
 
 #[cfg(feature = "n3")]
 #[doc(hidden)]
