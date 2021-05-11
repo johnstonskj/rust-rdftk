@@ -8,6 +8,10 @@ This crate provides a placeholder for a query API and the [*SPARQL Query Languag
 
 ## Changes
 
+**Version 0.1.2**
+
+* Applied a lot more warnings in lib.rs
+
 **Version 0.1.1**
 
 * Made all local dependencies only major/minor valued.
