@@ -71,6 +71,12 @@ namespace! {
 
 ## Changes
 
+**Version 0.1.8**
+
+* Applied a lot more warnings in lib.rs
+* Applied resulting warnings and Clippy suggestions.
+* Reformatted macro layout.
+
 **Version 0.1.7**
 
 * Added missing names in rdfs vocabulary.

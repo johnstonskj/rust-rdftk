@@ -40,6 +40,26 @@ namespace! {
 
 */
 
+#![warn(
+    // ---------- Stylistic
+    future_incompatible,
+    nonstandard_style,
+    rust_2018_idioms,
+    trivial_casts,
+    trivial_numeric_casts,
+    // ---------- Public
+    missing_debug_implementations,
+    missing_docs,
+    unreachable_pub,
+    // ---------- Unsafe
+    unsafe_code,
+    // ---------- Unused
+    unused_extern_crates,
+    unused_import_braces,
+    unused_qualifications,
+    unused_results,
+)]
+
 #[allow(unused_imports)]
 #[macro_use]
 extern crate lazy_static;
@@ -97,44 +117,46 @@ extern crate paste;
 #[macro_export]
 macro_rules! namespace {
     ($prefix:expr, $namespace:expr, { $($fn_name:ident, $name:expr),* }) => {
+        use rdftk_iri::{IRI, IRIRef};
+        use std::str::FromStr;
+        use std::collections::HashMap;
 
-    use rdftk_iri::{IRI, IRIRef};
-    use std::str::FromStr;
-    use std::collections::HashMap;
+        const PREFIX: &str = $prefix;
 
-    const PREFIX: &str = $prefix;
+        const NAMESPACE: &str = $namespace;
 
-    const NAMESPACE: &str = $namespace;
+        lazy_static! {
+            static ref NS_IRI: IRIRef = IRIRef::new(NAMESPACE.parse().unwrap());
+            static ref NS_CACHE: HashMap<String, (IRIRef, String)> = make_cache();
+        }
 
-    lazy_static! {
-        static ref NS_IRI: IRIRef = IRIRef::new(NAMESPACE.parse().unwrap());
-        static ref NS_CACHE: HashMap<String, (IRIRef, String)> = make_cache();
-    }
+        fn make_cache() -> HashMap<String, (IRIRef, String)> {
+            let mut cache: HashMap<String, (IRIRef, String)> = Default::default();
+            $(
+            let _ = cache.insert($name.to_string(), (
+                IRIRef::new(IRI::from_str(&format!("{}{}", NAMESPACE, $name)).unwrap()),
+                format!("{}:{}", PREFIX, $name),
+                )
+            );
+            )*
+            cache
+        }
 
-    fn make_cache() -> HashMap<String, (IRIRef, String)> {
-        let mut cache: HashMap<String, (IRIRef, String)> = Default::default();
+        #[inline]
+        #[doc = "Returns the commonly used prefix for this namespace."]
+        pub fn default_prefix() -> &'static str { PREFIX }
+
+        #[inline]
+        #[doc = "Returns the IRI, as a string, for this namespace."]
+        pub fn namespace_str() -> &'static str { NAMESPACE }
+
+        #[inline]
+        #[doc = "Returns the IRI for this namespace."]
+        pub fn namespace_iri() -> &'static IRIRef { &NS_IRI }
+
         $(
-        cache.insert($name.to_string(), (
-            IRIRef::new(IRI::from_str(&format!("{}{}", NAMESPACE, $name)).unwrap()),
-            format!("{}:{}", PREFIX, $name),
-            )
-        );
+            nsname!($fn_name, $name);
         )*
-        cache
-    }
-
-        #[inline]
-    pub fn default_prefix() -> &'static str { PREFIX }
-
-        #[inline]
-    pub fn namespace_str() -> &'static str { NAMESPACE }
-
-        #[inline]
-    pub fn namespace_iri() -> &'static IRIRef { &NS_IRI }
-
-    $(
-        nsname!($fn_name, $name);
-    )*
     };
 }
 
@@ -152,15 +174,17 @@ macro_rules! namespace {
 macro_rules! nsname {
     ($fn_name:ident, $name:expr) => {
         #[inline]
+        #[doc = "Returns the IRI for this namespace member."]
         pub fn $fn_name() -> &'static IRIRef {
             &NS_CACHE.get($name).unwrap().0
         }
 
         paste::item! {
-        #[inline]
-        pub fn [<$fn_name _qname>]() -> &'static String {
-            &NS_CACHE.get($name).unwrap().1
-        }
+            #[inline]
+            #[doc = "Returns a qname, using the default prefix, for this namespace member."]
+            pub fn [<$fn_name _qname>]() -> &'static String {
+                &NS_CACHE.get($name).unwrap().1
+            }
         }
     };
 }
@@ -189,6 +213,8 @@ pub mod xsd;
 
 #[cfg(test)]
 mod tests {
+    #![allow(unreachable_pub)]
+
     use super::*;
 
     namespace!("p", "heep://schema/com/p#", { foo, "Foo", bar, "Bar" } );
