@@ -4,14 +4,16 @@ use std::path::{Path, PathBuf};
 
 const MANIFEST_DIR: &str = env!("CARGO_MANIFEST_DIR");
 
-const COMMON_FILE_NAME: &str = "common.pest";
+const PEST_EXTENSION: &str = "pest";
 
-const FILE_SUFFIX: &str = "-in.pest";
+const COMMON_NAME: &str = "common";
+
+const FILE_SUFFIX: &str = "-in";
 
 const PEST_MODS: &[&str] = &["nq", "nt", "turtle"];
 
 fn read_a_file(dir_path: &Path, file_name: &str) -> String {
-    let file_path = dir_path.join(file_name);
+    let file_path = dir_path.join(&format!("{}.{}", file_name, PEST_EXTENSION));
     let content = read_to_string(&file_path)
         .unwrap_or_else(|_| panic!("Unable to read file {:?}", file_path));
     println!("cargo:rerun-if-changed={:?}", file_path);
@@ -21,14 +23,14 @@ fn read_a_file(dir_path: &Path, file_name: &str) -> String {
 fn main() {
     let src_path = PathBuf::from(MANIFEST_DIR).join("src");
 
-    let common_rules = read_a_file(&src_path, COMMON_FILE_NAME);
+    let common_rules = read_a_file(&src_path.join(COMMON_NAME), COMMON_NAME);
 
     for module in PEST_MODS {
         let file_path = src_path.join(module);
         let file_name = format!("{}{}", module, FILE_SUFFIX);
         let module_rules = read_a_file(&file_path, &file_name);
 
-        let combined_path = file_path.join(&format!("{}.pest", module));
+        let combined_path = file_path.join(&format!("{}.{}", module, PEST_EXTENSION));
         let write_file = File::create(&combined_path).unwrap();
         let mut writer = BufWriter::new(&write_file);
         writer

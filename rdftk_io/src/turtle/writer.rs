@@ -24,7 +24,7 @@ let result = write_graph_to_string(&writer, &make_graph());
 
 */
 
-use crate::common::Indenter;
+use crate::common::indenter::Indenter;
 use crate::GraphWriter;
 use rdftk_core::graph::{Graph, Prefix, PrefixMappings};
 use rdftk_core::statement::SubjectNodeRef;
