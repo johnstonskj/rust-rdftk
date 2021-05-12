@@ -21,6 +21,8 @@ pub const MIME_TYPE: &str = "text/turtle";
 // Modules
 // ------------------------------------------------------------------------------------------------
 
+mod parser;
+
 #[doc(hidden)]
 pub mod reader;
 

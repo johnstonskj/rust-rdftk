@@ -53,6 +53,13 @@ TBD
 #[macro_use]
 extern crate error_chain;
 
+#[macro_use]
+extern crate log;
+
+#[cfg(any(feature = "nt", feature = "turtle"))]
+#[macro_use]
+extern crate pest_derive;
+
 use rdftk_core::data_set::DataSet;
 use rdftk_core::graph::Graph;
 use std::io::{Read, Write};

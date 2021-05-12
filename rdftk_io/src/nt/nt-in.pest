@@ -1,0 +1,30 @@
+ntriplesDoc = {
+	SOI ~ triple* ~ EOI
+}
+
+triple = {
+    subject ~ predicate ~ object ~ "."
+}
+
+subject = {
+	IRIREF
+	| BlankNode 
+}
+	
+predicate = {
+	IRIREF
+}
+	
+object = {
+	IRIREF
+	| BlankNode  
+	| literal
+}
+
+literal = {
+	rdfLiteral
+}
+
+String = {
+	STRING_LITERAL_QUOTE
+}

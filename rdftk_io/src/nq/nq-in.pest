@@ -1,0 +1,35 @@
+nquadsDoc = {
+	SOI ~ quad* ~ EOI
+}
+
+quad = {
+    subject ~ predicate ~ object ~ graphLabel? ~ "."
+}
+
+subject = {
+	IRIREF
+	| BlankNode 
+}
+	
+predicate = {
+	IRIREF
+}
+	
+object = {
+	IRIREF
+	| BlankNode  
+	| literal
+}
+
+graphLabel = {
+	IRIREF
+	| BlankNode
+}
+
+literal = {
+	rdfLiteral
+}
+
+String = {
+	STRING_LITERAL_QUOTE
+}
