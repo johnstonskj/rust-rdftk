@@ -54,16 +54,18 @@ TBD
 extern crate error_chain;
 
 #[macro_use]
+extern crate lazy_static;
+
+#[macro_use]
 extern crate log;
 
 #[cfg(any(feature = "nt", feature = "turtle"))]
 #[macro_use]
 extern crate pest_derive;
 
-use rdftk_core::data_set::DataSet;
-use rdftk_core::graph::Graph;
+use rdftk_core::data_set::DataSetRef;
+use rdftk_core::graph::{GraphFactoryRef, GraphRef};
 use std::io::{Read, Write};
-use std::rc::Rc;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -75,7 +77,7 @@ use std::rc::Rc;
 ///
 pub trait GraphReader {
     /// Read a graph from the read implementation `r`.
-    fn read<'a, G: Graph<'a>>(&self, r: &mut impl Read) -> error::Result<Rc<G>>;
+    fn read(&self, r: &mut impl Read, factory: GraphFactoryRef) -> error::Result<GraphRef>;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -87,7 +89,7 @@ pub trait GraphReader {
 ///
 pub trait GraphWriter {
     /// Write the formatted graph `Graph` using the write implementation `w`.
-    fn write<'a>(&self, w: &mut impl Write, graph: &'a impl Graph<'a>) -> error::Result<()>;
+    fn write(&self, w: &mut impl Write, graph: &GraphRef) -> error::Result<()>;
 }
 
 ///
@@ -95,12 +97,9 @@ pub trait GraphWriter {
 /// [`DataSet`](../rdftk_graph/data_set/trait.DataSet.html) using the provided implementation of
 /// [`Write`](https://doc.rust-lang.org/std/io/trait.Write.html).
 ///
-pub trait DataSetWriter<'a, G: 'a>
-where
-    G: Graph<'a>,
-{
+pub trait DataSetWriter {
     /// Write the formatted graph `NamedGraph` using the write implementation `w`.
-    fn write(&self, w: &mut impl Write, data_set: &'a impl DataSet<'a, G>) -> error::Result<()>;
+    fn write(&self, w: &mut impl Write, data_set: &DataSetRef) -> error::Result<()>;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -111,10 +110,7 @@ where
 /// A convenience function that will return a String containing the output of the `GraphWriter`
 /// for the given `Graph` instance.
 ///
-pub fn write_graph_to_string<'a>(
-    w: &impl GraphWriter,
-    graph: &'a impl Graph<'a>,
-) -> error::Result<String> {
+pub fn write_graph_to_string(w: &impl GraphWriter, graph: &GraphRef) -> error::Result<String> {
     use std::io::Cursor;
     let mut buffer = Cursor::new(Vec::new());
     w.write(&mut buffer, graph)?;
@@ -125,13 +121,10 @@ pub fn write_graph_to_string<'a>(
 /// A convenience function that will return a String containing the output of the `NamedGraphWriter`
 /// for the given `NamedGraph` instance.
 ///
-pub fn write_data_set_to_string<'a, G: 'a>(
-    w: &impl DataSetWriter<'a, G>,
-    data_set: &'a impl DataSet<'a, G>,
-) -> error::Result<String>
-where
-    G: Graph<'a>,
-{
+pub fn write_data_set_to_string(
+    w: &impl DataSetWriter,
+    data_set: &DataSetRef,
+) -> error::Result<String> {
     use std::io::Cursor;
     let mut buffer = Cursor::new(Vec::new());
     w.write(&mut buffer, data_set)?;
@@ -142,6 +135,7 @@ where
 // Modules
 // ------------------------------------------------------------------------------------------------
 
+#[macro_use]
 mod common;
 
 pub mod error;

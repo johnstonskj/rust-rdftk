@@ -34,3 +34,8 @@ More detailed description, with
 // ------------------------------------------------------------------------------------------------
 
 pub(crate) mod indenter;
+
+#[macro_use]
+pub(crate) mod parser_error;
+
+pub(crate) mod parser;

@@ -1,10 +1,10 @@
 #![cfg(feature = "nq")]
 
-use rdftk_core::data_set::{GraphName, MutableDataSet};
+use rdftk_core::data_set::{DataSetRef, GraphName};
 use rdftk_io::nq::writer::NQuadDataSetWriter;
 use rdftk_io::write_data_set_to_string;
 use rdftk_iri::IRI;
-use rdftk_memgraph::data_set::MemDataSet;
+use rdftk_memgraph::data_set::data_set_factory;
 use std::str::FromStr;
 
 mod common;
@@ -12,19 +12,22 @@ mod common;
 #[test]
 fn write_to_nquads() {
     let graph = common::tony_benn_graph();
-    let mut data_set = MemDataSet::default();
-    data_set.insert(
-        GraphName::named_ref(
-            IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn")
-                .unwrap()
-                .into(),
-        ),
-        graph,
-    );
+    let data_set = data_set_factory().new_data_set(None);
+    {
+        let mut data_set = data_set.borrow_mut();
+        data_set.insert(
+            GraphName::named_ref(
+                IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn")
+                    .unwrap()
+                    .into(),
+            ),
+            graph,
+        );
+    }
 
     let writer = NQuadDataSetWriter::default();
 
-    let result = write_data_set_to_string(&writer, &data_set);
+    let result = write_data_set_to_string(&writer, &(data_set as DataSetRef));
     assert!(result.is_ok());
     let output = result.unwrap();
     println!("# format: N-Quads\n{}", output);

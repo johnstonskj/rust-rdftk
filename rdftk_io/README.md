@@ -29,6 +29,11 @@ Each module will also provide public constants `NAME`, `FILE_EXTENSION`, and `MI
 
 ## Changes
 
+**Version 0.1.8**
+
+* Using new style interfaces, a consistent use of traits and trait reference types.
+* Have a working NTriple parser.
+
 **Version 0.1.7**
 
 * Using rdftk_core 0.2, this has changes in the signature of both Graph and DataSet traits.

@@ -24,6 +24,8 @@ pub const FORMAT_IRI: &str = "http://www.w3.org/ns/formats/N-Quads";
 // Modules
 // ------------------------------------------------------------------------------------------------
 
+mod parser;
+
 #[doc(hidden)]
 pub mod reader;
 

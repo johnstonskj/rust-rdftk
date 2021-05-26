@@ -7,18 +7,15 @@ More detailed description, with
 
 */
 
-use crate::error::Result;
-use crate::nt::parser;
-use crate::GraphReader;
-use rdftk_core::graph::{GraphFactoryRef, GraphRef};
-use std::io::Read;
+// use ...
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
-#[derive(Clone, Debug)]
-pub struct NTriplesReader {}
+// ------------------------------------------------------------------------------------------------
+// Public Macros
+// ------------------------------------------------------------------------------------------------
 
 // ------------------------------------------------------------------------------------------------
 // Private Types
@@ -31,14 +28,6 @@ pub struct NTriplesReader {}
 // ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
-
-impl GraphReader for NTriplesReader {
-    fn read(&self, r: &mut impl Read, factory: GraphFactoryRef) -> Result<GraphRef> {
-        let mut content: String = String::new();
-        let _ = r.read_to_string(&mut content)?;
-        Ok(parser::parse_graph(&content, factory)?)
-    }
-}
 
 // ------------------------------------------------------------------------------------------------
 // Private Functions

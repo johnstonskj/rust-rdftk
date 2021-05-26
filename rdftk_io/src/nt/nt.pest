@@ -1,0 +1,292 @@
+ntriplesDoc = {
+	SOI ~ triple* ~ EOI
+}
+
+triple = {
+    subject ~ predicate ~ object ~ "."
+}
+
+subject = {
+	IRIREF
+	| BlankNode 
+}
+	
+predicate = {
+	IRIREF
+}
+	
+object = {
+	IRIREF
+	| BlankNode  
+	| literal
+}
+
+literal = {
+	rdfLiteral
+}
+
+String = {
+	STRING_LITERAL_QUOTE
+}
+
+// ------------------------------------------------------------------------------------------------
+// IRIs
+// ------------------------------------------------------------------------------------------------
+
+iri = {
+	IRIREF
+	| prefixedName
+}
+
+IRIREF = ${
+    "<" ~ IRIREF_INNER ~ ">"
+}
+
+IRIREF_INNER = @{
+    IRIREF_CHAR*
+}
+
+IRIREF_CHAR = {
+    /* #x00=NULL #01-#x1F=control codes #x20=space */
+    !(">" | '\u{0000}'..'\u{0020}' | "\"" | "{" | "}" | "|" | "^" | "`" | "\\") ~  ANY
+    | UCHAR
+}
+
+// ------------------------------------------------------------------------------------------------
+// Blank Nodes
+// ------------------------------------------------------------------------------------------------
+
+BlankNode = {
+    BLANK_NODE_LABEL
+	| ANON
+}
+
+BLANK_NODE_LABEL = @{
+	"_:" ~ (PN_CHARS_U | ASCII_DIGIT) ~ BLANK_NODE_LABEL_TAIL*
+}
+
+BLANK_NODE_LABEL_TAIL = {
+	PN_CHARS
+	| &("." ~ PN_CHARS) ~ "."
+}
+
+ANON = {
+	"[" ~ "]"
+}
+
+// ------------------------------------------------------------------------------------------------
+// RDF (string-like) Literals
+// ------------------------------------------------------------------------------------------------
+
+rdfLiteral = {
+	String ~ (LANGTAG | "^^" ~ iri)?
+}
+
+LANGTAG = {
+	"@" ~ ASCII_ALPHA+ ~ ("-" ~ ASCII_ALPHANUMERIC+)*
+}
+
+// ------------------------------------------------------------------------------------------------
+// Numeric Literals
+// ------------------------------------------------------------------------------------------------
+
+NumericLiteral = {
+    SIGN? ~
+    ( DOUBLE
+	| DECIMAL
+	| INTEGER )
+}
+
+INTEGER = {
+	ASCII_DIGIT+
+}
+	
+DECIMAL = {
+	ASCII_DIGIT* ~ "." ~ ASCII_DIGIT+
+}
+	
+DOUBLE = {
+	(ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT* ~ EXPONENT | "." ~ ASCII_DIGIT+ ~EXPONENT | ASCII_DIGIT+ ~ EXPONENT)
+}
+
+SIGN = {
+    ("+" | "-")
+}
+
+EXPONENT = {
+	^"e" ~ SIGN? ~ ASCII_DIGIT+
+}
+
+// ------------------------------------------------------------------------------------------------
+// Boolean Literals
+// ------------------------------------------------------------------------------------------------
+
+BooleanLiteral = {
+	"true"
+	| "false"
+}
+
+// ------------------------------------------------------------------------------------------------
+// String Literals
+// ------------------------------------------------------------------------------------------------
+
+STRING_LITERAL_LONG_SINGLE_QUOTE = ${
+	"'''" ~ LONG_SINGLE_QUOTE_INNER ~ "'''"
+}
+
+LONG_SINGLE_QUOTE_INNER = @{
+    LONG_SINGLE_QUOTE_CHAR*
+}
+
+LONG_SINGLE_QUOTE_CHAR = {
+    !("'''" | "\\" | "\r" | "\n" ) ~ ANY
+    | ECHAR
+    | UCHAR
+}
+
+STRING_LITERAL_LONG_QUOTE = ${
+	"\"\"\"" ~ LONG_QUOTE_INNER ~ "\"\"\""
+}
+
+LONG_QUOTE_INNER = @{
+    LONG_QUOTE_CHAR*
+}
+
+LONG_QUOTE_CHAR = {
+    !("\"\"\"" | "\\" | "\r" | "\n" ) ~ ANY
+    | ECHAR
+    | UCHAR
+}
+	
+STRING_LITERAL_QUOTE = ${
+	"\"" ~ QUOTE_INNER ~ "\""
+}
+
+QUOTE_INNER = @{
+    QUOTE_CHAR*
+}
+
+QUOTE_CHAR = {
+    !("\"" | "\\" | "\r" | "\n" ) ~ ANY
+    | ECHAR
+    | UCHAR
+}
+
+STRING_LITERAL_SINGLE_QUOTE = ${
+	"'" ~ SINGLE_QUOTE_INNER ~ "'"
+}
+
+SINGLE_QUOTE_INNER = @{
+    SINGLE_QUOTE_CHAR*
+}
+
+SINGLE_QUOTE_CHAR = {
+    !( "'" | "\\" | "\r" | "\n" ) ~ ANY
+    | ECHAR
+    | UCHAR
+}
+
+UCHAR = @{
+	"\\u" ~ ASCII_HEX_DIGIT{6} | "\\U" ~ ASCII_HEX_DIGIT{4}
+}
+	
+ECHAR = @{
+	"\\" ~ ("t" | "b" | "n" | "r" | "f" | "\"" | "'" | "\\")
+}
+
+// ------------------------------------------------------------------------------------------------
+// Prefixed Names
+// ------------------------------------------------------------------------------------------------
+
+prefixedName = {
+	PNAME_LN
+	| PNAME_NS
+}
+
+PNAME_NS = {
+	PN_PREFIX? ~ ":"
+}
+
+PNAME_LN = {
+	PNAME_NS ~ PN_LOCAL
+}
+
+PN_CHARS_BASE = {
+	ASCII_ALPHA
+	| '\u{00C0}'..'\u{00D6}'
+	| '\u{00D8}'..'\u{00F6}'
+	| '\u{00F8}'..'\u{02FF}'
+	| '\u{0370}'..'\u{037D}'
+	| '\u{037F}'..'\u{1FFF}'
+	| '\u{200C}'..'\u{200D}'
+	| '\u{2070}'..'\u{218F}'
+	| '\u{2C00}'..'\u{2FEF}'
+	| '\u{3001}'..'\u{D7FF}'
+	| '\u{F900}'..'\u{FDCF}'
+	| '\u{FDF0}'..'\u{FFFD}'
+	| '\u{10000}'..'\u{EFFFF}'
+}
+
+PN_CHARS_U = {
+	PN_CHARS_BASE
+	| "_"
+}
+	
+PN_CHARS = {
+	PN_CHARS_U
+	| "-"
+	| ASCII_DIGIT
+	| '\u{00B7}'..'\u{00B7}'
+	| '\u{0300}'..'\u{036F}'
+	| '\u{203F}'..'\u{2040}'
+}
+
+PN_PREFIX = @{
+	PN_CHARS_BASE ~ PN_PREFIX_TAIL*
+}
+
+PN_PREFIX_TAIL = {
+	PN_CHARS
+	| &("." ~ PN_CHARS) ~ "."
+}
+
+PN_LOCAL = @{
+	(PN_CHARS_U  | ":" | ASCII_DIGIT | PLX) ~ PN_LOCAL_TAIL*
+}
+
+PN_LOCAL_TAIL = {
+    PN_LOCAL_CHARS
+    | &("." ~ PN_LOCAL_CHARS) ~ "."
+}
+
+PN_LOCAL_CHARS = {
+    PN_CHARS  | ":" | PLX
+}
+	
+PLX = {
+	PERCENT
+	| PN_LOCAL_ESC
+}
+	
+PERCENT = {
+	"%" ~ ASCII_HEX_DIGIT ~ ASCII_HEX_DIGIT
+}
+
+PN_LOCAL_ESC = {
+	"\\" ~ ("_" | "~" | "." | "-" | "!" | "$" | "&" | "'\''" | "(" | ")"
+	       | "*" | "+" | "," | ";" | "=" | "/" | "?" | "#" | "@" | "%")
+}
+
+// ------------------------------------------------------------------------------------------------
+// Implicit Whitespace
+// ------------------------------------------------------------------------------------------------
+
+newline    = _{ "\n" | "\r\n" }
+
+COMMENT = _{
+   "#" ~ (!newline ~ ANY)*
+}
+
+WHITESPACE = _{
+	" " | "\t" | newline
+}

@@ -20,6 +20,8 @@ pub const MIME_TYPE: &str = "application/rdf+xml";
 // Modules
 // ------------------------------------------------------------------------------------------------
 
+mod syntax;
+
 #[doc(hidden)]
 pub mod reader;
 

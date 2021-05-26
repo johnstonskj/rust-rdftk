@@ -1,26 +1,29 @@
 /*!
-* Provides the `NQuadDataSetWriter` implementation of the `DataSetWriter` trait and the
-* `NQuadGraphWriter` implementation of the `GraphWriter` trait.
-*
-* # Example
-*
-* ```rust
-* use rdftk_io::nq::writer::NQuadDataSetWriter;
-* use rdftk_io::write_data_set_to_string;
-* # use rdftk_memgraph::MemGraph;use rdftk_memgraph::data_set::MemDataSet;
-* # fn make_data_set() -> MemDataSet { MemDataSet::default() }
-*
-* let writer = NQuadDataSetWriter::default();
-*
-* let result = write_data_set_to_string(&writer, &make_data_set());
-* ```
-*
+Provides the `NQuadDataSetWriter` implementation of the `DataSetWriter` trait and the
+`NQuadGraphWriter` implementation of the `GraphWriter` trait.
+
+# Example
+
+```rust
+use rdftk_io::nq::writer::NQuadDataSetWriter;
+use rdftk_io::write_data_set_to_string;
+# use std::cell::RefCell;
+# use std::rc::Rc;
+# use rdftk_core::data_set::DataSetRef;
+# use rdftk_memgraph::data_set::data_set_factory;
+# fn make_data_set() -> DataSetRef { data_set_factory().new_data_set(None) }
+
+let writer = NQuadDataSetWriter::default();
+
+let result = write_data_set_to_string(&writer, &make_data_set());
+```
+
 */
 
 use crate::error::Result;
 use crate::{DataSetWriter, GraphWriter};
-use rdftk_core::data_set::{DataSet, GraphNameRef};
-use rdftk_core::Graph;
+use rdftk_core::data_set::{DataSetRef, GraphNameRef};
+use rdftk_core::graph::GraphRef;
 use std::io::Write;
 
 // ------------------------------------------------------------------------------------------------
@@ -53,11 +56,9 @@ impl Default for NQuadDataSetWriter {
     }
 }
 
-impl<'a, G: 'a> DataSetWriter<'a, G> for NQuadDataSetWriter
-where
-    G: Graph<'a>,
-{
-    fn write(&self, w: &mut impl Write, data_set: &'a impl DataSet<'a, G>) -> Result<()> {
+impl DataSetWriter for NQuadDataSetWriter {
+    fn write(&self, w: &mut impl Write, data_set: &DataSetRef) -> Result<()> {
+        let data_set = data_set.borrow();
         if let Some(graph) = data_set.default_graph() {
             let inner_writer = NQuadGraphWriter::default();
             inner_writer.write(w, graph)?;
@@ -79,7 +80,8 @@ impl Default for NQuadGraphWriter {
 }
 
 impl GraphWriter for NQuadGraphWriter {
-    fn write<'a>(&self, w: &mut impl Write, graph: &impl Graph<'a>) -> Result<()> {
+    fn write(&self, w: &mut impl Write, graph: &GraphRef) -> Result<()> {
+        let graph = graph.borrow();
         for subject in graph.subjects() {
             for predicate in graph.predicates_for(subject) {
                 for object in graph.objects_for(subject, predicate) {

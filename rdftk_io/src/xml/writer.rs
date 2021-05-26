@@ -1,18 +1,40 @@
 /*!
-One-line description.
+Provides the type `XmlWriter` for writing in the [RDF 1.1 XML Syntax](https://www.w3.org/TR/rdf-syntax-grammar/)
+format.
 
-More detailed description, with
+This writer has a number of options, it can be written in a plain, streaming, form or alternatively
+pretty-printed  for readability. It is also possible to pick one of the type styles described
+in the specification, "flat" or "striped".
 
 # Example
 
+```rust
+use rdftk_io::xml::writer::{XmlOptions, XmlWriter};
+use rdftk_io::write_graph_to_string;
+# use rdftk_memgraph::simple::MemGraph;
+# let graph = rdftk_memgraph::simple::graph_factory().new_graph();
+
+let options: XmlOptions = XmlOptions::flat().pretty().clone();
+
+let writer = XmlWriter::new(options);
+
+println!("{}", write_graph_to_string(&writer, &graph).unwrap());
+```
+
 */
 
+use super::syntax::{
+    ATTRIBUTE_ABOUT, ATTRIBUTE_DATATYPE, ATTRIBUTE_NODE_ID, ATTRIBUTE_RESOURCE, ATTRIBUTE_XML_LANG,
+    DEFAULT_ENCODING, ELEMENT_DESCRIPTION, ELEMENT_RDF,
+};
 use crate::error::{ErrorKind, Result};
 use crate::GraphWriter;
+use rdftk_core::graph::GraphRef;
 use rdftk_core::statement::SubjectNodeRef;
 use rdftk_core::{Graph, SubjectNode};
 use rdftk_iri::IRIRef;
 use rdftk_names::{dc, foaf, geo, owl, rdf, rdfs, xsd};
+use std::cell::Ref;
 use std::collections::HashMap;
 use std::io::Write;
 use xml::common::XmlVersion;
@@ -26,7 +48,7 @@ use xml::EmitterConfig;
 ///
 /// Determines the style of the generated XML.
 ///
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum XmlStyle {
     /// Flatten the graph so all subjects are at the same level in the document.
     Flat,
@@ -37,7 +59,7 @@ pub enum XmlStyle {
 ///
 /// Options that control how the XML writer will render a graph.
 ///
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct XmlOptions {
     /// Determines the style of the generated XML. Default is `Flat`.
     pub style: XmlStyle,
@@ -56,13 +78,14 @@ pub struct XmlWriter {
     options: XmlOptions,
 }
 
-// ------------------------------------------------------------------------------------------------
-// Private Types
-// ------------------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------------------
-// Public Functions
-// ------------------------------------------------------------------------------------------------
+lazy_static! {
+    static ref RDF_ABOUT: String = format!("{}:{}", rdf::default_prefix(), ATTRIBUTE_ABOUT);
+    static ref RDF_DATATYPE: String = format!("{}:{}", rdf::default_prefix(), ATTRIBUTE_DATATYPE);
+    static ref RDF_DESCRIPTION: String =
+        format!("{}:{}", rdf::default_prefix(), ELEMENT_DESCRIPTION);
+    static ref RDF_NODE_ID: String = format!("{}:{}", rdf::default_prefix(), ATTRIBUTE_NODE_ID);
+    static ref RDF_RESOURCE: String = format!("{}:{}", rdf::default_prefix(), ATTRIBUTE_RESOURCE);
+}
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
@@ -73,8 +96,46 @@ impl Default for XmlOptions {
         Self {
             style: XmlStyle::Flat,
             pretty: false,
-            encoding: String::from("utf-8"),
+            encoding: String::from(DEFAULT_ENCODING),
         }
+    }
+}
+
+impl XmlOptions {
+    /// Create an option instance with `XmlStyle::Flat`.
+    pub fn flat() -> Self {
+        Self {
+            style: XmlStyle::Flat,
+            pretty: false,
+            encoding: String::from(DEFAULT_ENCODING),
+        }
+    }
+
+    /// Create an option instance with `XmlStyle::Striped`.
+    pub fn striped() -> Self {
+        Self {
+            style: XmlStyle::Striped,
+            pretty: false,
+            encoding: String::from(DEFAULT_ENCODING),
+        }
+    }
+
+    /// Set the option to emit pretty-printed XML.
+    pub fn pretty(&mut self) -> &mut Self {
+        self.pretty = true;
+        self
+    }
+
+    /// Set the option to emit plain, non-indented, XML.
+    pub fn plain(&mut self) -> &mut Self {
+        self.pretty = false;
+        self
+    }
+
+    /// Set the encoding string, this has no effect on the encoding being written.
+    pub fn encoding(&mut self, encoding: &str) -> &mut Self {
+        self.encoding = encoding.to_string();
+        self
     }
 }
 
@@ -90,7 +151,9 @@ impl Default for XmlWriter {
 }
 
 impl GraphWriter for XmlWriter {
-    fn write<'a>(&self, w: &mut impl Write, graph: &impl Graph<'a>) -> Result<()> {
+    fn write(&self, w: &mut impl Write, graph: &GraphRef) -> Result<()> {
+        let graph = graph.borrow();
+
         let config = EmitterConfig::new()
             .perform_indent(self.options.pretty)
             .normalize_empty_elements(self.options.pretty);
@@ -102,22 +165,23 @@ impl GraphWriter for XmlWriter {
             standalone: None,
         })?;
 
+        let container_name = format!("{}:{}", rdf::default_prefix(), ELEMENT_RDF);
         writer.write(
-            XmlEvent::start_element("rdf:RDF")
-                .ns("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#"),
+            XmlEvent::start_element(container_name.as_str())
+                .ns(rdf::default_prefix(), rdf::namespace_str()),
         )?;
 
         if self.options.style == XmlStyle::Flat {
             for subject in graph.subjects() {
-                self.write_subject(&mut writer, graph, subject, true)?;
+                self.write_subject(&mut writer, &graph, subject, true)?;
             }
         } else {
             for subject in graph.subjects().iter().filter(|s| s.is_iri()) {
-                self.write_subject(&mut writer, graph, subject, false)?;
+                self.write_subject(&mut writer, &graph, subject, false)?;
             }
         }
 
-        writer.write(XmlEvent::end_element().name("rdf:RDF"))?;
+        writer.write(XmlEvent::end_element().name(container_name.as_str()))?;
 
         Ok(())
     }
@@ -172,20 +236,23 @@ impl XmlWriter {
     fn write_subject<'a, W: Write>(
         &self,
         writer: &mut EventWriter<W>,
-        graph: &impl Graph<'a>,
+        graph: &Ref<'_, dyn Graph>,
         subject: &SubjectNodeRef,
         flat: bool,
     ) -> Result<()> {
         if let Some(blank) = subject.as_blank() {
             if flat {
-                writer
-                    .write(XmlEvent::start_element("rdf:Description").attr("rdf:nodeID", blank))?;
+                writer.write(
+                    XmlEvent::start_element(RDF_DESCRIPTION.as_str())
+                        .attr(RDF_NODE_ID.as_str(), blank),
+                )?;
             } else {
-                writer.write(XmlEvent::start_element("rdf:Description"))?;
+                writer.write(XmlEvent::start_element(RDF_DESCRIPTION.as_str()))?;
             }
         } else if let Some(subject) = subject.as_iri() {
             writer.write(
-                XmlEvent::start_element("rdf:Description").attr("rdf:about", &subject.to_string()),
+                XmlEvent::start_element(RDF_DESCRIPTION.as_str())
+                    .attr(RDF_ABOUT.as_str(), &subject.to_string()),
             )?;
         } else {
             return Err(ErrorKind::Msg("RDF* not supported by XML writer".to_string()).into());
@@ -204,11 +271,11 @@ impl XmlWriter {
 
                 if let Some(iri) = object.as_iri() {
                     let iri = iri.to_string();
-                    let event = event.attr("rdf:resource", &iri);
+                    let event = event.attr(RDF_RESOURCE.as_str(), &iri);
                     writer.write(event)?;
                 } else if let Some(blank) = object.as_blank() {
                     if flat {
-                        let event = event.attr("rdf:nodeID", blank);
+                        let event = event.attr(RDF_NODE_ID.as_str(), blank);
                         writer.write(event)?;
                     } else {
                         writer.write(event)?;
@@ -221,17 +288,16 @@ impl XmlWriter {
                     }
                 } else if let Some(literal) = object.as_literal() {
                     let event = if let Some(language) = literal.language() {
-                        event.attr("xml:lang", language)
+                        event.attr(ATTRIBUTE_XML_LANG, language)
                     } else {
                         event
                     };
-                    // let event = if let Some(data_type) = literal.data_type() {
-                    //     let dt_iri = Box::new(data_type.as_iri().to_string());
-                    //     event.attr("rdf:datatype", &dt_iri)
-                    // } else {
-                    //     event
-                    // };
-                    writer.write(event)?;
+                    if let Some(data_type) = literal.data_type() {
+                        let dt_iri = data_type.as_iri().to_string();
+                        writer.write(event.attr(RDF_DATATYPE.as_str(), &dt_iri))?
+                    } else {
+                        writer.write(event)?;
+                    }
                     writer.write(XmlEvent::Characters(literal.lexical_form()))?;
                 } else {
                     return Err(
@@ -242,7 +308,7 @@ impl XmlWriter {
             }
         }
 
-        writer.write(XmlEvent::end_element().name("rdf:Description"))?;
+        writer.write(XmlEvent::end_element().name(RDF_DESCRIPTION.as_str()))?;
 
         Ok(())
     }

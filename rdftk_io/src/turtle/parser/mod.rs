@@ -9,7 +9,12 @@ More detailed description, with
 
 #![allow(clippy::upper_case_acronyms)]
 
+use crate::common::parser_error::ParserErrorFactory;
+use pest::iterators::Pair;
 use pest::Parser;
+use rdftk_core::error::Error;
+use rdftk_core::graph::GraphRef;
+use rdftk_memgraph::simple::graph_factory;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -23,19 +28,18 @@ struct TurtleParser;
 // Private Types
 // ------------------------------------------------------------------------------------------------
 
+#[allow(dead_code)]
+const ERROR: ParserErrorFactory = ParserErrorFactory { repr: super::NAME };
+
 // ------------------------------------------------------------------------------------------------
 // Public Functions
 // ------------------------------------------------------------------------------------------------
 
-pub(super) fn parse_text(input: &str) {
-    let result = TurtleParser::parse(Rule::turtleStarDoc, input);
-    match result {
-        Ok(parsed) => println!("{:#?}", parsed),
-        Err(err) => {
-            println!("{}", err);
-            panic!("test failed");
-        }
-    }
+pub(super) fn parse_text(input: &str) -> Result<GraphRef, Error> {
+    let mut parsed =
+        TurtleParser::parse(Rule::turtleStarDoc, input).map_err(|e| ERROR.parser(e))?;
+    let top_node = parsed.next().unwrap();
+    turtle_star_doc(top_node)
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -45,6 +49,19 @@ pub(super) fn parse_text(input: &str) {
 // ------------------------------------------------------------------------------------------------
 // Private Functions
 // ------------------------------------------------------------------------------------------------
+
+fn turtle_star_doc(input_pair: Pair<'_, Rule>) -> Result<GraphRef, Error> {
+    let graph: GraphRef = graph_factory().new_graph();
+
+    trace!("turtle_star_doc({:?})", &input_pair.as_rule());
+
+    match input_pair.as_rule() {
+        Rule::turtleStarDoc => {}
+        _ => unexpected!("parse_idl", input_pair),
+    }
+
+    Ok(graph)
+}
 
 // ------------------------------------------------------------------------------------------------
 // Modules
@@ -60,7 +77,7 @@ mod tests {
 
     #[test]
     fn parse_simple() {
-        parse_text(
+        let result: Result<GraphRef, Error> = parse_text(
             r###"@base <http://example.org/> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -76,6 +93,7 @@ mod tests {
     rel:enemyOf <#green-goblin> ;
     a foaf:Person ;
     foaf:name "Spiderman", "Человек-паук"@ru ."###,
-        )
+        );
+        assert!(result.is_ok());
     }
 }

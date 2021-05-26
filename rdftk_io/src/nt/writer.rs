@@ -6,8 +6,8 @@ Provides the `NTripleWriter` implementation of the `GraphWriter` trait.
 ```rust
 use rdftk_io::nt::writer::NTripleWriter;
 use rdftk_io::write_graph_to_string;
-# use rdftk_memgraph::MemGraph;
-# fn make_graph() -> MemGraph { MemGraph::default() }
+# use rdftk_core::graph::GraphRef;
+# fn make_graph() -> GraphRef { rdftk_memgraph::simple::graph_factory().new_graph() }
 
 let writer = NTripleWriter::default();
 
@@ -19,7 +19,8 @@ let result = write_graph_to_string(&writer, &make_graph());
 use crate::error::Result;
 use crate::nq::writer::NQuadGraphWriter;
 use crate::GraphWriter;
-use rdftk_core::graph::Graph;
+use rdftk_core::graph::GraphRef;
+use std::borrow::Borrow;
 use std::io::Write;
 
 // ------------------------------------------------------------------------------------------------
@@ -44,7 +45,8 @@ impl Default for NTripleWriter {
 }
 
 impl GraphWriter for NTripleWriter {
-    fn write<'a>(&self, w: &mut impl Write, graph: &'a impl Graph<'a>) -> Result<()> {
+    fn write(&self, w: &mut impl Write, graph: &GraphRef) -> Result<()> {
+        let graph = graph.borrow();
         let inner_writer = NQuadGraphWriter::default();
         inner_writer.write(w, graph)
     }

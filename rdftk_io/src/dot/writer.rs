@@ -6,8 +6,8 @@ can be passed to `DotWriter::new`.
 ```rust
 use rdftk_io::dot::writer::{DotOptions, DotWriter};
 use rdftk_io::write_graph_to_string;
-# use rdftk_memgraph::MemGraph;
-# fn make_graph() -> MemGraph { MemGraph::default() }
+# use rdftk_core::graph::GraphRef;
+# fn make_graph() -> GraphRef { rdftk_memgraph::simple::graph_factory().new_graph() }
 
 let mut options = DotOptions::default();
 options.blank_labels = true;
@@ -18,7 +18,7 @@ let result = write_graph_to_string(&writer, &make_graph());
 */
 
 use crate::GraphWriter;
-use rdftk_core::graph::Graph;
+use rdftk_core::graph::GraphRef;
 use rdftk_core::{ObjectNode, SubjectNode};
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -112,10 +112,12 @@ impl Default for DotWriter {
 }
 
 impl GraphWriter for DotWriter {
-    fn write<'a>(&self, w: &mut impl Write, graph: &'a impl Graph<'a>) -> crate::error::Result<()> {
+    fn write(&self, w: &mut impl Write, graph: &GraphRef) -> crate::error::Result<()> {
         writeln!(w, "digraph {{\n    rankdir=BT\n    charset=\"utf-8\";")?;
 
         writeln!(w)?;
+
+        let graph = graph.borrow();
 
         let mappings = graph.prefix_mappings();
         for statement in graph.statements() {
@@ -125,7 +127,7 @@ impl GraphWriter for DotWriter {
                 self.options.node_prefix,
                 self.subject_id(statement.subject()),
                 self.object_id(statement.object()),
-                match mappings.compress(&statement.predicate()) {
+                match mappings.borrow().compress(&statement.predicate()) {
                     None => statement.predicate().to_string(),
                     Some(qname) => qname.to_string(),
                 }
