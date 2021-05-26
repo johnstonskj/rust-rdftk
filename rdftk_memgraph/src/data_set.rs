@@ -7,58 +7,70 @@ Additional semantics taken from [RDF 1.1 TriG](https://www.w3.org/TR/trig/), _RD
 
 */
 
-use crate::MemGraph;
-use rdftk_core::data_set::{DataSet, DataSetIndex, GraphNameRef, MutableDataSet};
+use rdftk_core::data_set::{
+    DataSet, DataSetFactory, DataSetFactoryRef, DataSetIndex, DataSetRef, GraphNameRef,
+};
+use rdftk_core::graph::GraphRef;
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::rc::Rc;
+use std::sync::Arc;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
 ///
+/// An implementation of the data set factory trait.
+///
+#[derive(Clone, Debug)]
+pub struct MemDataSetFactory {}
+
+///
 /// This implementation of the core `DataSet` and `MutableDataSet` traits is a simple in-memory hash
 /// from graph name to a `MemGraph` implementation.
 ///
-#[derive(Debug)]
+#[allow(missing_debug_implementations)]
 pub struct MemDataSet {
-    default_graph: Option<MemGraph>,
-    graphs: HashMap<GraphNameRef, MemGraph>,
+    default_graph: Option<GraphRef>,
+    graphs: HashMap<GraphNameRef, GraphRef>,
+}
+
+// ------------------------------------------------------------------------------------------------
+// Public Functions
+// ------------------------------------------------------------------------------------------------
+
+///
+/// Retrieve the graph factory for simple `MemGraph` instances.
+///
+pub fn data_set_factory() -> DataSetFactoryRef {
+    FACTORY.clone()
+}
+
+// ------------------------------------------------------------------------------------------------
+// Private Types
+// ------------------------------------------------------------------------------------------------
+
+lazy_static! {
+    static ref FACTORY: Arc<MemDataSetFactory> = Arc::new(MemDataSetFactory {});
 }
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl Default for MemDataSet {
-    fn default() -> Self {
-        Self {
-            default_graph: None,
+impl DataSetFactory for MemDataSetFactory {
+    fn new_data_set(&self, default_graph: Option<GraphRef>) -> DataSetRef {
+        Rc::new(RefCell::new(MemDataSet {
+            default_graph,
             graphs: Default::default(),
-        }
+        }))
     }
 }
 
-impl From<MemGraph> for MemDataSet {
-    fn from(v: MemGraph) -> Self {
-        Self {
-            default_graph: Some(v),
-            graphs: Default::default(),
-        }
-    }
-}
+// ------------------------------------------------------------------------------------------------
 
-impl From<HashMap<GraphNameRef, MemGraph>> for MemDataSet {
-    fn from(graphs: HashMap<GraphNameRef, MemGraph>) -> Self {
-        Self {
-            default_graph: None,
-            graphs,
-        }
-    }
-}
-
-impl<'a> DataSet<'a, MemGraph> for MemDataSet {
-    type GraphIter = std::collections::hash_map::Iter<'a, GraphNameRef, MemGraph>;
-
+impl DataSet for MemDataSet {
     fn is_empty(&self) -> bool {
         todo!()
     }
@@ -71,29 +83,31 @@ impl<'a> DataSet<'a, MemGraph> for MemDataSet {
         self.default_graph.is_some()
     }
 
-    fn default_graph(&self) -> &Option<MemGraph> {
-        &self.default_graph
+    fn default_graph(&self) -> Option<&GraphRef> {
+        self.default_graph.as_ref()
     }
 
     fn has_graph_named(&self, name: &GraphNameRef) -> bool {
         self.graphs.contains_key(name)
     }
 
-    fn graph_named(&self, name: &GraphNameRef) -> Option<&MemGraph> {
+    fn graph_named(&self, name: &GraphNameRef) -> Option<&GraphRef> {
         self.graphs.get(name)
     }
 
-    fn graphs(&'a self) -> Self::GraphIter {
-        self.graphs.iter()
+    fn graphs<'a>(&'a self) -> Box<dyn Iterator<Item = (&'a GraphNameRef, &'a GraphRef)> + 'a> {
+        Box::new(self.graphs.iter())
     }
 
     fn has_index(&self, _: &DataSetIndex) -> bool {
         false
     }
-}
 
-impl<'a> MutableDataSet<'a, MemGraph> for MemDataSet {
-    fn set_default_graph(&mut self, graph: MemGraph) {
+    // --------------------------------------------------------------------------------------------
+    // Mutators
+    // --------------------------------------------------------------------------------------------
+
+    fn set_default_graph(&mut self, graph: GraphRef) {
         self.default_graph = Some(graph);
     }
 
@@ -101,7 +115,7 @@ impl<'a> MutableDataSet<'a, MemGraph> for MemDataSet {
         self.default_graph = None;
     }
 
-    fn insert(&mut self, name: GraphNameRef, graph: MemGraph) {
+    fn insert(&mut self, name: GraphNameRef, graph: GraphRef) {
         let _ = self.graphs.insert(name, graph);
     }
 
@@ -112,5 +126,9 @@ impl<'a> MutableDataSet<'a, MemGraph> for MemDataSet {
     fn clear(&mut self) {
         self.graphs.clear();
         self.default_graph = None;
+    }
+
+    fn factory(&self) -> DataSetFactoryRef {
+        FACTORY.clone()
     }
 }

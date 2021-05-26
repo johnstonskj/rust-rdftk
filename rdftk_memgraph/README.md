@@ -8,6 +8,14 @@ This crate provides an implementation of the `Graph` traits from `rdftk_core::gr
 
 ## Changes
 
+**Version 0.1.11**
+
+* Update with API changes from rdftk_core.
+* New merged graph and data set traits.
+* New style for reference types and trait references.
+* Moved MemGraph into a new 'simple' module.
+* Implemented new factory types as singleton instances.
+
 **Version 0.1.10**
 
 * Using rdftk_core 0.2, this has changes in the signature of both Graph and DataSet traits.

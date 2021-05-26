@@ -7,17 +7,29 @@ More detailed description, with
 
 */
 
-use crate::Mappings;
-use rdftk_core::graph::{Graph, GraphIndex, MutableGraph, PrefixMappings};
-use rdftk_core::statement::{ObjectNodeRef, StatementList, StatementRef, SubjectNodeRef};
-use rdftk_core::SubjectNode;
+use rdftk_core::graph::mapping::PrefixMappingRef;
+use rdftk_core::graph::{
+    Graph, GraphFactory, GraphFactoryRef, GraphIndex, GraphRef, PrefixMappings,
+};
+use rdftk_core::statement::{
+    ObjectNodeRef, StatementList, StatementRef, SubjectNode, SubjectNodeRef,
+};
 use rdftk_iri::IRIRef;
+use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
+use std::iter::FromIterator;
 use std::rc::Rc;
+use std::sync::Arc;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
+
+///
+/// A factory creating IndexedMemGraph instances.
+///
+#[derive(Clone, Debug)]
+pub struct IndexedMemGraphFactory {}
 
 ///
 /// An indexed in-memory implementation of the `Graph` and `NamedGraph` traits.
@@ -25,7 +37,7 @@ use std::rc::Rc;
 #[derive(Clone, Debug)]
 pub struct IndexedMemGraph {
     statements: StatementList,
-    mappings: Rc<dyn PrefixMappings>,
+    mappings: PrefixMappingRef,
     s_index: HashMap<SubjectNodeRef, StatementList>,
     p_index: HashMap<IRIRef, StatementList>,
     o_index: HashMap<ObjectNodeRef, StatementList>,
@@ -35,6 +47,10 @@ pub struct IndexedMemGraph {
 // Private Types
 // ------------------------------------------------------------------------------------------------
 
+lazy_static! {
+    static ref FACTORY: Arc<IndexedMemGraphFactory> = Arc::new(IndexedMemGraphFactory {});
+}
+
 // ------------------------------------------------------------------------------------------------
 // Public Functions
 // ------------------------------------------------------------------------------------------------
@@ -43,22 +59,21 @@ pub struct IndexedMemGraph {
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl Default for IndexedMemGraph {
-    fn default() -> Self {
-        Self {
+impl GraphFactory for IndexedMemGraphFactory {
+    fn new_graph(&self) -> GraphRef {
+        Rc::new(RefCell::new(IndexedMemGraph {
             statements: Default::default(),
-            mappings: Rc::new(Mappings::default()),
+            mappings: Rc::new(RefCell::new(PrefixMappings::default())),
             s_index: Default::default(),
             p_index: Default::default(),
             o_index: Default::default(),
-        }
+        }))
     }
 }
 
-impl<'a> Graph<'a> for IndexedMemGraph {
-    type StatementIter = std::slice::Iter<'a, StatementRef>;
-    type FilteredIter = std::iter::Filter<Self::StatementIter, fn(&&StatementRef) -> bool>;
+// ------------------------------------------------------------------------------------------------
 
+impl Graph for IndexedMemGraph {
     fn is_empty(&self) -> bool {
         self.statements.is_empty()
     }
@@ -76,29 +91,50 @@ impl<'a> Graph<'a> for IndexedMemGraph {
             .contains_key(&SubjectNodeRef::from(SubjectNode::from(subject.clone())))
     }
 
-    fn contains(&self, statement: &StatementRef) -> bool {
-        self.contains_all(
-            statement.subject(),
-            statement.predicate(),
-            statement.object(),
-        )
-    }
-
-    fn contains_all(
+    fn matches(
         &self,
-        _subject: &SubjectNodeRef,
-        _predicate: &IRIRef,
-        _object: &ObjectNodeRef,
-    ) -> bool {
-        todo!()
+        subject: Option<&SubjectNodeRef>,
+        predicate: Option<&IRIRef>,
+        object: Option<&ObjectNodeRef>,
+    ) -> HashSet<&StatementRef> {
+        let s_sts: HashSet<&StatementRef> = if let Some(subject) = subject {
+            if let Some(sts) = self.s_index.get(subject) {
+                HashSet::from_iter(sts)
+            } else {
+                Default::default()
+            }
+        } else {
+            Default::default()
+        };
+        let p_sts: HashSet<&StatementRef> = if let Some(predicate) = predicate {
+            if let Some(sts) = self.p_index.get(predicate) {
+                HashSet::from_iter(sts)
+            } else {
+                Default::default()
+            }
+        } else {
+            Default::default()
+        };
+        let o_sts: HashSet<&StatementRef> = if let Some(object) = object {
+            if let Some(sts) = self.o_index.get(object) {
+                HashSet::from_iter(sts)
+            } else {
+                Default::default()
+            }
+        } else {
+            Default::default()
+        };
+        s_sts
+            .intersection(&p_sts)
+            .cloned()
+            .collect::<HashSet<&StatementRef>>()
+            .intersection(&o_sts)
+            .cloned()
+            .collect::<HashSet<&StatementRef>>()
     }
 
-    fn statements(&'a self) -> Self::StatementIter {
-        self.statements.iter()
-    }
-
-    fn filter(&'a self, filter: fn(&&StatementRef) -> bool) -> Self::FilteredIter {
-        self.statements.iter().filter(filter)
+    fn statements<'a>(&'a self) -> Box<dyn Iterator<Item = &'a StatementRef> + 'a> {
+        Box::new(self.statements.iter())
     }
 
     fn subjects(&self) -> HashSet<&SubjectNodeRef> {
@@ -109,8 +145,12 @@ impl<'a> Graph<'a> for IndexedMemGraph {
         self.p_index.keys().collect()
     }
 
-    fn predicates_for(&self, _subject: &SubjectNodeRef) -> HashSet<&IRIRef> {
-        todo!()
+    fn predicates_for(&self, subject: &SubjectNodeRef) -> HashSet<&IRIRef> {
+        if let Some(sts) = self.s_index.get(subject) {
+            sts.iter().map(|st| st.predicate()).collect()
+        } else {
+            Default::default()
+        }
     }
 
     fn objects(&self) -> HashSet<&ObjectNodeRef> {
@@ -125,16 +165,29 @@ impl<'a> Graph<'a> for IndexedMemGraph {
         todo!()
     }
 
-    fn has_index(&self, _index: &GraphIndex) -> bool {
-        todo!()
+    fn has_index(&self, index: &GraphIndex) -> bool {
+        matches!(
+            index,
+            GraphIndex::Subject | GraphIndex::Predicate | GraphIndex::Object
+        )
     }
 
-    fn prefix_mappings(&self) -> Rc<dyn PrefixMappings> {
+    fn prefix_mappings(&self) -> PrefixMappingRef {
         self.mappings.clone()
     }
-}
 
-impl<'a> MutableGraph<'a> for IndexedMemGraph {
+    fn set_prefix_mappings(&mut self, mappings: PrefixMappingRef) {
+        self.mappings = mappings;
+    }
+
+    fn factory(&self) -> GraphFactoryRef {
+        FACTORY.clone()
+    }
+
+    fn statements_mut<'a>(&'a mut self) -> Box<dyn Iterator<Item = &'a mut StatementRef> + 'a> {
+        Box::new(self.statements.iter_mut())
+    }
+
     fn insert(&mut self, statement: StatementRef) {
         match self.s_index.get_mut(statement.subject()) {
             None => {
@@ -149,13 +202,10 @@ impl<'a> MutableGraph<'a> for IndexedMemGraph {
         self.statements.push(statement);
     }
 
-    fn merge(
-        &mut self,
-        _other: &'a Rc<
-            dyn Graph<'a, StatementIter = Self::StatementIter, FilteredIter = Self::FilteredIter>,
-        >,
-    ) {
-        todo!()
+    fn merge(&mut self, other: &Self) {
+        for st in other.statements() {
+            self.insert(st.clone());
+        }
     }
 
     fn dedup(&mut self) {
@@ -166,12 +216,19 @@ impl<'a> MutableGraph<'a> for IndexedMemGraph {
         todo!()
     }
 
-    fn remove_all_for(&mut self, _subject: &SubjectNodeRef) {
-        todo!()
+    fn remove_all_for(&mut self, subject: &SubjectNodeRef) {
+        if let Some(sts) = self.s_index.remove(subject) {
+            for st in sts {
+                self.remove(&st);
+            }
+        }
     }
 
     fn clear(&mut self) {
-        todo!()
+        self.statements.clear();
+        self.s_index.clear();
+        self.p_index.clear();
+        self.o_index.clear();
     }
 }
 
