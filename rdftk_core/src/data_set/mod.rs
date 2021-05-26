@@ -6,12 +6,13 @@ Additional semantics taken from [RDF 1.1 TriG](https://www.w3.org/TR/trig/), _RD
 # Example
 
 ```rust
-use rdftk_core::Graph;use rdftk_core::data_set::DataSet;
+use rdftk_core::GraphRef;
+use rdftk_core::data_set::{DataSet, DataSetRef};
+use rdftk_core::statement::StatementRef;
 
-fn simple_dataset_writer<'a, G: 'a>(data_set: &'a impl DataSet<'a, G>)
-where
-    G: Graph<'a>,
+fn simple_dataset_writer(data_set: &DataSetRef)
 {
+    let data_set = data_set.borrow();
     if let Some(graph) = data_set.default_graph() {
         println!("{{");
         simple_graph_writer(graph);
@@ -24,7 +25,8 @@ where
     }
 }
 
-fn simple_graph_writer<'a>(graph: &'a impl Graph<'a>) {
+fn simple_graph_writer(graph: &GraphRef)
+{
     for statement in graph.statements() {
         println!("    {}", statement);
     }
@@ -33,8 +35,12 @@ fn simple_graph_writer<'a>(graph: &'a impl Graph<'a>) {
 
 */
 
-use crate::Graph;
+use crate::graph::GraphRef;
+use std::cell::RefCell;
+use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
+use std::rc::Rc;
+use std::sync::Arc;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -80,20 +86,52 @@ pub enum DataSetIndex {
 }
 
 ///
+/// A data set factory provides an interface to create a new data set. This allows for
+/// implementations where underlying shared resources are required and so may be owned by the
+/// factory.
+///
+pub trait DataSetFactory {
+    ///
+    /// Create a new graph instance.
+    ///
+    fn new_data_set(&self, default_graph: Option<GraphRef>) -> DataSetRef;
+
+    ///
+    ///  Create a new graph instance from the given statements and prefix mappings.
+    ///
+    fn data_set_from(
+        &self,
+        default_graph: Option<GraphRef>,
+        graphs: HashMap<GraphNameRef, GraphRef>,
+    ) -> DataSetRef {
+        let data_set = self.new_data_set(default_graph);
+        {
+            let mut data_set = data_set.borrow_mut();
+            for (name, graph) in graphs {
+                data_set.insert(name, graph);
+            }
+        }
+        data_set
+    }
+}
+
+///
+/// The reference type for a graph factory returned by a graph.
+///
+pub type DataSetFactoryRef = Arc<dyn DataSetFactory>;
+
+///
+/// The reference type for a graph data set.
+///
+pub type DataSetRef = Rc<RefCell<dyn DataSet>>;
+
+///
 /// A `DataSet` is a mapping from `GraphName` to `Graph`; this introduces the notion of a named graph
 /// although in actuality the graph itself is not named as the name is the key within the data set.
 /// Note that this trait represents an immutable data set, a type should also implement the
 /// `MutableDataSet` trait for mutation.
 ///
-pub trait DataSet<'a, G: 'a>
-where
-    G: Graph<'a>,
-{
-    ///
-    /// The type used to return an iterator over the graph name/graph pairs in this data set.
-    ///
-    type GraphIter: Iterator<Item = (&'a GraphNameRef, &'a G)>;
-
+pub trait DataSet {
     ///
     /// Returns `true` if there are no graphs in this data set, else `false`.
     ///
@@ -112,7 +150,7 @@ where
     ///
     /// Return the default graph for this data set, if it exists.
     ///
-    fn default_graph(&self) -> &Option<G>;
+    fn default_graph(&self) -> Option<&GraphRef>;
 
     ///
     /// Return `true` if this data set has a graph with the provided name, else `false`.
@@ -122,12 +160,12 @@ where
     ///
     /// Return the graph with the provided name from this data set, if it exists.
     ///
-    fn graph_named(&self, name: &GraphNameRef) -> Option<&G>;
+    fn graph_named(&self, name: &GraphNameRef) -> Option<&GraphRef>;
 
     ///
     /// Return an iterator over graph name/graph pairs.
     ///
-    fn graphs(&'a self) -> Self::GraphIter;
+    fn graphs<'a>(&'a self) -> Box<dyn Iterator<Item = (&'a GraphNameRef, &'a GraphRef)> + 'a>;
 
     ///
     /// Returns `true` if this data set has an index of the specified kind, else `false`.
@@ -140,20 +178,12 @@ where
     fn has_indices(&self, indices: &[DataSetIndex]) -> bool {
         indices.iter().all(|i| self.has_index(i))
     }
-}
 
-///
-/// This trait provides the set of common mutation operations on a data set.
-///
-pub trait MutableDataSet<'a, G: 'a>: DataSet<'a, G>
-where
-    G: Graph<'a>,
-{
     ///
     /// Set the provided graph as the default, unnamed graph, for this data set. Only one graph may
     /// be the default.
     ///
-    fn set_default_graph(&mut self, graph: G);
+    fn set_default_graph(&mut self, graph: GraphRef);
 
     ///
     /// Remove any graph that may be set as the current default. This operation has no effect if
@@ -163,7 +193,7 @@ where
     ///
     /// Insert a new graph with it's associated name into the data set.
     ///
-    fn insert(&mut self, name: GraphNameRef, graph: G);
+    fn insert(&mut self, name: GraphNameRef, graph: GraphRef);
 
     ///
     /// Remove the graph with the provided name from this data set. This operation has no effect if
@@ -175,6 +205,14 @@ where
     /// Remove all graphs from this data set.
     ///
     fn clear(&mut self);
+
+    ///
+    /// Return the factory that creates data sets of this kind.
+    ///
+    /// Note that this uses Arc as a reference as factories are explicitly intended for cross-thread
+    /// usage.
+    ///
+    fn factory(&self) -> DataSetFactoryRef;
 }
 
 // ------------------------------------------------------------------------------------------------

@@ -49,6 +49,20 @@ pub fn make_statements() -> StatementList {
 
 ## Changes
 
+**Version 0.2.2**
+
+* Reworked APIs to take <name>Ref types and to be consistent in use of trait objects and types throughout.
+* Added factory type for data sets.
+* Made PrefixMappings a concrete type in the core::graph::mapping module.
+* Added InvalidMatch and Io variants to ErrorKind.
+* Added mutators to Statment.
+
+**Version 0.2.1**
+
+* Changed API, removed mutable traits for Graph and DataSet, moved methods into their base traits.
+* Added factory types for graphs.
+* Added Skolemization function for graphs.
+
 **Version 0.2.0**
 
 * A change to the API, all `Statement`, and statement components are now passed as `Rc` references.

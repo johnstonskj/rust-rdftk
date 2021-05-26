@@ -644,6 +644,13 @@ impl Statement {
     }
 
     ///
+    /// Set the value of this statement's subject.
+    ///
+    pub fn set_subject(&mut self, subject: SubjectNodeRef) {
+        self.subject = subject;
+    }
+
+    ///
     /// Return the predicate of this statement.
     ///
     pub fn predicate(&self) -> &IRIRef {
@@ -651,10 +658,24 @@ impl Statement {
     }
 
     ///
+    /// Set the value of this statement's predicate.
+    ///
+    pub fn set_predicate(&mut self, predicate: IRIRef) {
+        self.predicate = predicate;
+    }
+
+    ///
     /// Return the object of this statement.
     ///
     pub fn object(&self) -> &ObjectNodeRef {
         &self.object
+    }
+
+    ///
+    /// Set the value of this statement's object.
+    ///
+    pub fn set_object(&mut self, object: ObjectNodeRef) {
+        self.object = object;
     }
 
     ///

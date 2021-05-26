@@ -18,5 +18,15 @@ error_chain! {
             description("The String value provided is not a valid QName.")
             display("The String value `{}` is not a valid QName.", s)
         }
+        #[doc = "The match combination is not valid."]
+        InvalidMatch {
+            description("The match combination is not valid.")
+            display("The match combination is not valid.")
+        }
+        #[doc = "A failure occurred reading or writing a graph."]
+        Io {
+            description("A failure occurred reading or writing a graph.")
+            display("A failure occurred reading or writing a graph.")
+        }
     }
 }

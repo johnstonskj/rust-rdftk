@@ -73,9 +73,10 @@ extern crate error_chain;
 pub mod error;
 
 pub mod data_set;
+pub use data_set::{DataSet, DataSetFactory, DataSetFactoryRef, DataSetRef};
 
 pub mod graph;
-pub use graph::{Graph, PrefixMappings};
+pub use graph::{Graph, GraphFactory, GraphFactoryRef, GraphRef, PrefixMappings};
 
 pub mod literal;
 pub use literal::{DataType, Literal};
