@@ -526,6 +526,27 @@ impl IRI {
         self.is_absolute() && !ssp.is_empty() && !ssp.starts_with('/')
     }
 
+    ///
+    /// Returns true if this IRI's path starts with the well-known prefix defined in
+    /// [RFC-8615: Well-Known Uniform Resource Identifiers (URIs)](https://datatracker.ietf.org/doc/html/rfc8615).
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use rdftk_iri::IRI;
+    /// # use std::str::FromStr;
+    /// assert!(
+    ///     IRI::from_str("http://example.com/.well-known/genid/d26a2d0e98334696f4ad70a677abc1f6")
+    ///         .unwrap()
+    ///         .is_well_known()
+    /// );
+    /// ```
+    ///
+    pub fn is_well_known(&self) -> bool {
+        self.path().is_well_known()
+    }
+
     // --------------------------------------------------------------------------------------------
 
     /// Return `true` if this `IRI` include a scheme, else `false`.

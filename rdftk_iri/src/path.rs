@@ -69,6 +69,7 @@ pub struct Path(String);
 const PATH_SEP: &str = "/";
 const DOT: &str = ".";
 const DOT_DOT: &str = "..";
+const WELL_KNOWN: &str = "/.well-known/";
 
 impl Default for Path {
     fn default() -> Self {
@@ -132,6 +133,14 @@ impl Path {
         Self(PATH_SEP.to_string())
     }
 
+    ///
+    /// Constructs a new *well-known* path, i.e. it contains the prefix specified in
+    /// [RFC-8615: Well-Known Uniform Resource Identifiers (URIs)](https://datatracker.ietf.org/doc/html/rfc8615).
+    ///
+    pub fn well_known() -> Self {
+        Self(WELL_KNOWN.to_string())
+    }
+
     // --------------------------------------------------------------------------------------------
 
     ///
@@ -184,6 +193,13 @@ impl Path {
             .all(|segment| segment != DOT && segment != DOT_DOT)
     }
 
+    ///
+    /// Returns true if this path starts with the well-known prefix defined in
+    /// [RFC-8615: Well-Known Uniform Resource Identifiers (URIs)](https://datatracker.ietf.org/doc/html/rfc8615).
+    ///
+    pub fn is_well_known(&self) -> bool {
+        self.0.starts_with(WELL_KNOWN)
+    }
     // --------------------------------------------------------------------------------------------
 
     fn hierarchical_segments(&self) -> Vec<String> {

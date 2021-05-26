@@ -56,6 +56,10 @@ The following features are present in this crate.
 
 ## Changes
 
+**Version 0.1.7**
+
+* Added support for well-known IRIs to the Path and IRI types.
+
 **Version 0.1.6**
 
 * Applied a lot more warnings in lib.rs
