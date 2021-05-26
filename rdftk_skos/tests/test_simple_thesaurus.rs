@@ -91,11 +91,10 @@ fn test_simple_thesaurus() {
 
 #[test]
 fn test_simple_thesaurus_to_rdf() {
-    use rdftk_core::graph::Graph;
-
     let scheme = make_unesco_computer();
 
     let graph = to_rdf_graph(&scheme, None);
+    let graph = graph.borrow();
     assert_eq!(graph.len(), 43);
 
     for statement in graph.statements() {
@@ -109,18 +108,21 @@ const MARKDOWN: &str = include_str!("simple_thesaurus.md");
 fn test_simple_thesaurus_to_markdown() {
     let scheme = make_unesco_computer();
 
-    let mut mappings = standard_mappings();
-    mappings.insert(
-        "dbpedia",
-        IRI::from_str("http://dbpedia.org/ontology/")
-            .unwrap()
-            .into(),
-    );
-    mappings.set_default_namespace(
-        IRI::from_str("http://vocabularies.unesco.org/thesaurus/")
-            .unwrap()
-            .into(),
-    );
+    let mappings = standard_mappings();
+    {
+        let mut mappings = mappings.borrow_mut();
+        mappings.insert(
+            "dbpedia",
+            IRI::from_str("http://dbpedia.org/ontology/")
+                .unwrap()
+                .into(),
+        );
+        mappings.set_default_namespace(
+            IRI::from_str("http://vocabularies.unesco.org/thesaurus/")
+                .unwrap()
+                .into(),
+        );
+    }
 
     let result = make_document_with_mappings(&scheme, "en", mappings);
 

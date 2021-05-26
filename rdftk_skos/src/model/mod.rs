@@ -11,10 +11,9 @@ TBD
 */
 
 use crate::ns;
-use rdftk_core::graph::{MutableGraph, PrefixMappings};
-use rdftk_core::Graph;
+use rdftk_core::graph::{GraphRef, PrefixMappings};
 use rdftk_iri::IRIRef;
-use rdftk_memgraph::{Mappings, MemGraph};
+use rdftk_memgraph::simple::graph_factory;
 use rdftk_names::{dc, owl, rdf, xsd};
 use std::rc::Rc;
 
@@ -100,28 +99,31 @@ pub trait ToUri {
 // Public Functions
 // ------------------------------------------------------------------------------------------------
 
-pub fn to_rdf_graph(scheme: &Scheme, default_namespace: Option<IRIRef>) -> MemGraph {
-    let mut ns_mappings = standard_mappings();
+pub fn to_rdf_graph(scheme: &Scheme, default_namespace: Option<IRIRef>) -> GraphRef {
+    let ns_mappings = standard_mappings();
     if let Some(default_namespace) = default_namespace {
+        let mut ns_mappings = ns_mappings.borrow_mut();
         let _ = ns_mappings.set_default_namespace(default_namespace);
     }
     to_rdf_graph_with_mappings(scheme, ns_mappings)
 }
 
-pub fn to_rdf_graph_with_mappings(scheme: &Scheme, ns_mappings: Mappings) -> MemGraph {
-    let mut graph = MemGraph::default();
+pub fn to_rdf_graph_with_mappings(scheme: &Scheme, ns_mappings: PrefixMappingRef) -> GraphRef {
+    let graph = graph_factory().new_graph();
+    {
+        let mut graph = graph.borrow_mut();
+        let _ = graph.set_prefix_mappings(ns_mappings);
 
-    let _ = graph.mappings(Rc::new(ns_mappings));
-
-    for statement in scheme.to_statements(None) {
-        graph.insert(statement.into());
+        for statement in scheme.to_statements(None) {
+            graph.insert(statement.into());
+        }
     }
-
     graph
 }
 
-pub fn from_rdf_graph<'a>(graph: &'a impl Graph<'a>) -> Vec<Scheme> {
+pub fn from_rdf_graph<'a>(graph: &GraphRef) -> Vec<Scheme> {
     let schemes = Default::default();
+    let graph = graph.borrow();
     let scheme_subjects: Vec<&SubjectNodeRef> = graph
         .statements()
         .filter_map(|st| {
@@ -137,8 +139,8 @@ pub fn from_rdf_graph<'a>(graph: &'a impl Graph<'a>) -> Vec<Scheme> {
     schemes
 }
 
-pub fn standard_mappings() -> Mappings {
-    let mut mappings = Mappings::default();
+pub fn standard_mappings() -> PrefixMappingRef {
+    let mut mappings = PrefixMappings::default();
     let _ = mappings.insert(ns::default_prefix(), ns::namespace_iri().clone());
     let _ = mappings.insert(ns::xl::default_prefix(), ns::xl::namespace_iri().clone());
     let _ = mappings.insert(ns::iso::default_prefix(), ns::iso::namespace_iri().clone());
@@ -153,7 +155,7 @@ pub fn standard_mappings() -> Mappings {
     let _ = mappings.insert(rdf::default_prefix(), rdf::namespace_iri().clone());
     let _ = mappings.insert(owl::default_prefix(), owl::namespace_iri().clone());
     let _ = mappings.insert(xsd::default_prefix(), xsd::namespace_iri().clone());
-    mappings
+    Rc::new(RefCell::new(mappings))
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -171,4 +173,6 @@ pub use collection::Collection;
 
 pub mod properties;
 pub use properties::{Label, LiteralProperty};
+use rdftk_core::graph::mapping::PrefixMappingRef;
 use rdftk_core::statement::{ObjectNodeRef, StatementList, StatementRef, SubjectNodeRef};
+use std::cell::RefCell;

@@ -17,11 +17,10 @@ use crate::model::{
     LiteralProperty, Resource, Scheme, ToUri,
 };
 use crate::ns;
-use rdftk_core::graph::PrefixMappings;
+use rdftk_core::graph::mapping::PrefixMappingRef;
 use rdftk_io::turtle::writer::TurtleWriter;
 use rdftk_io::write_graph_to_string;
 use rdftk_iri::IRIRef;
-use rdftk_memgraph::Mappings;
 use somedoc::error::{Error, ErrorKind, ResultExt};
 use somedoc::model::block::{
     Cell, Column, Formatted, HasBlockContent, HasLabel, Heading, HeadingLevel, Label as Anchor,
@@ -42,7 +41,7 @@ use std::str::FromStr;
 // ------------------------------------------------------------------------------------------------
 
 struct Context<'a> {
-    ns_mappings: Mappings,
+    ns_mappings: PrefixMappingRef,
     collections: Vec<Rc<RefCell<Collection>>>,
     language: &'a str,
 }
@@ -58,6 +57,7 @@ pub fn make_document(
 ) -> Result<Document, Error> {
     let mut ns_mappings = standard_mappings();
     if let Some(default_namespace) = default_namespace {
+        let mut ns_mappings = ns_mappings.borrow_mut();
         let _ = ns_mappings.set_default_namespace(default_namespace);
     }
 
@@ -67,7 +67,7 @@ pub fn make_document(
 pub fn make_document_with_mappings(
     scheme: &Scheme,
     language: &str,
-    ns_mappings: Mappings,
+    ns_mappings: PrefixMappingRef,
 ) -> Result<Document, Error> {
     let context = Context::new(scheme, language, ns_mappings);
 
@@ -160,7 +160,7 @@ pub fn make_document_with_mappings(
 // ------------------------------------------------------------------------------------------------
 
 impl<'a> Context<'a> {
-    fn new(scheme: &'a Scheme, language: &'a str, ns_mappings: Mappings) -> Self {
+    fn new(scheme: &'a Scheme, language: &'a str, ns_mappings: PrefixMappingRef) -> Self {
         // make collection mappings!
         let mut collections = scheme.collections_flattened();
         collections.sort_by_key(|collection| collection.borrow().preferred_label(language));
@@ -241,6 +241,7 @@ fn write_labels<'a>(document: &mut Document, labels: Vec<&Label>, context: &Cont
             current_kind = Some(label.kind());
             let _ = document.add_paragraph(Paragraph::bold_str(&match context
                 .ns_mappings
+                .borrow()
                 .compress(&label.kind().to_uri())
             {
                 None => label.kind().to_uri().to_string(),
@@ -280,14 +281,16 @@ fn write_other_properties<'a>(
     ]);
     for property in properties.iter() {
         table.add_row(Row::new(&[
-            Cell::text_str(&match context.ns_mappings.compress(&property.predicate()) {
-                None => property.predicate().to_string(),
-                Some(qname) => qname.to_string(),
-            }),
+            Cell::text_str(
+                &match context.ns_mappings.borrow().compress(&property.predicate()) {
+                    None => property.predicate().to_string(),
+                    Some(qname) => qname.to_string(),
+                },
+            ),
             Cell::text_str(&property.value().lexical_form()),
             Cell::text_str(&match property.value().data_type() {
                 None => String::new(),
-                Some(dt) => match context.ns_mappings.compress(dt.as_iri()) {
+                Some(dt) => match context.ns_mappings.borrow().compress(dt.as_iri()) {
                     None => property.predicate().to_string(),
                     Some(qname) => qname.to_string(),
                 },
@@ -324,10 +327,12 @@ fn write_concept_relations<'a>(document: &mut Document, concept: &Concept, conte
         let related = related.borrow();
         let label = related.preferred_label(context.language);
         table.add_row(Row::new(&[
-            Cell::text_str(&match context.ns_mappings.compress(&relation.to_uri()) {
-                None => relation.to_uri().to_string(),
-                Some(qname) => qname.to_string(),
-            }),
+            Cell::text_str(
+                &match context.ns_mappings.borrow().compress(&relation.to_uri()) {
+                    None => relation.to_uri().to_string(),
+                    Some(qname) => qname.to_string(),
+                },
+            ),
             Cell::link(HyperLink::internal_with_caption_str(
                 Anchor::safe_from(&label, Some("concept")),
                 &label,
@@ -335,12 +340,12 @@ fn write_concept_relations<'a>(document: &mut Document, concept: &Concept, conte
         ]));
     }
     for (relation, related) in concept.external_relations() {
-        let related_label = match context.ns_mappings.compress(&related.clone()) {
+        let related_label = match context.ns_mappings.borrow().compress(&related.clone()) {
             None => related.to_string(),
             Some(qname) => qname.to_string(),
         };
         table.add_row(Row::new(&[
-            Cell::text_str(&match context.ns_mappings.compress(&relation) {
+            Cell::text_str(&match context.ns_mappings.borrow().compress(&relation) {
                 None => relation.to_string(),
                 Some(qname) => qname.to_string(),
             }),

@@ -12,6 +12,10 @@ TBD
 
 ## Changes
 
+**Version 0.1.29**
+
+* More core API changes.
+
 **Version 0.1.28**
 
 * Using rdftk_core 0.2, this has changes in the signature of both Graph and DataSet traits.
