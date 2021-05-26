@@ -32,6 +32,12 @@ pub struct NTriplesReader {}
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
+impl Default for NTriplesReader {
+    fn default() -> Self {
+        Self {}
+    }
+}
+
 impl GraphReader for NTriplesReader {
     fn read(&self, r: &mut impl Read, factory: GraphFactoryRef) -> Result<GraphRef> {
         let mut content: String = String::new();
