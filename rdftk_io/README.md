@@ -27,6 +27,23 @@ creation of [GraphViz](https://graphviz.gitlab.io/) dot files for a visualizatio
 
 Each module will also provide public constants `NAME`, `FILE_EXTENSION`, and `MIME_TYPE`.
 
+# Example
+
+An example, reading an existing NTriple file.
+
+```rust
+use rdftk_io::nt::reader::NTriplesReader;
+use rdftk_io::GraphReader;
+use rdftk_memgraph::simple::graph_factory;
+use std::fs::File;
+use std::path::PathBuf;
+
+let file_path = PathBuf::from("tests/w3c/nt/literal.nt");
+let mut file = File::open(file_path).unwrap();
+let reader = NTriplesReader::default();
+let graph = reader.read(&mut file, graph_factory()).unwrap();
+```
+
 ## Changes
 
 **Version 0.1.9**

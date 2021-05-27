@@ -10,7 +10,7 @@ creation of [GraphViz](https://graphviz.gitlab.io/) dot files for a visualizatio
 
 | Module    | Name                                                                                                | MIME Type                   | R/W     |
 |-----------|---------------------------------------------------------------------------------------------------- |-----------------------------|---------|
-| `nt`      | [RDF 1.1 N-Triples](https://www.w3.org/TR/n-triples/); A line-based syntax for an RDF graph         | `application/n-triples`     | **W**   |
+| `nt`      | [RDF 1.1 N-Triples](https://www.w3.org/TR/n-triples/); A line-based syntax for an RDF graph         | `application/n-triples`     | **R+W** |
 | `nq`      | [RDF 1.1 N-Quads](https://www.w3.org/TR/n-quads/); A line-based syntax for RDF datasets             | `application/n-quads`       | **W**   |
 | `turtle`  | [RDF 1.1 Turtle](https://www.w3.org/TR/turtle/); Terse RDF Triple Language                          | `text/turtle`               | **W**   |
 | `trig`    | [RDF 1.1 TriG](https://www.w3.org/TR/trig/); RDF Dataset Language                                   | `application/trig`          |         |
@@ -26,7 +26,20 @@ Each module will also provide public constants `NAME`, `FILE_EXTENSION`, and `MI
 
 # Example
 
-TBD
+An example, reading an existing NTriple file.
+
+```rust
+use rdftk_io::nt::reader::NTriplesReader;
+use rdftk_io::GraphReader;
+use rdftk_memgraph::simple::graph_factory;
+use std::fs::File;
+use std::path::PathBuf;
+
+let file_path = PathBuf::from("tests/w3c/nt/literal.nt");
+let mut file = File::open(file_path).unwrap();
+let reader = NTriplesReader::default();
+let graph = reader.read(&mut file, graph_factory()).unwrap();
+```
 
 */
 
