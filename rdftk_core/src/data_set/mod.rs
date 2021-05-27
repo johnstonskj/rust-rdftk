@@ -27,6 +27,7 @@ fn simple_dataset_writer(data_set: &DataSetRef)
 
 fn simple_graph_writer(graph: &GraphRef)
 {
+    let graph = graph.borrow();
     for statement in graph.statements() {
         println!("    {}", statement);
     }
