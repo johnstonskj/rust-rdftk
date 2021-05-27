@@ -132,9 +132,9 @@ fn test_simple_thesaurus_to_markdown() {
     let md = write_document_to_string(&doc, MarkdownFlavor::XWiki.into()).unwrap();
     println!("{}", md);
 
-    let md = md.replace("\r\n", "\n");
+    let expected = MARKDOWN.replace("\r\n", "\n");
 
     // This allows the use of pretty_assertions to produce a nice diff if the assert_eq fails.
-    let md = &md[0..MARKDOWN.len()];
-    assert_eq!(md, MARKDOWN);
+    let md = &md[0..expected.len()];
+    assert_eq!(md, expected);
 }
