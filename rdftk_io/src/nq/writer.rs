@@ -20,9 +20,9 @@ let result = write_data_set_to_string(&writer, &make_data_set());
 
 */
 
-use crate::error::Result;
 use crate::{DataSetWriter, GraphWriter};
 use rdftk_core::data_set::{DataSetRef, GraphNameRef};
+use rdftk_core::error::Result;
 use rdftk_core::graph::GraphRef;
 use std::io::Write;
 
@@ -86,9 +86,11 @@ impl GraphWriter for NQuadGraphWriter {
             for predicate in graph.predicates_for(subject) {
                 for object in graph.objects_for(subject, predicate) {
                     if let Some(graph_name) = &self.name {
-                        writeln!(w, "{} <{}> {} {} .", subject, predicate, object, graph_name)?;
+                        writeln!(w, "{} <{}> {} {} .", subject, predicate, object, graph_name)
+                            .map_err(io_error)?;
                     } else {
-                        writeln!(w, "{} <{}> {} .", subject, predicate, object)?;
+                        writeln!(w, "{} <{}> {} .", subject, predicate, object)
+                            .map_err(io_error)?;
                     }
                 }
             }
@@ -102,4 +104,13 @@ impl NQuadGraphWriter {
     pub fn named(name: GraphNameRef) -> Self {
         Self { name: Some(name) }
     }
+}
+
+// ------------------------------------------------------------------------------------------------
+// Private Functions
+// ------------------------------------------------------------------------------------------------
+
+fn io_error(e: std::io::Error) -> rdftk_core::error::Error {
+    use rdftk_core::error::ErrorKind;
+    rdftk_core::error::Error::with_chain(e, ErrorKind::ReadWrite(super::NAME.to_string()))
 }

@@ -15,9 +15,9 @@ let result = write_graph_to_string(&writer, &make_graph());
 
 */
 
-use crate::error::{ErrorKind, Result};
 use crate::json::NAME;
 use crate::GraphWriter;
+use rdftk_core::error::{Error, ErrorKind, Result};
 use rdftk_core::graph::GraphRef;
 use serde_json::{Map, Value};
 use std::io::Write;
@@ -122,9 +122,9 @@ impl GraphWriter for JsonWriter {
             let _ = json_graph.insert(subject.to_string(), Value::Object(predicate_map));
         }
         if self.pretty {
-            serde_json::to_writer_pretty(w, &Value::Object(json_graph))?;
+            serde_json::to_writer_pretty(w, &Value::Object(json_graph)).map_err(json_error)?;
         } else {
-            serde_json::to_writer(w, &Value::Object(json_graph))?;
+            serde_json::to_writer(w, &Value::Object(json_graph)).map_err(json_error)?;
         }
 
         Ok(())
@@ -137,9 +137,14 @@ impl JsonWriter {
         Self { pretty: true }
     }
 }
+
 // ------------------------------------------------------------------------------------------------
 // Private Functions
 // ------------------------------------------------------------------------------------------------
+
+fn json_error(e: serde_json::Error) -> Error {
+    Error::with_chain(e, ErrorKind::ReadWrite(NAME.to_string()))
+}
 
 // ------------------------------------------------------------------------------------------------
 // Modules

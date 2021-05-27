@@ -12,11 +12,12 @@ More detailed description, with
 use crate::common::parser_error::ParserErrorFactory;
 use pest::iterators::Pair;
 use pest::Parser;
-use rdftk_core::error::Result;
+use rdftk_core::error::{ErrorKind, Result};
 use rdftk_core::graph::{GraphFactoryRef, GraphRef};
 use rdftk_core::statement::{ObjectNodeRef, StatementRef, SubjectNodeRef};
 use rdftk_core::{DataType, Literal, ObjectNode, Statement, SubjectNode};
 use rdftk_iri::{IRIRef, IRI};
+use regex::Regex;
 use std::str::FromStr;
 
 // ------------------------------------------------------------------------------------------------
@@ -30,7 +31,7 @@ struct NTripleParser;
 // ------------------------------------------------------------------------------------------------
 // Private Types
 // ------------------------------------------------------------------------------------------------
-#[allow(dead_code)]
+
 const ERROR: ParserErrorFactory = ParserErrorFactory { repr: super::NAME };
 
 // ------------------------------------------------------------------------------------------------
@@ -101,12 +102,9 @@ fn subject(input_pair: Pair<'_, Rule>) -> Result<SubjectNodeRef> {
     if input_pair.as_rule() == Rule::subject {
         let inner_pair = input_pair.into_inner().next().unwrap();
         match inner_pair.as_rule() {
-            Rule::IRIREF => {
-                let iri = inner_pair.as_str().to_string();
-                let iri = &iri[1..iri.len() - 1];
-                let iri = IRIRef::new(IRI::from_str(iri).unwrap());
-                Ok(SubjectNodeRef::new(SubjectNode::named(iri)))
-            }
+            Rule::IRIREF => Ok(SubjectNodeRef::new(SubjectNode::named(iri_ref(
+                inner_pair,
+            )?))),
             Rule::BlankNode => {
                 let node = inner_pair.as_str().to_string();
                 let node = &node[2..];
@@ -127,9 +125,7 @@ fn predicate(input_pair: Pair<'_, Rule>) -> Result<IRIRef> {
     if input_pair.as_rule() == Rule::predicate {
         let inner_pair = input_pair.into_inner().next().unwrap();
         if inner_pair.as_rule() == Rule::IRIREF {
-            let iri = inner_pair.as_str().to_string();
-            let iri = &iri[1..iri.len() - 1];
-            Ok(IRIRef::new(IRI::from_str(iri).unwrap()))
+            Ok(iri_ref(inner_pair)?)
         } else {
             unexpected!("subject", inner_pair);
         }
@@ -245,8 +241,13 @@ fn iri_ref(input_pair: Pair<'_, Rule>) -> Result<IRIRef> {
     trace!("iri_ref({:?})", &input_pair.as_rule());
     if input_pair.as_rule() == Rule::IRIREF {
         let iri = input_pair.as_str().to_string();
-        let iri = &iri[1..iri.len() - 1];
-        Ok(IRIRef::new(IRI::from_str(iri).unwrap()))
+        let iri_str = unescape_iri(&iri[1..iri.len() - 1]);
+        let iri = IRIRef::new(IRI::from_str(&iri_str).unwrap());
+        if !iri.is_relative_reference() {
+            Ok(iri)
+        } else {
+            Err(ErrorKind::AbsoluteIriExpected(iri_str.to_string()).into())
+        }
     } else {
         unexpected!("iri_ref", input_pair);
     }
@@ -261,6 +262,38 @@ fn lang_tag(input_pair: Pair<'_, Rule>) -> Result<String> {
     } else {
         unexpected!("lang_tag", input_pair);
     }
+}
+
+lazy_static! {
+    static ref UNICODE_ESC: Regex =
+        Regex::new(r"(\\U[[:xdigit:]]{8})|(\\u[[:xdigit:]]{4})").unwrap();
+}
+
+fn unescape_iri(iri: &str) -> String {
+    let (new_iri, end) =
+        UNICODE_ESC
+            .captures_iter(iri)
+            .fold((String::new(), 0), |(so_far, start), cap| {
+                let cap = cap.get(0).unwrap();
+                (
+                    format!(
+                        "{}{}{}",
+                        so_far,
+                        &iri[start..cap.start()],
+                        unescape_uchar(cap.as_str())
+                    ),
+                    cap.end(),
+                )
+            });
+
+    format!("{}{}", new_iri, &iri[end..])
+}
+
+fn unescape_uchar(uchar: &str) -> char {
+    use std::char;
+    let uchar = &uchar[2..];
+    let uchar_u32 = u32::from_str_radix(uchar, 16).unwrap();
+    char::from_u32(uchar_u32).unwrap()
 }
 
 // ------------------------------------------------------------------------------------------------

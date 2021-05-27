@@ -1,8 +1,7 @@
-use crate::error::{Error as IoError, ErrorKind};
 use pest::iterators::Pair;
 use pest::RuleType;
-use rdftk_core::error::Error as CoreError;
-use std::fmt::{Debug, Display};
+use rdftk_core::error::{Error as CoreError, ErrorKind};
+use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
 
 // ------------------------------------------------------------------------------------------------
@@ -31,7 +30,7 @@ pub(crate) struct ParserError {
 macro_rules! unexpected {
     ($fn_name:expr, $pair:expr) => {{
         error!("ParserError::unexpected({}, {:?})", $fn_name, $pair);
-        return Err(ERROR.error($fn_name).unexpected(&$pair).into());
+        return Err(ERROR.error($fn_name).unexpected(&$pair).clone().into());
     }};
 }
 
@@ -70,52 +69,48 @@ impl ParserErrorFactory {
     pub(crate) fn parser<R: 'static + Copy + Debug + Hash + Ord + Send>(
         &self,
         e: ::pest::error::Error<R>,
-    ) -> IoError {
-        IoError::with_chain(
-            e,
-            ErrorKind::Deserialization(self.repr.to_string(), "<pest-parser>".to_string(), None),
-        )
+    ) -> CoreError {
+        CoreError::with_chain(e, ErrorKind::ReadWrite(self.repr.to_string()))
     }
 }
 
 // ------------------------------------------------------------------------------------------------
 
-impl From<&mut ParserError> for CoreError {
-    fn from(e: &mut ParserError) -> Self {
-        CoreError::from(IoError::from(e.clone()))
-    }
-}
-
-impl From<&mut ParserError> for IoError {
-    fn from(e: &mut ParserError) -> Self {
-        IoError::from(e.clone())
-    }
-}
-
-impl From<ParserError> for IoError {
-    fn from(e: ParserError) -> Self {
-        ErrorKind::Deserialization(
-            e.repr,
+impl Display for ParserError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}{}",
             format!(
                 "{}{}{}{}",
-                e.fn_name,
-                match e.rule {
+                &self.fn_name,
+                match &self.rule {
                     None => String::new(),
-                    Some(s) => format!(" ({})", s),
+                    Some(s) => format!(", rule: {}", s),
                 },
-                match e.expecting {
+                match &self.expecting {
                     None => String::new(),
-                    Some(s) => format!(" expecting {}", s),
+                    Some(s) => format!(", expecting: {}", s),
                 },
-                if e.unreachable {
-                    " should have been unreachable".to_string()
+                if self.unreachable {
+                    ", should have been unreachable".to_string()
                 } else {
                     String::new()
                 },
             ),
-            e.context,
+            match &self.context {
+                None => String::new(),
+                Some(s) => format!(", context: '{}'", s),
+            }
         )
-        .into()
+    }
+}
+
+impl std::error::Error for ParserError {}
+
+impl Into<CoreError> for ParserError {
+    fn into(self) -> CoreError {
+        CoreError::with_chain(self.clone(), ErrorKind::ReadWrite(self.repr))
     }
 }
 

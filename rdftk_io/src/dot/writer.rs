@@ -112,10 +112,10 @@ impl Default for DotWriter {
 }
 
 impl GraphWriter for DotWriter {
-    fn write(&self, w: &mut impl Write, graph: &GraphRef) -> crate::error::Result<()> {
-        writeln!(w, "digraph {{\n    rankdir=BT\n    charset=\"utf-8\";")?;
+    fn write(&self, w: &mut impl Write, graph: &GraphRef) -> rdftk_core::error::Result<()> {
+        writeln!(w, "digraph {{\n    rankdir=BT\n    charset=\"utf-8\";").map_err(io_error)?;
 
-        writeln!(w)?;
+        writeln!(w).map_err(io_error)?;
 
         let graph = graph.borrow();
 
@@ -131,10 +131,11 @@ impl GraphWriter for DotWriter {
                     None => statement.predicate().to_string(),
                     Some(qname) => qname.to_string(),
                 }
-            )?;
+            )
+            .map_err(io_error)?;
         }
 
-        writeln!(w)?;
+        writeln!(w).map_err(io_error)?;
 
         for node in self.nodes.borrow().values() {
             match node.kind {
@@ -149,7 +150,8 @@ impl GraphWriter for DotWriter {
                             node.id,
                             self.options.blank_shape,
                             self.options.blank_color
-                        )?;
+                        )
+                        .map_err(io_error)?;
                     } else {
                         writeln!(
                             w,
@@ -158,7 +160,8 @@ impl GraphWriter for DotWriter {
                             node.id,
                             self.options.blank_shape,
                             self.options.blank_color
-                        )?;
+                        )
+                        .map_err(io_error)?;
                     }
                 }
                 NodeKind::IRI => {
@@ -171,7 +174,8 @@ impl GraphWriter for DotWriter {
                         node.label,
                         self.options.iri_shape,
                         self.options.iri_color
-                    )?;
+                    )
+                    .map_err(io_error)?;
                 }
                 NodeKind::Literal => {
                     writeln!(
@@ -182,11 +186,12 @@ impl GraphWriter for DotWriter {
                         node.label,
                         self.options.literal_shape,
                         self.options.literal_color
-                    )?;
+                    )
+                    .map_err(io_error)?;
                 }
             }
         }
-        writeln!(w, "}}")?;
+        writeln!(w, "}}").map_err(io_error)?;
         Ok(())
     }
 }
@@ -269,4 +274,13 @@ impl DotWriter {
             id
         }
     }
+}
+
+// ------------------------------------------------------------------------------------------------
+// Private Functions
+// ------------------------------------------------------------------------------------------------
+
+fn io_error(e: std::io::Error) -> rdftk_core::error::Error {
+    use rdftk_core::error::ErrorKind;
+    rdftk_core::error::Error::with_chain(e, ErrorKind::ReadWrite(super::NAME.to_string()))
 }

@@ -27,8 +27,8 @@ use super::syntax::{
     ATTRIBUTE_ABOUT, ATTRIBUTE_DATATYPE, ATTRIBUTE_NODE_ID, ATTRIBUTE_RESOURCE, ATTRIBUTE_XML_LANG,
     DEFAULT_ENCODING, ELEMENT_DESCRIPTION, ELEMENT_RDF,
 };
-use crate::error::{ErrorKind, Result};
 use crate::GraphWriter;
+use rdftk_core::error::{ErrorKind, Result};
 use rdftk_core::graph::GraphRef;
 use rdftk_core::statement::SubjectNodeRef;
 use rdftk_core::{Graph, SubjectNode};
@@ -159,17 +159,21 @@ impl GraphWriter for XmlWriter {
             .normalize_empty_elements(self.options.pretty);
         let mut writer = config.create_writer(w);
 
-        writer.write(XmlEvent::StartDocument {
-            version: XmlVersion::Version11,
-            encoding: Some(&self.options.encoding),
-            standalone: None,
-        })?;
+        writer
+            .write(XmlEvent::StartDocument {
+                version: XmlVersion::Version11,
+                encoding: Some(&self.options.encoding),
+                standalone: None,
+            })
+            .map_err(xml_error)?;
 
         let container_name = format!("{}:{}", rdf::default_prefix(), ELEMENT_RDF);
-        writer.write(
-            XmlEvent::start_element(container_name.as_str())
-                .ns(rdf::default_prefix(), rdf::namespace_str()),
-        )?;
+        writer
+            .write(
+                XmlEvent::start_element(container_name.as_str())
+                    .ns(rdf::default_prefix(), rdf::namespace_str()),
+            )
+            .map_err(xml_error)?;
 
         if self.options.style == XmlStyle::Flat {
             for subject in graph.subjects() {
@@ -181,7 +185,9 @@ impl GraphWriter for XmlWriter {
             }
         }
 
-        writer.write(XmlEvent::end_element().name(container_name.as_str()))?;
+        writer
+            .write(XmlEvent::end_element().name(container_name.as_str()))
+            .map_err(xml_error)?;
 
         Ok(())
     }
@@ -233,7 +239,7 @@ impl XmlWriter {
         mappings
     }
 
-    fn write_subject<'a, W: Write>(
+    fn write_subject<W: Write>(
         &self,
         writer: &mut EventWriter<W>,
         graph: &Ref<'_, dyn Graph>,
@@ -242,18 +248,24 @@ impl XmlWriter {
     ) -> Result<()> {
         if let Some(blank) = subject.as_blank() {
             if flat {
-                writer.write(
-                    XmlEvent::start_element(RDF_DESCRIPTION.as_str())
-                        .attr(RDF_NODE_ID.as_str(), blank),
-                )?;
+                writer
+                    .write(
+                        XmlEvent::start_element(RDF_DESCRIPTION.as_str())
+                            .attr(RDF_NODE_ID.as_str(), blank),
+                    )
+                    .map_err(xml_error)?;
             } else {
-                writer.write(XmlEvent::start_element(RDF_DESCRIPTION.as_str()))?;
+                writer
+                    .write(XmlEvent::start_element(RDF_DESCRIPTION.as_str()))
+                    .map_err(xml_error)?;
             }
         } else if let Some(subject) = subject.as_iri() {
-            writer.write(
-                XmlEvent::start_element(RDF_DESCRIPTION.as_str())
-                    .attr(RDF_ABOUT.as_str(), &subject.to_string()),
-            )?;
+            writer
+                .write(
+                    XmlEvent::start_element(RDF_DESCRIPTION.as_str())
+                        .attr(RDF_ABOUT.as_str(), &subject.to_string()),
+                )
+                .map_err(xml_error)?;
         } else {
             return Err(ErrorKind::Msg("RDF* not supported by XML writer".to_string()).into());
         }
@@ -272,13 +284,13 @@ impl XmlWriter {
                 if let Some(iri) = object.as_iri() {
                     let iri = iri.to_string();
                     let event = event.attr(RDF_RESOURCE.as_str(), &iri);
-                    writer.write(event)?;
+                    writer.write(event).map_err(xml_error)?;
                 } else if let Some(blank) = object.as_blank() {
                     if flat {
                         let event = event.attr(RDF_NODE_ID.as_str(), blank);
-                        writer.write(event)?;
+                        writer.write(event).map_err(xml_error)?;
                     } else {
-                        writer.write(event)?;
+                        writer.write(event).map_err(xml_error)?;
                         self.write_subject(
                             writer,
                             graph,
@@ -294,24 +306,40 @@ impl XmlWriter {
                     };
                     if let Some(data_type) = literal.data_type() {
                         let dt_iri = data_type.as_iri().to_string();
-                        writer.write(event.attr(RDF_DATATYPE.as_str(), &dt_iri))?
+                        writer
+                            .write(event.attr(RDF_DATATYPE.as_str(), &dt_iri))
+                            .map_err(xml_error)?
                     } else {
-                        writer.write(event)?;
+                        writer.write(event).map_err(xml_error)?;
                     }
-                    writer.write(XmlEvent::Characters(literal.lexical_form()))?;
+                    writer
+                        .write(XmlEvent::Characters(literal.lexical_form()))
+                        .map_err(xml_error)?;
                 } else {
                     return Err(
                         ErrorKind::Msg("RDF* not supported by XML writer".to_string()).into(),
                     );
                 }
-                writer.write(XmlEvent::end_element().name(name.as_str()))?;
+                writer
+                    .write(XmlEvent::end_element().name(name.as_str()))
+                    .map_err(xml_error)?;
             }
         }
 
-        writer.write(XmlEvent::end_element().name(RDF_DESCRIPTION.as_str()))?;
+        writer
+            .write(XmlEvent::end_element().name(RDF_DESCRIPTION.as_str()))
+            .map_err(xml_error)?;
 
         Ok(())
     }
+}
+
+// ------------------------------------------------------------------------------------------------
+// Private Functions
+// ------------------------------------------------------------------------------------------------
+
+fn xml_error(e: xml::writer::Error) -> rdftk_core::error::Error {
+    rdftk_core::error::Error::with_chain(e, ErrorKind::ReadWrite(super::NAME.to_string()))
 }
 
 fn split_uri(iri: &IRIRef) -> (String, String) {

@@ -124,8 +124,8 @@ LONG_QUOTE_INNER = @{
 
 LONG_QUOTE_CHAR = {
     !("\"\"\"" | "\\" | "\r" | "\n" ) ~ ANY
-    | ECHAR
     | UCHAR
+    | ECHAR
 }
 	
 STRING_LITERAL_QUOTE = ${
@@ -138,8 +138,8 @@ QUOTE_INNER = @{
 
 QUOTE_CHAR = {
     !("\"" | "\\" | "\r" | "\n" ) ~ ANY
-    | ECHAR
     | UCHAR
+    | ECHAR
 }
 
 STRING_LITERAL_SINGLE_QUOTE = ${
@@ -157,7 +157,7 @@ SINGLE_QUOTE_CHAR = {
 }
 
 UCHAR = @{
-	"\\u" ~ ASCII_HEX_DIGIT{6} | "\\U" ~ ASCII_HEX_DIGIT{4}
+	"\\U" ~ ASCII_HEX_DIGIT{8} | "\\u" ~ ASCII_HEX_DIGIT{4}
 }
 	
 ECHAR = @{

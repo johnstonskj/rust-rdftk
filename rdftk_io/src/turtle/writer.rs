@@ -75,7 +75,7 @@ impl Default for TurtleWriter {
 }
 
 impl GraphWriter for TurtleWriter {
-    fn write(&self, w: &mut impl Write, graph: &GraphRef) -> crate::error::Result<()> {
+    fn write(&self, w: &mut impl Write, graph: &GraphRef) -> rdftk_core::error::Result<()> {
         let graph = graph.borrow();
 
         //
@@ -83,12 +83,12 @@ impl GraphWriter for TurtleWriter {
         //
         if let Some(base) = &self.base {
             if self.options.use_sparql_style {
-                writeln!(w, "BASE <{}>", base)?;
+                writeln!(w, "BASE <{}>", base).map_err(io_error)?;
             } else {
-                writeln!(w, "@base <{}> .", base)?;
+                writeln!(w, "@base <{}> .", base).map_err(io_error)?;
             }
         }
-        writeln!(w)?;
+        writeln!(w).map_err(io_error)?;
         //
         // Write all prefix mappings
         //
@@ -101,12 +101,12 @@ impl GraphWriter for TurtleWriter {
                 Prefix::Some(prefix) => prefix.clone(),
             };
             if self.options.use_sparql_style {
-                writeln!(w, "PREFIX {}: <{}>", prefix, namespace)?;
+                writeln!(w, "PREFIX {}: <{}>", prefix, namespace).map_err(io_error)?;
             } else {
-                writeln!(w, "@prefix {}: <{}> .", prefix, namespace)?;
+                writeln!(w, "@prefix {}: <{}> .", prefix, namespace).map_err(io_error)?;
             }
         }
-        writeln!(w)?;
+        writeln!(w).map_err(io_error)?;
         //
         // Write statements, start with those where subject is an IRI
         //
@@ -116,18 +116,21 @@ impl GraphWriter for TurtleWriter {
             if subject.is_blank() {
                 blanks_to_write.push(subject);
             } else {
-                let mut inner_written =
-                    self.write_sub_graph(w, subject, &graph, Indenter::default())?;
+                let mut inner_written = self
+                    .write_sub_graph(w, subject, &graph, Indenter::default())
+                    .map_err(io_error)?;
                 blanks_written.append(&mut inner_written);
             }
-            writeln!(w)?;
+            writeln!(w).map_err(io_error)?;
         }
         //
         // Write statements where subject is a blank node
         //
         blanks_to_write.retain(|subject| !blanks_written.contains(subject));
         for subject in blanks_to_write {
-            let _ = self.write_sub_graph(w, subject, &graph, Indenter::default())?;
+            let _ = self
+                .write_sub_graph(w, subject, &graph, Indenter::default())
+                .map_err(io_error)?;
         }
         Ok(())
     }
@@ -244,4 +247,13 @@ impl TurtleWriter {
         // TODO: compress data type IRIs
         write!(w, "{} ", literal)
     }
+}
+
+// ------------------------------------------------------------------------------------------------
+// Private Functions
+// ------------------------------------------------------------------------------------------------
+
+pub fn io_error(e: std::io::Error) -> rdftk_core::error::Error {
+    use rdftk_core::error::ErrorKind;
+    rdftk_core::error::Error::with_chain(e, ErrorKind::ReadWrite(super::NAME.to_string()))
 }

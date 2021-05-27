@@ -29,6 +29,12 @@ Each module will also provide public constants `NAME`, `FILE_EXTENSION`, and `MI
 
 ## Changes
 
+**Version 0.1.9**
+
+* Added unicode escape handling into the IRI parsing.
+* All W3C test cases for NTriples now passing.
+* Removed local error module, using core error types now.
+
 **Version 0.1.8**
 
 * Using new style interfaces, a consistent use of traits and trait reference types.

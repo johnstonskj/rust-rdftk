@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_io"
-version = "0.1.8"
+version = "0.1.9"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
 description = "This crate provides traits for reading and writing Statements and Graphs as well as implementations of these for common representations."
@@ -26,11 +26,11 @@ turtle = ["pest", "pest_derive", "rdftk_memgraph"]
 xml = ["xml-rs", "rdftk_names", "rdftk_memgraph"]
 
 [dependencies]
-error-chain = "0.12"
 lazy_static = "1.4"
 log = "0.4"
 rdftk_core = { version = "0.2", path = "../rdftk_core" }
 rdftk_iri = { version = "0.1", path = "../rdftk_iri" }
+regex = "1.5"
 
 # feature-dependencies
 pest = { version = "2.1", optional = true }

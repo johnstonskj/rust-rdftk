@@ -16,9 +16,9 @@ let result = write_graph_to_string(&writer, &make_graph());
 
 */
 
-use crate::error::Result;
 use crate::nq::writer::NQuadGraphWriter;
 use crate::GraphWriter;
+use rdftk_core::error::Result;
 use rdftk_core::graph::GraphRef;
 use std::borrow::Borrow;
 use std::io::Write;

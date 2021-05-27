@@ -1,5 +1,5 @@
+use rdftk_core::error::eprint_trace;
 use rdftk_core::GraphRef;
-use rdftk_io::error::Error;
 use rdftk_io::nt::reader::NTriplesReader;
 use rdftk_io::GraphReader;
 use rdftk_memgraph::simple::graph_factory;
@@ -11,7 +11,13 @@ macro_rules! positive_test {
         #[test]
         fn $name() {
             println!($comment);
-            assert!(read_test_file($file).is_ok());
+            match read_test_file($file) {
+                Ok(_) => {}
+                Err(e) => {
+                    eprint_trace(&e);
+                    panic!("{}", e);
+                }
+            }
         }
     };
 }
@@ -26,7 +32,7 @@ macro_rules! negative_test {
     };
 }
 
-fn read_test_file(file_name: &str) -> Result<GraphRef, Error> {
+fn read_test_file(file_name: &str) -> Result<GraphRef, rdftk_core::error::Error> {
     let file_path = PathBuf::from(format!("tests/w3c/nt/{}.nt", file_name));
     let mut file = File::open(file_path).unwrap();
     let reader = NTriplesReader::default();

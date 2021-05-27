@@ -7,9 +7,9 @@ More detailed description, with
 
 */
 
-use crate::error::Result;
 use crate::nt::parser;
 use crate::GraphReader;
+use rdftk_core::error::Result;
 use rdftk_core::graph::{GraphFactoryRef, GraphRef};
 use std::io::Read;
 
@@ -41,14 +41,19 @@ impl Default for NTriplesReader {
 impl GraphReader for NTriplesReader {
     fn read(&self, r: &mut impl Read, factory: GraphFactoryRef) -> Result<GraphRef> {
         let mut content: String = String::new();
-        let _ = r.read_to_string(&mut content)?;
-        Ok(parser::parse_graph(&content, factory)?)
+        let _ = r.read_to_string(&mut content).map_err(io_error)?;
+        parser::parse_graph(&content, factory)
     }
 }
 
 // ------------------------------------------------------------------------------------------------
 // Private Functions
 // ------------------------------------------------------------------------------------------------
+
+pub fn io_error(e: std::io::Error) -> rdftk_core::error::Error {
+    use rdftk_core::error::ErrorKind;
+    rdftk_core::error::Error::with_chain(e, ErrorKind::ReadWrite(super::NAME.to_string()))
+}
 
 // ------------------------------------------------------------------------------------------------
 // Modules
