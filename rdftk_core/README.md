@@ -49,6 +49,11 @@ pub fn make_statements() -> StatementList {
 
 ## Changes
 
+**Version 0.2.3**
+
+* Copied some errors from rdftk_io.
+* Renamed the Io variant to ReadWrite.
+
 **Version 0.2.2**
 
 * Reworked APIs to take <name>Ref types and to be consistent in use of trait objects and types throughout.
