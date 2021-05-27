@@ -91,7 +91,8 @@ pub(crate) fn is_correctly_escaped(s: &str) -> bool {
 
 #[inline]
 pub(crate) fn is_ipchar(c: char) -> bool {
-    is_iunreserved(c) || is_sub_delims(c) || c == ':' || c == '@'
+    // Have to include '%' here as the is_correctly_escaped rule is run after this check.
+    is_iunreserved(c) || is_sub_delims(c) || c == ':' || c == '@' || c == '%'
 }
 
 // #[inline]

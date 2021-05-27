@@ -500,8 +500,8 @@ impl IRI {
     }
 
     ///
-    /// Returns `true` if this is an opaque `IRI`, else `false`. An `IRI` is opaque if, and only if, i
-    /// t is absolute and its scheme-specific part does not begin with a slash character ('/'). An
+    /// Returns `true` if this is an opaque `IRI`, else `false`. An `IRI` is opaque if, and only if,
+    /// it is absolute and its scheme-specific part does not begin with a slash character ('/'). An
     /// opaque `IRI` has a scheme, a scheme-specific part, and possibly a fragment; all other
     /// components are undefined.
     ///

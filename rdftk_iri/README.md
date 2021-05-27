@@ -56,6 +56,11 @@ The following features are present in this crate.
 
 ## Changes
 
+**Version 0.1.8**
+
+* Minor fix to parser to fix some precedence rules.
+* Some documentation fixes.
+
 **Version 0.1.7**
 
 * Added support for well-known IRIs to the Path and IRI types.
