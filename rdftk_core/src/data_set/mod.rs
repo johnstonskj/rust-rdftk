@@ -36,55 +36,17 @@ fn simple_graph_writer(graph: &GraphRef)
 
 */
 
-use crate::graph::GraphRef;
+use crate::graph::{Featured, GraphRef};
+use rdftk_iri::{IRIRef, IRI};
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::fmt::{Display, Formatter};
 use std::rc::Rc;
+use std::str::FromStr;
 use std::sync::Arc;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
-
-///
-/// This enumeration describes the combination of quads that may be indexed by the `DataSet`. The
-/// indexes actually supported by a data set implementation can be retrieved using
-/// `DataSet::has_index` or `DataSet::has_indices`.
-///
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum DataSetIndex {
-    #[allow(missing_docs)]
-    Graph,
-    #[allow(missing_docs)]
-    Subject,
-    #[allow(missing_docs)]
-    Predicate,
-    #[allow(missing_docs)]
-    Object,
-    #[allow(missing_docs)]
-    SubjectPredicate,
-    #[allow(missing_docs)]
-    SubjectPredicateObject,
-    #[allow(missing_docs)]
-    SubjectObject,
-    #[allow(missing_docs)]
-    PredicateObject,
-    #[allow(missing_docs)]
-    SubjectGraph,
-    #[allow(missing_docs)]
-    PredicateGraph,
-    #[allow(missing_docs)]
-    ObjectGraph,
-    #[allow(missing_docs)]
-    SubjectPredicateGraph,
-    #[allow(missing_docs)]
-    SubjectPredicateObjectGraph,
-    #[allow(missing_docs)]
-    SubjectObjectGraph,
-    #[allow(missing_docs)]
-    PredicateObjectGraph,
-}
 
 ///
 /// A data set factory provides an interface to create a new data set. This allows for
@@ -132,7 +94,7 @@ pub type DataSetRef = Rc<RefCell<dyn DataSet>>;
 /// Note that this trait represents an immutable data set, a type should also implement the
 /// `MutableDataSet` trait for mutation.
 ///
-pub trait DataSet {
+pub trait DataSet: Featured {
     ///
     /// Returns `true` if there are no graphs in this data set, else `false`.
     ///
@@ -167,18 +129,6 @@ pub trait DataSet {
     /// Return an iterator over graph name/graph pairs.
     ///
     fn graphs<'a>(&'a self) -> Box<dyn Iterator<Item = (&'a GraphNameRef, &'a GraphRef)> + 'a>;
-
-    ///
-    /// Returns `true` if this data set has an index of the specified kind, else `false`.
-    ///
-    fn has_index(&self, index: &DataSetIndex) -> bool;
-
-    ///
-    /// Returns `true` if this data set has **all* the specified index kinds, else `false`.
-    ///
-    fn has_indices(&self, indices: &[DataSetIndex]) -> bool {
-        indices.iter().all(|i| self.has_index(i))
-    }
 
     ///
     /// Set the provided graph as the default, unnamed graph, for this data set. Only one graph may
@@ -216,34 +166,14 @@ pub trait DataSet {
     fn factory(&self) -> DataSetFactoryRef;
 }
 
-// ------------------------------------------------------------------------------------------------
-// Implementations
-// ------------------------------------------------------------------------------------------------
-
-impl Display for DataSetIndex {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                DataSetIndex::Subject => "S",
-                DataSetIndex::Predicate => "P",
-                DataSetIndex::Object => "O",
-                DataSetIndex::SubjectPredicate => "SP",
-                DataSetIndex::SubjectPredicateObject => "SPO",
-                DataSetIndex::SubjectObject => "SO",
-                DataSetIndex::PredicateObject => "PO",
-                DataSetIndex::Graph => "G",
-                DataSetIndex::SubjectGraph => "SG",
-                DataSetIndex::PredicateGraph => "PG",
-                DataSetIndex::ObjectGraph => "OG",
-                DataSetIndex::SubjectPredicateGraph => "SPG",
-                DataSetIndex::SubjectPredicateObjectGraph => "SPOG",
-                DataSetIndex::SubjectObjectGraph => "SGO",
-                DataSetIndex::PredicateObjectGraph => "POG",
-            }
-        )
-    }
+lazy_static! {
+    ///
+    /// If true, a data set's default graph is a combination of all named graphs. This implies
+    /// that `set_default_graph` and `unset_default_graph` have no effect.
+    ///
+    pub static ref FEATURE_COMBINED_DEFAULT: IRIRef = IRIRef::from(
+        IRI::from_str("http://rust-rdftk.dev/feature/data_set/combined_default").unwrap()
+    );
 }
 
 // ------------------------------------------------------------------------------------------------

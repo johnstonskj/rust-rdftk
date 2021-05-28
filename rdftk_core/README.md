@@ -49,6 +49,12 @@ pub fn make_statements() -> StatementList {
 
 ## Changes
 
+**Version 0.2.4**
+
+* Created new Featured trait implemented by a number of types that allow client query of various optional
+  capabilities. This also subsumes the has_index/has_all_indices capability as all index queries are now
+  feature queries.
+
 **Version 0.2.3**
 
 * Copied some errors from rdftk_io.

@@ -95,6 +95,11 @@ pub type StatementRef = Rc<Statement>;
 ///
 pub type StatementList = Vec<StatementRef>;
 
+///
+/// The reserved namespace value used to identify a serialized blank node.
+///
+pub const BLANK_NODE_NAMESPACE: &str = "_";
+
 // ------------------------------------------------------------------------------------------------
 // Private Types
 // ------------------------------------------------------------------------------------------------
@@ -105,6 +110,7 @@ enum Subject {
     BNode(String),
     IRI(IRIRef),
     Star(StatementRef),
+    //    Formulae(FormulaRef),
 }
 
 #[allow(clippy::upper_case_acronyms)]
@@ -114,6 +120,7 @@ enum Object {
     IRI(IRIRef),
     Literal(Literal),
     Star(StatementRef),
+    //    Formulae(FormulaRef),
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -126,9 +133,10 @@ impl Display for SubjectNode {
             f,
             "{}",
             match &self.inner {
-                Subject::BNode(node) => format!("_:{}", node),
+                Subject::BNode(node) => format!("{}:{}", BLANK_NODE_NAMESPACE, node),
                 Subject::IRI(iri) => format!("<{}>", iri),
-                Subject::Star(st) => format!("<{}>", st.to_string_no_dot()),
+                Subject::Star(st) => format!("<< {} >>", st.to_string_no_dot()),
+                //                Subject::Formulae(f) => f.to_string(),
             }
         )
     }
@@ -240,6 +248,22 @@ impl SubjectNode {
         Rc::from(Self::about(st))
     }
 
+    // ///
+    // /// Construct a new subject node, where the subject is a formula (quoted graph).
+    // ///
+    // pub fn formula(f: FormulaRef) -> Self {
+    //     Self {
+    //         inner: Subject::Formulae(f),
+    //     }
+    // }
+    //
+    // ///
+    // /// Construct a new subject node reference, where the subject is a formula (quoted graph).
+    // ///
+    // pub fn formula_ref(f: FormulaRef) -> SubjectNodeRef {
+    //     Rc::from(Self::formula(f))
+    // }
+
     /// Is this object a literal, with the provided value?
     pub fn eq_statement(&self, other: &StatementRef) -> bool {
         if let Some(value) = self.as_statement() {
@@ -308,6 +332,23 @@ impl SubjectNode {
         }
     }
 
+    // ///
+    // /// Return `true` if this subject is a [N3 Formula](https://www.w3.org/TeamSubmission/n3/#Quoting) statement, else `false`.
+    // ///
+    // pub fn is_formula(&self) -> bool {
+    //     matches!(self.inner, Subject::Formulae(_))
+    // }
+    //
+    // ///
+    // /// Return a formula reference, if `self.is_formula()`, else `None`.
+    // ///
+    // pub fn as_formula(&self) -> Option<&FormulaRef> {
+    //     match &self.inner {
+    //         Subject::Formulae(f) => Some(f),
+    //         _ => None,
+    //     }
+    // }
+
     ///
     /// Return a new object node reference, which refers to this subject.
     ///
@@ -316,6 +357,7 @@ impl SubjectNode {
             Subject::BNode(node) => ObjectNode::blank_named(node),
             Subject::IRI(iri) => ObjectNode::named(iri.clone()),
             Subject::Star(st) => ObjectNode::about(st.clone()),
+            //            Subject::Formulae(f) => ObjectNode::formula(f.clone()),
         }
         .into()
     }
@@ -329,10 +371,11 @@ impl Display for ObjectNode {
             f,
             "{}",
             match &self.inner {
-                Object::BNode(node) => format!("_:{}", node),
+                Object::BNode(node) => format!("{}:{}", BLANK_NODE_NAMESPACE, node),
                 Object::IRI(iri) => format!("<{}>", iri),
                 Object::Literal(literal) => literal.to_string(),
                 Object::Star(st) => format!("<< {} >>", st.to_string_no_dot()),
+                //                Object::Formulae(f) => f.to_string(),
             }
         )
     }
@@ -490,6 +533,22 @@ impl ObjectNode {
         Rc::from(Self::about(st))
     }
 
+    // ///
+    // /// Construct a new object node, where the subject is a formula (quoted graph).
+    // ///
+    // pub fn formula(f: FormulaRef) -> Self {
+    //     Self {
+    //         inner: Object::Formulae(f),
+    //     }
+    // }
+    //
+    // ///
+    // /// Construct a new object node reference, where the subject is a formula (quoted graph).
+    // ///
+    // pub fn formula_ref(f: FormulaRef) -> ObjectNodeRef {
+    //     Rc::from(Self::formula(f))
+    // }
+
     /// Is this object a literal, with the provided value?
     pub fn eq_statement(&self, other: &StatementRef) -> bool {
         if let Some(value) = self.as_statement() {
@@ -567,6 +626,23 @@ impl ObjectNode {
         }
     }
 
+    // ///
+    // /// Return `true` if this object is a [N3 Formula](https://www.w3.org/TeamSubmission/n3/#Quoting) statement, else `false`.
+    // ///
+    // pub fn is_formula(&self) -> bool {
+    //     matches!(self.inner, Object::Formulae(_))
+    // }
+    //
+    // ///
+    // /// Return a formula reference, if `self.is_formula()`, else `None`.
+    // ///
+    // pub fn as_formula(&self) -> Option<&FormulaRef> {
+    //     match &self.inner {
+    //         Object::Formulae(f) => Some(f),
+    //         _ => None,
+    //     }
+    // }
+
     ///
     /// Return a new subject node reference, which refers to this object, if it is not
     /// a literal.
@@ -576,6 +652,7 @@ impl ObjectNode {
             Object::IRI(iri) => Some(SubjectNode::named(iri.clone())),
             Object::BNode(b) => Some(SubjectNode::blank_named(b)),
             Object::Star(st) => Some(SubjectNode::about(st.clone())),
+            //            Object::Formulae(f) => Some(SubjectNode::formula(f.clone())),
             _ => None,
         }
     }

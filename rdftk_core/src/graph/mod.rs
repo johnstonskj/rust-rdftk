@@ -19,11 +19,11 @@ fn simple_graph_writer(graph: &impl Graph)
 */
 
 use crate::statement::{ObjectNodeRef, StatementRef, SubjectNodeRef};
-use rdftk_iri::IRIRef;
+use rdftk_iri::{IRIRef, IRI};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use std::fmt::{Display, Formatter};
 use std::rc::Rc;
+use std::str::FromStr;
 use std::sync::Arc;
 
 // ------------------------------------------------------------------------------------------------
@@ -31,33 +31,24 @@ use std::sync::Arc;
 // ------------------------------------------------------------------------------------------------
 
 ///
-/// This enumeration describes the combination of triples that may be indexed by the `Graph`. The
-/// indexes actually supported by a graph implementation can be retrieved using
-/// `Graph::has_index` or `Graph::has_indices`.
+/// Not all the features expressed in the Graph APIs are required to be implemented by a
+/// particular type. This trait allows a client to determine which features are supported.
 ///
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum GraphIndex {
-    #[allow(missing_docs)]
-    Subject,
-    #[allow(missing_docs)]
-    Predicate,
-    #[allow(missing_docs)]
-    Object,
-    #[allow(missing_docs)]
-    SubjectPredicate,
-    #[allow(missing_docs)]
-    SubjectPredicateObject,
-    #[allow(missing_docs)]
-    SubjectObject,
-    #[allow(missing_docs)]
-    PredicateObject,
+pub trait Featured {
+    ///
+    /// Return true if this instance, or factory, supports the feature identified by the IRI.
+    ///
+    fn supports_feature(&self, feature: &IRIRef) -> bool;
 }
 
 ///
 /// A graph factory provides an interface to create a new graph. This allows for implementations
 /// where underlying shared resources are required and so may be owned by the factory.
 ///
-pub trait GraphFactory {
+/// The method for getting the initial factory instance is not specified here. By convention
+/// implementors *may* provide a function `graph_factory` in the root module for their crate.
+///
+pub trait GraphFactory: Featured {
     ///
     /// Create a new graph instance.
     ///
@@ -100,7 +91,7 @@ pub type GraphRef = Rc<RefCell<dyn Graph>>;
 /// Note that this trait represents an immutable graph, a type should also implement the
 /// `MutableGraph` trait for mutation.
 ///
-pub trait Graph {
+pub trait Graph: Featured {
     ///
     /// Returns `true` if there are no statements in this graph, else `false`.
     ///
@@ -205,22 +196,6 @@ pub trait Graph {
     fn objects_for(&self, subject: &SubjectNodeRef, predicate: &IRIRef) -> HashSet<&ObjectNodeRef>;
 
     // --------------------------------------------------------------------------------------------
-    // Indexing
-    // --------------------------------------------------------------------------------------------
-
-    ///
-    /// Returns `true` if this graph has an index of the specified kind, else `false`.
-    ///
-    fn has_index(&self, index: &GraphIndex) -> bool;
-
-    ///
-    /// Returns `true` if this graph has **all* the specified index kinds, else `false`.
-    ///
-    fn has_indices(&self, indices: &[GraphIndex]) -> bool {
-        indices.iter().all(|i| self.has_index(i))
-    }
-
-    // --------------------------------------------------------------------------------------------
     // Namespace Management
     // --------------------------------------------------------------------------------------------
 
@@ -301,26 +276,19 @@ pub trait Graph {
     fn clear(&mut self);
 }
 
-// ------------------------------------------------------------------------------------------------
-// Implementations
-// ------------------------------------------------------------------------------------------------
-
-impl Display for GraphIndex {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                GraphIndex::Subject => "S",
-                GraphIndex::Predicate => "P",
-                GraphIndex::Object => "O",
-                GraphIndex::SubjectPredicate => "SP",
-                GraphIndex::SubjectPredicateObject => "SPO",
-                GraphIndex::SubjectObject => "SO",
-                GraphIndex::PredicateObject => "PO",
-            }
-        )
-    }
+lazy_static! {
+    ///
+    /// This graph, or corresponding statement, supports
+    /// [RDF-star](https://w3c.github.io/rdf-star/cg-spec/editors_draft.html).
+    ///
+    pub static ref FEATURE_RDF_STAR: IRIRef =
+        IRIRef::from(IRI::from_str("http://rust-rdftk.dev/feature/graph/rdf_star").unwrap());
+    ///
+    /// This graph, or corresponding statement, supports
+    /// [N3 Formula](https://www.w3.org/TeamSubmission/n3/#Quoting)
+    ///
+    pub static ref FEATURE_N3_FORMULAE: IRIRef =
+        IRIRef::from(IRI::from_str("http://rust-rdftk.dev/feature/graph/n3_formulae").unwrap());
 }
 
 // ------------------------------------------------------------------------------------------------

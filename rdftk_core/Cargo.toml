@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_core"
-version = "0.2.3"
+version = "0.2.4"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
 description = "This crate provides the core RDF data model; concrete implementations for Statements and Literals, along with a Resource type that provides a builder-like experience for models."
@@ -11,13 +11,12 @@ readme = "README.md"
 publish = true
 
 [package.metadata.docs.rs]
-# This sets the default target to `x86_64-unknown-linux-gnu`
-# and only builds that target for documentation.
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 chrono = "0.4"
 error-chain = "0.12"
+lazy_static = "1.4"
 rdftk_iri = { version = "0.1", path = "../rdftk_iri" }
 rdftk_names = { version = "0.1", path = "../rdftk_names" }
 unique_id = "0.1"

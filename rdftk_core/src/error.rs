@@ -33,10 +33,15 @@ error_chain! {
             description("A failure occurred reading or writing a graph.")
             display("A failure occurred reading or writing a graph, for representation: '{}'.", repr)
         }
-        #[doc = "Statements as objects from RDF* are not supported by this representation."]
+        #[doc = "Statements as objects, from RDF*, are not supported by this representation."]
         RdfStarNotSupported(representation: String) {
-            description("Statements as objects from RDF* are not supported by this representation.")
-            display("Statements as objects from RDF* are not supported by the {:?} representation.", representation)
+            description("Statements as objects, from RDF*, are not supported by this representation.")
+            display("Statements as objects, from RDF*, are not supported by the {:?} representation.", representation)
+        }
+        #[doc = "Cited formulae, from N3, are not supported by this representation."]
+        FormulaeNotSupported(representation: String) {
+            description("Cited formulae, from N3, are not supported by this representation.")
+            display("Cited formulae, from N3, are not supported by the {:?} representation.", representation)
         }
     }
 }

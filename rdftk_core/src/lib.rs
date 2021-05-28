@@ -66,6 +66,9 @@ statements.push(Statement::new(
 #[macro_use]
 extern crate error_chain;
 
+#[macro_use]
+extern crate lazy_static;
+
 // ------------------------------------------------------------------------------------------------
 // Modules
 // ------------------------------------------------------------------------------------------------
@@ -77,6 +80,8 @@ pub use data_set::{DataSet, DataSetFactory, DataSetFactoryRef, DataSetRef};
 
 pub mod graph;
 pub use graph::{Graph, GraphFactory, GraphFactoryRef, GraphRef, PrefixMappings};
+
+pub mod indices;
 
 pub mod literal;
 pub use literal::{DataType, Literal};
