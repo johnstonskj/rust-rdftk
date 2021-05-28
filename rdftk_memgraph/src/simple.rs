@@ -3,9 +3,7 @@ TBD
 */
 
 use rdftk_core::graph::mapping::PrefixMappingRef;
-use rdftk_core::graph::{
-    Graph, GraphFactory, GraphFactoryRef, GraphIndex, GraphRef, PrefixMappings,
-};
+use rdftk_core::graph::{Featured, Graph, GraphFactory, GraphFactoryRef, GraphRef, PrefixMappings};
 use rdftk_core::statement::{ObjectNodeRef, StatementList, StatementRef, SubjectNodeRef};
 use rdftk_core::SubjectNode;
 use rdftk_iri::IRIRef;
@@ -63,6 +61,12 @@ impl Default for MemGraphFactory {
     }
 }
 
+impl Featured for MemGraphFactory {
+    fn supports_feature(&self, _feature: &IRIRef) -> bool {
+        false
+    }
+}
+
 impl GraphFactory for MemGraphFactory {
     fn new_graph(&self) -> GraphRef {
         Rc::new(RefCell::new(MemGraph {
@@ -73,6 +77,12 @@ impl GraphFactory for MemGraphFactory {
 }
 
 // ------------------------------------------------------------------------------------------------
+
+impl Featured for MemGraph {
+    fn supports_feature(&self, _feature: &IRIRef) -> bool {
+        false
+    }
+}
 
 impl Graph for MemGraph {
     fn is_empty(&self) -> bool {
@@ -150,10 +160,6 @@ impl Graph for MemGraph {
                 }
             })
             .collect()
-    }
-
-    fn has_index(&self, _: &GraphIndex) -> bool {
-        false
     }
 
     fn prefix_mappings(&self) -> PrefixMappingRef {

@@ -8,6 +8,10 @@ This crate provides an implementation of the `Graph` traits from `rdftk_core::gr
 
 ## Changes
 
+**Version 0.1.12**
+
+* Tracking change in core to remove has_index/has_all_indices with new Featured trait.
+
 **Version 0.1.11**
 
 * Update with API changes from rdftk_core.

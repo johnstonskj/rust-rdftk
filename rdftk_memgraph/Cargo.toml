@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_memgraph"
-version = "0.1.11"
+version = "0.1.12"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
 description = "This crate provides an implementation of the Graph traits from rdftk_core::graph for simple in-memory usage."

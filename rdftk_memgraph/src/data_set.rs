@@ -7,10 +7,9 @@ Additional semantics taken from [RDF 1.1 TriG](https://www.w3.org/TR/trig/), _RD
 
 */
 
-use rdftk_core::data_set::{
-    DataSet, DataSetFactory, DataSetFactoryRef, DataSetIndex, DataSetRef, GraphNameRef,
-};
-use rdftk_core::graph::GraphRef;
+use rdftk_core::data_set::{DataSet, DataSetFactory, DataSetFactoryRef, DataSetRef, GraphNameRef};
+use rdftk_core::graph::{Featured, GraphRef};
+use rdftk_iri::IRIRef;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -59,6 +58,12 @@ lazy_static! {
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
+impl Featured for MemDataSetFactory {
+    fn supports_feature(&self, _feature: &IRIRef) -> bool {
+        false
+    }
+}
+
 impl DataSetFactory for MemDataSetFactory {
     fn new_data_set(&self, default_graph: Option<GraphRef>) -> DataSetRef {
         Rc::new(RefCell::new(MemDataSet {
@@ -69,6 +74,12 @@ impl DataSetFactory for MemDataSetFactory {
 }
 
 // ------------------------------------------------------------------------------------------------
+
+impl Featured for MemDataSet {
+    fn supports_feature(&self, _feature: &IRIRef) -> bool {
+        false
+    }
+}
 
 impl DataSet for MemDataSet {
     fn is_empty(&self) -> bool {
@@ -97,10 +108,6 @@ impl DataSet for MemDataSet {
 
     fn graphs<'a>(&'a self) -> Box<dyn Iterator<Item = (&'a GraphNameRef, &'a GraphRef)> + 'a> {
         Box::new(self.graphs.iter())
-    }
-
-    fn has_index(&self, _: &DataSetIndex) -> bool {
-        false
     }
 
     // --------------------------------------------------------------------------------------------

@@ -8,9 +8,8 @@ More detailed description, with
 */
 
 use rdftk_core::graph::mapping::PrefixMappingRef;
-use rdftk_core::graph::{
-    Graph, GraphFactory, GraphFactoryRef, GraphIndex, GraphRef, PrefixMappings,
-};
+use rdftk_core::graph::{Featured, Graph, GraphFactory, GraphFactoryRef, GraphRef, PrefixMappings};
+use rdftk_core::indices;
 use rdftk_core::statement::{
     ObjectNodeRef, StatementList, StatementRef, SubjectNode, SubjectNodeRef,
 };
@@ -59,6 +58,12 @@ lazy_static! {
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
+impl Featured for IndexedMemGraphFactory {
+    fn supports_feature(&self, _feature: &IRIRef) -> bool {
+        false
+    }
+}
+
 impl GraphFactory for IndexedMemGraphFactory {
     fn new_graph(&self) -> GraphRef {
         Rc::new(RefCell::new(IndexedMemGraph {
@@ -72,6 +77,15 @@ impl GraphFactory for IndexedMemGraphFactory {
 }
 
 // ------------------------------------------------------------------------------------------------
+
+impl Featured for IndexedMemGraph {
+    #[allow(trivial_casts)]
+    fn supports_feature(&self, feature: &IRIRef) -> bool {
+        feature == (&indices::FEATURE_IDX_SUBJECT as &IRIRef)
+            || feature == (&indices::FEATURE_IDX_PREDICATE as &IRIRef)
+            || feature == (&indices::FEATURE_IDX_OBJECT as &IRIRef)
+    }
+}
 
 impl Graph for IndexedMemGraph {
     fn is_empty(&self) -> bool {
@@ -163,13 +177,6 @@ impl Graph for IndexedMemGraph {
         _predicate: &IRIRef,
     ) -> HashSet<&ObjectNodeRef> {
         todo!()
-    }
-
-    fn has_index(&self, index: &GraphIndex) -> bool {
-        matches!(
-            index,
-            GraphIndex::Subject | GraphIndex::Predicate | GraphIndex::Object
-        )
     }
 
     fn prefix_mappings(&self) -> PrefixMappingRef {
