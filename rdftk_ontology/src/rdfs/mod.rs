@@ -416,11 +416,11 @@ impl Vocabulary {
     // ---------------------------------------------------------------------------------------------
 
     pub fn add_class(&mut self, class: Class) {
-        self.classes.insert(class.uri.clone(), class);
+        let _ = self.classes.insert(class.uri.clone(), class);
     }
 
     pub fn remove_class(&mut self, class: &Class) {
-        self.classes.remove(&class.uri);
+        let _ = self.classes.remove(&class.uri);
     }
 
     pub fn classes(&self) -> impl Iterator<Item = &Class> {
@@ -430,11 +430,11 @@ impl Vocabulary {
     // ---------------------------------------------------------------------------------------------
 
     pub fn add_property(&mut self, property: Property) {
-        self.properties.insert(property.uri.clone(), property);
+        let _ = self.properties.insert(property.uri.clone(), property);
     }
 
     pub fn remove_property(&mut self, property: &Property) {
-        self.properties.remove(&property.uri);
+        let _ = self.properties.remove(&property.uri);
     }
 
     pub fn properties(&self) -> impl Iterator<Item = &Property> {
