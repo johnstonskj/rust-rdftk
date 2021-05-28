@@ -9,6 +9,52 @@ This brief primer introduces enough to get started on understanding the RDFtk se
 introduced in crate-specific sections. There is a more complete [W3C RDF Primer](https://www.w3.org/TR/rdf-primer/) 
 that has a lot more information than presented here.
 
+## Data Modeling
+
+
+<a name="fig_1_1"></a>![An RDF Statement](img/primer-er-example.png)
+<div class="caption figure">1.1: E/R and UML Diagrams</div>
+
+1. Data Modeling - ER
+1. Software Modeling - UML
+1. Data Schema - SQL, XSD, ...
+1. Classes
+
+
+```sql
+CREATE TABLE authored (
+    author VARCHAR(128) NOT NULL, 
+    thing VARCHAR(128) NOT NULL
+);
+
+INSERT 
+    INTO authored (author, thing) 
+    VALUES ('Simon', 'this');
+```
+
+```rust
+struct Authored {
+    pub author: String,
+    pub thing: String,
+}
+
+fn make_one() -> Authored {
+    Authored { author: "Simon", thing: "this" }
+}
+```
+
+```sql
+CREATE TABLE author (
+    id INT NOT NULL PRIMARY KEY,
+    name VARCHAR(128) NOT NULL
+);
+CREATE TABLE authored ( 
+    author INT NOT NULL, 
+    thing VARCHAR(128) NOT NULL, 
+    FOREIGN key(author) REFERENCES author(id)
+);
+```
+
 ## Resources, Statements, and Literals
 
 The data model for RDF is surprisingly simple, the core component of which is the **Statement**. A statement asserts
@@ -510,7 +556,7 @@ include variables, identifiers that start with "?" or "$". These variables not o
 projection but also how graph patterns will be matched.
 
 ```sparql
-PREFIX dcterms: <http://purl.org/dc/terms/> .
+PREFIX dcterms: <http://purl.org/dc/terms/>
 
 SELECT ?id ?descr ?ver
 WHERE {
@@ -531,7 +577,7 @@ The `FROM` clause in SPARQL identifies a graph to scope a query, and multiple gr
 across them.
 
 ```sparql
-PREFIX dcterms: <http://purl.org/dc/terms/> .
+PREFIX dcterms: <http://purl.org/dc/terms/>
 
 SELECT ?id ?descr ?ver
 FROM <https://crates.io/rdf/crates/>
@@ -587,7 +633,7 @@ by allowing for an optional IRI or blank node as the fourth element in a seriali
 Similarly, the Turtle language has been extended into [TriG](https://www.w3.org/TR/trig/) which defines a syntax that 
 wraps a set of statements in braces preceded by a graph identifier.
 
-```turtle
+```trig
 @prefix dcterms: <http://purl.org/dc/terms/> .
 
 <https://crates.io/rdf/crates/>
@@ -608,6 +654,9 @@ as Turtle, and expressed directly in SPARQL.
 For example, the following is a textual representation of our "*Joe said...*" reification example.
 
 ```turtle
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix : <#> .
+
 _:S1
     a               rdf:Statement ;
     rdf:subject     :Jane ;
@@ -621,12 +670,15 @@ Turtle does however have a short-cut for the representation of the blank node `_
 example somewhat more readable, but still verbose.
 
 ```turtle
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix : <#> .
+
 :Joe    
     :said [
         a               rdf:Statement ;
         rdf:subject     :Jane ;
         rdf:predicate   :said ;
-        rdf:object      "something" .
+        rdf:object      "something"
     ] .
 ```
 
