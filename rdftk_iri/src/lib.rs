@@ -83,11 +83,12 @@ Note also the use of `Scheme::https()`, both the [`Scheme`](struct.Scheme.html) 
 
 The following features are present in this crate.
 
-`builder` [default] -- include the [`builder`](builder/index.html) module, which in turn includes
+* `builder` [default] -- include the [`builder`](builder/index.html) module, which in turn includes
    the [`IriBuilder`](builder/struct.IriBuilder.html) type.
-`path_iri` [default] -- provides an implementation of `TryFrom<&PathBuf>` and `TryFrom<PathBuf>`
+* `genid` [default] -- includes a constructor to create `"genid"` well-known IRI values.
+* `path_iri` [default] -- provides an implementation of `TryFrom<&PathBuf>` and `TryFrom<PathBuf>`
   for `IRI`.
-`uuid_iri` [default] -- provides an implementation of `TryFrom<&Uuid>` and `TryFrom<Uuid>`
+* `uuid_iri` [default] -- provides an implementation of `TryFrom<&Uuid>` and `TryFrom<Uuid>`
   for `IRI`.
 
 # Specifications
@@ -245,6 +246,8 @@ extern crate error_chain;
 #[macro_use]
 extern crate lazy_static;
 
+use std::str::FromStr;
+
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
@@ -269,6 +272,17 @@ pub trait Normalize {
 }
 
 ///
+/// Encode the corresponding type using percent-encoding rules.
+///
+pub trait PercentEncoding {
+    /// Construct a new value that has been percent encoded. If `for_uri` is true this method will
+    /// also encode all non-ascii characters as a sequence of UTF-8 octets in percent encoded form.
+    fn encode(&self, for_uri: bool) -> Self
+    where
+        Self: Sized;
+}
+
+///
 /// This trait is implemented by most components to provide a way to determine whether a string
 /// value is valid. It can be assumed that the action is less expensive than performing the
 /// [`FromStr`](https://doc.rust-lang.org/std/str/trait.FromStr.html) conversion and checking it's
@@ -284,6 +298,8 @@ pub trait ValidateStr: FromStr {
 // ------------------------------------------------------------------------------------------------
 // Modules
 // ------------------------------------------------------------------------------------------------
+
+mod pct_encoding;
 
 mod parse;
 
@@ -318,4 +334,3 @@ pub use fragment::Fragment;
 #[doc(hidden)]
 pub mod iri;
 pub use iri::{IRIRef, IRI};
-use std::str::FromStr;

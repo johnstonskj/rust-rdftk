@@ -1,8 +1,9 @@
 #![allow(clippy::module_name_repetitions)]
 
 use crate::error::{Error as IriError, ErrorKind};
-use crate::Normalize;
+use crate::pct_encoding::{fragment_map, pct_encode};
 use crate::{parse, ValidateStr};
+use crate::{Normalize, PercentEncoding};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
@@ -26,7 +27,7 @@ use std::str::FromStr;
 /// println!("'{}'", heading); // prints '#heading-one'
 /// ```
 ///
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Fragment(String);
 
 // ------------------------------------------------------------------------------------------------
@@ -64,6 +65,15 @@ impl ValidateStr for Fragment {
 }
 
 impl Normalize for Fragment {}
+
+impl PercentEncoding for Fragment {
+    fn encode(&self, for_uri: bool) -> Self
+    where
+        Self: Sized,
+    {
+        Self(pct_encode(&self.0, fragment_map(), for_uri))
+    }
+}
 
 impl Fragment {
     /// Return `true` if the fragment is the empty string `""` (which is a legal value), else `false`.

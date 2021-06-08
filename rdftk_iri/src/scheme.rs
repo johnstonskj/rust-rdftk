@@ -37,7 +37,7 @@ use std::str::FromStr;
 /// let http_scheme = Scheme::http();
 /// ```
 ///
-#[derive(Clone, Debug, Eq)]
+#[derive(Clone, Debug, Eq, PartialOrd, Ord)]
 pub struct Scheme(String);
 
 // ------------------------------------------------------------------------------------------------

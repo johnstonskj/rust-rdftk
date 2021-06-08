@@ -49,12 +49,19 @@ to construct well-known values.
 The following features are present in this crate.
 
 * `builder` [default] -- include the `builder` module, which in turn includes the `IriBuilder` type.
+* `genid` [default] -- includes a constructor to create `"genid"` well-known IRI values.
 * `path_iri` [default] -- provides an implementation of `TryFrom<&PathBuf>` and `TryFrom<PathBuf>`
   for `IRI`.
 * `uuid_iri` [default] -- provides an implementation of `TryFrom<&Uuid>` and `TryFrom<Uuid>`
   for `IRI`.
 
 ## Changes
+
+**Version 0.1.9**
+
+* Added a feature to enable genid creation.
+* Made IRI PartialOrd + Ord, it can now be sorted.
+* Added PercentEncoding trait for percent encoding components.
 
 **Version 0.1.8**
 

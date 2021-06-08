@@ -17,8 +17,9 @@ TBD
 #![allow(clippy::module_name_repetitions)]
 
 use crate::error::{Component, Error as IriError, ErrorKind, Result as IriResult};
-use crate::Normalize;
+use crate::pct_encoding::{path_map, pct_encode};
 use crate::{parse, ValidateStr};
+use crate::{Normalize, PercentEncoding};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
@@ -59,7 +60,7 @@ use std::str::FromStr;
 /// println!("'{}'", path); // prints '/foo/bar'
 /// ```
 ///
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Path(String);
 
 // ------------------------------------------------------------------------------------------------
@@ -121,6 +122,15 @@ impl Normalize for Path {
             }
         }
         Ok(Self(segments.join(PATH_SEP)))
+    }
+}
+
+impl PercentEncoding for Path {
+    fn encode(&self, for_uri: bool) -> Self
+    where
+        Self: Sized,
+    {
+        Self(pct_encode(&self.0, path_map(), for_uri))
     }
 }
 

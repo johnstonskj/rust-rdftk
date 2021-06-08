@@ -2,7 +2,8 @@
 
 use crate::error::ResultExt;
 use crate::error::{Component, Error as IriError, ErrorKind, Result as IriResult};
-use crate::{parse, ValidateStr};
+use crate::pct_encoding::{pct_encode, user_info_map};
+use crate::{parse, PercentEncoding, ValidateStr};
 use crate::{Normalize, Scheme};
 use regex::Regex;
 use std::fmt::{Display, Formatter};
@@ -52,14 +53,14 @@ use std::str::FromStr;
 /// println!("'{}'", http_port.value()); // prints '80'
 /// ```
 ///
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Port(u16);
 
 ///
 /// This type holds the host details in their parsed form. It is an enumeration of the set of
 /// valid host representations allowed by the IRI specification.
 ///
-#[derive(Clone, Debug, Eq)]
+#[derive(Clone, Debug, Eq, PartialOrd, Ord)]
 pub enum HostKind {
     /// Holds a parsed IPv4 address; e.g. `127.0.0.1`, `192.0.0.10`, `16.38.10.112`.
     Ipv4(Ipv4Addr),
@@ -75,7 +76,7 @@ pub enum HostKind {
 /// This type wraps the specific [`HostKind`](enum.HostKind.html) and provides a common place for
 /// host-related operations.
 ///
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Host(HostKind);
 
 ///
@@ -91,7 +92,7 @@ pub struct Host(HostKind);
 /// assert!(!user.has_password());
 /// ```
 ///
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct UserInfo {
     user_name: String,
     password: Option<String>,
@@ -120,7 +121,7 @@ pub struct UserInfo {
 /// assert!(!http_authority.has_user_info());
 /// ```
 ///
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Authority {
     user_info: Option<UserInfo>,
     host: Host,
@@ -572,6 +573,21 @@ impl FromStr for UserInfo {
     }
 }
 
+impl PercentEncoding for UserInfo {
+    fn encode(&self, for_uri: bool) -> Self
+    where
+        Self: Sized,
+    {
+        Self {
+            user_name: pct_encode(&self.user_name, user_info_map(), for_uri),
+            password: self
+                .password
+                .as_ref()
+                .map(|pw| pct_encode(&pw, user_info_map(), for_uri)),
+        }
+    }
+}
+
 impl UserInfo {
     ///
     /// Construct a new `UserInfo` instance with only the user's name specified.
@@ -691,6 +707,19 @@ impl Normalize for Authority {
             host: self.host.normalize()?,
             ..self
         })
+    }
+}
+
+impl PercentEncoding for Authority {
+    fn encode(&self, for_uri: bool) -> Self
+    where
+        Self: Sized,
+    {
+        Self {
+            user_info: self.user_info.as_ref().map(|ui| ui.encode(for_uri)),
+            host: self.host.clone(),
+            port: self.port.clone(),
+        }
     }
 }
 
@@ -851,10 +880,9 @@ fn parse_ihost(s: &str) -> IriResult<(Host, Option<Port>)> {
             Host(HostKind::Ipv4(address.parse().chain_err(|| {
                 ErrorKind::ParseIpAddressError(address.to_string())
             })?)),
-            match captures.get(3) {
-                None => None,
-                Some(port) => Some(Port::from_str(port.as_str()).unwrap()),
-            },
+            captures
+                .get(3)
+                .map(|port| Port::from_str(port.as_str()).unwrap()),
         ))
     } else if let Some(captures) = IPVMORE.captures(s) {
         if captures.get(2).is_none() {
@@ -863,10 +891,9 @@ fn parse_ihost(s: &str) -> IriResult<(Host, Option<Port>)> {
                 Host(HostKind::Ipv6(address.parse().chain_err(|| {
                     ErrorKind::ParseIpAddressError(address.to_string())
                 })?)),
-                match captures.get(5) {
-                    None => None,
-                    Some(port) => Some(Port::from_str(port.as_str()).unwrap()),
-                },
+                captures
+                    .get(5)
+                    .map(|port| Port::from_str(port.as_str()).unwrap()),
             ))
         } else {
             let version = captures.get(2).unwrap().as_str();
@@ -877,10 +904,9 @@ fn parse_ihost(s: &str) -> IriResult<(Host, Option<Port>)> {
                         .chain_err(|| ErrorKind::ParseIpAddressError(version.to_string()))?,
                     captures.get(3).unwrap().as_str().to_string(),
                 )),
-                match captures.get(5) {
-                    None => None,
-                    Some(port) => Some(Port::from_str(port.as_str()).unwrap()),
-                },
+                captures
+                    .get(5)
+                    .map(|port| Port::from_str(port.as_str()).unwrap()),
             ))
         }
     } else {

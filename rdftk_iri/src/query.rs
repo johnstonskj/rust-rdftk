@@ -12,8 +12,9 @@ TBD
 #![allow(clippy::module_name_repetitions)]
 
 use crate::error::{Component, Error as IriError, ErrorKind, Result as IriResult};
-use crate::Normalize;
+use crate::pct_encoding::{pct_encode, query_map};
 use crate::{parse, ValidateStr};
+use crate::{Normalize, PercentEncoding};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
@@ -41,7 +42,7 @@ use std::str::FromStr;
 /// println!("'{}'", query); // prints '?page=1&size=20'
 /// ```
 ///
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Query(String);
 
 // ------------------------------------------------------------------------------------------------
@@ -81,6 +82,15 @@ impl ValidateStr for Query {
 impl Normalize for Query {
     fn normalize(self) -> IriResult<Self> {
         unimplemented!()
+    }
+}
+
+impl PercentEncoding for Query {
+    fn encode(&self, for_uri: bool) -> Self
+    where
+        Self: Sized,
+    {
+        Self(pct_encode(&self.0, query_map(), for_uri))
     }
 }
 

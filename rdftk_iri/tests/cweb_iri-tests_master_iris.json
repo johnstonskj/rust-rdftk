@@ -11,7 +11,8 @@
             "id": "1",
             "name": "A U+0020 space in the fragment",
             "url": "http://www.example.com/#hello, world",
-            "expect_url": "http://www.example.com/#hello, world"
+            "expect_url": "http://www.example.com/#hello, world",
+            "does_not_parse": true
           },
           {
             "id": "2",
@@ -45,19 +46,22 @@
             "id": "7",
             "name": "An extra U+0023 NUMBER SIGN in middle of the fragment",
             "url": "http://www.example.com/#asdf#qwer",
-            "expect_url": "http://www.example.com/#asdf#qwer"
+            "expect_url": "http://www.example.com/#asdf#qwer",
+            "does_not_parse": true
           },
           {
             "id": "8",
             "name": "An extra U+0023 NUMBER SIGN at the start of fragment",
             "url": "http://www.example.com/##asdf",
-            "expect_url": "http://www.example.com/##asdf"
+            "expect_url": "http://www.example.com/##asdf",
+            "does_not_parse": true
           },
           {
             "id": "9",
             "name": "Extra white space characters",
             "url": "http://www.example.com/#a\u000Ab\u000Dc\u0009d",
-            "expect_url": "http://www.example.com/#abcd"
+            "expect_url": "http://www.example.com/#abcd",
+            "ignored": true
           }
         ]
       },

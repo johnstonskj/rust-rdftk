@@ -1,11 +1,12 @@
 use crate::error::{Error as IriError, ErrorKind, Result as IriResult};
-use crate::{Authority, Fragment, Normalize, Path, Port, Query, Scheme};
+use crate::{Authority, Fragment, Normalize, Path, PercentEncoding, Port, Query, Scheme};
 use regex::Regex;
 use std::convert::TryFrom;
 use std::fmt::{Display, Formatter};
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::Arc;
+use uuid::Uuid;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -105,7 +106,7 @@ use std::sync::Arc;
 /// Japanese, Korean, and Cyrillic characters.
 ///
 #[allow(clippy::upper_case_acronyms)]
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct IRI {
     scheme: Option<Scheme>,
     authority: Option<Authority>,
@@ -116,7 +117,7 @@ pub struct IRI {
 
 ///
 /// A preferred reference-counted type to wrap an `IRI`. For RDF where IRIs are extensively reused
-/// as graph nodes, the requirement to use a reference type is very important to reduce duplication.
+/// as model.graph nodes, the requirement to use a reference type is very important to reduce duplication.
 ///
 /// As such, the APIs across the RDFtk crates use `IRIRef` exclusively.
 ///
@@ -186,19 +187,19 @@ impl TryFrom<&PathBuf> for IRI {
 }
 
 #[cfg(feature = "uuid_iri")]
-impl TryFrom<uuid::Uuid> for IRI {
+impl TryFrom<Uuid> for IRI {
     type Error = IriError;
 
-    fn try_from(path: uuid::Uuid) -> Result<Self, Self::Error> {
+    fn try_from(path: Uuid) -> Result<Self, Self::Error> {
         Self::try_from(&path)
     }
 }
 
 #[cfg(feature = "uuid_iri")]
-impl TryFrom<&uuid::Uuid> for IRI {
+impl TryFrom<&Uuid> for IRI {
     type Error = IriError;
 
-    fn try_from(path: &uuid::Uuid) -> Result<Self, Self::Error> {
+    fn try_from(path: &Uuid) -> Result<Self, Self::Error> {
         Self::new_name("uuid", &path.to_hyphenated().to_string())
     }
 }
@@ -250,6 +251,21 @@ impl Normalize for IRI {
     }
 }
 
+impl PercentEncoding for IRI {
+    fn encode(&self, for_uri: bool) -> Self
+    where
+        Self: Sized,
+    {
+        Self {
+            scheme: self.scheme.clone(),
+            authority: self.authority.as_ref().map(|a| a.encode(for_uri)),
+            path: self.path.encode(for_uri),
+            query: self.query.as_ref().map(|q| q.encode(for_uri)),
+            fragment: self.fragment.as_ref().map(|f| f.encode(for_uri)),
+        }
+    }
+}
+
 impl IRI {
     ///
     /// Create a new `IRI` with only the specified path, this is a valid relative value
@@ -295,8 +311,8 @@ impl IRI {
     ///
     /// This results in the `IRI`  `file://Documents/test-plan.md`.
     ///
-    #[allow(clippy::ptr_arg)]
-    pub fn new_file(path: &PathBuf) -> IriResult<Self> {
+    #[cfg(feature = "path_iri")]
+    pub fn new_file(path: &std::path::Path) -> IriResult<Self> {
         Ok(Self {
             scheme: Some(Scheme::file()),
             authority: None,
@@ -334,6 +350,37 @@ impl IRI {
             query: None,
             fragment: None,
         })
+    }
+
+    ///
+    /// Create a new well-known `IRI` using the `"genid"` form. This creates a new UUID value and
+    /// replaces the path of the provided base `IRI` with the new path.
+    ///
+    /// ```rust
+    /// use rdftk_iri::{IRI, Path};
+    /// use std::str::FromStr;
+    ///
+    /// let base_iri = IRI::from_str("http://example.org/").unwrap();
+    /// let gen_id = IRI::new_genid(&base_iri).unwrap();
+    ///
+    /// // http://example.org/.well-known/genid/{uuid}
+    /// println!("{}", gen_id);
+    ///
+    /// ```
+    ///
+    #[cfg(feature = "genid")]
+    pub fn new_genid(base: &IRI) -> IriResult<Self> {
+        let new_uuid = Uuid::new_v4();
+        let new_uuid = new_uuid
+            .to_simple()
+            .encode_lower(&mut Uuid::encode_buffer())
+            .to_string();
+        let mut path = Path::well_known();
+        path.push("genid")?;
+        path.push(&new_uuid)?;
+        let mut iri: IRI = base.clone();
+        iri.set_path(path);
+        Ok(iri)
     }
 
     // --------------------------------------------------------------------------------------------
