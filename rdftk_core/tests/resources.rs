@@ -1,5 +1,5 @@
-use rdftk_core::resource::Resource;
-use rdftk_core::statement::Statement;
+use rdftk_core::model::statement::StatementList;
+use rdftk_core::simple::resource::Resource;
 use rdftk_iri::IRIRef;
 use rdftk_iri::IRI;
 use std::str::FromStr;
@@ -20,17 +20,17 @@ fn wikipedia_example_01() {
             .unwrap()
             .into(),
     )
-    .literal(contact("fullName"), "Eric Miller".into())
+    .literal_str(contact("fullName"), "Eric Miller")
     .resource_named(
         contact("mailbox"),
         IRI::from_str("mailto:e.miller123(at)example")
             .unwrap()
             .into(),
     )
-    .literal(contact("personalTitle"), "Dr.".into())
+    .literal_str(contact("personalTitle"), "Dr.")
     .instance_of(contact("Person"))
     .to_owned();
-    let sts: Vec<Statement> = resource.into();
+    let sts: StatementList = resource.into();
     assert_eq!(sts.len(), 4);
     for st in sts {
         println!("{}", st);

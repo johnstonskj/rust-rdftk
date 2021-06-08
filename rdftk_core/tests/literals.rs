@@ -1,9 +1,10 @@
-use rdftk_core::literal::Literal;
+use rdftk_core::simple::literal::literal_factory;
 use std::time::Duration;
 
 #[test]
 fn untyped() {
-    let value = Literal::new("a string");
+    let literals = literal_factory();
+    let value = literals.literal("a string");
     assert!(!value.has_data_type());
     assert!(!value.has_language());
     assert_eq!(value.lexical_form(), "a string");
@@ -12,7 +13,8 @@ fn untyped() {
 
 #[test]
 fn needs_escape() {
-    let value = Literal::new(r#"\ta "string"#);
+    let literals = literal_factory();
+    let value = literals.literal(r#"\ta "string"#);
     assert!(!value.has_data_type());
     assert!(!value.has_language());
     assert_eq!(value.lexical_form(), "\\\\ta \\\"string");
@@ -21,16 +23,18 @@ fn needs_escape() {
 
 #[test]
 fn string_with_language() {
-    let value = Literal::with_language("a string", "en_us");
+    let literals = literal_factory();
+    let value = literals.with_language_str("a string", "en-us").unwrap();
     assert!(!value.has_data_type());
     assert!(value.has_language());
     assert_eq!(value.lexical_form(), "a string");
-    assert_eq!(value.to_string(), "\"a string\"@en_us");
+    assert_eq!(value.to_string(), "\"a string\"@en-us");
 }
 
 #[test]
 fn typed_as_string() {
-    let value: Literal = Literal::string("a string");
+    let literals = literal_factory();
+    let value = literals.string("a string");
     assert!(value.has_data_type());
     assert!(!value.has_language());
     assert_eq!(value.lexical_form(), "a string");
@@ -41,17 +45,9 @@ fn typed_as_string() {
 }
 
 #[test]
-fn not_typed_as_string() {
-    let value: Literal = "a string".to_string().into();
-    assert!(!value.has_data_type());
-    assert!(!value.has_language());
-    assert_eq!(value.lexical_form(), "a string");
-    assert_eq!(value.to_string(), "\"a string\"");
-}
-
-#[test]
 fn typed_as_boolean() {
-    let value: Literal = true.into();
+    let literals = literal_factory();
+    let value = literals.boolean(true);
     assert!(value.has_data_type());
     assert!(!value.has_language());
     assert_eq!(value.lexical_form(), "true");
@@ -63,7 +59,21 @@ fn typed_as_boolean() {
 
 #[test]
 fn typed_as_long() {
-    let value: Literal = 1u64.into();
+    let literals = literal_factory();
+    let value = literals.long(1);
+    assert!(value.has_data_type());
+    assert!(!value.has_language());
+    assert_eq!(value.lexical_form(), "1");
+    assert_eq!(
+        value.to_string(),
+        "\"1\"^^<http://www.w3.org/2001/XMLSchema#long>"
+    );
+}
+
+#[test]
+fn typed_as_ulong() {
+    let literals = literal_factory();
+    let value = literals.unsigned_long(1);
     assert!(value.has_data_type());
     assert!(!value.has_language());
     assert_eq!(value.lexical_form(), "1");
@@ -75,8 +85,9 @@ fn typed_as_long() {
 
 #[test]
 fn typed_as_duration() {
+    let literals = literal_factory();
     let duration = Duration::from_secs(63542);
-    let value: Literal = duration.into();
+    let value = literals.duration(duration);
     println!("Duration Out: {}", value);
     assert!(value.has_data_type());
     assert!(!value.has_language());

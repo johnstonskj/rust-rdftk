@@ -1,0 +1,188 @@
+// ------------------------------------------------------------------------------------------------
+// From [RFC-5646/BCP-47](https://www.rfc-editor.org/rfc/bcp/bcp47.txt) Section 2.1 Syntax.
+// ------------------------------------------------------------------------------------------------
+
+//
+// Language-Tag  = langtag                ; normal language tags
+//               / privateuse             ; private use tag
+//               / grandfathered          ; grandfathered registrations
+
+language_tag = {
+    SOI ~ grandfathered | private_use | lang_tag  ~ EOI
+}
+
+// langtag       = language
+//                 ["-" script]
+//                 ["-" region]
+//                 *("-" variant)
+//                 *("-" extension)
+//                 ["-" privateuse]
+
+lang_tag = {
+    language
+    ~ (SEP ~ script)?
+    ~ (SEP ~ region)?
+    ~ (SEP ~ variant)*
+    ~ (SEP ~ extension)*
+    ~ (SEP ~ private_use)?
+}
+
+// language      = 2*3ALPHA               ; shortest ISO 639 code
+//                  [ SEP ~ extlang ]     ; sometimes followed by
+//                                        ; extended language subtags
+//               / 4ALPHA                 ; or reserved for future use
+//               / 5*8ALPHA               ; or registered language subtag
+
+language = @{
+    ALPHA{2,3} ~ (SEP ~ ext_lang)?
+    | ALPHA{4}
+    | ALPHA{5,8}
+}
+
+// extlang       = 3ALPHA                 ; selected ISO 639 codes
+//                 *2("-" 3ALPHA)         ; permanently reserved
+
+ext_lang = {
+    ALPHA{3} ~ (SEP ~ ALPHA{3}) ~ (SEP ~ ALPHA{3})+
+}
+
+// script        = 4ALPHA                 ; ISO 15924 code
+//
+// **Note**, 2.2.3.  Script Subtag:
+// The script subtags 'Qaaa' through 'Qabx' are reserved for private use in language tags.
+
+script = @{
+    // the guard stops us being greedy and stopping here, else we miss variants.
+    !(ALPHA{4} ~ ALPHA) ~ ALPHA{4}
+}
+
+// region        = 2ALPHA                 ; ISO 3166-1 code
+//               / 3DIGIT                 ; UN M.49 code
+
+// **Note**, 2.2.4.  Region Subtag:
+// The region subtags 'AA', 'QM'-'QZ', 'XA'-'XZ', and 'ZZ' are reserved for private use in language tags.
+
+region = @{
+    // the guard stops us being greedy and stopping here, else we miss variants.
+    !(ALPHA{2} ~ ALPHA) ~ ALPHA{2} | DIGIT{3}
+}
+
+// variant       = 5*8alphanum            ; registered variants
+//               / (DIGIT 3alphanum)
+
+// **Note**, 2.2.5.  Variant Subtags:
+// The same variant subtag MUST NOT be used more than once within a language tag.
+
+variant = @{
+    alphanum{5,8}
+    | DIGIT ~ alphanum{3}
+}
+
+// extension     = singleton 1*("-" (2*8alphanum))
+
+extension = @{
+    singleton ~ (SEP ~ alphanum{2,8})+
+}
+
+//                                        ; Single alphanumerics
+//                                        ; "x" reserved for private use
+//  singleton    = DIGIT                  ; 0 - 9
+//               / %x41-57                ; A - W
+//               / %x59-5A                ; Y - Z
+//               / %x61-77                ; a - w
+//               / %x79-7A                ; y - z
+
+singleton = {
+    !^"x" ~ alphanum
+}
+
+// privateuse    = ("x"/"X") 1*("-" (1*8alphanum))
+
+private_use = @{
+    ^"x" ~ (SEP ~ alphanum{1,8})+
+}
+
+// grandfathered = irregular              ; non-redundant tags registered
+//               / regular                ; during the RFC 3066 era
+
+grandfathered = @{
+    irregular | regular
+}
+
+// irregular     = "en-GB-oed"            ; irregular tags do not match
+//               / "i-ami"                ; the 'langtag' production and
+//               / "i-bnn"                ; would not otherwise be
+//               / "i-default"            ; considered 'well-formed'
+//               / "i-enochian"           ; These tags are all valid,
+//               / "i-hak"                ; but most are deprecated
+//               / "i-klingon"            ; in favor of more modern
+//               / "i-lux"                ; subtags or subtag
+//               / "i-mingo"              ; combination
+//               / "i-navajo"
+//               / "i-pwn"
+//               / "i-tao"
+//               / "i-tay"
+//               / "i-tsu"
+//               / "sgn-BE-FR"
+//               / "sgn-BE-NL"
+//               / "sgn-CH-DE"
+
+irregular = {
+    "en-GB-oed"
+    | "i-ami"
+    | "i-bnn"
+    | "i-default"
+    | "i-enochian"
+    | "i-hak"
+    | "i-klingon"
+    | "i-lux"
+    | "i-mingo"
+    | "i-navajo"
+    | "i-pwn"
+    | "i-tao"
+    | "i-tay"
+    | "i-tsu"
+    | "sgn-BE-FR"
+    | "sgn-BE-NL"
+    | "sgn-CH-DE"
+}
+
+// regular       = "art-lojban"           ; these tags match the 'langtag'
+//               / "cel-gaulish"          ; production, but their subtags
+//               / "no-bok"               ; are not extended language
+//               / "no-nyn"               ; or variant subtags: their meaning
+//               / "zh-guoyu"             ; is defined by their registration
+//               / "zh-hakka"             ; and all of these are deprecated
+//               / "zh-min"               ; in favor of a more modern
+//               / "zh-min-nan"           ; subtag or sequence of subtags
+//               / "zh-xiang"
+
+regular = {
+    "art-lojban"
+    | "cel-gaulish"
+    | "no-bok"
+    | "no-nyn"
+    | "zh-guoyu"
+    | "zh-hakka"
+    | "zh-min-nan"
+    | "zh-min"
+    | "zh-xiang"
+}
+
+alphanum = {
+    ALPHA | DIGIT
+}
+
+//
+
+ALPHA = {
+    ASCII_ALPHA
+}
+
+DIGIT = {
+    ASCII_DIGIT
+}
+
+SEP = {
+    "-"
+}

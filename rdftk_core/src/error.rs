@@ -8,6 +8,16 @@ The shared `Error`, `ErrorKind`, and `Result` common to the entire toolkit.
 
 error_chain! {
     errors {
+        #[doc = "The String value provided is not a valid value for it's type."]
+        InvalidFromStr(value: String, type_name: String) {
+            description("The String value provided is not a value for it's type.")
+            display("The String value `{}` is not a valid value for it's type: '{}'.", value, type_name)
+        }
+        #[doc = "The String value provided is not a valid Blank Node name."]
+        InvalidBlankNodeName(s: String) {
+            description("The String value provided is not a valid Blank Node name.")
+            display("The String value `{}` is not a valid Blank Node name.", s)
+        }
         #[doc = "A QName may not have an empty name part."]
         EmptyQName {
             description("A QName may not have an empty name part.")
@@ -17,6 +27,11 @@ error_chain! {
         InvalidQName(s: String) {
             description("The String value provided is not a valid QName.")
             display("The String value `{}` is not a valid QName.", s)
+        }
+        #[doc = "Values from these different providers cannot be combined."]
+        ProviderMismatch(lhs: String, rhs: String) {
+            description("Values from these different providers cannot be combined.")
+            display("Values from these different providers cannot be combined ({:?}, {:?}).", lhs, rhs)
         }
         #[doc = "The match combination is not valid."]
         InvalidMatch {
@@ -28,22 +43,42 @@ error_chain! {
             description("An Absolute IRI was expected at.")
             display("An Absolute IRI was expected at, not '{}'.", s)
         }
-        #[doc = "A failure occurred reading or writing a graph."]
+        #[doc = "A failure occurred reading or writing a model.graph."]
         ReadWrite(repr: String) {
-            description("A failure occurred reading or writing a graph.")
-            display("A failure occurred reading or writing a graph, for representation: '{}'.", repr)
+            description("A failure occurred reading or writing a model.graph.")
+            display("A failure occurred reading or writing a model.graph, for representation: '{}'.", repr)
+        }
+        #[doc = "Some model element was in an invalid state for the requested operation."]
+        InvalidState {
+            description("Some model element was in an invalid state for the requested operation.")
+            display("Some model element was in an invalid state for the requested operation.")
         }
         #[doc = "Statements as objects, from RDF*, are not supported by this representation."]
         RdfStarNotSupported(representation: String) {
             description("Statements as objects, from RDF*, are not supported by this representation.")
             display("Statements as objects, from RDF*, are not supported by the {:?} representation.", representation)
         }
-        #[doc = "Cited formulae, from N3, are not supported by this representation."]
+        #[doc = "Cited model.formulae, from N3, are not supported by this representation."]
         FormulaeNotSupported(representation: String) {
-            description("Cited formulae, from N3, are not supported by this representation.")
-            display("Cited formulae, from N3, are not supported by the {:?} representation.", representation)
+            description("Cited model.formulae, from N3, are not supported by this representation.")
+            display("Cited model.formulae, from N3, are not supported by the {:?} representation.", representation)
         }
     }
+
+    foreign_links {
+        Iri(::rdftk_iri::error::Error) #[doc = "A wrapped error parsing IRI strings."];
+    }
+}
+
+#[allow(unused_macros)]
+macro_rules! invalid_str_err {
+    ($s:expr) => {
+        Err($crate::error::ErrorKind::InvalidFromStr(
+            $s.to_string(),
+            ::std::any::type_name::<Self>().to_string(),
+        )
+        .into())
+    };
 }
 
 // ------------------------------------------------------------------------------------------------

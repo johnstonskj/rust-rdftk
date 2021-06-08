@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_core"
-version = "0.2.4"
+version = "0.3.0-pre"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
 description = "This crate provides the core RDF data model; concrete implementations for Statements and Literals, along with a Resource type that provides a builder-like experience for models."
@@ -13,11 +13,21 @@ publish = true
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
+[features]
+default = ["chrono_types", "n3_formulae", "rdf_star"]
+rdf_star = []
+n3_formulae = []
+chrono_types = ["chrono"]
+
 [dependencies]
-chrono = "0.4"
+bimap = "0.6"
 error-chain = "0.12"
 lazy_static = "1.4"
+pest = "2.1"
+pest_derive = "2.1"
 rdftk_iri = { version = "0.1", path = "../rdftk_iri" }
 rdftk_names = { version = "0.1", path = "../rdftk_names" }
 unique_id = "0.1"
 uuid = { version = "0.8", features = ["v4"] }
+
+chrono = { version = "0.4", optional = true }

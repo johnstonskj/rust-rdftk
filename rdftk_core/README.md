@@ -9,20 +9,20 @@ This crate provides an implementation of the RDF abstract syntax along with a `R
 From [RDF 1.1 Concepts and Abstract Syntax](https://www.w3.org/TR/rdf11-concepts/);
 
 > The core structure of the abstract syntax is a set of triples, each consisting of a subject, a
-> predicate and an object. A set of such triples is called an RDF graph. An RDF graph can be
+> predicate and an object. A set of such triples is called an RDF model.graph. An RDF model.graph can be
 > visualized as a node and directed-arc diagram, in which each triple is represented as a
 > node-arc-node link.
 >
-> ![rdf-graph](https://raw.githubusercontent.com/johnstonskj/rust-rdftk/master/rdftk_core/doc/rdf-graph.svg)
+> ![rdf-model.graph](https://raw.githubusercontent.com/johnstonskj/rust-rdftk/master/rdftk_core/doc/rdf-graph.svg)
 >
-> There can be three kinds of nodes in an RDF graph: IRIs, literals, and blank nodes.
+> There can be three kinds of nodes in an RDF model.graph: IRIs, literals, and blank nodes.
 
 In this library the triple, or statement, as well as subject, predicate, and object types are
 in the module [`statement`](statement/index.html). Literal's as objects are supported in the
 [`literal`](literal/index.html) module. Traits that describe graphs are provided by the
-[`graph`](graph/index.html) module.
+[`model.graph`](graph/index.html) module.
 
-Additional features are provided such as support for data sets (module [`data_set`](data_set/index.html))
+Additional features are provided such as support for data sets (module [`model.data_set`](data_set/index.html))
 as well as support for extensions to the core RDF abstract model such as
 [RDF-star](https://w3c.github.io/rdf-star/cg-spec/editors_draft.html).
 
@@ -49,6 +49,10 @@ pub fn make_statements() -> StatementList {
 
 ## Changes
 
+**Version 0.3.0**
+
+* API is now entirely trait based with a simple in-memory implementation in core.
+
 **Version 0.2.4**
 
 * Created new Featured trait implemented by a number of types that allow client query of various optional
@@ -64,7 +68,7 @@ pub fn make_statements() -> StatementList {
 
 * Reworked APIs to take <name>Ref types and to be consistent in use of trait objects and types throughout.
 * Added factory type for data sets.
-* Made PrefixMappings a concrete type in the core::graph::mapping module.
+* Made PrefixMappings a concrete type in the core::model.graph::mapping module.
 * Added InvalidMatch and Io variants to ErrorKind.
 * Added mutators to Statment.
 
@@ -94,7 +98,7 @@ pub fn make_statements() -> StatementList {
 
 **Version 0.1.14**
 
-* Removed stand-alone named graph.
+* Removed stand-alone named model.graph.
 * Added DataSet as a way to associate names to graphs.
 * Renamed CachingGraph to ValueFactory and made stand-alone.
 

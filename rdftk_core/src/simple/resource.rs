@@ -1,80 +1,85 @@
 /*!
-Implementation of the `Resource` pattern as a kind of statement builder. As a builder type the
-interface is only additive, no update or remove methods exist.
-
-Each `Resource` comprises a common subject value and a set of predicates each of which may have
-multiple associated values. It should therefore be noted that calling a predicate method will add a
-new value, and **not** replace any existing value. New resource instances can be used directly as
-the object of a predicate and so _nested_ or _related_ resources can be written inline. This is
-particulary useful where the object is a blank node.
-
-Additionally a `Predicate` builder is provided where it is more readable to add only the values
-individually rather than repeating the same predicate IRI as the `Resource` interface requires. The
-interface for `Predicate` is intended to be a precise sub-set of the `Resource` methods so that the
-same look and feel is maintained.
-
-# Example
-
-The following short example shows the use of `Resource`, and a nested resource, to build a small
-RDF model. Once a resource is created it can be converted into a vector of `Statement`s for either
-writing out or constructing a `Graph` instance.
-
-```rust
-use rdftk_core::{Literal, Statement};
-use rdftk_core::resource::Resource;
-use rdftk_iri::IRI;
-use rdftk_names::{dc::elements as dc, foaf, rdf};
-use std::str::FromStr;
-
-fn contact(name: &str) -> IRI {
-    IRI::from_str(&format!(
-        "http://www.w3.org/2000/10/swap/pim/contact#{}",
-        name
-    ))
-    .unwrap()
-}
-
-let resource =
-    Resource::named(IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap().into())
-        .value_of(dc::publisher().clone(), Literal::new("Wikipedia"))
-        .value_of(dc::title().clone(), Literal::new("Tony Benn"))
-        .resource(
-            dc::description().clone(),
-            Resource::blank()
-                .resource_named(rdf::a_type().clone(), foaf::person().clone())
-                .value_of(foaf::name().clone(), Literal::new("Tony Benn"))
-                .to_owned(),
-        )
-        .to_owned();
-
-let sts: Vec<Statement> = resource.into();
-assert_eq!(sts.len(), 5);
-
-for st in sts {
-    println!("{}", st);
-}
-```
-
-The output from the example above will look like this, although blank node identifiers _will_
-likely be different.
-
-```text
-<http://en.wikipedia.org/wiki/Tony_Benn> <http://purl.org/dc/elements/1.1/title> "Tony Benn" .
-_:B1 <http://xmlns.com/foaf/0.1/name> "Tony Benn" .
-_:B1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
-<http://en.wikipedia.org/wiki/Tony_Benn> <http://purl.org/dc/elements/1.1/description> _:B1 .
-<http://en.wikipedia.org/wiki/Tony_Benn> <http://purl.org/dc/elements/1.1/publisher> "Wikipedia" .
-```
-
+* Implementation of the `Resource` pattern as a kind of statement builder. As a builder type the
+* interface is only additive, no update or remove methods exist.
+*
+* Each `Resource` comprises a common subject value and a set of predicates each of which may have
+* multiple associated values. It should therefore be noted that calling a predicate method will add a
+* new value, and **not** replace any existing value. New resource instances can be used directly as
+* the object of a predicate and so _nested_ or _related_ resources can be written inline. This is
+* particulary useful where the object is a blank node.
+*
+* Additionally a `Predicate` builder is provided where it is more readable to add only the values
+* individually rather than repeating the same predicate IRI as the `Resource` interface requires. The
+* interface for `Predicate` is intended to be a precise sub-set of the `Resource` methods so that the
+* same look and feel is maintained.
+*
+* # Example
+*
+* The following short example shows the use of `Resource`, and a nested resource, to build a small
+* RDF model. Once a resource is created it can be converted into a vector of `Statement`s for either
+* writing out or constructing a `Graph` instance.
+*
+* ```rust
+* use rdftk_core::simple::literal::literal_factory;
+* use rdftk_core::simple::resource::Resource;
+* use rdftk_iri::IRI;
+* use rdftk_names::{dc::elements as dc, foaf, rdf};
+* use std::str::FromStr;
+* use rdftk_core::model::statement::StatementList;
+*
+* fn contact(name: &str) -> IRI {
+*     IRI::from_str(&format!(
+*         "http://www.w3.org/2000/10/swap/pim/contact#{}",
+*         name
+*     ))
+*     .unwrap()
+* }
+*
+* let resource =
+*     Resource::named(IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap().into())
+*         .value_of(dc::publisher().clone(), literal_factory().literal("Wikipedia"))
+*         .value_of(dc::title().clone(), literal_factory().literal("Tony Benn"))
+*         .resource(
+*             dc::description().clone(),
+*             Resource::blank()
+*                 .resource_named(rdf::a_type().clone(), foaf::person().clone())
+*                 .value_of(foaf::name().clone(), literal_factory().literal("Tony Benn"))
+*                 .to_owned(),
+*         )
+*         .to_owned();
+*
+* let sts: StatementList = resource.into();
+* assert_eq!(sts.len(), 5);
+*
+* for st in sts {
+*     println!("{}", st);
+* }
+* ```
+*
+* The output from the example above will look like this, although blank node identifiers _will_
+* likely be different.
+*
+* ```text
+* <http://en.wikipedia.org/wiki/Tony_Benn> <http://purl.org/dc/elements/1.1/title> "Tony Benn" .
+* _:B1 <http://xmlns.com/foaf/0.1/name> "Tony Benn" .
+* _:B1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
+* <http://en.wikipedia.org/wiki/Tony_Benn> <http://purl.org/dc/elements/1.1/description> _:B1 .
+* <http://en.wikipedia.org/wiki/Tony_Benn> <http://purl.org/dc/elements/1.1/publisher> "Wikipedia" .
+* ```
+*
 */
 
-use crate::statement::{StatementList, SubjectNodeRef};
-use crate::{Literal, ObjectNode, Statement, SubjectNode};
+use crate::error::{ErrorKind, Result};
+use crate::model::literal::{DataType, LanguageTag, LiteralFactoryRef, LiteralRef};
+use crate::model::statement::{StatementFactoryRef, StatementList, SubjectNodeRef};
+use crate::simple;
+use crate::simple::literal::literal_factory;
 use rdftk_iri::IRIRef;
 use rdftk_names::rdf;
+use simple::statement::statement_factory;
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::rc::Rc;
+use std::str::FromStr;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -86,6 +91,8 @@ use std::rc::Rc;
 #[derive(Clone, Debug)]
 pub struct Resource {
     subject: SubjectNodeRef,
+    statement_factory: StatementFactoryRef,
+    literal_factory: LiteralFactoryRef,
     predicates: HashMap<IRIRef, RefCell<Vec<ResourceObject>>>,
 }
 
@@ -102,13 +109,12 @@ pub struct Predicate {
 // Private Types
 // ------------------------------------------------------------------------------------------------
 
-//#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug)]
 enum ResourceObject {
     Resource(Resource),
     Resources(Container<Resource>),
-    Literal(Literal),
-    Literals(Container<Literal>),
+    Literal(LiteralRef),
+    Literals(Container<LiteralRef>),
 }
 
 #[derive(Clone, Debug)]
@@ -145,7 +151,7 @@ impl Predicate {
     ///
     /// Add a new property object, a literal value, to this predicate.
     ///
-    pub fn property(&mut self, value: Literal) -> &mut Self {
+    pub fn property(&mut self, value: LiteralRef) -> &mut Self {
         self.objects.push(ResourceObject::Literal(value));
         self
     }
@@ -155,7 +161,7 @@ impl Predicate {
     ///
     /// The value of this property object is a container denoting the provided values as alternatives.
     ///
-    pub fn property_alternatives(&mut self, values: &[Literal]) -> &mut Self {
+    pub fn property_alternatives(&mut self, values: &[LiteralRef]) -> &mut Self {
         self.objects.push(ResourceObject::Literals(Container {
             kind: ContainerKind::Alt,
             values: values.to_vec(),
@@ -167,7 +173,7 @@ impl Predicate {
     /// The value of this property object is a container denoting the provided values as an
     /// unordered bag.
     ///
-    pub fn property_bag(&mut self, values: &[Literal]) -> &mut Self {
+    pub fn property_bag(&mut self, values: &[LiteralRef]) -> &mut Self {
         self.objects.push(ResourceObject::Literals(Container {
             kind: ContainerKind::Bag,
             values: values.to_vec(),
@@ -179,7 +185,7 @@ impl Predicate {
     /// The value of this property object is a container denoting the provided values as an ordered
     /// sequence.
     ///
-    pub fn property_sequence(&mut self, values: &[Literal]) -> &mut Self {
+    pub fn property_sequence(&mut self, values: &[LiteralRef]) -> &mut Self {
         self.objects.push(ResourceObject::Literals(Container {
             kind: ContainerKind::Seq,
             values: values.to_vec(),
@@ -191,7 +197,7 @@ impl Predicate {
     /// The value of this property object is a container of the provided values with a specified
     /// type.
     ///
-    pub fn property_container(&mut self, values: &[Literal], kind: IRIRef) -> &mut Self {
+    pub fn property_container(&mut self, values: &[LiteralRef], kind: IRIRef) -> &mut Self {
         self.objects.push(ResourceObject::Literals(Container {
             kind: ContainerKind::Other(kind),
             values: values.to_vec(),
@@ -279,18 +285,11 @@ impl Predicate {
 
 // ------------------------------------------------------------------------------------------------
 
-impl From<Resource> for Vec<Statement> {
-    fn from(resource: Resource) -> Self {
-        let mut sts = Vec::default();
-        flatten(&resource, &mut sts);
-        sts
-    }
-}
-
 impl From<Resource> for StatementList {
     fn from(resource: Resource) -> Self {
-        let sts: Vec<Statement> = resource.into();
-        sts.iter().cloned().map(Rc::new).collect()
+        let mut sts: StatementList = Vec::default();
+        flatten(&resource, &mut sts);
+        sts
     }
 }
 
@@ -300,9 +299,43 @@ impl Resource {
     /// [`SubjectNode`](../statement/struct.SubjectNode.html).
     ///
     pub fn new(subject: SubjectNodeRef) -> Self {
+        assert_eq!(subject.provider_id(), simple::PROVIDER_ID);
         Self {
             subject,
+            statement_factory: statement_factory(),
+            literal_factory: literal_factory(),
             predicates: Default::default(),
+        }
+    }
+
+    ///
+    /// Construct a new `Resource` with the subject cloned from an existing
+    /// [`SubjectNode`](../statement/struct.SubjectNode.html).
+    ///
+    pub fn with_factories(
+        subject: SubjectNodeRef,
+        statement_factory: StatementFactoryRef,
+        literal_factory: LiteralFactoryRef,
+    ) -> Result<Self> {
+        if statement_factory.provider_id() != literal_factory.provider_id() {
+            Err(ErrorKind::ProviderMismatch(
+                statement_factory.provider_id().to_string(),
+                literal_factory.provider_id().to_string(),
+            )
+            .into())
+        } else if subject.provider_id() != statement_factory.provider_id() {
+            Err(ErrorKind::ProviderMismatch(
+                subject.provider_id().to_string(),
+                statement_factory.provider_id().to_string(),
+            )
+            .into())
+        } else {
+            Ok(Self {
+                subject,
+                statement_factory,
+                literal_factory,
+                predicates: Default::default(),
+            })
         }
     }
 
@@ -310,8 +343,11 @@ impl Resource {
     /// Construct a new `Resource` with a new blank node as the subject.
     ///
     pub fn blank() -> Self {
+        let statement_factory = statement_factory();
         Self {
-            subject: SubjectNode::blank().into(),
+            subject: statement_factory.blank_subject(),
+            statement_factory,
+            literal_factory: literal_factory(),
             predicates: Default::default(),
         }
     }
@@ -320,8 +356,11 @@ impl Resource {
     /// Construct a new `Resource` with a named blank node as the subject.
     ///
     pub fn blank_named(name: &str) -> Self {
+        let statement_factory = statement_factory();
         Self {
-            subject: SubjectNode::blank_named(name).into(),
+            subject: statement_factory.blank_subject_named(name).unwrap(),
+            statement_factory,
+            literal_factory: literal_factory(),
             predicates: Default::default(),
         }
     }
@@ -330,8 +369,11 @@ impl Resource {
     /// Construct a new `Resource` with the provided `IRI` as the subject.
     ///
     pub fn named(name: IRIRef) -> Self {
+        let statement_factory = statement_factory();
         Self {
-            subject: SubjectNode::named(name).into(),
+            subject: statement_factory.named_subject(name),
+            statement_factory,
+            literal_factory: literal_factory(),
             predicates: Default::default(),
         }
     }
@@ -372,21 +414,69 @@ impl Resource {
     ///
     /// Add a new property predicate with a literal value to this resource.
     ///
-    pub fn property(&mut self, predicate: IRIRef, value: Literal) -> &mut Self {
+    pub fn property(&mut self, predicate: IRIRef, value: LiteralRef) -> &mut Self {
         self.literal(predicate, value)
     }
 
     ///
     /// Add a new property predicate with a literal value to this resource.
     ///
-    pub fn value_of(&mut self, predicate: IRIRef, value: Literal) -> &mut Self {
+    pub fn value_of(&mut self, predicate: IRIRef, value: LiteralRef) -> &mut Self {
         self.literal(predicate, value)
     }
 
     ///
     /// Add a new property predicate with a literal value to this resource.
     ///
-    pub fn literal(&mut self, predicate: IRIRef, value: Literal) -> &mut Self {
+    pub fn literal(&mut self, predicate: IRIRef, value: LiteralRef) -> &mut Self {
+        self.insert(predicate, ResourceObject::Literal(value))
+    }
+
+    ///
+    /// Add a new property predicate with a literal value to this resource.
+    ///
+    pub fn literal_str(&mut self, predicate: IRIRef, value: &str) -> &mut Self {
+        let value = literal_factory().literal(value);
+        self.insert(predicate, ResourceObject::Literal(value))
+    }
+
+    ///
+    /// Add a new property predicate with a literal value to this resource.
+    ///
+    pub fn literal_typed_str(
+        &mut self,
+        predicate: IRIRef,
+        value: &str,
+        data_type: DataType,
+    ) -> &mut Self {
+        let value = literal_factory().with_data_type(value, data_type);
+        self.insert(predicate, ResourceObject::Literal(value))
+    }
+
+    ///
+    /// Add a new property predicate with a literal value to this resource.
+    ///
+    pub fn literal_language_str(
+        &mut self,
+        predicate: IRIRef,
+        value: &str,
+        language: LanguageTag,
+    ) -> &mut Self {
+        let value = literal_factory().with_language(value, language);
+        self.insert(predicate, ResourceObject::Literal(value))
+    }
+
+    ///
+    /// Add a new property predicate with a literal value to this resource.
+    ///
+    pub fn literal_language_str_str(
+        &mut self,
+        predicate: IRIRef,
+        value: &str,
+        language: &str,
+    ) -> &mut Self {
+        let value =
+            literal_factory().with_language(value, LanguageTag::from_str(language).unwrap());
         self.insert(predicate, ResourceObject::Literal(value))
     }
 
@@ -395,7 +485,7 @@ impl Resource {
     ///
     /// The value of this property predicate is a container denoting the provided values as alternatives.
     ///
-    pub fn property_alternatives(&mut self, predicate: IRIRef, values: &[Literal]) -> &mut Self {
+    pub fn property_alternatives(&mut self, predicate: IRIRef, values: &[LiteralRef]) -> &mut Self {
         self.insert(
             predicate,
             ResourceObject::Literals(Container {
@@ -409,7 +499,7 @@ impl Resource {
     /// The value of this property predicate is a container denoting the provided values as an
     /// unordered bag.
     ///
-    pub fn property_bag(&mut self, predicate: IRIRef, values: &[Literal]) -> &mut Self {
+    pub fn property_bag(&mut self, predicate: IRIRef, values: &[LiteralRef]) -> &mut Self {
         self.insert(
             predicate,
             ResourceObject::Literals(Container {
@@ -423,7 +513,7 @@ impl Resource {
     /// The value of this property predicate is a container denoting the provided values as an ordered
     /// sequence.
     ///
-    pub fn property_sequence(&mut self, predicate: IRIRef, values: &[Literal]) -> &mut Self {
+    pub fn property_sequence(&mut self, predicate: IRIRef, values: &[LiteralRef]) -> &mut Self {
         self.insert(
             predicate,
             ResourceObject::Literals(Container {
@@ -440,7 +530,7 @@ impl Resource {
     pub fn property_container(
         &mut self,
         predicate: IRIRef,
-        values: &[Literal],
+        values: &[LiteralRef],
         kind: IRIRef,
     ) -> &mut Self {
         self.insert(
@@ -581,7 +671,7 @@ impl ResourceObject {
 // Private Functions
 // ------------------------------------------------------------------------------------------------
 
-fn flatten(resource: &Resource, sts: &mut Vec<Statement>) {
+fn flatten(resource: &Resource, sts: &mut StatementList) {
     let subject = &resource.subject;
     for (predicate, objects) in &resource.predicates {
         let objects = objects.borrow();
@@ -598,59 +688,89 @@ fn flatten(resource: &Resource, sts: &mut Vec<Statement>) {
                     ResourceObject::Literals(lc) => &lc.kind,
                     _ => unreachable!(),
                 };
-                let container = Rc::from(SubjectNode::blank());
-                sts.push(Statement::new(
-                    subject.clone(),
-                    predicate.clone(),
-                    container.as_object(),
-                ));
-                sts.push(Statement::new(
-                    container.clone(),
-                    rdf::a_type().clone(),
-                    ObjectNode::named(match kind {
-                        ContainerKind::Alt => rdf::alt().clone(),
-                        ContainerKind::Bag => rdf::bag().clone(),
-                        ContainerKind::Seq => rdf::seq().clone(),
-                        ContainerKind::Other(iri) => iri.clone(),
-                    })
-                    .into(),
-                ));
+                let container = resource.statement_factory.blank_subject();
+                sts.push(
+                    resource
+                        .statement_factory
+                        .statement(
+                            subject.clone(),
+                            predicate.clone(),
+                            resource
+                                .statement_factory
+                                .subject_as_object(container.clone()),
+                        )
+                        .unwrap(),
+                );
+                sts.push(
+                    resource
+                        .statement_factory
+                        .statement(
+                            container.clone(),
+                            rdf::a_type().clone(),
+                            resource.statement_factory.named_object(match kind {
+                                ContainerKind::Alt => rdf::alt().clone(),
+                                ContainerKind::Bag => rdf::bag().clone(),
+                                ContainerKind::Seq => rdf::seq().clone(),
+                                ContainerKind::Other(iri) => iri.clone(),
+                            }),
+                        )
+                        .unwrap(),
+                );
 
                 match object {
                     ResourceObject::Resources(rc) => {
                         for (index, resource) in rc.values.iter().enumerate() {
                             flatten(resource, sts);
-                            sts.push(Statement::new(
-                                container.clone(),
-                                rdf::member(index),
-                                resource.subject.as_object(),
-                            ));
+                            sts.push(
+                                resource
+                                    .statement_factory
+                                    .statement(
+                                        container.clone(),
+                                        rdf::member(index),
+                                        resource
+                                            .statement_factory
+                                            .subject_as_object(resource.subject.clone()),
+                                    )
+                                    .unwrap(),
+                            );
                         }
                     }
                     ResourceObject::Literals(lc) => {
                         for (index, literal) in lc.values.iter().enumerate() {
-                            sts.push(Statement::new(
-                                container.clone(),
-                                rdf::member(index),
-                                literal.as_object(),
-                            ));
+                            sts.push(
+                                resource
+                                    .statement_factory
+                                    .statement(
+                                        container.clone(),
+                                        rdf::member(index),
+                                        resource.statement_factory.literal_object(literal.clone()),
+                                    )
+                                    .unwrap(),
+                            );
                         }
                     }
                     _ => unreachable!(),
                 };
             } else {
-                let statement = Statement::new(
-                    subject.clone(),
-                    predicate.clone(),
-                    match object {
-                        ResourceObject::Resource(resource) => {
-                            flatten(resource, sts);
-                            resource.subject.as_object()
-                        }
-                        ResourceObject::Literal(literal) => literal.as_object(),
-                        _ => unreachable!(),
-                    },
-                );
+                let statement = resource
+                    .statement_factory
+                    .statement(
+                        subject.clone(),
+                        predicate.clone(),
+                        match object {
+                            ResourceObject::Resource(resource) => {
+                                flatten(resource, sts);
+                                resource
+                                    .statement_factory
+                                    .subject_as_object(resource.subject.clone())
+                            }
+                            ResourceObject::Literal(literal) => {
+                                resource.statement_factory.literal_object(literal.clone())
+                            }
+                            _ => unreachable!(),
+                        },
+                    )
+                    .unwrap();
                 sts.push(statement);
             }
         }

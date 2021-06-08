@@ -1,15 +1,21 @@
 /*!
-TBD
+Simple, in-memory implementation of the `Graph` and `GraphFactory` traits.
 */
 
-use rdftk_core::graph::mapping::PrefixMappingRef;
-use rdftk_core::graph::{Featured, Graph, GraphFactory, GraphFactoryRef, GraphRef, PrefixMappings};
-use rdftk_core::statement::{ObjectNodeRef, StatementList, StatementRef, SubjectNodeRef};
-use rdftk_core::SubjectNode;
+use crate::model::features::{Featured, FEATURE_GRAPH_DUPLICATES, FEATURE_RDF_STAR};
+use crate::model::graph::{Graph, GraphFactory, GraphFactoryRef, GraphRef, PrefixMappingRef};
+use crate::model::literal::LiteralFactoryRef;
+use crate::model::statement::{
+    ObjectNodeRef, StatementFactoryRef, StatementList, StatementRef, SubjectNodeRef,
+};
+use crate::model::Provided;
+use crate::simple::empty_mappings;
+use crate::simple::literal::literal_factory;
+use crate::simple::statement::statement_factory;
 use rdftk_iri::IRIRef;
-use rdftk_names::rdf;
 use std::cell::RefCell;
 use std::collections::HashSet;
+use std::ops::Deref;
 use std::rc::Rc;
 use std::sync::Arc;
 
@@ -18,16 +24,16 @@ use std::sync::Arc;
 // ------------------------------------------------------------------------------------------------
 
 ///
-/// A factory creating `MemGraph` instances.
+/// Simple, in-memory implementation of the `GraphFactory` trait.
 ///
 #[derive(Clone, Debug)]
-pub struct MemGraphFactory {}
+pub struct SimpleGraphFactory {}
 
 ///
-/// A very simple in-memory implementation of the `Graph` and `NamedGraph` traits.
+/// Simple, in-memory implementation of the `Graph` trait.
 ///
 #[derive(Clone, Debug)]
-pub struct MemGraph {
+pub struct SimpleGraph {
     statements: StatementList,
     mappings: PrefixMappingRef,
 }
@@ -37,7 +43,7 @@ pub struct MemGraph {
 // ------------------------------------------------------------------------------------------------
 
 ///
-/// Retrieve the graph factory for simple `MemGraph` instances.
+/// Retrieve the `GraphFactory` factory for `simple::SimpleGraph` instances.
 ///
 pub fn graph_factory() -> GraphFactoryRef {
     FACTORY.clone()
@@ -48,43 +54,47 @@ pub fn graph_factory() -> GraphFactoryRef {
 // ------------------------------------------------------------------------------------------------
 
 lazy_static! {
-    static ref FACTORY: Arc<MemGraphFactory> = Arc::new(MemGraphFactory::default());
+    static ref FACTORY: Arc<SimpleGraphFactory> = Arc::new(SimpleGraphFactory::default());
 }
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl Default for MemGraphFactory {
+impl Default for SimpleGraphFactory {
     fn default() -> Self {
         Self {}
     }
 }
 
-impl Featured for MemGraphFactory {
-    fn supports_feature(&self, _feature: &IRIRef) -> bool {
-        false
+impl Provided for SimpleGraphFactory {
+    fn provider_id(&self) -> &'static str {
+        super::PROVIDER_ID
     }
 }
 
-impl GraphFactory for MemGraphFactory {
-    fn new_graph(&self) -> GraphRef {
-        Rc::new(RefCell::new(MemGraph {
+impl GraphFactory for SimpleGraphFactory {
+    fn graph(&self) -> GraphRef {
+        self.with_mappings(empty_mappings())
+    }
+
+    fn with_mappings(&self, mappings: PrefixMappingRef) -> GraphRef {
+        Rc::new(RefCell::new(SimpleGraph {
             statements: Default::default(),
-            mappings: Rc::new(RefCell::new(PrefixMappings::default())),
+            mappings,
         }))
     }
 }
 
 // ------------------------------------------------------------------------------------------------
 
-impl Featured for MemGraph {
-    fn supports_feature(&self, _feature: &IRIRef) -> bool {
-        false
+impl Featured for SimpleGraph {
+    fn supports_feature(&self, feature: &IRIRef) -> bool {
+        feature == FEATURE_GRAPH_DUPLICATES.deref() || feature == FEATURE_RDF_STAR.deref()
     }
 }
 
-impl Graph for MemGraph {
+impl Graph for SimpleGraph {
     fn is_empty(&self) -> bool {
         self.statements.is_empty()
     }
@@ -94,14 +104,13 @@ impl Graph for MemGraph {
     }
 
     fn contains_subject(&self, subject: &SubjectNodeRef) -> bool {
-        self.statements
-            .iter()
-            .any(|st| st.as_ref().subject() == subject)
+        self.statements.iter().any(|st| st.subject() == subject)
     }
 
     fn contains_individual(&self, subject: &IRIRef) -> bool {
-        let subject: SubjectNodeRef = SubjectNode::named(subject.clone()).into();
-        self.objects_for(&subject, rdf::a_type()).is_empty()
+        let factory = self.statement_factory();
+        let subject = factory.named_subject(subject.clone());
+        self.contains_subject(&subject)
     }
 
     fn matches(
@@ -113,6 +122,7 @@ impl Graph for MemGraph {
         self.statements
             .iter()
             .filter(|st| {
+                let st = st;
                 (subject.is_some() && st.subject() == subject.unwrap())
                     && (predicate.is_some() && st.predicate() == predicate.unwrap())
                     && (object.is_some() && st.object() == object.unwrap())
@@ -136,6 +146,7 @@ impl Graph for MemGraph {
         self.statements
             .iter()
             .filter_map(|st| {
+                let st = st;
                 if st.subject() == subject {
                     Some(st.predicate())
                 } else {
@@ -153,6 +164,7 @@ impl Graph for MemGraph {
         self.statements
             .iter()
             .filter_map(|st| {
+                let st = st;
                 if st.subject() == subject && st.predicate() == predicate {
                     Some(st.object())
                 } else {
@@ -171,7 +183,15 @@ impl Graph for MemGraph {
     }
 
     fn factory(&self) -> GraphFactoryRef {
-        FACTORY.clone()
+        graph_factory()
+    }
+
+    fn statement_factory(&self) -> StatementFactoryRef {
+        statement_factory()
+    }
+
+    fn literal_factory(&self) -> LiteralFactoryRef {
+        literal_factory()
     }
 
     fn statements_mut<'a>(&'a mut self) -> Box<dyn Iterator<Item = &'a mut StatementRef> + 'a> {
@@ -188,30 +208,44 @@ impl Graph for MemGraph {
         }
     }
 
-    fn dedup(&mut self) {
-        let mut sts: HashSet<StatementRef> = self.statements.drain(..).collect();
-        self.statements = sts.drain().collect()
+    fn dedup(&mut self) -> StatementList {
+        let mut discarded: StatementList = Default::default();
+        let mut kept: HashSet<StatementRef> = Default::default();
+        for st in &self.statements {
+            if kept.contains(st) {
+                discarded.push(st.clone());
+            } else {
+                let _ = kept.insert(st.clone());
+            }
+        }
+        self.statements = kept.drain().collect();
+        discarded
     }
 
     fn remove(&mut self, statement: &StatementRef) {
-        self.statements.retain(|st| st != statement);
+        for (idx, st) in self.statements.iter().enumerate() {
+            if st == statement {
+                let _ = self.statements.remove(idx);
+                break;
+            }
+        }
     }
 
-    fn remove_all_for(&mut self, subject: &SubjectNodeRef) {
-        self.statements.retain(|st| st.subject() != subject);
+    fn remove_all_for(&mut self, subject: &SubjectNodeRef) -> StatementList {
+        let mut discarded: StatementList = Default::default();
+        let mut kept: StatementList = Default::default();
+        for st in &self.statements {
+            if st.subject() == subject {
+                kept.push(st.clone());
+            } else {
+                discarded.push(st.clone());
+            }
+        }
+        self.statements = kept;
+        discarded
     }
 
     fn clear(&mut self) {
         self.statements.clear()
-    }
-}
-
-impl<'a> MemGraph {
-    ///
-    /// Construct a new `MemGraph` from the list of statements.
-    ///
-    pub fn with(&mut self, statements: StatementList) -> &mut Self {
-        self.statements = statements;
-        self
     }
 }

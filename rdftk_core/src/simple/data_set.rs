@@ -1,14 +1,14 @@
 /*!
-Provides an implementation of the W3C
-[RDF 1.1: On Semantics of RDF Datasets](https://www.w3.org/TR/rdf11-datasets/) recommendation.
-Additional semantics taken from [RDF 1.1 TriG](https://www.w3.org/TR/trig/), _RDF Dataset Language_.
-
-# Example
-
+Simple, in-memory implementation of the `DataSet` and `DataSetFactory` traits.
 */
 
-use rdftk_core::data_set::{DataSet, DataSetFactory, DataSetFactoryRef, DataSetRef, GraphNameRef};
-use rdftk_core::graph::{Featured, GraphRef};
+use crate::model::data_set::{
+    DataSet, DataSetFactory, DataSetFactoryRef, DataSetRef, GraphNameRef,
+};
+use crate::model::features::Featured;
+use crate::model::graph::{GraphFactoryRef, GraphRef};
+use crate::model::Provided;
+use crate::simple::graph_factory;
 use rdftk_iri::IRIRef;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -20,17 +20,16 @@ use std::sync::Arc;
 // ------------------------------------------------------------------------------------------------
 
 ///
-/// An implementation of the data set factory trait.
+/// Simple, in-memory implementation of the `DataSetFactory` trait.
 ///
 #[derive(Clone, Debug)]
-pub struct MemDataSetFactory {}
+pub struct SimpleDataSetFactory {}
 
 ///
-/// This implementation of the core `DataSet` and `MutableDataSet` traits is a simple in-memory hash
-/// from graph name to a `MemGraph` implementation.
+/// Simple, in-memory implementation of the `DataSet` trait.
 ///
-#[allow(missing_debug_implementations)]
-pub struct MemDataSet {
+#[derive(Clone, Debug)]
+pub struct SimpleDataSet {
     default_graph: Option<GraphRef>,
     graphs: HashMap<GraphNameRef, GraphRef>,
 }
@@ -40,7 +39,7 @@ pub struct MemDataSet {
 // ------------------------------------------------------------------------------------------------
 
 ///
-/// Retrieve the graph factory for simple `MemGraph` instances.
+/// Retrieve the `DataSet` factory for `simple::SimpleDataSet` instances.
 ///
 pub fn data_set_factory() -> DataSetFactoryRef {
     FACTORY.clone()
@@ -51,22 +50,22 @@ pub fn data_set_factory() -> DataSetFactoryRef {
 // ------------------------------------------------------------------------------------------------
 
 lazy_static! {
-    static ref FACTORY: Arc<MemDataSetFactory> = Arc::new(MemDataSetFactory {});
+    static ref FACTORY: Arc<SimpleDataSetFactory> = Arc::new(SimpleDataSetFactory {});
 }
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl Featured for MemDataSetFactory {
-    fn supports_feature(&self, _feature: &IRIRef) -> bool {
-        false
+impl Provided for SimpleDataSetFactory {
+    fn provider_id(&self) -> &'static str {
+        crate::simple::PROVIDER_ID
     }
 }
 
-impl DataSetFactory for MemDataSetFactory {
-    fn new_data_set(&self, default_graph: Option<GraphRef>) -> DataSetRef {
-        Rc::new(RefCell::new(MemDataSet {
+impl DataSetFactory for SimpleDataSetFactory {
+    fn data_set(&self, default_graph: Option<GraphRef>) -> DataSetRef {
+        Rc::new(RefCell::new(SimpleDataSet {
             default_graph,
             graphs: Default::default(),
         }))
@@ -75,19 +74,19 @@ impl DataSetFactory for MemDataSetFactory {
 
 // ------------------------------------------------------------------------------------------------
 
-impl Featured for MemDataSet {
+impl Featured for SimpleDataSet {
     fn supports_feature(&self, _feature: &IRIRef) -> bool {
         false
     }
 }
 
-impl DataSet for MemDataSet {
+impl DataSet for SimpleDataSet {
     fn is_empty(&self) -> bool {
-        todo!()
+        self.graphs.is_empty() && self.default_graph.is_none()
     }
 
     fn len(&self) -> usize {
-        todo!()
+        self.graphs.len() + (if self.default_graph.is_some() { 1 } else { 0 })
     }
 
     fn has_default_graph(&self) -> bool {
@@ -136,6 +135,10 @@ impl DataSet for MemDataSet {
     }
 
     fn factory(&self) -> DataSetFactoryRef {
-        FACTORY.clone()
+        data_set_factory()
+    }
+
+    fn graph_factory(&self) -> GraphFactoryRef {
+        graph_factory()
     }
 }

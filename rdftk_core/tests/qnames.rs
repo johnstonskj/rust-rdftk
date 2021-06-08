@@ -1,4 +1,4 @@
-use rdftk_core::qname::QName;
+use rdftk_core::model::qname::QName;
 use std::str::FromStr;
 
 #[test]

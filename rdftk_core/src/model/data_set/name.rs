@@ -1,5 +1,5 @@
 /*!
-An extension to the core `Graph` to support named graphs. The semantics of a named graph has been
+An extension to the core `Graph` to support named graphs. The semantics of a named model.graph has been
 derived from [RDF 1.1 TriG](https://www.w3.org/TR/trig/), _RDF Dataset Language_, and
 [RDF 1.1: On Semantics of RDF Datasets](https://www.w3.org/TR/rdf11-datasets/).
 */
@@ -15,7 +15,7 @@ use unique_id::Generator;
 // ------------------------------------------------------------------------------------------------
 
 ///
-/// This type denotes the identifier for a graph in a data set; a graph name MUST be either an IRI
+/// This type denotes the identifier for a model.graph in a data set; a model.graph name MUST be either an IRI
 /// or a blank node.
 ///
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -24,7 +24,7 @@ pub struct GraphName {
 }
 
 ///
-/// The actual graph name storage type, reference counted for memory management.
+/// The actual model.graph name storage type, reference counted for memory management.
 ///
 pub type GraphNameRef = Rc<GraphName>;
 
@@ -76,7 +76,7 @@ impl From<&IRIRef> for GraphName {
 
 impl GraphName {
     ///
-    /// Construct a new graph name, as a blank node with a randomly assigned name.
+    /// Construct a new model.graph name, as a blank node with a randomly assigned name.
     ///
     pub fn blank() -> Self {
         Self {
@@ -85,14 +85,14 @@ impl GraphName {
     }
 
     ///
-    /// Construct a new graph name reference, as a blank node with a randomly assigned name.
+    /// Construct a new model.graph name reference, as a blank node with a randomly assigned name.
     ///
     pub fn blank_ref() -> GraphNameRef {
         Rc::from(Self::blank())
     }
 
     ///
-    /// Construct a new graph name, as a blank node with the specified name.
+    /// Construct a new model.graph name, as a blank node with the specified name.
     ///
     pub fn blank_named(name: &str) -> Self {
         Self {
@@ -101,7 +101,7 @@ impl GraphName {
     }
 
     ///
-    /// Construct a new graph name, with an IRI naming a resource.
+    /// Construct a new model.graph name, with an IRI naming a resource.
     ///
     pub fn named(name: IRIRef) -> Self {
         Self {
@@ -110,14 +110,14 @@ impl GraphName {
     }
 
     ///
-    /// Construct a new graph name reference, with an IRI naming a resource.
+    /// Construct a new model.graph name reference, with an IRI naming a resource.
     ///
     pub fn named_ref(name: IRIRef) -> GraphNameRef {
         Rc::from(Self::named(name))
     }
 
     ///
-    /// Return `true` if this graph name is a blank node, else `false`.
+    /// Return `true` if this model.graph name is a blank node, else `false`.
     ///
     pub fn is_blank(&self) -> bool {
         matches!(self.inner, Name::BNode(_))
@@ -134,7 +134,7 @@ impl GraphName {
     }
 
     ///
-    /// Return `true` if this graph name is an IRI, else `false`.
+    /// Return `true` if this model.graph name is an IRI, else `false`.
     ///
     pub fn is_iri(&self) -> bool {
         matches!(self.inner, Name::IRI(_))

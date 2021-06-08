@@ -1,75 +1,75 @@
 /*!
-Qualified names, names with the form `{prefix}:{name}` are used in a number of common serialization
-forms and use many of the same production rules as those for XML.
-
-# Example
-
-```rust
-use rdftk_core::qname::QName;
-
-let prefixed: QName = "prefix:name".parse().expect("parse error");
-let un_prefixed: QName = "name".parse().expect("parse error");
-
-let prefixed: QName = QName::with_prefix("prefix", "name").unwrap();
-let un_prefixed: QName = QName::new("name").unwrap();
-
-assert!(QName::new("").is_err());
-assert!(QName::new("hello world").is_err());
-```
-
-# Specification -- QName
-
-1. https://www.w3.org/TR/REC-xml-names/
-2. https://www.w3.org/TR/REC-xml/#NT-Name
-3. https://www.w3.org/2001/tag/doc/qnameids
-
-From (1):
-
-```text
-/* Attribute Names for Namespace Declaration */
-
-[4]  NCName          ::=  Name - (Char* ':' Char*)     /* An XML Name, minus the ":" */
-
-/* Qualified Name */
-
-[7]  QName           ::=  PrefixedName
-                          | UnprefixedName
-[8]  PrefixedName    ::=  Prefix ':' LocalPart
-[9]  UnprefixedName  ::=  LocalPart
-[10] Prefix          ::=  NCName
-[11] LocalPart       ::=  NCName
-```
-
-From (2):
-
-```text
-
-[4]  NameStartChar   ::=  ":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] | [#xF8-#x2FF]
-                          | [#x370-#x37D] | [#x37F-#x1FFF] | [#x200C-#x200D] | [#x2070-#x218F]
-                          | [#x2C00-#x2FEF] | [#x3001-#xD7FF] | [#xF900-#xFDCF] | [#xFDF0-#xFFFD]
-                          | [#x10000-#xEFFFF]
-[4a] NameChar        ::=  NameStartChar | "-" | "." | [0-9] | #xB7 | [#x0300-#x036F]
-                          | [#x203F-#x2040]
-[5]  Name            ::=  NameStartChar (NameChar)*
-```
-
-# Specification -- Curie
-
-1. https://www.w3.org/TR/curie/
-
-```text
-safe_curie  :=   '[' curie ']'
-
-curie       :=   [ [ prefix ] ':' ] reference
-
-prefix      :=   NCName
-
-reference   :=   irelative-ref (as defined in IRI)
-```
-
+* Qualified names, names with the form `{prefix}:{name}` are used in a number of common serialization
+* forms and use many of the same production rules as those for XML.
+*
+* # Example
+*
+* ```rust
+* use rdftk_core::model::qname::QName;
+*
+* let prefixed: QName = "prefix:name".parse().expect("parse error");
+* let un_prefixed: QName = "name".parse().expect("parse error");
+*
+* let prefixed: QName = QName::with_prefix("prefix", "name").unwrap();
+* let un_prefixed: QName = QName::new("name").unwrap();
+*
+* assert!(QName::new("").is_err());
+* assert!(QName::new("hello world").is_err());
+* ```
+*
+* # Specification -- QName
+*
+* 1. https://www.w3.org/TR/REC-xml-names/
+* 2. https://www.w3.org/TR/REC-xml/#NT-Name
+* 3. https://www.w3.org/2001/tag/doc/qnameids
+*
+* From (1):
+*
+* ```text
+* /* Attribute Names for Namespace Declaration */
+*
+* [4]  NCName          ::=  Name - (Char* ':' Char*)     /* An XML Name, minus the ":" */
+*
+* /* Qualified Name */
+*
+* [7]  QName           ::=  PrefixedName
+*                           | UnprefixedName
+* [8]  PrefixedName    ::=  Prefix ':' LocalPart
+* [9]  UnprefixedName  ::=  LocalPart
+* [10] Prefix          ::=  NCName
+* [11] LocalPart       ::=  NCName
+* ```
+*
+* From (2):
+*
+* ```text
+*
+* [4]  NameStartChar   ::=  ":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] | [#xF8-#x2FF]
+*                           | [#x370-#x37D] | [#x37F-#x1FFF] | [#x200C-#x200D] | [#x2070-#x218F]
+*                           | [#x2C00-#x2FEF] | [#x3001-#xD7FF] | [#xF900-#xFDCF] | [#xFDF0-#xFFFD]
+*                           | [#x10000-#xEFFFF]
+* [4a] NameChar        ::=  NameStartChar | "-" | "." | [0-9] | #xB7 | [#x0300-#x036F]
+*                           | [#x203F-#x2040]
+* [5]  Name            ::=  NameStartChar (NameChar)*
+* ```
+*
+* # Specification -- Curie
+*
+* 1. https://www.w3.org/TR/curie/
+*
+* ```text
+* safe_curie  :=   '[' curie ']'
+*
+* curie       :=   [ [ prefix ] ':' ] reference
+*
+* prefix      :=   NCName
+*
+* reference   :=   irelative-ref (as defined in IRI)
+* ```
+*
 * Note that while the empty string matches the production for curie above, an empty string is NOT a valid CURIE.
 * The CURIE prefix '_' is reserved for use by languages that support RDF. For this reason, the prefix '_' SHOULD be avoided by authors.
-
+*
 */
 
 use crate::error::{Error as RdfError, ErrorKind};
