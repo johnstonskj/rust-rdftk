@@ -117,7 +117,7 @@ pub struct IRI {
 
 ///
 /// A preferred reference-counted type to wrap an `IRI`. For RDF where IRIs are extensively reused
-/// as model.graph nodes, the requirement to use a reference type is very important to reduce duplication.
+/// as graph nodes, the requirement to use a reference type is very important to reduce duplication.
 ///
 /// As such, the APIs across the RDFtk crates use `IRIRef` exclusively.
 ///
