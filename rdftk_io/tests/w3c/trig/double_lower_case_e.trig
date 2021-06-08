@@ -1,2 +1,2 @@
 {<http://a.example/s> <http://a.example/p> 1e0 .}
-<http://example/graph> {<http://a.example/s> <http://a.example/p> 1e0 .}
+<http://example/model.graph> {<http://a.example/s> <http://a.example/p> 1e0 .}

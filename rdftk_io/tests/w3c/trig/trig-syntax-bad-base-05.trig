@@ -1,4 +1,4 @@
-# BASE inside graph
+# BASE inside model.graph
 {
   BASE <http://example/>
 }

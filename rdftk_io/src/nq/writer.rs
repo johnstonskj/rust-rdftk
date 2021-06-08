@@ -9,9 +9,9 @@ use rdftk_io::nq::writer::NQuadDataSetWriter;
 use rdftk_io::write_data_set_to_string;
 # use std::cell::RefCell;
 # use std::rc::Rc;
-# use rdftk_core::data_set::DataSetRef;
-# use rdftk_memgraph::data_set::data_set_factory;
-# fn make_data_set() -> DataSetRef { data_set_factory().new_data_set(None) }
+# use rdftk_core::model::data_set::DataSetRef;
+# use rdftk_core::simple::data_set::data_set_factory;
+# fn make_data_set() -> DataSetRef { data_set_factory().data_set(None) }
 
 let writer = NQuadDataSetWriter::default();
 
@@ -21,9 +21,9 @@ let result = write_data_set_to_string(&writer, &make_data_set());
 */
 
 use crate::{DataSetWriter, GraphWriter};
-use rdftk_core::data_set::{DataSetRef, GraphNameRef};
 use rdftk_core::error::Result;
-use rdftk_core::graph::GraphRef;
+use rdftk_core::model::data_set::{DataSetRef, GraphNameRef};
+use rdftk_core::model::graph::GraphRef;
 use std::io::Write;
 
 // ------------------------------------------------------------------------------------------------
@@ -100,7 +100,7 @@ impl GraphWriter for NQuadGraphWriter {
 }
 
 impl NQuadGraphWriter {
-    /// Construct a new quad writer with the provided graph name.
+    /// Construct a new quad writer with the provided model.graph name.
     pub fn named(name: GraphNameRef) -> Self {
         Self { name: Some(name) }
     }

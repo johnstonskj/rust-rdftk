@@ -34,6 +34,7 @@ macro_rules! unexpected {
     }};
 }
 
+#[allow(unused_macros)]
 macro_rules! unreachable {
     ($fn_name:expr) => {{
         error!("ParserError::unreachable({)", $fn_name);
@@ -41,6 +42,7 @@ macro_rules! unreachable {
     }};
 }
 
+#[allow(unused_macros)]
 macro_rules! expecting {
     ($fn_name:expr, $rule:expr) => {{
         error!("ParserError::new({}, {:?})", $fn_name, $rule);

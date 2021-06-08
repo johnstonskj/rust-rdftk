@@ -6,8 +6,8 @@ Provides the `NTripleWriter` implementation of the `GraphWriter` trait.
 ```rust
 use rdftk_io::nt::writer::NTripleWriter;
 use rdftk_io::write_graph_to_string;
-# use rdftk_core::graph::GraphRef;
-# fn make_graph() -> GraphRef { rdftk_memgraph::simple::graph_factory().new_graph() }
+# use rdftk_core::model::graph::GraphRef;
+# fn make_graph() -> GraphRef { rdftk_core::simple::graph::graph_factory().graph() }
 
 let writer = NTripleWriter::default();
 
@@ -19,7 +19,7 @@ let result = write_graph_to_string(&writer, &make_graph());
 use crate::nq::writer::NQuadGraphWriter;
 use crate::GraphWriter;
 use rdftk_core::error::Result;
-use rdftk_core::graph::GraphRef;
+use rdftk_core::model::graph::GraphRef;
 use std::borrow::Borrow;
 use std::io::Write;
 
@@ -29,7 +29,7 @@ use std::io::Write;
 
 ///
 /// This struct implements the `GraphWriter` trait and will write out a serialized form of the
-/// entire graph.
+/// entire model.graph.
 ///
 #[derive(Debug)]
 pub struct NTripleWriter {}

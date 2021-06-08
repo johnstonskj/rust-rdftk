@@ -11,7 +11,7 @@ ex3_:foo-bar ex3_:foo_bar "c" .
 ex4-:foo-bar ex4-:foo_bar "d" .
 }
 
-<http://example/graph> {
+<http://example/model.graph> {
 ex1:foo-bar ex1:foo_bar "a" .
 ex-2:foo-bar ex-2:foo_bar "b" .
 ex3_:foo-bar ex3_:foo_bar "c" .

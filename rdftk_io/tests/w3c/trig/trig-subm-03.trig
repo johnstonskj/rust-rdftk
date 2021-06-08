@@ -7,7 +7,7 @@
       :e .
 }
 
-<http://example/graph> {
+<http://example/model.graph> {
 :a :b :c,
       :d,
       :e .

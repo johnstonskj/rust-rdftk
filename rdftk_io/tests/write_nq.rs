@@ -1,10 +1,10 @@
 #![cfg(feature = "nq")]
 
-use rdftk_core::data_set::{DataSetRef, GraphName};
+use rdftk_core::model::data_set::{DataSetRef, GraphName};
+use rdftk_core::simple::data_set::data_set_factory;
 use rdftk_io::nq::writer::NQuadDataSetWriter;
 use rdftk_io::write_data_set_to_string;
 use rdftk_iri::IRI;
-use rdftk_memgraph::data_set::data_set_factory;
 use std::str::FromStr;
 
 mod common;
@@ -12,7 +12,7 @@ mod common;
 #[test]
 fn write_to_nquads() {
     let graph = common::tony_benn_graph();
-    let data_set = data_set_factory().new_data_set(None);
+    let data_set = data_set_factory().data_set(None);
     {
         let mut data_set = data_set.borrow_mut();
         data_set.insert(

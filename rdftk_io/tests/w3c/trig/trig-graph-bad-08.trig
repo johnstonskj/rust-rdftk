@@ -2,4 +2,4 @@
 PREFIX : <http://example/> 
 
 # GRAPH and a triples block.
-@graph :g { :s :p :o }
+@model.graph :g { :s :p :o }

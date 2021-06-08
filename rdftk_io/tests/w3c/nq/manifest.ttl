@@ -99,84 +99,84 @@
 
 <#nq-syntax-uri-01> a rdft:TestNQuadsPositiveSyntax ;
    mf:name    "nq-syntax-uri-01" ;
-   rdfs:comment "URI graph with URI triple" ;
+   rdfs:comment "URI model.graph with URI triple" ;
    rdft:approval rdft:Approved ;
    mf:action    <nq-syntax-uri-01.nq> ;
    .
 
 <#nq-syntax-uri-02> a rdft:TestNQuadsPositiveSyntax ;
    mf:name    "nq-syntax-uri-02" ;
-   rdfs:comment "URI graph with BNode subject" ;
+   rdfs:comment "URI model.graph with BNode subject" ;
    rdft:approval rdft:Approved ;
    mf:action    <nq-syntax-uri-02.nq> ;
    .
 
 <#nq-syntax-uri-03> a rdft:TestNQuadsPositiveSyntax ;
    mf:name    "nq-syntax-uri-03" ;
-   rdfs:comment "URI graph with BNode object" ;
+   rdfs:comment "URI model.graph with BNode object" ;
    rdft:approval rdft:Approved ;
    mf:action    <nq-syntax-uri-03.nq> ;
    .
 
 <#nq-syntax-uri-04> a rdft:TestNQuadsPositiveSyntax ;
    mf:name    "nq-syntax-uri-04" ;
-   rdfs:comment "URI graph with simple literal" ;
+   rdfs:comment "URI model.graph with simple literal" ;
    rdft:approval rdft:Approved ;
    mf:action    <nq-syntax-uri-04.nq> ;
    .
 
 <#nq-syntax-uri-05> a rdft:TestNQuadsPositiveSyntax ;
    mf:name    "nq-syntax-uri-05" ;
-   rdfs:comment "URI graph with language tagged literal" ;
+   rdfs:comment "URI model.graph with language tagged literal" ;
    rdft:approval rdft:Approved ;
    mf:action    <nq-syntax-uri-05.nq> ;
    .
 
 <#nq-syntax-uri-06> a rdft:TestNQuadsPositiveSyntax ;
    mf:name    "nq-syntax-uri-06" ;
-   rdfs:comment "URI graph with datatyped literal" ;
+   rdfs:comment "URI model.graph with datatyped literal" ;
    rdft:approval rdft:Approved ;
    mf:action    <nq-syntax-uri-06.nq> ;
    .
 
 <#nq-syntax-bnode-01> a rdft:TestNQuadsPositiveSyntax ;
    mf:name    "nq-syntax-bnode-01" ;
-   rdfs:comment "BNode graph with URI triple" ;
+   rdfs:comment "BNode model.graph with URI triple" ;
    rdft:approval rdft:Approved ;
    mf:action    <nq-syntax-bnode-01.nq> ;
    .
 
 <#nq-syntax-bnode-02> a rdft:TestNQuadsPositiveSyntax ;
    mf:name    "nq-syntax-bnode-02" ;
-   rdfs:comment "BNode graph with BNode subject" ;
+   rdfs:comment "BNode model.graph with BNode subject" ;
    rdft:approval rdft:Approved ;
    mf:action    <nq-syntax-bnode-02.nq> ;
    .
 
 <#nq-syntax-bnode-03> a rdft:TestNQuadsPositiveSyntax ;
    mf:name    "nq-syntax-bnode-03" ;
-   rdfs:comment "BNode graph with BNode object" ;
+   rdfs:comment "BNode model.graph with BNode object" ;
    rdft:approval rdft:Approved ;
    mf:action    <nq-syntax-bnode-03.nq> ;
    .
 
 <#nq-syntax-bnode-04> a rdft:TestNQuadsPositiveSyntax ;
    mf:name    "nq-syntax-bnode-04" ;
-   rdfs:comment "BNode graph with simple literal" ;
+   rdfs:comment "BNode model.graph with simple literal" ;
    rdft:approval rdft:Approved ;
    mf:action    <nq-syntax-bnode-04.nq> ;
    .
 
 <#nq-syntax-bnode-05> a rdft:TestNQuadsPositiveSyntax ;
    mf:name    "nq-syntax-bnode-05" ;
-   rdfs:comment "BNode graph with language tagged literal" ;
+   rdfs:comment "BNode model.graph with language tagged literal" ;
    rdft:approval rdft:Approved ;
    mf:action    <nq-syntax-bnode-05.nq> ;
    .
 
 <#nq-syntax-bnode-06> a rdft:TestNQuadsPositiveSyntax ;
    mf:name    "nq-syntax-bnode-06" ;
-   rdfs:comment "BNode graph with datatyped literal" ;
+   rdfs:comment "BNode model.graph with datatyped literal" ;
    rdft:approval rdft:Approved ;
    mf:action    <nq-syntax-bnode-06.nq> ;
    .

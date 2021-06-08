@@ -5,7 +5,7 @@
 :c :d false .
 }
 
-<http://example/graph> {
+<http://example/model.graph> {
 :a :b true .
 :c :d false .
 }

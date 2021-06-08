@@ -24,7 +24,7 @@
          xmlns:eg="http://example.org/">
 
  <!-- The rdf:nodeID allows two references to the same node
-      as an object of triples in the graph. -->
+      as an object of triples in the model.graph. -->
  <rdf:Description >
    <eg:property1 rdf:ID="reify" rdf:nodeID="a" />
  </rdf:Description>

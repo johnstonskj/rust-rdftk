@@ -9,11 +9,11 @@ This crate provides traits for reading and writing `Statement`s and `Graph`s as 
 The following are some well-known formats (see [Wikipedia](https://en.wikipedia.org/wiki/Resource_Description_Framework#Serialization_formats)
 for a description of different serializations), support is indicated in the final column with
 an **R** for read support and **W** for write support. One additional module, `dot` allows for the
-creation of [GraphViz](https://graphviz.gitlab.io/) dot files for a visualization of a graph's structure.
+creation of [GraphViz](https://graphviz.gitlab.io/) dot files for a visualization of a model.graph's structure.
 
 | Module    | Name                                                                                                | MIME Type                   | R/W     |
 |-----------|---------------------------------------------------------------------------------------------------- |-----------------------------|---------|
-| `nt`      | [RDF 1.1 N-Triples](https://www.w3.org/TR/n-triples/); A line-based syntax for an RDF graph         | `application/n-triples`     | **W**   |
+| `nt`      | [RDF 1.1 N-Triples](https://www.w3.org/TR/n-triples/); A line-based syntax for an RDF model.graph         | `application/n-triples`     | **W**   |
 | `nq`      | [RDF 1.1 N-Quads](https://www.w3.org/TR/n-quads/); A line-based syntax for RDF datasets             | `application/n-quads`       | **W**   |
 | `turtle`  | [RDF 1.1 Turtle](https://www.w3.org/TR/turtle/); Terse RDF Triple Language                          | `text/turtle`               | **W**   |
 | `trig`    | [RDF 1.1 TriG](https://www.w3.org/TR/trig/); RDF Dataset Language                                   | `application/trig`          |         |
@@ -41,10 +41,15 @@ use std::path::PathBuf;
 let file_path = PathBuf::from("tests/w3c/nt/literal.nt");
 let mut file = File::open(file_path).unwrap();
 let reader = NTriplesReader::default();
-let graph = reader.read(&mut file, graph_factory()).unwrap();
+let model.graph = reader.read(&mut file, graph_factory()).unwrap();
 ```
 
 ## Changes
+
+**Version 0.2.0**
+
+* Updated rdftk_core dependency to 0.3.0, this is a significant API change.
+* All read operations require a graph factory now.
 
 **Version 0.1.9**
 

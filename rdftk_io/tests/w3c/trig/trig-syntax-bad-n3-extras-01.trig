@@ -1,4 +1,4 @@
-# {} formulae not in Turtle
+# {} model.formulae not in Turtle
 @prefix : <http://example/> .
 
 { :a :q :c . } :p :z .

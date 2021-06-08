@@ -1,8 +1,8 @@
 use rdftk_core::error::eprint_trace;
-use rdftk_core::GraphRef;
+use rdftk_core::model::graph::GraphRef;
+use rdftk_core::simple::graph_factory;
 use rdftk_io::nt::reader::NTriplesReader;
 use rdftk_io::GraphReader;
-use rdftk_memgraph::simple::graph_factory;
 use std::fs::File;
 use std::path::PathBuf;
 

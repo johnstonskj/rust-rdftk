@@ -8,8 +8,8 @@ use rdftk_io::turtle::writer::{TurtleOptions, TurtleWriter};
 use rdftk_io::write_graph_to_string;
 use rdftk_iri::{IRIRef, IRI};
 use std::str::FromStr;
-# use rdftk_core::graph::GraphRef;
-# fn make_graph() -> GraphRef { rdftk_memgraph::simple::graph_factory().new_graph() }
+# use rdftk_core::model::graph::GraphRef;
+# fn make_graph() -> GraphRef { rdftk_core::simple::graph::graph_factory().graph() }
 
 let mut options = TurtleOptions::default();
 options.use_sparql_style = true;
@@ -26,10 +26,10 @@ let result = write_graph_to_string(&writer, &make_graph());
 
 use crate::common::indenter::Indenter;
 use crate::GraphWriter;
-use rdftk_core::graph::mapping::PrefixMappingRef;
-use rdftk_core::graph::{Graph, GraphRef, Prefix};
-use rdftk_core::statement::SubjectNodeRef;
-use rdftk_core::Literal;
+use rdftk_core::model::graph::mapping::PrefixMappingRef;
+use rdftk_core::model::graph::{Graph, GraphRef};
+use rdftk_core::model::literal::LiteralRef;
+use rdftk_core::model::statement::SubjectNodeRef;
 use rdftk_iri::IRIRef;
 use std::cell::Ref;
 use std::io::Write;
@@ -79,7 +79,7 @@ impl GraphWriter for TurtleWriter {
         let graph = graph.borrow();
 
         //
-        // Write out the graph base IRI
+        // Write out the model.graph base IRI
         //
         if let Some(base) = &self.base {
             if self.options.use_sparql_style {
@@ -94,12 +94,7 @@ impl GraphWriter for TurtleWriter {
         //
         let mappings = graph.prefix_mappings();
         let mappings = mappings.borrow();
-        for prefix in mappings.prefixes() {
-            let namespace = mappings.get_namespace(prefix).unwrap();
-            let prefix = match prefix {
-                Prefix::Default => String::new(),
-                Prefix::Some(prefix) => prefix.clone(),
-            };
+        for (prefix, namespace) in mappings.mappings() {
             if self.options.use_sparql_style {
                 writeln!(w, "PREFIX {}: <{}>", prefix, namespace).map_err(io_error)?;
             } else {
@@ -183,7 +178,10 @@ impl TurtleWriter {
             while let Some(object) = o_iter.next() {
                 if object.is_blank() && self.options.nest_blank_nodes {
                     write!(w, "[\n{}", indenter.one())?;
-                    let inner_subject: SubjectNodeRef = object.as_subject().unwrap().into();
+                    let inner_subject: SubjectNodeRef = in_graph
+                        .statement_factory()
+                        .object_as_subject(object.clone().clone())
+                        .unwrap();
                     let mut inner_written =
                         self.write_sub_graph(w, &inner_subject, in_graph, indenter.clone())?;
                     blanks_written.push(inner_subject);
@@ -241,7 +239,7 @@ impl TurtleWriter {
     fn write_literal<W: Write>(
         &self,
         w: &mut W,
-        literal: &Literal,
+        literal: &LiteralRef,
         _mappings: &PrefixMappingRef,
     ) -> std::io::Result<()> {
         // TODO: compress data type IRIs

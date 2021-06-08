@@ -11,8 +11,7 @@ in the specification, "flat" or "striped".
 ```rust
 use rdftk_io::xml::writer::{XmlOptions, XmlWriter};
 use rdftk_io::write_graph_to_string;
-# use rdftk_memgraph::simple::MemGraph;
-# let graph = rdftk_memgraph::simple::graph_factory().new_graph();
+# let graph = rdftk_core::simple::graph::graph_factory().graph();
 
 let options: XmlOptions = XmlOptions::flat().pretty().clone();
 
@@ -24,14 +23,13 @@ println!("{}", write_graph_to_string(&writer, &graph).unwrap());
 */
 
 use super::syntax::{
-    ATTRIBUTE_ABOUT, ATTRIBUTE_DATATYPE, ATTRIBUTE_NODE_ID, ATTRIBUTE_RESOURCE, ATTRIBUTE_XML_LANG,
-    DEFAULT_ENCODING, ELEMENT_DESCRIPTION, ELEMENT_RDF,
+    ATTRIBUTE_ABOUT, ATTRIBUTE_DATATYPE, ATTRIBUTE_NODE_ID, ATTRIBUTE_RESOURCE, DEFAULT_ENCODING,
+    ELEMENT_DESCRIPTION, ELEMENT_RDF,
 };
 use crate::GraphWriter;
 use rdftk_core::error::{ErrorKind, Result};
-use rdftk_core::graph::GraphRef;
-use rdftk_core::statement::SubjectNodeRef;
-use rdftk_core::{Graph, SubjectNode};
+use rdftk_core::model::graph::{Graph, GraphRef};
+use rdftk_core::model::statement::SubjectNodeRef;
 use rdftk_iri::IRIRef;
 use rdftk_names::{dc, foaf, geo, owl, rdf, rdfs, xsd};
 use std::cell::Ref;
@@ -50,14 +48,14 @@ use xml::EmitterConfig;
 ///
 #[derive(Clone, Debug, PartialEq)]
 pub enum XmlStyle {
-    /// Flatten the graph so all subjects are at the same level in the document.
+    /// Flatten the model.graph so all subjects are at the same level in the document.
     Flat,
     /// Nest blank nodes so that the document only has IRI subjects at the some level.
     Striped,
 }
 
 ///
-/// Options that control how the XML writer will render a graph.
+/// Options that control how the XML writer will render a model.graph.
 ///
 #[derive(Clone, Debug)]
 pub struct XmlOptions {
@@ -294,16 +292,21 @@ impl XmlWriter {
                         self.write_subject(
                             writer,
                             graph,
-                            &SubjectNode::blank_named(blank).into(),
+                            &graph
+                                .statement_factory()
+                                .blank_subject_named(blank)
+                                .unwrap(),
                             flat,
                         )?;
                     }
                 } else if let Some(literal) = object.as_literal() {
-                    let event = if let Some(language) = literal.language() {
-                        event.attr(ATTRIBUTE_XML_LANG, language)
-                    } else {
-                        event
-                    };
+                    // TODO: FIX THIS++++!!!!
+                    // let event = if let Some(language) = literal.language() {
+                    //     let language = language.to_string();
+                    //     event.attr(ATTRIBUTE_XML_LANG, &language)
+                    // } else {
+                    //     event
+                    // };
                     if let Some(data_type) = literal.data_type() {
                         let dt_iri = data_type.as_iri().to_string();
                         writer

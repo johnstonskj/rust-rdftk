@@ -1,2 +1,2 @@
 <http://a.example/s> <http://a.example/p> "\u000C" .
-<http://a.example/s> <http://a.example/p> "\u000C" <http://example/graph> .
+<http://a.example/s> <http://a.example/p> "\u000C" <http://example/model.graph> .

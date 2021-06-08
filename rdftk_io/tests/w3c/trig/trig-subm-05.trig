@@ -6,7 +6,7 @@
 :c :d [] .
 }
 
-<http://example/graph> {
+<http://example/model.graph> {
 [] :a :b .
 :c :d [] .
 }

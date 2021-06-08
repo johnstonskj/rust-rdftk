@@ -2,6 +2,8 @@
 // Public Values
 // ------------------------------------------------------------------------------------------------
 
+#![allow(dead_code)]
+
 pub(crate) const DEFAULT_ENCODING: &str = "utf-8";
 
 pub(crate) const ATTRIBUTE_ABOUT: &str = "about";

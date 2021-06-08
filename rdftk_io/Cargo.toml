@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_io"
-version = "0.1.9"
+version = "0.2.0"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
 description = "This crate provides traits for reading and writing Statements and Graphs as well as implementations of these for common representations."
@@ -19,27 +19,25 @@ dot = []
 json = ["serde_json"]
 json-ld = ["serde_json"]
 n3 = []
-nq = ["pest", "pest_derive", "rdftk_memgraph"]
-nt = ["pest", "pest_derive", "rdftk_memgraph"]
+nq = ["pest", "pest_derive"]
+nt = ["pest", "pest_derive"]
 trig = []
-turtle = ["pest", "pest_derive", "rdftk_memgraph"]
-xml = ["xml-rs", "rdftk_names", "rdftk_memgraph"]
+turtle = ["pest", "pest_derive"]
+xml = ["xml-rs", "rdftk_names"]
 
 [dependencies]
 lazy_static = "1.4"
 log = "0.4"
-rdftk_core = { version = "0.2", path = "../rdftk_core" }
+rdftk_core = { version = "0.3.0-pre", path = "../rdftk_core" }
 rdftk_iri = { version = "0.1", path = "../rdftk_iri" }
 regex = "1.5"
 
 # feature-dependencies
 pest = { version = "2.1", optional = true }
 pest_derive = { version = "2.1", optional = true }
-rdftk_memgraph = { version = "0.1", path = "../rdftk_memgraph", optional = true }
 rdftk_names = { version = "0.1", path = "../rdftk_names", optional = true }
 serde_json = { version = "1.0", optional = true }
 xml-rs = { version = "0.8", optional = true }
 
 [dev-dependencies]
 pretty_assertions = "0.7"
-rdftk_memgraph = { version = "0.1", path = "../rdftk_memgraph" }

@@ -2,4 +2,4 @@
 @prefix foo: <http://example.org/bar#>  .
 
 {foo:blah foo:blah foo:blah .}
-<http://example/graph> {foo:blah foo:blah foo:blah .}
+<http://example/model.graph> {foo:blah foo:blah foo:blah .}

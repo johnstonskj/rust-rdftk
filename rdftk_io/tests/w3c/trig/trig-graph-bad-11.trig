@@ -2,7 +2,7 @@
 PREFIX : <http://example/> 
 
 # GRAPH - no lists
-graph (1 2) { :s :p :o }
+model.graph (1 2) { :s :p :o }
 
 
 

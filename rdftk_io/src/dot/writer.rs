@@ -6,8 +6,8 @@ can be passed to `DotWriter::new`.
 ```rust
 use rdftk_io::dot::writer::{DotOptions, DotWriter};
 use rdftk_io::write_graph_to_string;
-# use rdftk_core::graph::GraphRef;
-# fn make_graph() -> GraphRef { rdftk_memgraph::simple::graph_factory().new_graph() }
+# use rdftk_core::model::graph::GraphRef;
+# fn make_graph() -> GraphRef { rdftk_core::simple::graph::graph_factory().graph() }
 
 let mut options = DotOptions::default();
 options.blank_labels = true;
@@ -18,8 +18,8 @@ let result = write_graph_to_string(&writer, &make_graph());
 */
 
 use crate::GraphWriter;
-use rdftk_core::graph::GraphRef;
-use rdftk_core::{ObjectNode, SubjectNode};
+use rdftk_core::model::graph::GraphRef;
+use rdftk_core::model::statement::{ObjectNodeRef, SubjectNodeRef};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io::Write;
@@ -55,7 +55,7 @@ pub struct DotOptions {
 
 ///
 /// This struct implements the `GraphWriter` trait and will write out a serialized form for the
-/// entire graph.
+/// entire model.graph.
 ///
 #[derive(Debug)]
 pub struct DotWriter {
@@ -208,7 +208,7 @@ impl DotWriter {
         }
     }
 
-    fn subject_id(&self, node: &SubjectNode) -> String {
+    fn subject_id(&self, node: &SubjectNodeRef) -> String {
         let mut nodes = self.nodes.borrow_mut();
         if let Some(node) = nodes.get(&node.to_string()) {
             node.id.clone()
@@ -237,7 +237,7 @@ impl DotWriter {
         }
     }
 
-    fn object_id(&self, node: &ObjectNode) -> String {
+    fn object_id(&self, node: &ObjectNodeRef) -> String {
         let mut nodes = self.nodes.borrow_mut();
         if let Some(node) = nodes.get(&node.to_string()) {
             node.id.clone()

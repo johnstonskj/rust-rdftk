@@ -21,7 +21,7 @@ one
 """ .
 }
 
-<http://example/graph> {
+<http://example/model.graph> {
 ## \U00015678 is a not a legal codepoint
 ## :a :b """\nthis \ris a \U00015678long\t
 ## literal\uABCD

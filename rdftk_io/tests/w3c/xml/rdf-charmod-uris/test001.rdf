@@ -15,8 +15,8 @@
 
   Description:
         Non US-ASCII characters are permitted in the uriref labels
-        on the RDF graph. The % escaping algorithm is not applied
-        during graph construction.
+        on the RDF model.graph. The % escaping algorithm is not applied
+        during model.graph construction.
 
   $Id: test001.rdf,v 1.1 2002/04/29 09:46:57 dbeckett2 Exp $
 -->

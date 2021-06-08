@@ -2,7 +2,7 @@ _:hasParent <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org
 _:genid1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Restriction> .
 _:genid1 <http://www.w3.org/2002/07/owl#onProperty> _:hasParent .
 _:genid1 <http://www.w3.org/2002/07/owl#maxCardinality> "2"^^<http://www.w3.org/2001/XMLSchema#integer> .
-_:hasParent <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> <http://example/graph> .
-_:genid3 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Restriction> <http://example/graph> .
-_:genid3 <http://www.w3.org/2002/07/owl#onProperty> _:hasParent <http://example/graph> .
-_:genid3 <http://www.w3.org/2002/07/owl#maxCardinality> "2"^^<http://www.w3.org/2001/XMLSchema#integer> <http://example/graph> .
+_:hasParent <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#ObjectProperty> <http://example/model.graph> .
+_:genid3 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Restriction> <http://example/model.graph> .
+_:genid3 <http://www.w3.org/2002/07/owl#onProperty> _:hasParent <http://example/model.graph> .
+_:genid3 <http://www.w3.org/2002/07/owl#maxCardinality> "2"^^<http://www.w3.org/2001/XMLSchema#integer> <http://example/model.graph> .

@@ -338,39 +338,39 @@
     <#trig-syntax-ln-dots>
     <#trig-syntax-ns-dots>
 
-    # tests for bnode graph names, optional GRAPH keyword and
+    # tests for bnode model.graph names, optional GRAPH keyword and
     # triples outside {}
-      <#trig-kw-graph-01>
-      <#trig-kw-graph-02>
-      <#trig-kw-graph-03>
-      <#trig-kw-graph-04>
-      <#trig-kw-graph-05>
+      <#trig-kw-model.graph-01>
+      <#trig-kw-model.graph-02>
+      <#trig-kw-model.graph-03>
+      <#trig-kw-model.graph-04>
+      <#trig-kw-model.graph-05>
 
-      <#trig-kw-graph-06>
-      <#trig-kw-graph-07>
-      <#trig-kw-graph-08>
-      <#trig-kw-graph-09>
+      <#trig-kw-model.graph-06>
+      <#trig-kw-model.graph-07>
+      <#trig-kw-model.graph-08>
+      <#trig-kw-model.graph-09>
 
-      <#trig-kw-graph-10>
+      <#trig-kw-model.graph-10>
 
-      <#trig-graph-bad-01>
-      <#trig-graph-bad-02>
-      <#trig-graph-bad-03>
-      <#trig-graph-bad-04>
-      <#trig-graph-bad-05>
+      <#trig-model.graph-bad-01>
+      <#trig-model.graph-bad-02>
+      <#trig-model.graph-bad-03>
+      <#trig-model.graph-bad-04>
+      <#trig-model.graph-bad-05>
 
-      <#trig-graph-bad-06>
-      <#trig-graph-bad-07>
-      <#trig-graph-bad-08>
-      <#trig-graph-bad-09>
+      <#trig-model.graph-bad-06>
+      <#trig-model.graph-bad-07>
+      <#trig-model.graph-bad-08>
+      <#trig-model.graph-bad-09>
 
-      <#trig-graph-bad-10>
-      <#trig-graph-bad-11>
+      <#trig-model.graph-bad-10>
+      <#trig-model.graph-bad-11>
 
-      <#trig-bnodeplist-graph-01>
+      <#trig-bnodeplist-model.graph-01>
 
-      <#trig-collection-graph-01>
-      <#trig-collection-graph-02>
+      <#trig-collection-model.graph-01>
+      <#trig-collection-model.graph-02>
 
       <#trig-turtle-01>
       <#trig-turtle-02>
@@ -389,7 +389,7 @@
 # TriG tests
 <#anonymous_blank_node_graph> rdf:type rdft:TestTrigEval ;
    mf:name      "anonymous_blank_node_graph" ;
-   rdfs:comment "anonymous blank node graph" ;
+   rdfs:comment "anonymous blank node model.graph" ;
    rdft:approval rdft:Approved ;
    mf:action    <anonymous_blank_node_graph.trig> ;
    mf:result    <labeled_blank_node_graph.nq> ;
@@ -397,7 +397,7 @@
 
 <#labeled_blank_node_graph> rdf:type rdft:TestTrigEval ;
    mf:name      "labeled_blank_node_graph" ;
-   rdfs:comment "labeled blank node graph" ;
+   rdfs:comment "labeled blank node model.graph" ;
    rdft:approval rdft:Approved ;
    mf:action    <labeled_blank_node_graph.trig> ;
    mf:result    <labeled_blank_node_graph.nq> ;
@@ -420,28 +420,28 @@
 
 <#trig-syntax-bad-base-04> rdf:type rdft:TestTrigNegativeSyntax ;
    mf:name    "trig-syntax-bad-base-04" ;
-   rdfs:comment "@base inside graph (negative test)" ;
+   rdfs:comment "@base inside model.graph (negative test)" ;
    rdft:approval rdft:Approved ;
    mf:action    <trig-syntax-bad-base-04.trig> ;
    .
 
 <#trig-syntax-bad-base-05> rdf:type rdft:TestTrigNegativeSyntax ;
    mf:name    "trig-syntax-bad-base-05" ;
-   rdfs:comment "BASE inside graph (negative test)" ;
+   rdfs:comment "BASE inside model.graph (negative test)" ;
    rdft:approval rdft:Approved ;
    mf:action    <trig-syntax-bad-base-05.trig> ;
    .
 
 <#trig-syntax-bad-prefix-06> rdf:type rdft:TestTrigNegativeSyntax ;
    mf:name    "trig-syntax-bad-prefix-06" ;
-   rdfs:comment "@prefix inside graph (negative test)" ;
+   rdfs:comment "@prefix inside model.graph (negative test)" ;
    rdft:approval rdft:Approved ;
    mf:action    <trig-syntax-bad-prefix-06.trig> ;
    .
 
 <#trig-syntax-bad-prefix-07> rdf:type rdft:TestTrigNegativeSyntax ;
    mf:name    "trig-syntax-bad-prefix-07" ;
-   rdfs:comment "PREFIX inside graph (negative test)" ;
+   rdfs:comment "PREFIX inside model.graph (negative test)" ;
    rdft:approval rdft:Approved ;
    mf:action    <trig-syntax-bad-prefix-07.trig> ;
    .
@@ -2655,175 +2655,175 @@
         rdft:approval rdft:Approved ;
 	mf:action <trig-syntax-blank-label.trig> .
 
-# tests for bnode graph names, optional GRAPH keyword and
+# tests for bnode model.graph names, optional GRAPH keyword and
 # triples outside {}
 
-<#trig-kw-graph-01> rdf:type rdft:TestTrigPositiveSyntax ;
-   mf:name      "trig-kw-graph-01" ;
+<#trig-kw-model.graph-01> rdf:type rdft:TestTrigPositiveSyntax ;
+   mf:name      "trig-kw-model.graph-01" ;
    rdfs:comment "Named graphs can be proceeded by GRAPH" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-kw-graph-01.trig> ;
+   mf:action    <trig-kw-model.graph-01.trig> ;
    .
 
-<#trig-kw-graph-02> rdf:type rdft:TestTrigPositiveSyntax ;
-   mf:name      "trig-kw-graph-02" ;
+<#trig-kw-model.graph-02> rdf:type rdft:TestTrigPositiveSyntax ;
+   mf:name      "trig-kw-model.graph-02" ;
    rdfs:comment "Trailing . not necessary inside {}" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-kw-graph-02.trig> ;
+   mf:action    <trig-kw-model.graph-02.trig> ;
    .
 
-<#trig-kw-graph-03> rdf:type rdft:TestTrigPositiveSyntax ;
-   mf:name      "trig-kw-graph-03" ;
-   rdfs:comment "Named graph may be empty" ;
+<#trig-kw-model.graph-03> rdf:type rdft:TestTrigPositiveSyntax ;
+   mf:name      "trig-kw-model.graph-03" ;
+   rdfs:comment "Named model.graph may be empty" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-kw-graph-03.trig> ;
+   mf:action    <trig-kw-model.graph-03.trig> ;
    .
 
-<#trig-kw-graph-04> rdf:type rdft:TestTrigPositiveSyntax ;
-   mf:name      "trig-kw-graph-04" ;
+<#trig-kw-model.graph-04> rdf:type rdft:TestTrigPositiveSyntax ;
+   mf:name      "trig-kw-model.graph-04" ;
    rdfs:comment "" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-kw-graph-04.trig> ;
+   mf:action    <trig-kw-model.graph-04.trig> ;
    .
 
-<#trig-kw-graph-05> rdf:type rdft:TestTrigPositiveSyntax ;
-   mf:name      "trig-kw-graph-05" ;
-   rdfs:comment "Use of empty prefix inside named graph" ;
+<#trig-kw-model.graph-05> rdf:type rdft:TestTrigPositiveSyntax ;
+   mf:name      "trig-kw-model.graph-05" ;
+   rdfs:comment "Use of empty prefix inside named model.graph" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-kw-graph-05.trig> ;
+   mf:action    <trig-kw-model.graph-05.trig> ;
    .
 
-<#trig-kw-graph-06> rdf:type rdft:TestTrigPositiveSyntax ;
-   mf:name      "trig-kw-graph-06" ;
+<#trig-kw-model.graph-06> rdf:type rdft:TestTrigPositiveSyntax ;
+   mf:name      "trig-kw-model.graph-06" ;
    rdfs:comment "" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-kw-graph-06.trig> ;
+   mf:action    <trig-kw-model.graph-06.trig> ;
    .
 
-<#trig-kw-graph-07> rdf:type rdft:TestTrigPositiveSyntax ;
-   mf:name      "trig-kw-graph-07" ;
-   rdfs:comment "Named graph may be named with BNode _:a" ;
+<#trig-kw-model.graph-07> rdf:type rdft:TestTrigPositiveSyntax ;
+   mf:name      "trig-kw-model.graph-07" ;
+   rdfs:comment "Named model.graph may be named with BNode _:a" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-kw-graph-07.trig> ;
+   mf:action    <trig-kw-model.graph-07.trig> ;
    .
 
-<#trig-kw-graph-08> rdf:type rdft:TestTrigPositiveSyntax ;
-   mf:name      "trig-kw-graph-08" ;
-   rdfs:comment "Named graph may be named with BNode []" ;
+<#trig-kw-model.graph-08> rdf:type rdft:TestTrigPositiveSyntax ;
+   mf:name      "trig-kw-model.graph-08" ;
+   rdfs:comment "Named model.graph may be named with BNode []" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-kw-graph-08.trig> ;
+   mf:action    <trig-kw-model.graph-08.trig> ;
    .
 
-<#trig-kw-graph-09> rdf:type rdft:TestTrigPositiveSyntax ;
-   mf:name      "trig-kw-graph-09" ;
-   rdfs:comment "Named graph may be named with PNAME" ;
+<#trig-kw-model.graph-09> rdf:type rdft:TestTrigPositiveSyntax ;
+   mf:name      "trig-kw-model.graph-09" ;
+   rdfs:comment "Named model.graph may be named with PNAME" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-kw-graph-09.trig> ;
+   mf:action    <trig-kw-model.graph-09.trig> ;
    .
 
-<#trig-kw-graph-10> rdf:type rdft:TestTrigPositiveSyntax ;
-   mf:name      "trig-kw-graph-10" ;
-   rdfs:comment "Named graph with PNAME and empty graph" ;
+<#trig-kw-model.graph-10> rdf:type rdft:TestTrigPositiveSyntax ;
+   mf:name      "trig-kw-model.graph-10" ;
+   rdfs:comment "Named model.graph with PNAME and empty model.graph" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-kw-graph-10.trig> ;
+   mf:action    <trig-kw-model.graph-10.trig> ;
    .
 
-<#trig-graph-bad-01> rdf:type rdft:TestTrigNegativeSyntax ;
-   mf:name      "trig-graph-bad-01" ;
-   rdfs:comment "GRAPH but no name - GRAPH is not used with the default graph" ;
+<#trig-model.graph-bad-01> rdf:type rdft:TestTrigNegativeSyntax ;
+   mf:name      "trig-model.graph-bad-01" ;
+   rdfs:comment "GRAPH but no name - GRAPH is not used with the default model.graph" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-graph-bad-01.trig> ;
+   mf:action    <trig-model.graph-bad-01.trig> ;
    .
 
-<#trig-graph-bad-02> rdf:type rdft:TestTrigNegativeSyntax ;
-   mf:name      "trig-graph-bad-02" ;
+<#trig-model.graph-bad-02> rdf:type rdft:TestTrigNegativeSyntax ;
+   mf:name      "trig-model.graph-bad-02" ;
    rdfs:comment "GRAPH not followed by DOT" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-graph-bad-02.trig> ;
+   mf:action    <trig-model.graph-bad-02.trig> ;
    .
 
-<#trig-graph-bad-03> rdf:type rdft:TestTrigNegativeSyntax ;
-   mf:name      "trig-graph-bad-03" ;
+<#trig-model.graph-bad-03> rdf:type rdft:TestTrigNegativeSyntax ;
+   mf:name      "trig-model.graph-bad-03" ;
    rdfs:comment "GRAPH needs {}" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-graph-bad-03.trig> ;
+   mf:action    <trig-model.graph-bad-03.trig> ;
    .
 
-<#trig-graph-bad-04> rdf:type rdft:TestTrigNegativeSyntax ;
-   mf:name      "trig-graph-bad-04" ;
+<#trig-model.graph-bad-04> rdf:type rdft:TestTrigNegativeSyntax ;
+   mf:name      "trig-model.graph-bad-04" ;
    rdfs:comment "GRAPH needs {}" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-graph-bad-04.trig> ;
+   mf:action    <trig-model.graph-bad-04.trig> ;
    .
 
-<#trig-graph-bad-05> rdf:type rdft:TestTrigNegativeSyntax ;
-   mf:name      "trig-graph-bad-05" ;
+<#trig-model.graph-bad-05> rdf:type rdft:TestTrigNegativeSyntax ;
+   mf:name      "trig-model.graph-bad-05" ;
    rdfs:comment "GRAPH and a name, not several" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-graph-bad-05.trig> ;
+   mf:action    <trig-model.graph-bad-05.trig> ;
    .
 
-<#trig-graph-bad-06> rdf:type rdft:TestTrigNegativeSyntax ;
-   mf:name      "trig-graph-bad-06" ;
+<#trig-model.graph-bad-06> rdf:type rdft:TestTrigNegativeSyntax ;
+   mf:name      "trig-model.graph-bad-06" ;
    rdfs:comment "GRAPH - Must close {}" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-graph-bad-06.trig> ;
+   mf:action    <trig-model.graph-bad-06.trig> ;
    .
 
-<#trig-graph-bad-07> rdf:type rdft:TestTrigNegativeSyntax ;
-   mf:name      "trig-graph-bad-07" ;
+<#trig-model.graph-bad-07> rdf:type rdft:TestTrigNegativeSyntax ;
+   mf:name      "trig-model.graph-bad-07" ;
    rdfs:comment "GRAPH may not include a GRAPH" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-graph-bad-07.trig> ;
+   mf:action    <trig-model.graph-bad-07.trig> ;
    .
 
-<#trig-graph-bad-08> rdf:type rdft:TestTrigNegativeSyntax ;
-   mf:name      "trig-graph-bad-08" ;
-   rdfs:comment "@graph is not a keyword" ;
+<#trig-model.graph-bad-08> rdf:type rdft:TestTrigNegativeSyntax ;
+   mf:name      "trig-model.graph-bad-08" ;
+   rdfs:comment "@model.graph is not a keyword" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-graph-bad-08.trig> ;
+   mf:action    <trig-model.graph-bad-08.trig> ;
    .
 
-<#trig-graph-bad-09> rdf:type rdft:TestTrigNegativeSyntax ;
-   mf:name      "trig-graph-bad-09" ;
+<#trig-model.graph-bad-09> rdf:type rdft:TestTrigNegativeSyntax ;
+   mf:name      "trig-model.graph-bad-09" ;
    rdfs:comment "Directives not allowed inside GRAPH" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-graph-bad-09.trig> ;
+   mf:action    <trig-model.graph-bad-09.trig> ;
    .
 
-<#trig-graph-bad-10> rdf:type rdft:TestTrigNegativeSyntax ;
-   mf:name      "trig-graph-bad-10" ;
-   rdfs:comment "A graph may not be named with an empty collection" ;
+<#trig-model.graph-bad-10> rdf:type rdft:TestTrigNegativeSyntax ;
+   mf:name      "trig-model.graph-bad-10" ;
+   rdfs:comment "A model.graph may not be named with an empty collection" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-graph-bad-10.trig> ;
+   mf:action    <trig-model.graph-bad-10.trig> ;
    .
 
-<#trig-graph-bad-11> rdf:type rdft:TestTrigNegativeSyntax ;
-   mf:name      "trig-graph-bad-11" ;
-   rdfs:comment "A graph may not be named with a collection" ;
+<#trig-model.graph-bad-11> rdf:type rdft:TestTrigNegativeSyntax ;
+   mf:name      "trig-model.graph-bad-11" ;
+   rdfs:comment "A model.graph may not be named with a collection" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-graph-bad-11.trig> ;
+   mf:action    <trig-model.graph-bad-11.trig> ;
    .
 
-<#trig-bnodeplist-graph-01> rdf:type rdft:TestTrigNegativeSyntax ;
-   mf:name      "trig-bnodeplist-graph-bad-01" ;
-   rdfs:comment "A graph may not be named with a blankNodePropertyList" ;
+<#trig-bnodeplist-model.graph-01> rdf:type rdft:TestTrigNegativeSyntax ;
+   mf:name      "trig-bnodeplist-model.graph-bad-01" ;
+   rdfs:comment "A model.graph may not be named with a blankNodePropertyList" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-bnodeplist-graph-bad-01.trig> ;
+   mf:action    <trig-bnodeplist-model.graph-bad-01.trig> ;
    .
 
-<#trig-collection-graph-01> rdf:type rdft:TestTrigNegativeSyntax ;
-   mf:name      "trig-collection-graph-bad-01" ;
-   rdfs:comment "A graph may not be named with an empty collection" ;
+<#trig-collection-model.graph-01> rdf:type rdft:TestTrigNegativeSyntax ;
+   mf:name      "trig-collection-model.graph-bad-01" ;
+   rdfs:comment "A model.graph may not be named with an empty collection" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-collection-graph-bad-01.trig> ;
+   mf:action    <trig-collection-model.graph-bad-01.trig> ;
    .
 
-<#trig-collection-graph-02> rdf:type rdft:TestTrigNegativeSyntax ;
-   mf:name      "trig-collection-graph-bad-02" ;
-   rdfs:comment "A graph may not be named with a collection" ;
+<#trig-collection-model.graph-02> rdf:type rdft:TestTrigNegativeSyntax ;
+   mf:name      "trig-collection-model.graph-bad-02" ;
+   rdfs:comment "A model.graph may not be named with a collection" ;
    rdft:approval rdft:Approved ;
-   mf:action    <trig-collection-graph-bad-02.trig> ;
+   mf:action    <trig-collection-model.graph-bad-02.trig> ;
    .
 
 <#trig-turtle-01> rdf:type rdft:TestTrigPositiveSyntax ;

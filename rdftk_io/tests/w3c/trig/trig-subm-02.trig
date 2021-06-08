@@ -9,7 +9,7 @@
   :a a:a b:a .
 }
 
-<http://example/graph> {
+<http://example/model.graph> {
   :a :b :c .
   a:a a:b a:c .
   :a a:a b:a .

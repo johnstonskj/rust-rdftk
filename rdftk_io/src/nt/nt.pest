@@ -82,7 +82,7 @@ rdfLiteral = {
 	String ~ (LANGTAG | "^^" ~ iri)?
 }
 
-LANGTAG = {
+LANGTAG = @{
 	"@" ~ ASCII_ALPHA+ ~ ("-" ~ ASCII_ALPHANUMERIC+)*
 }
 

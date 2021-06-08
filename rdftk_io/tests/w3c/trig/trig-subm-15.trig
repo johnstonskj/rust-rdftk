@@ -8,7 +8,7 @@ with
 newlines""" .
 }
 
-<http://example/graph> {
+<http://example/model.graph> {
 :a :b """a long
 	literal
 with

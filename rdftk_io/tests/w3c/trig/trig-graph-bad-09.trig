@@ -2,7 +2,7 @@
 PREFIX : <http://example/> 
 
 # GRAPH - no directives
-graph :g { 
+model.graph :g {
   :s :p :o 
 prefix x: <http://example/x#> 
   x:s1 x:p1 x:o1 .

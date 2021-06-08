@@ -1,4 +1,4 @@
-# @prefix inside graph
+# @prefix inside model.graph
 {
   @prefix ex: <http://example/> .
 }

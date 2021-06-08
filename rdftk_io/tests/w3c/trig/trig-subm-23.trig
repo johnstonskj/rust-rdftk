@@ -16,7 +16,7 @@
    :p :q . # and me
 }
 
-<http://example/graph> {
+<http://example/model.graph> {
 :a :b :c . # end of line comment
 :d # ignore me
   :e # and me

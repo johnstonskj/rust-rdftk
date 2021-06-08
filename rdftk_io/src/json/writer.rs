@@ -4,8 +4,8 @@ Provides the `JsonWriter` implementation of the `GraphWriter` trait.
 ```rust
 use rdftk_io::json::writer::{JsonWriter};
 use rdftk_io::write_graph_to_string;
-# use rdftk_core::graph::GraphRef;
-# fn make_graph() -> GraphRef { rdftk_memgraph::simple::graph_factory().new_graph() }
+# use rdftk_core::model::graph::GraphRef;
+# fn make_graph() -> GraphRef { rdftk_core::simple::graph::graph_factory().graph() }
 
 let writer = JsonWriter::pretty();
 
@@ -18,7 +18,7 @@ let result = write_graph_to_string(&writer, &make_graph());
 use crate::json::NAME;
 use crate::GraphWriter;
 use rdftk_core::error::{Error, ErrorKind, Result};
-use rdftk_core::graph::GraphRef;
+use rdftk_core::model::graph::GraphRef;
 use serde_json::{Map, Value};
 use std::io::Write;
 
@@ -27,7 +27,7 @@ use std::io::Write;
 // ------------------------------------------------------------------------------------------------
 ///
 /// This struct implements the `GraphWriter` trait and will write out a serialized form of the
-/// entire graph.
+/// entire model.graph.
 ///
 #[derive(Debug)]
 pub struct JsonWriter {
@@ -109,7 +109,7 @@ impl GraphWriter for JsonWriter {
                         if let Some(data_type) = literal.data_type() {
                             let _ = object_map.insert(
                                 OBJ_KEY_DATATYPE.to_string(),
-                                Value::String(data_type.to_string()),
+                                Value::String(data_type.as_iri().to_string()),
                             );
                         }
                     } else {

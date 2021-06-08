@@ -10,7 +10,7 @@ ex:foo :_abc "def" .
 ex:foo :_345 "678" .
 }
 
-<http://example/graph> {
+<http://example/model.graph> {
 ex:foo rdf:_1 "1" .
 ex:foo rdf:_2 "2" .
 ex:foo :_abc "def" .

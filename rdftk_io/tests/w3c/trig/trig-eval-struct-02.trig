@@ -5,7 +5,7 @@
       .
 }
 
-<http://example/graph> {
+<http://example/model.graph> {
   <http://example/s> 
       <http://example/p1> <http://example/o1> ;
       <http://example/p2> <http://example/o2> ; 

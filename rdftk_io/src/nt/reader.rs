@@ -10,7 +10,7 @@ More detailed description, with
 use crate::nt::parser;
 use crate::GraphReader;
 use rdftk_core::error::Result;
-use rdftk_core::graph::{GraphFactoryRef, GraphRef};
+use rdftk_core::model::graph::{GraphFactoryRef, GraphRef};
 use std::io::Read;
 
 // ------------------------------------------------------------------------------------------------
