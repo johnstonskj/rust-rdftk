@@ -118,7 +118,7 @@ pub trait Statement: Debug + Featured {
 pub type StatementRef = Rc<dyn Statement>;
 
 ///
-/// A list of statements, this can be used to pass non-model.graph sets of statements.
+/// A list of statements, this can be used to pass non-graph sets of statements.
 ///
 pub type StatementList = Vec<StatementRef>;
 

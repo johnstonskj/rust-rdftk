@@ -32,7 +32,7 @@ lazy_static! {
     // --------------------------------------------------------------------------------------------
 
     ///
-    /// If true, a data set's default model.graph is a combination of all named graphs. This implies
+    /// If true, a data set's default graph is a combination of all named graphs. This implies
     /// that `set_default_graph` and `unset_default_graph` have no effect.
     ///
     pub static ref FEATURE_COMBINED_DEFAULT: IRIRef = IRIRef::from(
@@ -50,14 +50,14 @@ lazy_static! {
         IRIRef::from(IRI::from_str("http://rust-rdftk.dev/feature/graph/duplicates").unwrap());
 
     ///
-    /// This model.graph, or corresponding statement, supports
+    /// This graph, or corresponding statement, supports
     /// [RDF-star](https://w3c.github.io/rdf-star/cg-spec/editors_draft.html).
     ///
     pub static ref FEATURE_RDF_STAR: IRIRef =
         IRIRef::from(IRI::from_str("http://rust-rdftk.dev/feature/graph/rdf_star").unwrap());
 
     ///
-    /// This model.graph, or corresponding statement, supports
+    /// This graph, or corresponding statement, supports
     /// [N3 Formula](https://www.w3.org/TeamSubmission/n3/#Quoting)
     ///
     pub static ref FEATURE_N3_FORMULAE: IRIRef =
@@ -100,7 +100,7 @@ lazy_static! {
 
     /// Used to determine whether a specific index combination is supported.
     pub static ref FEATURE_IDX_GRAPH: IRIRef =
-        IRIRef::from(IRI::from_str("http://rust-rdftk.dev/feature/index/model.graph").unwrap());
+        IRIRef::from(IRI::from_str("http://rust-rdftk.dev/feature/index/graph").unwrap());
 
     /// Used to determine whether a specific index combination is supported.
     pub static ref FEATURE_IDX_SUBJECT_GRAPH: IRIRef =

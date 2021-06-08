@@ -56,12 +56,12 @@ use std::sync::Arc;
 ///
 pub trait DataSetFactory: Debug + Provided {
     ///
-    /// Create a new model.graph instance.
+    /// Create a new graph instance.
     ///
     fn data_set(&self, default_graph: Option<GraphRef>) -> DataSetRef;
 
     ///
-    ///  Create a new model.graph instance from the given statements and prefix mappings.
+    ///  Create a new graph instance from the given statements and prefix mappings.
     ///
     fn data_set_from(
         &self,
@@ -80,13 +80,13 @@ pub trait DataSetFactory: Debug + Provided {
 }
 
 ///
-/// The reference type for a model.graph factory returned by a model.graph.
+/// The reference type for a graph factory returned by a graph.
 ///
 pub type DataSetFactoryRef = Arc<dyn DataSetFactory>;
 
 ///
-/// A `DataSet` is a mapping from `GraphName` to `Graph`; this introduces the notion of a named model.graph
-/// although in actuality the model.graph itself is not named as the name is the key within the data set.
+/// A `DataSet` is a mapping from `GraphName` to `Graph`; this introduces the notion of a named graph
+/// although in actuality the graph itself is not named as the name is the key within the data set.
 /// Note that this trait represents an immutable data set, a type should also implement the
 /// `MutableDataSet` trait for mutation.
 ///
@@ -102,49 +102,49 @@ pub trait DataSet: Debug + Featured {
     fn len(&self) -> usize;
 
     ///
-    /// Return `true` if this data set has a default model.graph, else `false`.
+    /// Return `true` if this data set has a default graph, else `false`.
     ///
     fn has_default_graph(&self) -> bool;
 
     ///
-    /// Return the default model.graph for this data set, if it exists.
+    /// Return the default graph for this data set, if it exists.
     ///
     fn default_graph(&self) -> Option<&GraphRef>;
 
     ///
-    /// Return `true` if this data set has a model.graph with the provided name, else `false`.
+    /// Return `true` if this data set has a graph with the provided name, else `false`.
     ///
     fn has_graph_named(&self, name: &GraphNameRef) -> bool;
 
     ///
-    /// Return the model.graph with the provided name from this data set, if it exists.
+    /// Return the graph with the provided name from this data set, if it exists.
     ///
     fn graph_named(&self, name: &GraphNameRef) -> Option<&GraphRef>;
 
     ///
-    /// Return an iterator over model.graph name/model.graph pairs.
+    /// Return an iterator over graph-name/graph pairs.
     ///
     fn graphs<'a>(&'a self) -> Box<dyn Iterator<Item = (&'a GraphNameRef, &'a GraphRef)> + 'a>;
 
     ///
-    /// Set the provided model.graph as the default, unnamed model.graph, for this data set. Only one model.graph may
+    /// Set the provided graph as the default, unnamed graph, for this data set. Only one graph may
     /// be the default.
     ///
     fn set_default_graph(&mut self, graph: GraphRef);
 
     ///
-    /// Remove any model.graph that may be set as the current default. This operation has no effect if
-    /// no default model.graph is present.
+    /// Remove any graph that may be set as the current default. This operation has no effect if
+    /// no default graph is present.
     fn unset_default_graph(&mut self);
 
     ///
-    /// Insert a new model.graph with it's associated name into the data set.
+    /// Insert a new graph with it's associated name into the data set.
     ///
     fn insert(&mut self, name: GraphNameRef, graph: GraphRef);
 
     ///
-    /// Remove the model.graph with the provided name from this data set. This operation has no effect if
-    /// no such model.graph is present.
+    /// Remove the graph with the provided name from this data set. This operation has no effect if
+    /// no such graph is present.
     ///
     fn remove(&mut self, name: &GraphNameRef);
 
@@ -171,7 +171,7 @@ pub trait DataSet: Debug + Featured {
 }
 
 ///
-/// The reference type for a model.graph data set.
+/// The reference type for a graph data set.
 ///
 pub type DataSetRef = Rc<RefCell<dyn DataSet>>;
 

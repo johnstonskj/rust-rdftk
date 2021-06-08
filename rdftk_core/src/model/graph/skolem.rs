@@ -1,5 +1,5 @@
 /*!
-Support for the Skolemization process of a model.graph. For more details on the process, see
+Support for the Skolemization process of a graph. For more details on the process, see
 [Skolemization (Informative)](https://www.w3.org/TR/rdf11-mt/#skolemization-informative)
 and [Replacing Blank Nodes with IRIs](https://www.w3.org/TR/rdf11-concepts/#section-skolemization).
 
@@ -17,8 +17,8 @@ use std::rc::Rc;
 // ------------------------------------------------------------------------------------------------
 
 ///
-/// Replace all blank nodes with new, unique IRIs. This creates a new model.graph and leaves the initial
-/// model.graph unchanged. The base IRI is used to create identifiers, it's path will be replaced
+/// Replace all blank nodes with new, unique IRIs. This creates a new graph and leaves the initial
+/// graph unchanged. The base IRI is used to create identifiers, it's path will be replaced
 /// entirely by a well-known format.
 ///
 pub fn skolemize(graph: &impl Graph, base: &IRIRef) -> Result<GraphRef, Error> {

@@ -15,6 +15,7 @@ use crate::simple::statement::statement_factory;
 use rdftk_iri::IRIRef;
 use std::cell::RefCell;
 use std::collections::HashSet;
+use std::iter::FromIterator;
 use std::ops::Deref;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -22,12 +23,6 @@ use std::sync::Arc;
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
-
-///
-/// Simple, in-memory implementation of the `GraphFactory` trait.
-///
-#[derive(Clone, Debug)]
-pub struct SimpleGraphFactory {}
 
 ///
 /// Simple, in-memory implementation of the `Graph` trait.
@@ -52,6 +47,12 @@ pub fn graph_factory() -> GraphFactoryRef {
 // ------------------------------------------------------------------------------------------------
 // Private Types
 // ------------------------------------------------------------------------------------------------
+
+///
+/// Simple, in-memory implementation of the `GraphFactory` trait.
+///
+#[derive(Clone, Debug)]
+struct SimpleGraphFactory {}
 
 lazy_static! {
     static ref FACTORY: Arc<SimpleGraphFactory> = Arc::new(SimpleGraphFactory::default());
@@ -146,7 +147,6 @@ impl Graph for SimpleGraph {
         self.statements
             .iter()
             .filter_map(|st| {
-                let st = st;
                 if st.subject() == subject {
                     Some(st.predicate())
                 } else {
@@ -203,23 +203,23 @@ impl Graph for SimpleGraph {
     }
 
     fn merge(&mut self, other: &Self) {
-        for st in other.statements() {
-            self.statements.push(st.clone())
-        }
+        other.statements().for_each(|st| self.insert(st.clone()))
     }
 
     fn dedup(&mut self) -> StatementList {
-        let mut discarded: StatementList = Default::default();
-        let mut kept: HashSet<StatementRef> = Default::default();
-        for st in &self.statements {
-            if kept.contains(st) {
-                discarded.push(st.clone());
-            } else {
-                let _ = kept.insert(st.clone());
-            }
-        }
-        self.statements = kept.drain().collect();
-        discarded
+        let (keep, discard) = self.statements.iter().fold(
+            (HashSet::<StatementRef>::default(), StatementList::default()),
+            |(mut keep, mut discard), st| {
+                if keep.contains(st) {
+                    (&mut discard).push(st.clone());
+                } else {
+                    let _ = (&mut keep).insert(st.clone());
+                }
+                (keep, discard)
+            },
+        );
+        self.statements = StatementList::from_iter(keep.into_iter());
+        discard
     }
 
     fn remove(&mut self, statement: &StatementRef) {
@@ -232,20 +232,26 @@ impl Graph for SimpleGraph {
     }
 
     fn remove_all_for(&mut self, subject: &SubjectNodeRef) -> StatementList {
-        let mut discarded: StatementList = Default::default();
-        let mut kept: StatementList = Default::default();
-        for st in &self.statements {
-            if st.subject() == subject {
-                kept.push(st.clone());
-            } else {
-                discarded.push(st.clone());
-            }
-        }
-        self.statements = kept;
-        discarded
+        let (keep, discard) = self.statements.iter().fold(
+            (StatementList::default(), StatementList::default()),
+            |(mut keep, mut discard), st| {
+                if st.subject() == subject {
+                    keep.push(st.clone());
+                } else {
+                    discard.push(st.clone());
+                }
+                (keep, discard)
+            },
+        );
+        self.statements = keep;
+        discard
     }
 
     fn clear(&mut self) {
         self.statements.clear()
     }
 }
+
+// ------------------------------------------------------------------------------------------------
+// Private Functions
+// ------------------------------------------------------------------------------------------------

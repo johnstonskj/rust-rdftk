@@ -1,6 +1,6 @@
 /*!
 A trait for the prefix mappings required by the `Graph` trait. Prefix mappings can be added to a
-model.graph to provide more readable serialization forms.
+graph to provide more readable serialization forms.
 */
 
 use crate::model::qname::QName;

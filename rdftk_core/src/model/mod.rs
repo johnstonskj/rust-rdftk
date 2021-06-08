@@ -1,10 +1,6 @@
 /*!
-One-line description.
-
-More detailed description, with
-
-# Example
-
+This module contains the traits and types used to describe an abstract DataSet, Graph, and Statement
+RDF model.
 */
 
 // ------------------------------------------------------------------------------------------------

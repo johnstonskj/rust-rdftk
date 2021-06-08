@@ -24,12 +24,6 @@ use unique_id::Generator;
 // ------------------------------------------------------------------------------------------------
 
 ///
-/// Simple, in-memory implementation of the `StatementFactory` trait.
-///
-#[derive(Clone, Debug)]
-pub struct SimpleStatementFactory {}
-
-///
 /// Simple, in-memory implementation of the `Statement` trait.
 ///
 #[derive(Clone, Debug)]
@@ -53,6 +47,12 @@ pub fn statement_factory() -> StatementFactoryRef {
 // ------------------------------------------------------------------------------------------------
 // Private Types
 // ------------------------------------------------------------------------------------------------
+
+///
+/// Simple, in-memory implementation of the `StatementFactory` trait.
+///
+#[derive(Clone, Debug)]
+struct SimpleStatementFactory {}
 
 lazy_static! {
     static ref FACTORY: Arc<SimpleStatementFactory> = Arc::new(SimpleStatementFactory {});

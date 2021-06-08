@@ -11,18 +11,6 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 // ------------------------------------------------------------------------------------------------
-// Public Types
-// ------------------------------------------------------------------------------------------------
-
-///
-/// Simple, in-memory implementation of the `PrefixMappings` trait.
-///
-#[derive(Clone, Debug)]
-pub struct SimplePrefixMappings {
-    map: BiHashMap<String, IRIRef>,
-}
-
-// ------------------------------------------------------------------------------------------------
 // Public Functions
 // ------------------------------------------------------------------------------------------------
 
@@ -45,6 +33,18 @@ pub fn common_mappings() -> PrefixMappingRef {
         mut_mapping.include_xsd();
     }
     mapping
+}
+
+// ------------------------------------------------------------------------------------------------
+// Private Types
+// ------------------------------------------------------------------------------------------------
+
+///
+/// Simple, in-memory implementation of the `PrefixMappings` trait.
+///
+#[derive(Clone, Debug)]
+struct SimplePrefixMappings {
+    map: BiHashMap<String, IRIRef>,
 }
 
 // ------------------------------------------------------------------------------------------------

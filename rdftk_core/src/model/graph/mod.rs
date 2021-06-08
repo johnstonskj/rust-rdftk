@@ -175,7 +175,7 @@ pub trait Graph: Debug + Featured {
     fn predicates(&self) -> HashSet<&IRIRef>;
 
     ///
-    /// Return a set of all predicate referenced by the provided subject in model.graph, note that
+    /// Return a set of all predicate referenced by the provided subject in graph, note that
     /// this is a set so that it removes duplicates.
     ///
     fn predicates_for(&self, subject: &SubjectNodeRef) -> HashSet<&IRIRef>;
@@ -244,7 +244,7 @@ pub trait Graph: Debug + Featured {
     fn statements_mut<'a>(&'a mut self) -> Box<dyn Iterator<Item = &'a mut StatementRef> + 'a>;
 
     ///
-    /// Insert a new statement into the model.graph.
+    /// Insert a new statement into the graph.
     ///
     fn insert(&mut self, statement: StatementRef);
 
@@ -259,6 +259,9 @@ pub trait Graph: Debug + Featured {
     ///
     /// Remove any duplicates within the graph, replacing any number of identical statements with
     /// just one. This will return a list of all statements removed.
+    ///
+    /// This method does nothing if this graph has does not support the feature
+    /// `FEATURE_GRAPH_DUPLICATES` and will therefore always return an empty list.
     ///
     fn dedup(&mut self) -> StatementList;
 

@@ -20,12 +20,6 @@ use std::sync::Arc;
 // ------------------------------------------------------------------------------------------------
 
 ///
-/// Simple, in-memory implementation of the `DataSetFactory` trait.
-///
-#[derive(Clone, Debug)]
-pub struct SimpleDataSetFactory {}
-
-///
 /// Simple, in-memory implementation of the `DataSet` trait.
 ///
 #[derive(Clone, Debug)]
@@ -48,6 +42,12 @@ pub fn data_set_factory() -> DataSetFactoryRef {
 // ------------------------------------------------------------------------------------------------
 // Private Types
 // ------------------------------------------------------------------------------------------------
+
+///
+/// Simple, in-memory implementation of the `DataSetFactory` trait.
+///
+#[derive(Clone, Debug)]
+struct SimpleDataSetFactory {}
 
 lazy_static! {
     static ref FACTORY: Arc<SimpleDataSetFactory> = Arc::new(SimpleDataSetFactory {});

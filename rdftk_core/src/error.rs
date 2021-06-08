@@ -43,10 +43,10 @@ error_chain! {
             description("An Absolute IRI was expected at.")
             display("An Absolute IRI was expected at, not '{}'.", s)
         }
-        #[doc = "A failure occurred reading or writing a model.graph."]
+        #[doc = "A failure occurred reading or writing a graph."]
         ReadWrite(repr: String) {
-            description("A failure occurred reading or writing a model.graph.")
-            display("A failure occurred reading or writing a model.graph, for representation: '{}'.", repr)
+            description("A failure occurred reading or writing a graph.")
+            display("A failure occurred reading or writing a graph, for representation: '{}'.", repr)
         }
         #[doc = "Some model element was in an invalid state for the requested operation."]
         InvalidState {

@@ -1,8 +1,8 @@
 /*!
 Graphs may have mechanisms to cache commonly used values, or those with significant storage
 overhead. In such cases they provide a value factory that should be used to construct new values
-for use in the associated model.graph. It is possible that all graphs provided by some model.graph store share
-a common value factory by store rather than by model.graph.
+for use in the associated graph. It is possible that all graphs provided by some graph store share
+a common value factory by store rather than by graph.
 */
 
 use crate::error::Result;
@@ -20,7 +20,7 @@ use std::time::Duration;
 
 ///
 /// A value factory can be used to provide previously cached values rather than creating duplicates
-/// within a model.graph.
+/// within a graph.
 ///
 pub trait LiteralFactory: Debug + Provided {
     /// Returns a cached *untyped* literal value with the provided string.

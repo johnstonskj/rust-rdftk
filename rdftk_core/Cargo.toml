@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_core"
-version = "0.3.0-pre"
+version = "0.3.0"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
 description = "This crate provides the core RDF data model; concrete implementations for Statements and Literals, along with a Resource type that provides a builder-like experience for models."
@@ -31,3 +31,6 @@ unique_id = "0.1"
 uuid = { version = "0.8", features = ["v4"] }
 
 chrono = { version = "0.4", optional = true }
+
+[dev-dependencies]
+parameterized = "0.3.1"

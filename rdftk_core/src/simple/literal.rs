@@ -15,12 +15,6 @@ use std::sync::Arc;
 // ------------------------------------------------------------------------------------------------
 
 ///
-/// Simple, in-memory implementation of the `LiteralFactory` trait.
-///
-#[derive(Clone, Debug)]
-pub struct SimpleLiteralFactory {}
-
-///
 /// Simple, in-memory implementation of the `Literal` trait.
 ///
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -44,6 +38,12 @@ pub fn literal_factory() -> LiteralFactoryRef {
 // ------------------------------------------------------------------------------------------------
 // Private Types
 // ------------------------------------------------------------------------------------------------
+
+///
+/// Simple, in-memory implementation of the `LiteralFactory` trait.
+///
+#[derive(Clone, Debug)]
+struct SimpleLiteralFactory {}
 
 lazy_static! {
     static ref FACTORY: Arc<SimpleLiteralFactory> = Arc::new(SimpleLiteralFactory::default());

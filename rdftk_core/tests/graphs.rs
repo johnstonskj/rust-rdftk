@@ -1,14 +1,13 @@
-use rdftk_core::model::graph::GraphRef;
-use rdftk_core::model::statement::StatementList;
-use rdftk_core::simple::graph::graph_factory;
-use rdftk_core::simple::literal::literal_factory;
+use parameterized::parameterized;
+use rdftk_core::model::graph::{GraphFactoryRef, GraphRef};
+use rdftk_core::simple::graph::graph_factory as simple_graph_factory;
+use rdftk_core::simple::indexed::graph_factory as indexed_graph_factory;
 use rdftk_core::simple::mapping::empty_mappings;
-use rdftk_core::simple::statement::statement_factory;
 use rdftk_core::simple::PROVIDER_ID;
 use rdftk_iri::{IRIRef, IRI};
 use std::str::FromStr;
 
-pub fn tony_benn_graph() -> GraphRef {
+pub fn tony_benn_graph(graph_factory: GraphFactoryRef) -> GraphRef {
     let mappings = empty_mappings();
 
     {
@@ -24,88 +23,95 @@ pub fn tony_benn_graph() -> GraphRef {
         );
     }
 
-    let st_factory = statement_factory();
-    let lit_factory = literal_factory();
+    let graph = graph_factory.with_mappings(mappings);
 
-    let mut statements: StatementList = Default::default();
+    {
+        let mut ref_graph = graph.borrow_mut();
 
-    let subject_iri =
-        IRIRef::from(IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap());
+        let st_factory = ref_graph.statement_factory();
+        let lit_factory = ref_graph.literal_factory();
 
-    statements.push(
-        st_factory
-            .statement(
-                st_factory.named_subject(subject_iri.clone()),
-                IRIRef::from(IRI::from_str("http://purl.org/dc/elements/1.1/title").unwrap()),
-                st_factory.literal_object(lit_factory.literal("Tony Benn")),
-            )
-            .unwrap(),
-    );
-    statements.push(
-        st_factory
-            .statement(
-                st_factory.named_subject(subject_iri.clone()),
-                IRIRef::from(IRI::from_str("http://purl.org/dc/elements/1.1/publisher").unwrap()),
-                st_factory.literal_object(lit_factory.literal("Wikipedia")),
-            )
-            .unwrap(),
-    );
-    statements.push(
-        st_factory
-            .statement(
-                st_factory.named_subject(subject_iri),
-                IRIRef::from(IRI::from_str("http://purl.org/dc/elements/1.1/description").unwrap()),
-                st_factory.blank_object_named("B1").unwrap(),
-            )
-            .unwrap(),
-    );
-    statements.push(
-        st_factory
-            .statement(
-                st_factory.blank_subject_named("B1").unwrap(),
-                IRIRef::from(IRI::from_str("http://xmlns.com/foaf/0.1/name").unwrap()),
-                st_factory.literal_object(lit_factory.literal("Tony Benn")),
-            )
-            .unwrap(),
-    );
-    statements.push(
-        st_factory
-            .statement(
-                st_factory.blank_subject_named("B1").unwrap(),
-                IRIRef::from(
-                    IRI::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#type").unwrap(),
-                ),
-                st_factory.named_object(
-                    IRI::from_str("http://xmlns.com/foaf/0.1/Person")
-                        .unwrap()
-                        .into(),
-                ),
-            )
-            .unwrap(),
-    );
+        let subject_iri =
+            IRIRef::from(IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap());
 
-    graph_factory().graph_from(&statements, Some(mappings))
+        ref_graph.insert(
+            st_factory
+                .statement(
+                    st_factory.named_subject(subject_iri.clone()),
+                    IRIRef::from(IRI::from_str("http://purl.org/dc/elements/1.1/title").unwrap()),
+                    st_factory.literal_object(lit_factory.literal("Tony Benn")),
+                )
+                .unwrap(),
+        );
+        ref_graph.insert(
+            st_factory
+                .statement(
+                    st_factory.named_subject(subject_iri.clone()),
+                    IRIRef::from(
+                        IRI::from_str("http://purl.org/dc/elements/1.1/publisher").unwrap(),
+                    ),
+                    st_factory.literal_object(lit_factory.literal("Wikipedia")),
+                )
+                .unwrap(),
+        );
+        ref_graph.insert(
+            st_factory
+                .statement(
+                    st_factory.named_subject(subject_iri),
+                    IRIRef::from(
+                        IRI::from_str("http://purl.org/dc/elements/1.1/description").unwrap(),
+                    ),
+                    st_factory.blank_object_named("B1").unwrap(),
+                )
+                .unwrap(),
+        );
+        ref_graph.insert(
+            st_factory
+                .statement(
+                    st_factory.blank_subject_named("B1").unwrap(),
+                    IRIRef::from(IRI::from_str("http://xmlns.com/foaf/0.1/name").unwrap()),
+                    st_factory.literal_object(lit_factory.literal("Tony Benn")),
+                )
+                .unwrap(),
+        );
+        ref_graph.insert(
+            st_factory
+                .statement(
+                    st_factory.blank_subject_named("B1").unwrap(),
+                    IRIRef::from(
+                        IRI::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#type").unwrap(),
+                    ),
+                    st_factory.named_object(
+                        IRI::from_str("http://xmlns.com/foaf/0.1/Person")
+                            .unwrap()
+                            .into(),
+                    ),
+                )
+                .unwrap(),
+        );
+    }
+    graph
 }
 
-#[test]
-fn graph_len() {
-    let graph = tony_benn_graph();
+#[parameterized(graph_factory = { simple_graph_factory(), indexed_graph_factory()})]
+fn graph_len(graph_factory: GraphFactoryRef) {
+    let graph = tony_benn_graph(graph_factory);
     let graph = graph.borrow();
 
     assert_eq!(graph.len(), 5);
 }
 
-#[test]
-fn graph_provider() {
-    let graph = tony_benn_graph();
+#[parameterized(graph_factory = { simple_graph_factory(), indexed_graph_factory()})]
+fn graph_provider(graph_factory: GraphFactoryRef) {
+    let graph = tony_benn_graph(graph_factory);
     let graph = graph.borrow();
 
     assert_eq!(graph.factory().provider_id(), PROVIDER_ID);
 }
 
-#[test]
-fn graph_contains_individual() {
-    let graph = tony_benn_graph();
+#[parameterized(graph_factory = { simple_graph_factory(), indexed_graph_factory()})]
+fn graph_contains_individual(graph_factory: GraphFactoryRef) {
+    let graph = tony_benn_graph(graph_factory);
     let graph = graph.borrow();
 
     {
@@ -123,9 +129,9 @@ fn graph_contains_individual() {
     }
 }
 
-#[test]
-fn graph_contains_subject() {
-    let graph = tony_benn_graph();
+#[parameterized(graph_factory = { simple_graph_factory(), indexed_graph_factory()})]
+fn graph_contains_subject(graph_factory: GraphFactoryRef) {
+    let graph = tony_benn_graph(graph_factory);
     let graph = graph.borrow();
 
     {

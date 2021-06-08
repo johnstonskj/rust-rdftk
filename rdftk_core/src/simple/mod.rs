@@ -1,10 +1,6 @@
 /*!
-One-line description.
-
-More detailed description, with
-
-# Example
-
+This module contains the types implementing the abstract RDF model described in
+[crate::model](../model/index.html).
 */
 
 // use ...
@@ -49,6 +45,8 @@ pub use data_set::data_set_factory;
 
 pub mod graph;
 pub use graph::graph_factory;
+
+pub mod indexed;
 
 pub mod literal;
 
