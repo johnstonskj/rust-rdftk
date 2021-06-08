@@ -73,6 +73,10 @@ namespace! {
 
 **Version 0.1.8**
 
+* rdftk_iri dependency reset to only major/minor.
+
+**Version 0.1.8**
+
 * Applied a lot more warnings in lib.rs
 * Applied resulting warnings and Clippy suggestions.
 * Reformatted macro layout.
