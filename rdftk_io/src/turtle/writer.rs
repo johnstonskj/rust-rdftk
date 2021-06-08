@@ -180,7 +180,12 @@ impl TurtleWriter {
                     write!(w, "[\n{}", indenter.one())?;
                     let inner_subject: SubjectNodeRef = in_graph
                         .statement_factory()
-                        .object_as_subject(object.clone().clone())
+                        .object_as_subject(
+                            <&std::rc::Rc<dyn rdftk_core::model::statement::ObjectNode>>::clone(
+                                object,
+                            )
+                            .clone(),
+                        )
                         .unwrap();
                     let mut inner_written =
                         self.write_sub_graph(w, &inner_subject, in_graph, indenter.clone())?;

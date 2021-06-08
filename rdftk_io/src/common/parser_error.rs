@@ -110,9 +110,9 @@ impl Display for ParserError {
 
 impl std::error::Error for ParserError {}
 
-impl Into<CoreError> for ParserError {
-    fn into(self) -> CoreError {
-        CoreError::with_chain(self.clone(), ErrorKind::ReadWrite(self.repr))
+impl From<ParserError> for CoreError {
+    fn from(e: ParserError) -> Self {
+        CoreError::with_chain(e.clone(), ErrorKind::ReadWrite(e.repr))
     }
 }
 

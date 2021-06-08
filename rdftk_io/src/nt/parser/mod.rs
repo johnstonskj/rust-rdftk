@@ -256,7 +256,7 @@ fn iri_ref(input_pair: Pair<'_, Rule>) -> Result<IRIRef> {
         if !iri.is_relative_reference() {
             Ok(iri)
         } else {
-            Err(ErrorKind::AbsoluteIriExpected(iri_str.to_string()).into())
+            Err(ErrorKind::AbsoluteIriExpected(iri_str).into())
         }
     } else {
         unexpected!("iri_ref", input_pair);
