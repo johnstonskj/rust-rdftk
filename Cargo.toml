@@ -4,7 +4,6 @@ members = [
     "rdftk_core",
     "rdftk_io",
     "rdftk_iri",
-    "rdftk_memgraph",
     "rdftk_names",
     "rdftk_ontology",
     "rdftk_query",
