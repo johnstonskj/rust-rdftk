@@ -12,6 +12,10 @@ TBD
 
 ## Changes
 
+**Version 0.2.0**
+
+* Major version update to track new core 0.3 series.
+
 **Version 0.1.29**
 
 * More core API changes.

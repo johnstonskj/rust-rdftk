@@ -1,12 +1,5 @@
 /*!
 Create a rich document for the provided scheme.
-
-Details TBD
-
-# Example
-
-TBD
-
 */
 
 use crate::model::collection::Member;
@@ -17,7 +10,9 @@ use crate::model::{
     LiteralProperty, Resource, Scheme, ToUri,
 };
 use crate::ns;
-use rdftk_core::graph::mapping::PrefixMappingRef;
+use rdftk_core::model::graph::mapping::PrefixMappingRef;
+use rdftk_core::model::literal::LanguageTag;
+use rdftk_core::simple;
 use rdftk_io::turtle::writer::TurtleWriter;
 use rdftk_io::write_graph_to_string;
 use rdftk_iri::IRIRef;
@@ -40,22 +35,28 @@ use std::str::FromStr;
 // Private Types
 // ------------------------------------------------------------------------------------------------
 
-struct Context<'a> {
+struct Context {
     ns_mappings: PrefixMappingRef,
     collections: Vec<Rc<RefCell<Collection>>>,
-    language: &'a str,
+    language: Option<LanguageTag>,
 }
 
 // ------------------------------------------------------------------------------------------------
 // Public Functions
 // ------------------------------------------------------------------------------------------------
 
+///
+/// Construct a new `Document` instance which will describe the provided Scheme. If provided, the
+/// specified `language` will be used to select preferred labels and descriptions. If provided, the
+/// default namespace will be used when serializing the Turtle appendix.
+///
 pub fn make_document(
     scheme: &Scheme,
-    language: &str,
+    language: Option<LanguageTag>,
     default_namespace: Option<IRIRef>,
 ) -> Result<Document, Error> {
-    let mut ns_mappings = standard_mappings();
+    let factory = simple::graph_factory();
+    let ns_mappings = standard_mappings(&factory);
     if let Some(default_namespace) = default_namespace {
         let mut ns_mappings = ns_mappings.borrow_mut();
         let _ = ns_mappings.set_default_namespace(default_namespace);
@@ -64,9 +65,14 @@ pub fn make_document(
     make_document_with_mappings(scheme, language, ns_mappings)
 }
 
+///
+/// Construct a new `Document` instance which will describe the provided Scheme. If provided, the
+/// specified `language` will be used to select preferred labels and descriptions. If provided, the
+///  set of mappings will be used as prefixes when serializing the Turtle appendix.
+///
 pub fn make_document_with_mappings(
     scheme: &Scheme,
-    language: &str,
+    language: Option<LanguageTag>,
     ns_mappings: PrefixMappingRef,
 ) -> Result<Document, Error> {
     let context = Context::new(scheme, language, ns_mappings);
@@ -110,7 +116,7 @@ pub fn make_document_with_mappings(
         );
 
         let mut concepts = scheme.concepts_flattened();
-        concepts.sort_by_key(|concept| concept.borrow().preferred_label(language));
+        concepts.sort_by_key(|concept| concept.borrow().get_preferred_label_for(&context.language));
         concepts.dedup();
 
         for concept in &concepts {
@@ -145,7 +151,7 @@ pub fn make_document_with_mappings(
             .clone(),
     );
 
-    let graph = to_rdf_graph_with_mappings(&scheme, context.ns_mappings);
+    let graph = to_rdf_graph_with_mappings(&scheme, context.ns_mappings, &simple::graph_factory());
     let writer = TurtleWriter::default();
     let code = write_graph_to_string(&writer, &graph)
         .chain_err(|| ErrorKind::Msg("Could not serialize graph".to_string()))?;
@@ -159,11 +165,12 @@ pub fn make_document_with_mappings(
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl<'a> Context<'a> {
-    fn new(scheme: &'a Scheme, language: &'a str, ns_mappings: PrefixMappingRef) -> Self {
+impl Context {
+    fn new(scheme: &Scheme, language: Option<LanguageTag>, ns_mappings: PrefixMappingRef) -> Self {
         // make collection mappings!
         let mut collections = scheme.collections_flattened();
-        collections.sort_by_key(|collection| collection.borrow().preferred_label(language));
+        collections
+            .sort_by_key(|collection| collection.borrow().get_preferred_label_for(&language));
         Self {
             ns_mappings,
             collections,
@@ -186,29 +193,32 @@ fn level_to_heading(level: u8) -> HeadingLevel {
         _ => HeadingLevel::SubSubSubSubSubSection,
     }
 }
-fn write_entity_header<'a>(
+fn write_entity_header(
     document: &mut Document,
     obj: &impl Resource,
     header_text: &str,
     depth: usize,
-    context: &Context<'a>,
+    context: &Context,
 ) {
-    let heading = format!("{}: {}", header_text, obj.preferred_label(context.language));
+    let heading = format!(
+        "{}: {}",
+        header_text,
+        obj.get_preferred_label_for(&context.language)
+    );
 
     let _ = document.add_heading(
         Heading::new(&heading, level_to_heading(depth as u8))
             .set_label(Anchor::safe_from(
-                &obj.preferred_label(context.language),
+                &obj.get_preferred_label_for(&context.language),
                 Some(&header_text.to_lowercase()),
             ))
             .clone(),
     );
 
-    let for_language = Some(context.language.to_string());
     if let Some(definition) = obj.properties().iter().find(|prop| {
-        prop.predicate() == ns::definition() && prop.value().language() == &for_language
+        prop.predicate() == ns::definition() && prop.language() == context.language.as_ref()
     }) {
-        let _ = document.add_paragraph(Paragraph::italic_str(definition.value().lexical_form()));
+        let _ = document.add_paragraph(Paragraph::italic_str(definition.lexical_form()));
     }
 
     let _ = document.add_paragraph(Paragraph::link(HyperLink::external(&obj.uri().to_string())));
@@ -228,7 +238,7 @@ fn write_entity_header<'a>(
     }
 }
 
-fn write_labels<'a>(document: &mut Document, labels: Vec<&Label>, context: &Context<'a>) {
+fn write_labels(document: &mut Document, labels: Vec<&Label>, context: &Context) {
     let mut labels = labels;
     labels.sort_by_key(|label| label.kind());
     let mut current_kind: Option<&LabelKind> = None;
@@ -250,14 +260,18 @@ fn write_labels<'a>(document: &mut Document, labels: Vec<&Label>, context: &Cont
 
             table = Table::new(&[Column::from("Label text"), Column::from("Language")]);
         }
-        let lang = label.language();
 
         table.add_row(Row::new(&[
             Cell::text_str(label.text()),
-            if lang == context.language {
-                Cell::bold_str(&lang.to_string())
-            } else {
-                Cell::plain_str(&lang.to_string())
+            match label.language() {
+                None => Cell::empty(),
+                Some(lang) => {
+                    if label.language() == context.language.as_ref() {
+                        Cell::bold_str(&lang.to_string())
+                    } else {
+                        Cell::plain_str(&lang.to_string())
+                    }
+                }
             },
         ]));
     }
@@ -266,10 +280,10 @@ fn write_labels<'a>(document: &mut Document, labels: Vec<&Label>, context: &Cont
     }
 }
 
-fn write_other_properties<'a>(
+fn write_other_properties(
     document: &mut Document,
     properties: Vec<&LiteralProperty>,
-    context: &Context<'a>,
+    context: &Context,
 ) {
     let mut properties = properties;
     properties.sort_by_key(|property| property.predicate().to_string());
@@ -287,18 +301,18 @@ fn write_other_properties<'a>(
                     Some(qname) => qname.to_string(),
                 },
             ),
-            Cell::text_str(&property.value().lexical_form()),
-            Cell::text_str(&match property.value().data_type() {
+            Cell::text_str(&property.lexical_form()),
+            Cell::text_str(&match property.data_type() {
                 None => String::new(),
                 Some(dt) => match context.ns_mappings.borrow().compress(dt.as_iri()) {
                     None => property.predicate().to_string(),
                     Some(qname) => qname.to_string(),
                 },
             }),
-            match property.value().language() {
+            match property.language() {
                 None => Cell::empty(),
                 Some(lang) => {
-                    if lang == context.language {
+                    if property.language() == context.language.as_ref() {
                         Cell::bold_str(&lang.to_string())
                     } else {
                         Cell::plain_str(&lang.to_string())
@@ -310,7 +324,7 @@ fn write_other_properties<'a>(
     let _ = document.add_table(table);
 }
 
-fn write_concept<'a>(document: &mut Document, concept: &Concept, context: &Context<'a>) {
+fn write_concept(document: &mut Document, concept: &Concept, context: &Context) {
     write_entity_header(document, concept, "Concept", 3, &context);
 
     if concept.has_concepts() {
@@ -320,12 +334,12 @@ fn write_concept<'a>(document: &mut Document, concept: &Concept, context: &Conte
     write_collection_membership(document, concept.uri(), context);
 }
 
-fn write_concept_relations<'a>(document: &mut Document, concept: &Concept, context: &Context<'a>) {
+fn write_concept_relations(document: &mut Document, concept: &Concept, context: &Context) {
     let _ = document.add_heading(Heading::new("Related Concepts", level_to_heading(4)));
     let mut table = Table::new(&[Column::from("Relationship"), Column::from("Concept IRI")]);
     for (relation, related) in concept.concepts() {
         let related = related.borrow();
-        let label = related.preferred_label(context.language);
+        let label = related.get_preferred_label_for(&context.language);
         table.add_row(Row::new(&[
             Cell::text_str(
                 &match context.ns_mappings.borrow().compress(&relation.to_uri()) {
@@ -358,10 +372,10 @@ fn write_concept_relations<'a>(document: &mut Document, concept: &Concept, conte
     let _ = document.add_table(table);
 }
 
-fn write_concept_tree<'a>(
+fn write_concept_tree(
     document: &mut Document,
     scheme: &Scheme,
-    context: &Context<'a>,
+    context: &Context,
 ) -> Result<(), Error> {
     let _ = document.add_heading(
         Heading::sub_section("Concepts Hierarchy")
@@ -370,7 +384,7 @@ fn write_concept_tree<'a>(
     );
     for concept in scheme.top_concepts().map(|concept| concept.borrow()) {
         let mut list = List::default();
-        let label = concept.preferred_label(context.language);
+        let label = concept.get_preferred_label_for(&context.language);
         let link = HyperLink::internal_with_caption_str(
             Anchor::safe_from(&label, Some("concept")),
             &label,
@@ -384,18 +398,19 @@ fn write_concept_tree<'a>(
     Ok(())
 }
 
-fn write_concept_tree_inner<'a>(
+fn write_concept_tree_inner(
     document: &mut Document,
     list: &mut List,
     current_concepts: Vec<&(ConceptRelation, Rc<RefCell<Concept>>)>,
-    context: &Context<'a>,
+    context: &Context,
 ) -> Result<(), Error> {
     let mut current_concepts = current_concepts;
-    current_concepts.sort_by_key(|(_, concept)| concept.borrow().preferred_label(context.language));
+    current_concepts
+        .sort_by_key(|(_, concept)| concept.borrow().get_preferred_label_for(&context.language));
     let mut sub_list = List::default();
     for (relation, concept) in current_concepts.iter().filter(|(rel, _)| rel.is_narrower()) {
         let concept = concept.borrow();
-        let pref_label = concept.preferred_label(context.language);
+        let pref_label = concept.get_preferred_label_for(&context.language);
         let link = HyperLink::internal_with_caption_str(
             Anchor::safe_from(&pref_label, Some("concept")),
             &pref_label,
@@ -422,7 +437,7 @@ fn write_concept_tree_inner<'a>(
     Ok(())
 }
 
-fn write_collection<'a>(document: &mut Document, collection: &Collection, context: &Context<'a>) {
+fn write_collection(document: &mut Document, collection: &Collection, context: &Context) {
     write_entity_header(document, collection, "Collection", 3, &context);
 
     if collection.has_members() {
@@ -432,11 +447,7 @@ fn write_collection<'a>(document: &mut Document, collection: &Collection, contex
     write_collection_membership(document, collection.uri(), context);
 }
 
-fn write_collection_membership<'a>(
-    document: &mut Document,
-    member_uri: &IRIRef,
-    context: &Context<'a>,
-) {
+fn write_collection_membership(document: &mut Document, member_uri: &IRIRef, context: &Context) {
     let in_collections: Vec<&Rc<RefCell<Collection>>> = context
         .collections
         .iter()
@@ -452,7 +463,7 @@ fn write_collection_membership<'a>(
         );
         for collection in in_collections {
             let collection = collection.borrow();
-            let pref_label = collection.preferred_label(context.language);
+            let pref_label = collection.get_preferred_label_for(&context.language);
             let _ = list.add_item_from(
                 HyperLink::internal_with_caption_str(
                     Anchor::safe_from(&pref_label, Some("collection")),
@@ -466,9 +477,9 @@ fn write_collection_membership<'a>(
 }
 
 fn write_collection_members<'a>(
-    document: &mut Document,
+    document: &'a mut Document,
     members: impl Iterator<Item = &'a Member>,
-    context: &Context<'a>,
+    context: &Context,
 ) {
     let _ = document.add_heading(Heading::new("Members", level_to_heading(4)));
     let mut list = List::default();
@@ -476,7 +487,7 @@ fn write_collection_members<'a>(
         match member {
             Member::Collection(member) => {
                 let member = member.borrow();
-                let pref_label = member.preferred_label(context.language);
+                let pref_label = member.get_preferred_label_for(&context.language);
                 let mut item_span = Span::default();
                 let _ = item_span.add_text("Collection ".into());
                 let _ = item_span.add_link(HyperLink::internal_with_caption_str(
@@ -487,7 +498,7 @@ fn write_collection_members<'a>(
             }
             Member::Concept(member) => {
                 let member = member.borrow();
-                let pref_label = member.preferred_label(context.language);
+                let pref_label = member.get_preferred_label_for(&context.language);
                 let mut item_span = Span::default();
                 let _ = item_span.add_text("Concept ".into());
                 let _ = item_span.add_link(HyperLink::internal_with_caption_str(

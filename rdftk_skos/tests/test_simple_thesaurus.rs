@@ -1,6 +1,8 @@
 use pretty_assertions::assert_eq;
-use rdftk_core::graph::PrefixMappings;
-use rdftk_core::{DataType, Literal};
+use rdftk_core::model::graph::PrefixMappings;
+use rdftk_core::model::literal::{DataType, LanguageTag, Literal};
+use rdftk_core::simple::graph_factory;
+use rdftk_core::simple::statement::statement_factory;
 use rdftk_iri::{IRIRef, IRI};
 use rdftk_names::{dc, owl, xsd};
 use rdftk_skos::document::make_document_with_mappings;
@@ -48,12 +50,10 @@ fn make_unesco_computer() -> Scheme {
     ref_analog_computers.add_preferred_label("Ordenador analógico", "es");
     ref_analog_computers.add_preferred_label("حواسب تناظرية", "ar");
     ref_analog_computers.add_hidden_label("Ordenador analogico", "es");
-    ref_analog_computers.add_property(LiteralProperty::new(
+    ref_analog_computers.add_property(LiteralProperty::with_data_type(
         dc::terms::modified().clone(),
-        Literal::with_type(
-            "2019-12-15T14:00:02Z",
-            DataType::Other(xsd::date_time().clone()),
-        ),
+        "2019-12-15T14:00:02Z",
+        DataType::Other(xsd::date_time().clone()),
     ));
 
     let domain_collection = scheme.new_top_collection(
@@ -93,7 +93,7 @@ fn test_simple_thesaurus() {
 fn test_simple_thesaurus_to_rdf() {
     let scheme = make_unesco_computer();
 
-    let graph = to_rdf_graph(&scheme, None);
+    let graph = to_rdf_graph(&scheme, None, &graph_factory());
     let graph = graph.borrow();
     assert_eq!(graph.len(), 43);
 
@@ -108,7 +108,7 @@ const MARKDOWN: &str = include_str!("simple_thesaurus.md");
 fn test_simple_thesaurus_to_markdown() {
     let scheme = make_unesco_computer();
 
-    let mappings = standard_mappings();
+    let mappings = standard_mappings(&graph_factory());
     {
         let mut mappings = mappings.borrow_mut();
         mappings.insert(
@@ -124,7 +124,9 @@ fn test_simple_thesaurus_to_markdown() {
         );
     }
 
-    let result = make_document_with_mappings(&scheme, "en", mappings);
+    let language = Some(LanguageTag::from_str("en").unwrap());
+
+    let result = make_document_with_mappings(&scheme, language, mappings);
 
     assert!(result.is_ok());
     let doc = result.unwrap();

@@ -14,8 +14,8 @@ use crate::model::properties::final_preferred_label;
 use crate::model::{Label, Labeled, LiteralProperty, Propertied, Resource, ToStatements};
 use crate::model::{ToStatement, ToUri};
 use crate::ns;
-use rdftk_core::statement::{ObjectNodeRef, StatementList};
-use rdftk_core::{ObjectNode, Statement, SubjectNode};
+use rdftk_core::model::literal::{LanguageTag, LiteralFactoryRef};
+use rdftk_core::model::statement::{ObjectNodeRef, StatementFactoryRef, StatementList};
 use rdftk_iri::IRIRef;
 use rdftk_names::rdf;
 use std::cell::RefCell;
@@ -133,7 +133,7 @@ impl Labeled for Concept {
         &self.labels
     }
 
-    fn preferred_label(&self, for_language: &str) -> String {
+    fn get_preferred_label_for(&self, for_language: &Option<LanguageTag>) -> String {
         if let Some(label) = &self.preferred_label {
             label.clone()
         } else {
@@ -146,42 +146,59 @@ impl Labeled for Concept {
 }
 
 impl ToStatements for Concept {
-    fn to_statements(&self, in_scheme: Option<&ObjectNodeRef>) -> StatementList {
-        let mut statements: StatementList = Default::default();
-        let subject = SubjectNode::named_ref(self.uri().clone());
-        statements.push(Statement::new_ref(
-            subject.clone(),
-            rdf::a_type().clone(),
-            ObjectNode::named_ref(ns::concept().clone()),
-        ));
+    fn to_statements(
+        &self,
+        in_scheme: Option<&ObjectNodeRef>,
+        statements: &StatementFactoryRef,
+        literals: &LiteralFactoryRef,
+    ) -> StatementList {
+        let mut statement_list: StatementList = Default::default();
+        let subject = statements.named_subject(self.uri().clone());
+        statement_list.push(
+            statements
+                .statement(
+                    subject.clone(),
+                    rdf::a_type().clone(),
+                    statements.named_object(ns::concept().clone()),
+                )
+                .unwrap(),
+        );
         if let Some(in_scheme) = in_scheme {
-            statements.push(Statement::new_ref(
-                subject.clone(),
-                ns::in_scheme().clone(),
-                in_scheme.clone(),
-            ));
+            statement_list.push(
+                statements
+                    .statement(subject.clone(), ns::in_scheme().clone(), in_scheme.clone())
+                    .unwrap(),
+            );
         }
         for (relation, to_concept) in &self.concepts {
-            statements.push(Statement::new_ref(
-                subject.clone(),
-                relation.to_uri(),
-                ObjectNode::named_ref(to_concept.borrow().uri().clone()),
-            ));
+            statement_list.push(
+                statements
+                    .statement(
+                        subject.clone(),
+                        relation.to_uri(),
+                        statements.named_object(to_concept.borrow().uri().clone()),
+                    )
+                    .unwrap(),
+            );
         }
         for (relation, to_concept) in &self.external_relations {
-            statements.push(Statement::new_ref(
-                subject.clone(),
-                relation.clone(),
-                ObjectNode::named_ref(to_concept.clone()),
-            ));
+            statement_list.push(
+                statements
+                    .statement(
+                        subject.clone(),
+                        relation.clone(),
+                        statements.named_object(to_concept.clone()),
+                    )
+                    .unwrap(),
+            );
         }
         for label in self.labels() {
-            statements.push(label.to_statement(&subject));
+            statement_list.push(label.to_statement(&subject, statements, literals));
         }
         for property in self.properties() {
-            statements.push(property.to_statement(&subject));
+            statement_list.push(property.to_statement(&subject, statements, literals));
         }
-        statements
+        statement_list
     }
 }
 

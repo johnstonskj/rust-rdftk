@@ -14,8 +14,10 @@ use crate::model::properties::final_preferred_label;
 use crate::model::ToStatement;
 use crate::model::{Concept, Label, Labeled, LiteralProperty, Propertied, Resource, ToStatements};
 use crate::ns;
-use rdftk_core::statement::{ObjectNodeRef, StatementList, SubjectNodeRef};
-use rdftk_core::{ObjectNode, Statement, SubjectNode};
+use rdftk_core::model::literal::{LanguageTag, LiteralFactoryRef};
+use rdftk_core::model::statement::{
+    ObjectNodeRef, StatementFactoryRef, StatementList, SubjectNodeRef,
+};
 use rdftk_iri::IRIRef;
 use rdftk_names::rdf;
 use std::cell::RefCell;
@@ -107,7 +109,7 @@ impl Labeled for Collection {
         &self.labels
     }
 
-    fn preferred_label(&self, for_language: &str) -> String {
+    fn get_preferred_label_for(&self, for_language: &Option<LanguageTag>) -> String {
         if let Some(label) = &self.preferred_label {
             label.clone()
         } else {
@@ -120,59 +122,77 @@ impl Labeled for Collection {
 }
 
 impl ToStatements for Collection {
-    fn to_statements(&self, in_scheme: Option<&ObjectNodeRef>) -> StatementList {
-        let mut statements: StatementList = Default::default();
-        let subject = SubjectNode::named_ref(self.uri().clone());
+    fn to_statements(
+        &self,
+        in_scheme: Option<&ObjectNodeRef>,
+        statements: &StatementFactoryRef,
+        literals: &LiteralFactoryRef,
+    ) -> StatementList {
+        let mut statement_list: StatementList = Default::default();
+        let subject = statements.named_subject(self.uri().clone());
         if self.ordered {
-            statements.push(Statement::new_ref(
-                subject.clone(),
-                rdf::a_type().clone(),
-                ObjectNode::named_ref(ns::ordered_collection().clone()),
-            ));
+            statement_list.push(
+                statements
+                    .statement(
+                        subject.clone(),
+                        rdf::a_type().clone(),
+                        statements.named_object(ns::ordered_collection().clone()),
+                    )
+                    .unwrap(),
+            );
         } else {
-            statements.push(Statement::new_ref(
-                subject.clone(),
-                rdf::a_type().clone(),
-                ObjectNode::named_ref(ns::collection().clone()),
-            ));
+            statement_list.push(
+                statements
+                    .statement(
+                        subject.clone(),
+                        rdf::a_type().clone(),
+                        statements.named_object(ns::collection().clone()),
+                    )
+                    .unwrap(),
+            );
         }
         if let Some(in_scheme) = in_scheme {
-            statements.push(Statement::new_ref(
-                subject.clone(),
-                ns::in_scheme().clone(),
-                in_scheme.clone(),
-            ));
+            statement_list.push(
+                statements
+                    .statement(subject.clone(), ns::in_scheme().clone(), in_scheme.clone())
+                    .unwrap(),
+            );
         }
 
         if self.has_members() {
             if self.ordered {
-                let mut list_node = make_list_node(&mut statements, None);
+                let mut list_node = make_list_node(&mut statement_list, None, statements);
                 for (i, member) in self.members.iter().enumerate() {
-                    add_to_list_node(&mut statements, &list_node, &member.uri());
+                    add_to_list_node(&mut statement_list, &list_node, &member.uri(), statements);
                     if i < self.members.len() {
-                        list_node = make_list_node(&mut statements, Some(list_node));
+                        list_node =
+                            make_list_node(&mut statement_list, Some(list_node), statements);
                     }
                 }
-                make_list_end(&mut statements, &list_node);
+                make_list_end(&mut statement_list, &list_node, statements);
             } else {
                 for member in &self.members {
-                    statements.push(Statement::new_ref(
-                        subject.clone(),
-                        ns::member().clone(),
-                        ObjectNode::named_ref(member.uri().clone()),
-                    ));
+                    statement_list.push(
+                        statements
+                            .statement(
+                                subject.clone(),
+                                ns::member().clone(),
+                                statements.named_object(member.uri().clone()),
+                            )
+                            .unwrap(),
+                    );
                 }
             }
         }
 
         for label in self.labels() {
-            statements.push(label.to_statement(&subject));
+            statement_list.push(label.to_statement(&subject, statements, literals));
         }
         for property in self.properties() {
-            statements.push(property.to_statement(&subject));
+            statement_list.push(property.to_statement(&subject, statements, literals));
         }
 
-        statements
+        statement_list
     }
 }
 
@@ -264,40 +284,73 @@ impl Collection {
 // Private Functions
 // ------------------------------------------------------------------------------------------------
 
-fn make_list_node(statements: &mut StatementList, from: Option<SubjectNodeRef>) -> SubjectNodeRef {
-    let new_node = SubjectNode::blank_ref();
+fn make_list_node(
+    statements: &mut StatementList,
+    from: Option<SubjectNodeRef>,
+    factory: &StatementFactoryRef,
+) -> SubjectNodeRef {
+    let new_node = factory.blank_subject();
     if let Some(from) = from {
-        statements.push(Statement::new_ref(
-            from,
-            rdf::rest().clone(),
-            new_node.as_object(),
-        ));
+        statements.push(
+            factory
+                .statement(
+                    from,
+                    rdf::rest().clone(),
+                    factory.subject_as_object(new_node.clone()),
+                )
+                .unwrap(),
+        );
     }
-    statements.push(Statement::new_ref(
-        new_node.clone(),
-        rdf::a_type().clone(),
-        ObjectNode::named_ref(rdf::list().clone()),
-    ));
+    statements.push(
+        factory
+            .statement(
+                new_node.clone(),
+                rdf::a_type().clone(),
+                factory.named_object(rdf::list().clone()),
+            )
+            .unwrap(),
+    );
     new_node
 }
 
-fn add_to_list_node(statements: &mut StatementList, current: &SubjectNodeRef, member_uri: &IRIRef) {
-    statements.push(Statement::new_ref(
-        current.clone(),
-        rdf::first().clone(),
-        ObjectNode::named_ref(member_uri.clone()),
-    ));
+fn add_to_list_node(
+    statements: &mut StatementList,
+    current: &SubjectNodeRef,
+    member_uri: &IRIRef,
+    factory: &StatementFactoryRef,
+) {
+    statements.push(
+        factory
+            .statement(
+                current.clone(),
+                rdf::first().clone(),
+                factory.named_object(member_uri.clone()),
+            )
+            .unwrap(),
+    );
 }
 
-fn make_list_end(statements: &mut StatementList, last: &SubjectNodeRef) {
-    statements.push(Statement::new_ref(
-        last.clone(),
-        rdf::a_type().clone(),
-        ObjectNode::named_ref(rdf::list().clone()),
-    ));
-    statements.push(Statement::new_ref(
-        last.clone(),
-        rdf::rest().clone(),
-        ObjectNode::named_ref(rdf::nil().clone()),
-    ));
+fn make_list_end(
+    statements: &mut StatementList,
+    last: &SubjectNodeRef,
+    factory: &StatementFactoryRef,
+) {
+    statements.push(
+        factory
+            .statement(
+                last.clone(),
+                rdf::a_type().clone(),
+                factory.named_object(rdf::list().clone()),
+            )
+            .unwrap(),
+    );
+    statements.push(
+        factory
+            .statement(
+                last.clone(),
+                rdf::rest().clone(),
+                factory.named_object(rdf::nil().clone()),
+            )
+            .unwrap(),
+    );
 }
