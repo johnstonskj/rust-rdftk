@@ -194,6 +194,47 @@ serialization forms, representations, are described for RDF data but none descri
 <p>This brief primer introduces enough to get started on understanding the RDFtk set of crates and more details will be
 introduced in crate-specific sections. There is a more complete <a href="https://www.w3.org/TR/rdf-primer/">W3C RDF Primer</a> 
 that has a lot more information than presented here.</p>
+<h2><a class="header" href="#data-modeling" id="data-modeling">Data Modeling</a></h2>
+<p><a name="fig_1_1"></a><img src="img/primer-er-example.png" alt="An RDF Statement" /></p>
+<div class="caption figure">1.1: E/R and UML Diagrams</div>
+<ol>
+<li>Data Modeling - ER</li>
+<li>Software Modeling - UML</li>
+<li>Data Schema - SQL, XSD, ...</li>
+<li>Classes</li>
+</ol>
+<pre><code class="language-sql">CREATE TABLE authored (
+    author VARCHAR(128) NOT NULL, 
+    thing VARCHAR(128) NOT NULL
+);
+
+INSERT 
+    INTO authored (author, thing) 
+    VALUES ('Simon', 'this');
+</code></pre>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>struct Authored {
+    pub author: String,
+    pub thing: String,
+}
+
+fn make_one() -&gt; Authored {
+    Authored { author: &quot;Simon&quot;, thing: &quot;this&quot; }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<pre><code class="language-sql">CREATE TABLE author (
+    id INT NOT NULL PRIMARY KEY,
+    name VARCHAR(128) NOT NULL
+);
+CREATE TABLE authored ( 
+    author INT NOT NULL, 
+    thing VARCHAR(128) NOT NULL, 
+    FOREIGN key(author) REFERENCES author(id)
+);
+</code></pre>
 <h2><a class="header" href="#resources-statements-and-literals" id="resources-statements-and-literals">Resources, Statements, and Literals</a></h2>
 <p>The data model for RDF is surprisingly simple, the core component of which is the <strong>Statement</strong>. A statement asserts
 a fact based on the linguistic form <em>subject</em> <em>predicate</em> <em>object</em> (property will sometimes be used instead of the more
@@ -628,7 +669,7 @@ and columns the specifics of query matching are different and make use of <em>ba
 statements within a graph. The structure of these patterns is very similar to the syntax we’ve seen for Turtle, but 
 include variables, identifiers that start with “?” or “$”. These variables not only determine what is included in the 
 projection but also how graph patterns will be matched.</p>
-<pre><code class="language-sparql">PREFIX dcterms: &lt;http://purl.org/dc/terms/&gt; .
+<pre><code class="language-sparql">PREFIX dcterms: &lt;http://purl.org/dc/terms/&gt;
 
 SELECT ?id ?descr ?ver
 WHERE {
@@ -646,7 +687,7 @@ information on the resources required to complete a query.</p>
 </blockquote>
 <p>The <code>FROM</code> clause in SPARQL identifies a graph to scope a query, and multiple graphs can be specified to produce results
 across them.</p>
-<pre><code class="language-sparql">PREFIX dcterms: &lt;http://purl.org/dc/terms/&gt; .
+<pre><code class="language-sparql">PREFIX dcterms: &lt;http://purl.org/dc/terms/&gt;
 
 SELECT ?id ?descr ?ver
 FROM &lt;https://crates.io/rdf/crates/&gt;
@@ -688,7 +729,7 @@ by allowing for an optional IRI or blank node as the fourth element in a seriali
 </code></pre>
 <p>Similarly, the Turtle language has been extended into <a href="https://www.w3.org/TR/trig/">TriG</a> which defines a syntax that 
 wraps a set of statements in braces preceded by a graph identifier.</p>
-<pre><code class="language-turtle">@prefix dcterms: &lt;http://purl.org/dc/terms/&gt; .
+<pre><code class="language-trig">@prefix dcterms: &lt;http://purl.org/dc/terms/&gt; .
 
 &lt;https://crates.io/rdf/crates/&gt;
   {
@@ -703,7 +744,10 @@ in RDF. The current <a href="https://w3c.github.io/rdf-star/rdf-star-cg-spec.htm
 number of frameworks, including RDFtk, and allows for an entire statement to be written in-line in representations such
 as Turtle, and expressed directly in SPARQL.</p>
 <p>For example, the following is a textual representation of our “<em>Joe said...</em>“ reification example.</p>
-<pre><code class="language-turtle">_:S1
+<pre><code class="language-turtle">@prefix rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
+@prefix : &lt;#&gt; .
+
+_:S1
     a               rdf:Statement ;
     rdf:subject     :Jane ;
     rdf:predicate   :said ;
@@ -713,12 +757,15 @@ as Turtle, and expressed directly in SPARQL.</p>
 </code></pre>
 <p>Turtle does however have a short-cut for the representation of the blank node <code>_:S1</code> above, which does make the 
 example somewhat more readable, but still verbose.</p>
-<pre><code class="language-turtle">:Joe    
+<pre><code class="language-turtle">@prefix rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; .
+@prefix : &lt;#&gt; .
+
+:Joe    
     :said [
         a               rdf:Statement ;
         rdf:subject     :Jane ;
         rdf:predicate   :said ;
-        rdf:object      &quot;something&quot; .
+        rdf:object      &quot;something&quot;
     ] .
 </code></pre>
 <p>RDF* allows the inner statement to be included directly by enclosed within “&lt;&lt;“ and “&gt;&gt;”, as shown below.</p>
