@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_io"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
 description = "This crate provides traits for reading and writing Statements and Graphs as well as implementations of these for common representations."
@@ -28,7 +28,7 @@ xml = ["xml-rs", "rdftk_names"]
 [dependencies]
 lazy_static = "1.4"
 log = "0.4"
-rdftk_core = { version = "0.3.0-pre", path = "../rdftk_core" }
+rdftk_core = { version = "0.3", path = "../rdftk_core" }
 rdftk_iri = { version = "0.1", path = "../rdftk_iri" }
 regex = "1.5"
 
@@ -40,4 +40,6 @@ serde_json = { version = "1.0", optional = true }
 xml-rs = { version = "0.8", optional = true }
 
 [dev-dependencies]
+env_logger = "0.8"
 pretty_assertions = "0.7"
+pretty_env_logger = "0.4"

@@ -36,7 +36,8 @@ pub const MIME_TYPE: &str = "application/rdf+json";
 // Modules
 // ------------------------------------------------------------------------------------------------
 
-#[doc(hidden)]
+mod syntax;
+
 pub mod reader;
 
 pub mod writer;

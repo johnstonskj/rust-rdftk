@@ -1,4 +1,4 @@
-# PREFIX inside model.graph
+# PREFIX inside graph
 {
   PREFIX ex: <http://example/>
 }

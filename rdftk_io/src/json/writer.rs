@@ -15,6 +15,10 @@ let result = write_graph_to_string(&writer, &make_graph());
 
 */
 
+use crate::json::syntax::{
+    OBJ_KEY_DATATYPE, OBJ_KEY_LANG, OBJ_KEY_TYPE, OBJ_KEY_VALUE, OBJ_TYPE_BNODE, OBJ_TYPE_LITERAL,
+    OBJ_TYPE_URI,
+};
 use crate::json::NAME;
 use crate::GraphWriter;
 use rdftk_core::error::{Error, ErrorKind, Result};
@@ -27,7 +31,7 @@ use std::io::Write;
 // ------------------------------------------------------------------------------------------------
 ///
 /// This struct implements the `GraphWriter` trait and will write out a serialized form of the
-/// entire model.graph.
+/// entire graph.
 ///
 #[derive(Debug)]
 pub struct JsonWriter {
@@ -45,15 +49,6 @@ pub struct JsonWriter {
 // ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
-
-const OBJ_KEY_VALUE: &str = "value";
-const OBJ_KEY_TYPE: &str = "type";
-const OBJ_KEY_LANG: &str = "lang";
-const OBJ_KEY_DATATYPE: &str = "datatype";
-
-const OBJ_TYPE_BNODE: &str = "bnode";
-const OBJ_TYPE_URI: &str = "uri";
-const OBJ_TYPE_LITERAL: &str = "literal";
 
 impl Default for JsonWriter {
     fn default() -> Self {
@@ -143,6 +138,7 @@ impl JsonWriter {
 // ------------------------------------------------------------------------------------------------
 
 fn json_error(e: serde_json::Error) -> Error {
+    error!("Error parsing JSON source: {:?}", e);
     Error::with_chain(e, ErrorKind::ReadWrite(NAME.to_string()))
 }
 

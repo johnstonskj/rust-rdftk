@@ -100,7 +100,7 @@ impl GraphWriter for NQuadGraphWriter {
 }
 
 impl NQuadGraphWriter {
-    /// Construct a new quad writer with the provided model.graph name.
+    /// Construct a new quad writer with the provided graph name.
     pub fn named(name: GraphNameRef) -> Self {
         Self { name: Some(name) }
     }

@@ -1,6 +1,5 @@
 use rdftk_core::model::graph::GraphRef;
 use rdftk_core::model::statement::StatementList;
-use rdftk_core::simple::empty_mappings;
 use rdftk_core::simple::graph::graph_factory;
 use rdftk_core::simple::literal::literal_factory;
 use rdftk_core::simple::statement::statement_factory;
@@ -8,7 +7,7 @@ use rdftk_iri::{IRIRef, IRI};
 use std::str::FromStr;
 
 pub fn tony_benn_graph() -> GraphRef {
-    let mappings = empty_mappings();
+    let mappings = graph_factory().mapping_factory().empty();
     {
         let mut mut_mappings = mappings.borrow_mut();
         mut_mappings.include_rdf();

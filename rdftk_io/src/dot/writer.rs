@@ -55,7 +55,7 @@ pub struct DotOptions {
 
 ///
 /// This struct implements the `GraphWriter` trait and will write out a serialized form for the
-/// entire model.graph.
+/// entire graph.
 ///
 #[derive(Debug)]
 pub struct DotWriter {

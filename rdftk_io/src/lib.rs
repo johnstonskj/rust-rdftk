@@ -10,7 +10,7 @@ creation of [GraphViz](https://graphviz.gitlab.io/) dot files for a visualizatio
 
 | Module    | Name                                                                                                | MIME Type                   | R/W     |
 |-----------|---------------------------------------------------------------------------------------------------- |-----------------------------|---------|
-| `nt`      | [RDF 1.1 N-Triples](https://www.w3.org/TR/n-triples/); A line-based syntax for an RDF model.graph         | `application/n-triples`     | **R+W** |
+| `nt`      | [RDF 1.1 N-Triples](https://www.w3.org/TR/n-triples/); A line-based syntax for an RDF graph         | `application/n-triples`     | **R+W** |
 | `nq`      | [RDF 1.1 N-Quads](https://www.w3.org/TR/n-quads/); A line-based syntax for RDF datasets             | `application/n-quads`       | **W**   |
 | `turtle`  | [RDF 1.1 Turtle](https://www.w3.org/TR/turtle/); Terse RDF Triple Language                          | `text/turtle`               | **W**   |
 | `trig`    | [RDF 1.1 TriG](https://www.w3.org/TR/trig/); RDF Dataset Language                                   | `application/trig`          |         |
@@ -95,21 +95,21 @@ pub trait GraphReader {
 
 ///
 /// Write all [`Statement`](../rdftk_core/statement/struct.Statement.html)s in the
-/// [`Graph`](../rdftk_graph/model.graph/trait.Graph.html) using the provided implementation of
+/// [`Graph`](../rdftk_graph/graph/trait.Graph.html) using the provided implementation of
 /// [`Write`](https://doc.rust-lang.org/std/io/trait.Write.html).
 ///
 pub trait GraphWriter {
-    /// Write the formatted model.graph `Graph` using the write implementation `w`.
+    /// Write the formatted graph `Graph` using the write implementation `w`.
     fn write(&self, w: &mut impl Write, graph: &GraphRef) -> Result<()>;
 }
 
 ///
-/// Write all [`Graph`](../rdftk_graph/model.graph/trait.Graph.html)s in the
+/// Write all [`Graph`](../rdftk_graph/graph/trait.Graph.html)s in the
 /// [`DataSet`](../rdftk_graph/model.data_set/trait.DataSet.html) using the provided implementation of
 /// [`Write`](https://doc.rust-lang.org/std/io/trait.Write.html).
 ///
 pub trait DataSetWriter {
-    /// Write the formatted model.graph `NamedGraph` using the write implementation `w`.
+    /// Write the formatted graph `NamedGraph` using the write implementation `w`.
     fn write(&self, w: &mut impl Write, data_set: &DataSetRef) -> Result<()>;
 }
 

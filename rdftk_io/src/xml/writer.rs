@@ -26,6 +26,7 @@ use super::syntax::{
     ATTRIBUTE_ABOUT, ATTRIBUTE_DATATYPE, ATTRIBUTE_NODE_ID, ATTRIBUTE_RESOURCE, DEFAULT_ENCODING,
     ELEMENT_DESCRIPTION, ELEMENT_RDF,
 };
+use crate::xml::syntax::ATTRIBUTE_XML_LANG_PREFIXED;
 use crate::GraphWriter;
 use rdftk_core::error::{ErrorKind, Result};
 use rdftk_core::model::graph::{Graph, GraphRef};
@@ -48,14 +49,14 @@ use xml::EmitterConfig;
 ///
 #[derive(Clone, Debug, PartialEq)]
 pub enum XmlStyle {
-    /// Flatten the model.graph so all subjects are at the same level in the document.
+    /// Flatten the graph so all subjects are at the same level in the document.
     Flat,
-    /// Nest blank nodes so that the document only has IRI subjects at the some level.
+    /// Nest blank nodes so that the document only has IRI subjects at the same level.
     Striped,
 }
 
 ///
-/// Options that control how the XML writer will render a model.graph.
+/// Options that control how the XML writer will render a graph.
 ///
 #[derive(Clone, Debug)]
 pub struct XmlOptions {
@@ -76,6 +77,10 @@ pub struct XmlWriter {
     options: XmlOptions,
 }
 
+// ------------------------------------------------------------------------------------------------
+// Implementations
+// ------------------------------------------------------------------------------------------------
+
 lazy_static! {
     static ref RDF_ABOUT: String = format!("{}:{}", rdf::default_prefix(), ATTRIBUTE_ABOUT);
     static ref RDF_DATATYPE: String = format!("{}:{}", rdf::default_prefix(), ATTRIBUTE_DATATYPE);
@@ -84,10 +89,6 @@ lazy_static! {
     static ref RDF_NODE_ID: String = format!("{}:{}", rdf::default_prefix(), ATTRIBUTE_NODE_ID);
     static ref RDF_RESOURCE: String = format!("{}:{}", rdf::default_prefix(), ATTRIBUTE_RESOURCE);
 }
-
-// ------------------------------------------------------------------------------------------------
-// Implementations
-// ------------------------------------------------------------------------------------------------
 
 impl Default for XmlOptions {
     fn default() -> Self {
@@ -272,7 +273,7 @@ impl XmlWriter {
             let (ns, mut name) = split_uri(predicate);
 
             for object in graph.objects_for(subject, predicate) {
-                let event = if let Some(prefix) = self.mappings.get(&ns) {
+                let mut element = if let Some(prefix) = self.mappings.get(&ns) {
                     name = format!("{}:{}", prefix, name);
                     XmlEvent::start_element(name.as_str()).ns(prefix, &ns)
                 } else {
@@ -281,14 +282,14 @@ impl XmlWriter {
 
                 if let Some(iri) = object.as_iri() {
                     let iri = iri.to_string();
-                    let event = event.attr(RDF_RESOURCE.as_str(), &iri);
-                    writer.write(event).map_err(xml_error)?;
+                    element = element.attr(RDF_RESOURCE.as_str(), &iri);
+                    writer.write(element).map_err(xml_error)?;
                 } else if let Some(blank) = object.as_blank() {
                     if flat {
-                        let event = event.attr(RDF_NODE_ID.as_str(), blank);
-                        writer.write(event).map_err(xml_error)?;
+                        element = element.attr(RDF_NODE_ID.as_str(), blank);
+                        writer.write(element).map_err(xml_error)?;
                     } else {
-                        writer.write(event).map_err(xml_error)?;
+                        writer.write(element).map_err(xml_error)?;
                         self.write_subject(
                             writer,
                             graph,
@@ -300,20 +301,20 @@ impl XmlWriter {
                         )?;
                     }
                 } else if let Some(literal) = object.as_literal() {
-                    // TODO: FIX THIS++++!!!!
-                    // let event = if let Some(language) = literal.language() {
-                    //     let language = language.to_string();
-                    //     event.attr(ATTRIBUTE_XML_LANG, &language)
-                    // } else {
-                    //     event
-                    // };
+                    let language = literal
+                        .language()
+                        .map(|l| l.to_string())
+                        .unwrap_or_default();
+                    if !language.is_empty() {
+                        element = element.attr(ATTRIBUTE_XML_LANG_PREFIXED, &language)
+                    }
                     if let Some(data_type) = literal.data_type() {
                         let dt_iri = data_type.as_iri().to_string();
                         writer
-                            .write(event.attr(RDF_DATATYPE.as_str(), &dt_iri))
+                            .write(element.attr(RDF_DATATYPE.as_str(), &dt_iri))
                             .map_err(xml_error)?
                     } else {
-                        writer.write(event).map_err(xml_error)?;
+                        writer.write(element).map_err(xml_error)?;
                     }
                     writer
                         .write(XmlEvent::Characters(literal.lexical_form()))
@@ -341,6 +342,7 @@ impl XmlWriter {
 // Private Functions
 // ------------------------------------------------------------------------------------------------
 
+#[inline]
 fn xml_error(e: xml::writer::Error) -> rdftk_core::error::Error {
     rdftk_core::error::Error::with_chain(e, ErrorKind::ReadWrite(super::NAME.to_string()))
 }

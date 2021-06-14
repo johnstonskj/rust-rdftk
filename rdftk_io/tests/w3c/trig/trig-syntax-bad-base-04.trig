@@ -1,4 +1,4 @@
-# @base inside model.graph
+# @base inside graph
 {
   @base <http://example/> .
 }

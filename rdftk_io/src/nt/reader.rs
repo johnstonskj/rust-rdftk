@@ -1,9 +1,20 @@
 /*!
-One-line description.
-
-More detailed description, with
+Provides the `NTripleReader` implementation of the `GraphReader` trait.
 
 # Example
+
+```rust
+use rdftk_core::simple::graph_factory;
+use rdftk_io::nt::reader::NTriplesReader;
+use rdftk_io::GraphReader;
+use std::fs::File;
+use std::path::PathBuf;
+
+let file_path = PathBuf::from("tests/w3c/nt/literal.nt");
+let mut file = File::open(file_path).unwrap();
+let reader = NTriplesReader::default();
+assert!(reader.read(&mut file, graph_factory()).is_ok());
+```
 
 */
 
@@ -17,6 +28,9 @@ use std::io::Read;
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
+///
+/// An implementation of the GraphReader trait to read resources in the NTriples representation.
+///
 #[derive(Clone, Debug)]
 pub struct NTriplesReader {}
 
@@ -50,7 +64,7 @@ impl GraphReader for NTriplesReader {
 // Private Functions
 // ------------------------------------------------------------------------------------------------
 
-pub fn io_error(e: std::io::Error) -> rdftk_core::error::Error {
+fn io_error(e: std::io::Error) -> rdftk_core::error::Error {
     use rdftk_core::error::ErrorKind;
     rdftk_core::error::Error::with_chain(e, ErrorKind::ReadWrite(super::NAME.to_string()))
 }

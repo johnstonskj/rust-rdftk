@@ -79,7 +79,7 @@ impl GraphWriter for TurtleWriter {
         let graph = graph.borrow();
 
         //
-        // Write out the model.graph base IRI
+        // Write out the graph base IRI
         //
         if let Some(base) = &self.base {
             if self.options.use_sparql_style {

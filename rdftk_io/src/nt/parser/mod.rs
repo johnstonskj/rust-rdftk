@@ -113,6 +113,7 @@ fn subject(input_pair: Pair<'_, Rule>, factory: &StatementFactoryRef) -> Result<
             Rule::IRIREF => Ok(factory.named_subject(iri_ref(inner_pair)?)),
             Rule::BlankNode => {
                 let node = inner_pair.as_str().to_string();
+                // strip the leading '_:'
                 let node = &node[2..];
                 factory.blank_subject_named(node)
             }
@@ -153,6 +154,7 @@ fn object(
             Rule::IRIREF => Ok(factory.named_object(iri_ref(inner_pair)?)),
             Rule::BlankNode => {
                 let node = inner_pair.as_str().to_string();
+                // strip the leading '_:'
                 let node = &node[2..];
                 Ok(factory.blank_object_named(node)?)
             }
@@ -251,8 +253,9 @@ fn iri_ref(input_pair: Pair<'_, Rule>) -> Result<IRIRef> {
     trace!("iri_ref({:?})", &input_pair.as_rule());
     if input_pair.as_rule() == Rule::IRIREF {
         let iri = input_pair.as_str().to_string();
+        // strip the '<' and '>' characters.
         let iri_str = unescape_iri(&iri[1..iri.len() - 1]);
-        let iri = IRIRef::new(IRI::from_str(&iri_str).unwrap());
+        let iri = IRIRef::new(IRI::from_str(&iri_str)?);
         if !iri.is_relative_reference() {
             Ok(iri)
         } else {
@@ -267,12 +270,15 @@ fn lang_tag(input_pair: Pair<'_, Rule>) -> Result<LanguageTag> {
     trace!("lang_tag({:?})", &input_pair.as_rule());
     if input_pair.as_rule() == Rule::LANGTAG {
         let tag = input_pair.as_str().to_string();
+        // strip the leading '@'
         let tag = &tag[1..];
         Ok(LanguageTag::from_str(tag)?)
     } else {
         unexpected!("lang_tag", input_pair);
     }
 }
+
+// ------------------------------------------------------------------------------------------------
 
 lazy_static! {
     static ref UNICODE_ESC: Regex =

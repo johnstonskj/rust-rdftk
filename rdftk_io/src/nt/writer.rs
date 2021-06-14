@@ -29,7 +29,7 @@ use std::io::Write;
 
 ///
 /// This struct implements the `GraphWriter` trait and will write out a serialized form of the
-/// entire model.graph.
+/// entire graph.
 ///
 #[derive(Debug)]
 pub struct NTripleWriter {}

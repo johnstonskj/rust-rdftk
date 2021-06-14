@@ -2,7 +2,7 @@
 <http://a.example/s> <http://a.example/p> p:o#comment
 .
 
-<http://example/model.graph> {
+<http://example/graph> {
   <http://a.example/s> <http://a.example/p> <http://a.example/o>#comment
   .
 }

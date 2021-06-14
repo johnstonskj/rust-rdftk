@@ -23,7 +23,6 @@ pub const MIME_TYPE: &str = "application/n-triples";
 
 mod parser;
 
-#[doc(hidden)]
 pub mod reader;
 
 pub mod writer;
