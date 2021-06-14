@@ -28,17 +28,18 @@ TBD
     unused_results,
 )]
 
-use rdftk_core::{Literal, Statement};
+use rdftk_core::model::literal::LiteralRef;
+use rdftk_core::model::statement::{StatementFactoryRef, StatementList};
 use rdftk_iri::IRIRef;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub enum LabelProperty {
-    Label(Literal),
-    Comment(Literal),
+    Label(LiteralRef),
+    Comment(LiteralRef),
     SeeAlso(IRIRef),
     IsDefinedBy(IRIRef),
 }
@@ -48,10 +49,10 @@ pub trait Resource {
 }
 
 pub trait Labeled: Resource {
-    fn add_label(&mut self, value: Literal) {
+    fn add_label(&mut self, value: LiteralRef) {
         self.add_label_property(LabelProperty::Label(value))
     }
-    fn add_comment(&mut self, value: Literal) {
+    fn add_comment(&mut self, value: LiteralRef) {
         self.add_label_property(LabelProperty::Comment(value))
     }
     fn add_see_also(&mut self, value: IRIRef) {
@@ -84,7 +85,7 @@ pub trait Subclassed: Individual {
 }
 
 pub trait ToStatements {
-    fn to_statements(&self) -> Vec<Statement>;
+    fn to_statements(&self, factory: &StatementFactoryRef) -> StatementList;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -94,6 +95,18 @@ pub trait ToStatements {
 // ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
+
+impl PartialEq for LabelProperty {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Label(lhs), Self::Label(rhs)) => lhs == rhs,
+            (Self::Comment(lhs), Self::Comment(rhs)) => lhs == rhs,
+            (Self::SeeAlso(lhs), Self::SeeAlso(rhs)) => lhs == rhs,
+            (Self::IsDefinedBy(lhs), Self::IsDefinedBy(rhs)) => lhs == rhs,
+            (_, _) => false,
+        }
+    }
+}
 
 // ------------------------------------------------------------------------------------------------
 // Private Types

@@ -8,7 +8,7 @@ More detailed description, with
 */
 
 use crate::LabelProperty;
-use rdftk_core::Literal;
+use rdftk_core::model::literal::LiteralRef;
 use rdftk_iri::IRIRef;
 use std::collections::HashMap;
 
@@ -20,16 +20,16 @@ use std::collections::HashMap;
 
 // Nothing
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub enum HeaderProperty {
-    VersionInfo(Literal),
+    VersionInfo(LiteralRef),
     PriorVersion(IRIRef),
     BackwardCompatibleWith(IRIRef),
     IncompatibleWith(IRIRef),
     Imports(IRIRef),
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct Ontology {
     uri: IRIRef,
     label_properties: Vec<LabelProperty>,
@@ -38,14 +38,14 @@ pub struct Ontology {
     properties: HashMap<IRIRef, Property>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct Class {
     description: ClassDescription,
     axioms: Vec<ClassAxiom>,
     deprecated: bool,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct Property {
     deprecated: bool,
 }
