@@ -20,7 +20,7 @@ use std::time::Duration;
 
 ///
 /// A value factory can be used to provide previously cached values rather than creating duplicates
-/// within a graph.
+/// within a graph. Such a factory may only be retrieved using the `Graph::literal_factory` method.
 ///
 pub trait LiteralFactory: Debug + Provided {
     /// Returns a cached *untyped* literal value with the provided string.

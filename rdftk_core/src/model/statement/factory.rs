@@ -12,6 +12,11 @@ use rdftk_iri::IRIRef;
 use std::fmt::Debug;
 use std::sync::Arc;
 
+///
+/// A statement factory provides an interface to create new statements and statement nodes. This
+/// allows for implementations where underlying shared resources are required and so may be owned
+/// by the factory. This factory may only be retrieved using the `Graph::statement_factory` method.
+///
 pub trait StatementFactory: Debug + Provided {
     // --------------------------------------------------------------------------------------------
     // Whole statements

@@ -49,6 +49,10 @@ pub fn make_statements() -> StatementList {
 
 ## Changes
 
+**Version 0.3.1**
+
+* Added PrefixMappingFactory trait and a prefix_mapping_factory method on GraphFactory.
+
 **Version 0.3.0**
 
 * The abstract RDF API, described in module 'model', is now entirely trait based.

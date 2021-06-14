@@ -42,7 +42,6 @@
 */
 
 use crate::model::Equiv;
-use rdftk_names::xsd;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::rc::Rc;
@@ -119,27 +118,7 @@ impl Display for dyn Literal {
             "\"{}\"{}",
             self.lexical_form(),
             match (self.data_type(), self.language()) {
-                (Some(data_type), None) => format!(
-                    "^^<{}>",
-                    match data_type {
-                        DataType::String => xsd::string(),
-                        DataType::QName => xsd::q_name(),
-                        DataType::IRI => xsd::any_uri(),
-                        DataType::Boolean => xsd::boolean(),
-                        DataType::Float => xsd::float(),
-                        DataType::Double => xsd::double(),
-                        DataType::Long => xsd::long(),
-                        DataType::Int => xsd::int(),
-                        DataType::Short => xsd::short(),
-                        DataType::Byte => xsd::byte(),
-                        DataType::UnsignedLong => xsd::unsigned_long(),
-                        DataType::UnsignedInt => xsd::unsigned_int(),
-                        DataType::UnsignedShort => xsd::unsigned_short(),
-                        DataType::UnsignedByte => xsd::unsigned_byte(),
-                        DataType::Duration => xsd::duration(),
-                        DataType::Other(iri) => iri,
-                    }
-                ),
+                (Some(data_type), None) => format!("^^<{}>", data_type.as_iri()),
                 (None, Some(language)) => format!("@{}", language),
                 _ => String::new(),
             }

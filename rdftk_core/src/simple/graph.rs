@@ -3,13 +3,13 @@ Simple, in-memory implementation of the `Graph` and `GraphFactory` traits.
 */
 
 use crate::model::features::{Featured, FEATURE_GRAPH_DUPLICATES, FEATURE_RDF_STAR};
+use crate::model::graph::mapping::PrefixMappingFactoryRef;
 use crate::model::graph::{Graph, GraphFactory, GraphFactoryRef, GraphRef, PrefixMappingRef};
 use crate::model::literal::LiteralFactoryRef;
 use crate::model::statement::{
     ObjectNodeRef, StatementFactoryRef, StatementList, StatementRef, SubjectNodeRef,
 };
 use crate::model::Provided;
-use crate::simple::empty_mappings;
 use crate::simple::literal::literal_factory;
 use crate::simple::statement::statement_factory;
 use rdftk_iri::IRIRef;
@@ -48,9 +48,6 @@ pub fn graph_factory() -> GraphFactoryRef {
 // Private Types
 // ------------------------------------------------------------------------------------------------
 
-///
-/// Simple, in-memory implementation of the `GraphFactory` trait.
-///
 #[derive(Clone, Debug)]
 struct SimpleGraphFactory {}
 
@@ -76,7 +73,11 @@ impl Provided for SimpleGraphFactory {
 
 impl GraphFactory for SimpleGraphFactory {
     fn graph(&self) -> GraphRef {
-        self.with_mappings(empty_mappings())
+        self.with_mappings(self.mapping_factory().empty())
+    }
+
+    fn mapping_factory(&self) -> PrefixMappingFactoryRef {
+        crate::simple::mapping::prefix_mapping_factory()
     }
 
     fn with_mappings(&self, mappings: PrefixMappingRef) -> GraphRef {

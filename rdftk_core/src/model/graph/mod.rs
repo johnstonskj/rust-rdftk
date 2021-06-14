@@ -19,6 +19,7 @@ fn simple_graph_writer(graph: &impl Graph)
 */
 
 use crate::model::features::Featured;
+use crate::model::graph::mapping::PrefixMappingFactoryRef;
 use crate::model::literal::LiteralFactoryRef;
 use crate::model::statement::{
     ObjectNodeRef, StatementFactoryRef, StatementList, StatementRef, SubjectNodeRef,
@@ -48,6 +49,11 @@ pub trait GraphFactory: Debug + Provided {
     /// Create a new graph instance.
     ///
     fn graph(&self) -> GraphRef;
+
+    ///
+    /// Retrieve a prefix-mapping factory.
+    ///
+    fn mapping_factory(&self) -> PrefixMappingFactoryRef;
 
     ///
     /// Create a new graph instance with the provided namespace mappings.

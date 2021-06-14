@@ -2,13 +2,12 @@ use parameterized::parameterized;
 use rdftk_core::model::graph::{GraphFactoryRef, GraphRef};
 use rdftk_core::simple::graph::graph_factory as simple_graph_factory;
 use rdftk_core::simple::indexed::graph_factory as indexed_graph_factory;
-use rdftk_core::simple::mapping::empty_mappings;
 use rdftk_core::simple::PROVIDER_ID;
 use rdftk_iri::{IRIRef, IRI};
 use std::str::FromStr;
 
 pub fn tony_benn_graph(graph_factory: GraphFactoryRef) -> GraphRef {
-    let mappings = empty_mappings();
+    let mappings = graph_factory.mapping_factory().empty();
 
     {
         let mut mut_mappings = mappings.borrow_mut();

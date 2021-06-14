@@ -9,6 +9,7 @@ use rdftk_names::{rdf, rdfs, xsd};
 use std::cell::RefCell;
 use std::fmt::Debug;
 use std::rc::Rc;
+use std::sync::Arc;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -18,6 +19,40 @@ use std::rc::Rc;
 /// The prefix used to denote the default namespace in the prefix mapping.
 ///
 pub const DEFAULT_PREFIX: &str = "";
+
+///
+/// A prefix mapping factory provides an interface to create a new prefix mapping. This allows for
+/// implementations where underlying shared resources are required and so may be owned by the
+/// factory.
+///
+/// Such a factory may only be retrieved by the [`GraphFactory::prefix_mapping_factory`]() method.
+///
+pub trait PrefixMappingFactory: Debug {
+    ///
+    /// Return a new empty mapping.
+    ///
+    fn empty(&self) -> PrefixMappingRef;
+
+    ///
+    /// Return a new mapping containing the RDF, RDF Schema, and XML Schema Datatype namespace
+    /// mappings.
+    ///
+    fn common(&self) -> PrefixMappingRef {
+        let mapping = self.empty();
+        {
+            let mut mut_mapping = mapping.borrow_mut();
+            mut_mapping.include_rdf();
+            mut_mapping.include_rdfs();
+            mut_mapping.include_xsd();
+        }
+        mapping
+    }
+}
+
+///
+/// The actual object storage type, reference counted for memory management.
+///
+pub type PrefixMappingFactoryRef = Arc<dyn PrefixMappingFactory>;
 
 ///
 /// Prefix mappings are used in the serialization of graphs.

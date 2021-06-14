@@ -7,13 +7,13 @@ use crate::model::features::{
     Featured, FEATURE_GRAPH_DUPLICATES, FEATURE_IDX_OBJECT, FEATURE_IDX_PREDICATE,
     FEATURE_IDX_SUBJECT, FEATURE_RDF_STAR,
 };
+use crate::model::graph::mapping::PrefixMappingFactoryRef;
 use crate::model::graph::{Graph, GraphFactory, GraphFactoryRef, GraphRef, PrefixMappingRef};
 use crate::model::literal::LiteralFactoryRef;
 use crate::model::statement::{
     ObjectNodeRef, StatementFactoryRef, StatementList, StatementRef, SubjectNodeRef,
 };
 use crate::model::Provided;
-use crate::simple::empty_mappings;
 use crate::simple::literal::literal_factory;
 use crate::simple::statement::statement_factory;
 use rdftk_iri::IRIRef;
@@ -85,7 +85,11 @@ impl Provided for IndexedSimpleGraphFactory {
 
 impl GraphFactory for IndexedSimpleGraphFactory {
     fn graph(&self) -> GraphRef {
-        self.with_mappings(empty_mappings())
+        self.with_mappings(self.mapping_factory().empty())
+    }
+
+    fn mapping_factory(&self) -> PrefixMappingFactoryRef {
+        crate::simple::mapping::prefix_mapping_factory()
     }
 
     fn with_mappings(&self, prefix_mappings: PrefixMappingRef) -> GraphRef {

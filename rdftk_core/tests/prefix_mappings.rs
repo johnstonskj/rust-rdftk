@@ -1,12 +1,12 @@
 use rdftk_core::model::graph::mapping::DEFAULT_PREFIX;
-use rdftk_core::model::graph::PrefixMappingRef;
+use rdftk_core::model::graph::{GraphFactoryRef, PrefixMappingRef};
 use rdftk_core::model::qname::QName;
-use rdftk_core::simple::mapping::common_mappings;
+use rdftk_core::simple::graph_factory;
 use rdftk_iri::{IRIRef, IRI};
 use std::str::FromStr;
 
-fn make_mappings() -> PrefixMappingRef {
-    let mappings = common_mappings();
+fn make_mappings(graph_factory: GraphFactoryRef) -> PrefixMappingRef {
+    let mappings = graph_factory.mapping_factory().common();
     {
         let mut mut_mappings = mappings.borrow_mut();
         mut_mappings.set_default_namespace(IRIRef::from(
@@ -18,7 +18,7 @@ fn make_mappings() -> PrefixMappingRef {
 
 #[test]
 fn test_construct_mappings() {
-    let mappings = make_mappings();
+    let mappings = make_mappings(graph_factory());
     let mappings = mappings.borrow();
 
     assert_eq!(mappings.len(), 4);
@@ -31,7 +31,7 @@ fn test_construct_mappings() {
 
 #[test]
 fn test_mapping_expand() {
-    let mappings = make_mappings();
+    let mappings = make_mappings(graph_factory());
 
     {
         let mut mut_mappings = mappings.borrow_mut();
@@ -69,7 +69,7 @@ fn test_mapping_expand() {
 
 #[test]
 fn test_mapping_compress() {
-    let mappings = make_mappings();
+    let mappings = make_mappings(graph_factory());
     let mappings = mappings.borrow();
 
     assert_eq!(

@@ -1,5 +1,5 @@
 use rdftk_iri::IRIRef;
-use rdftk_names::xsd;
+use rdftk_names::{rdf, xsd};
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -41,6 +41,8 @@ pub enum DataType {
     UnsignedByte,
     /// Denotes a literal of type `xsd::duration`.
     Duration,
+    /// Denotes an escaped string containing XML content.
+    XmlLiteral,
     /// Denotes a literal where the type is indicated by the provided `IRI`.
     Other(IRIRef),
 }
@@ -48,6 +50,46 @@ pub enum DataType {
 // ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
+
+impl From<IRIRef> for DataType {
+    fn from(iri: IRIRef) -> Self {
+        if &iri == xsd::string() {
+            DataType::String
+        } else if &iri == xsd::q_name() {
+            DataType::QName
+        } else if &iri == xsd::any_uri() {
+            DataType::IRI
+        } else if &iri == xsd::boolean() {
+            DataType::Boolean
+        } else if &iri == xsd::float() {
+            DataType::Float
+        } else if &iri == xsd::double() {
+            DataType::Double
+        } else if &iri == xsd::long() {
+            DataType::Long
+        } else if &iri == xsd::int() {
+            DataType::Int
+        } else if &iri == xsd::short() {
+            DataType::Short
+        } else if &iri == xsd::byte() {
+            DataType::Byte
+        } else if &iri == xsd::unsigned_long() {
+            DataType::UnsignedLong
+        } else if &iri == xsd::unsigned_int() {
+            DataType::UnsignedInt
+        } else if &iri == xsd::unsigned_short() {
+            DataType::UnsignedShort
+        } else if &iri == xsd::unsigned_byte() {
+            DataType::UnsignedByte
+        } else if &iri == xsd::duration() {
+            DataType::Duration
+        } else if &iri == rdf::xml_literal() {
+            DataType::XmlLiteral
+        } else {
+            DataType::Other(iri)
+        }
+    }
+}
 
 impl DataType {
     ///
@@ -71,6 +113,7 @@ impl DataType {
             DataType::UnsignedShort => xsd::unsigned_short(),
             DataType::UnsignedByte => xsd::unsigned_byte(),
             DataType::Duration => xsd::duration(),
+            DataType::XmlLiteral => rdf::xml_literal(),
             DataType::Other(iri) => iri,
         }
     }

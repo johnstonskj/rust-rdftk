@@ -2,46 +2,38 @@
 Simple, in-memory implementation of the `PrefixMappings` trait.
 */
 
-use crate::model::graph::mapping::DEFAULT_PREFIX;
+use crate::model::graph::mapping::{PrefixMappingFactory, PrefixMappingFactoryRef, DEFAULT_PREFIX};
 use crate::model::graph::{PrefixMappingRef, PrefixMappings};
 use crate::model::qname::QName;
 use bimap::BiHashMap;
 use rdftk_iri::{Fragment, IRIRef};
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::Arc;
 
 // ------------------------------------------------------------------------------------------------
 // Public Functions
 // ------------------------------------------------------------------------------------------------
 
 ///
-/// Create a new prefix mapping instance with no mappings.
+/// Retrieve the `GraphFactory` factory for `simple::SimpleGraph` instances.
 ///
-pub fn empty_mappings() -> PrefixMappingRef {
-    SimplePrefixMappings::default().into()
-}
-
-///
-/// Create a new prefix mapping instance with the RDF, RDF Schema, and XML Namespace mappings.
-///
-pub fn common_mappings() -> PrefixMappingRef {
-    let mapping = empty_mappings();
-    {
-        let mut mut_mapping = mapping.borrow_mut();
-        mut_mapping.include_rdf();
-        mut_mapping.include_rdfs();
-        mut_mapping.include_xsd();
-    }
-    mapping
+pub fn prefix_mapping_factory() -> PrefixMappingFactoryRef {
+    FACTORY.clone()
 }
 
 // ------------------------------------------------------------------------------------------------
 // Private Types
 // ------------------------------------------------------------------------------------------------
 
-///
-/// Simple, in-memory implementation of the `PrefixMappings` trait.
-///
+#[derive(Clone, Debug)]
+struct SimplePrefixMappingFactory {}
+
+lazy_static! {
+    static ref FACTORY: Arc<SimplePrefixMappingFactory> =
+        Arc::new(SimplePrefixMappingFactory::default());
+}
+
 #[derive(Clone, Debug)]
 struct SimplePrefixMappings {
     map: BiHashMap<String, IRIRef>,
@@ -49,6 +41,22 @@ struct SimplePrefixMappings {
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
+// ------------------------------------------------------------------------------------------------
+
+impl Default for SimplePrefixMappingFactory {
+    fn default() -> Self {
+        Self {}
+    }
+}
+
+impl PrefixMappingFactory for SimplePrefixMappingFactory {
+    fn empty(&self) -> PrefixMappingRef {
+        Rc::new(RefCell::new(SimplePrefixMappings {
+            map: Default::default(),
+        }))
+    }
+}
+
 // ------------------------------------------------------------------------------------------------
 
 impl Default for SimplePrefixMappings {
