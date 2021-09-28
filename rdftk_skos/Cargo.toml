@@ -30,7 +30,7 @@ rdftk_names = { version = "0.1", path = "../rdftk_names" }
 somedoc = { version = "0.2", optional = true }
 
 [dev-dependencies]
-pretty_assertions = "0.7"
+pretty_assertions = "1.0"
 
 [dev-dependencies.cargo-husky]
 version = "1"
