@@ -195,7 +195,7 @@ fn parse_document<R: Read>(
 fn parse_subject_element<R: Read>(
     event_reader: &mut EventReader<&mut R>,
     xml_base: &Option<IRIRef>,
-    subject: Option<&SubjectNodeRef>,
+    _subject: Option<&SubjectNodeRef>,
     graph: &mut GraphRef,
 ) -> Result<Option<SubjectNodeRef>> {
     let description_element = ExpectedName::new(ELEMENT_DESCRIPTION, rdf::namespace_str());
@@ -264,6 +264,7 @@ fn parse_subject_element<R: Read>(
                     &subject_node,
                     graph,
                 )?;
+                #[allow(unused_assignments)]
                 subject = Some(subject_node);
             }
             Ok(XmlEvent::EndElement { .. }) => {
@@ -355,6 +356,7 @@ fn parse_predicate_element<R: Read>(
                             )
                             .unwrap(),
                     );
+                    #[allow(unused_assignments)]
                     no_child_elements = true;
                 } else {
                     let statement_factory = graph.borrow().statement_factory();
@@ -407,7 +409,7 @@ fn parse_predicate_element<R: Read>(
                             // SPEC: §2.11 Omitting Blank Nodes: rdf:parseType="Resource"
                             let subject_node = statement_factory.blank_subject();
                             //parse_predicate_attributes(&attributes.inner, &subject_node, graph)?;
-                            parse_subject_element(
+                            let _ = parse_subject_element(
                                 event_reader,
                                 if attributes.uri_base.is_some() {
                                     &attributes.uri_base
@@ -452,17 +454,18 @@ fn parse_object_element<R: Read>(
         match &event {
             Ok(XmlEvent::StartElement {
                 name,
-                namespace,
+                namespace: _,
                 attributes,
             }) => {
                 trace_event!("parse_content_element" => event);
                 if has_characters {
                     error_event!(state => "parse_object_element", &format!("found XML content, parseType != Literal ({:?})", name));
                 }
+                #[allow(unused_assignments)]
                 has_elements = true;
                 let attributes = parse_attributes(attributes)?;
                 let subject_node = graph.borrow().statement_factory().blank_subject();
-                parse_subject_element(
+                let _ = parse_subject_element(
                     event_reader,
                     if attributes.uri_base.is_some() {
                         &attributes.uri_base
@@ -473,7 +476,7 @@ fn parse_object_element<R: Read>(
                     graph,
                 )?;
             }
-            Ok(XmlEvent::EndElement { name }) => {
+            Ok(XmlEvent::EndElement { name: _ }) => {
                 trace_event!("parse_content_element" => event);
                 return Ok(Some(content));
             }
@@ -482,6 +485,7 @@ fn parse_object_element<R: Read>(
                 if has_elements {
                     error_event!(state => "parse_object_element", &format!("found character content after element(s)"));
                 }
+                #[allow(unused_assignments)]
                 has_characters = true;
                 content.push_str(&value);
             }
@@ -490,6 +494,7 @@ fn parse_object_element<R: Read>(
                 if has_elements {
                     error_event!(state => "parse_object_element", "found character content after element(s)");
                 }
+                #[allow(unused_assignments)]
                 has_characters = true;
                 content.push_str(&value);
             }
