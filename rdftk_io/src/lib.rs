@@ -64,6 +64,7 @@ let graph = reader.read(&mut file, graph_factory()).unwrap();
     unused_results,
 )]
 
+#[allow(unused_imports)]
 #[macro_use]
 extern crate lazy_static;
 

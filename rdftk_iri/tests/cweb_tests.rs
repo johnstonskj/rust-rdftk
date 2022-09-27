@@ -3,6 +3,7 @@ use serde::Deserialize;
 use std::str::FromStr;
 
 #[derive(Clone, Debug, Deserialize)]
+#[allow(dead_code)]
 struct Test {
     id: String,
     name: String,
@@ -32,6 +33,7 @@ struct Test {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+#[allow(dead_code)]
 struct Group {
     name: String,
     link: String,

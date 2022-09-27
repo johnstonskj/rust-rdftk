@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use crate::model::statement::{StatementRef, BLANK_NODE_NAMESPACE};
 use crate::model::{Equiv, Provided};
 use rdftk_iri::IRIRef;
@@ -132,5 +133,44 @@ impl Equiv<StatementRef> for dyn SubjectNode {
         } else {
             false
         }
+    }
+}
+
+impl PartialOrd for dyn SubjectNode {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        if self.is_iri() && other.is_iri() {
+            if let Some(iri) = self.as_iri() {
+                if let Some(other_iri) = other.as_iri() {
+                    return iri.partial_cmp(other_iri)
+                }
+            }
+        }
+        if self.is_blank() && other.is_blank() {
+            if let Some(blank) = self.as_blank() {
+                if let Some(other_blank) = other.as_blank() {
+                    return blank.partial_cmp(other_blank)
+                }
+            }
+        }
+        if self.is_statement() && other.is_statement() {
+            todo!("sorting rdf-star statements is not yet supported");
+        }
+        if self.is_iri() {
+            Some(Ordering::Less)
+        } else if self.is_blank() {
+            Some(Ordering::Greater)
+        } else {
+            None
+        }
+    }
+}
+
+impl Ord for dyn SubjectNode {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let po = self.partial_cmp(other);
+        if let Some(ordering) = po {
+            return ordering
+        }
+        Ordering::Less
     }
 }

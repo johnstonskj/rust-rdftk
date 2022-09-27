@@ -25,12 +25,14 @@ trig = []
 turtle = ["pest", "pest_derive"]
 xml = ["xml-rs", "rdftk_names"]
 
+
 [dependencies]
 lazy_static = "1.4"
 log = "0.4"
 rdftk_core = { version = "0.3", path = "../rdftk_core" }
 rdftk_iri = { version = "0.1", path = "../rdftk_iri" }
 regex = "1.5"
+itertools = "0.10.5"
 
 # feature-dependencies
 pest = { version = "2.1", optional = true }

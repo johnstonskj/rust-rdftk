@@ -24,15 +24,18 @@ let result = write_graph_to_string(&writer, &make_graph());
 
 */
 
-use crate::common::indenter::Indenter;
-use crate::GraphWriter;
-use rdftk_core::model::graph::mapping::PrefixMappingRef;
+use std::cell::Ref;
+use std::io::Write;
+
+use itertools::Itertools;
 use rdftk_core::model::graph::{Graph, GraphRef};
+use rdftk_core::model::graph::mapping::PrefixMappingRef;
 use rdftk_core::model::literal::LiteralRef;
 use rdftk_core::model::statement::SubjectNodeRef;
 use rdftk_iri::IRIRef;
-use std::cell::Ref;
-use std::io::Write;
+
+use crate::common::indenter::Indenter;
+use crate::GraphWriter;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -42,6 +45,13 @@ use std::io::Write;
 pub struct TurtleOptions {
     pub nest_blank_nodes: bool,
     pub use_sparql_style: bool,
+    /// Use the same formatting style as used by the LNKD.tech editor plugin
+    /// for the IntelliJ IDEs like Idea and CLion
+    pub use_intellij_style: bool,
+    /// If provided, any IRI that's written to Turtle that starts with the given
+    /// string will be written to Turtle as if it's part of the base namespace.
+    pub convert_to_base: Option<String>,
+    pub indent_width: usize
 }
 
 #[derive(Debug)]
@@ -59,6 +69,24 @@ impl Default for TurtleOptions {
         Self {
             nest_blank_nodes: true,
             use_sparql_style: false,
+            use_intellij_style: false,
+            convert_to_base: None,
+            indent_width: 2
+        }
+    }
+}
+
+impl TurtleOptions {
+    /// Set default options to make the generated Turtle RDF look like it's formatted
+    /// by the LNKD.tech plugin that is used in the IntelliJ family of editors such as
+    /// Idea and CLion.
+    /// This would allow you to load RDF from a git clone and write it back to disk
+    /// without causing unnecessary git-diff detectable changes.
+    pub fn new_with_intellij_style() -> Self {
+        Self {
+            use_intellij_style: true,
+            indent_width: 4,
+            ..Default::default()
         }
     }
 }
@@ -82,20 +110,22 @@ impl GraphWriter for TurtleWriter {
         // Write out the graph base IRI
         //
         if let Some(base) = &self.base {
-            if self.options.use_sparql_style {
+            if self.options.use_sparql_style && ! self.options.use_intellij_style {
                 writeln!(w, "BASE <{}>", base).map_err(io_error)?;
             } else {
                 writeln!(w, "@base <{}> .", base).map_err(io_error)?;
             }
         }
-        writeln!(w).map_err(io_error)?;
+        if ! self.options.use_intellij_style {
+            writeln!(w).map_err(io_error)?;
+        }
         //
         // Write all prefix mappings
         //
         let mappings = graph.prefix_mappings();
         let mappings = mappings.borrow();
-        for (prefix, namespace) in mappings.mappings() {
-            if self.options.use_sparql_style {
+        for (prefix, namespace) in mappings.mappings().sorted() {
+            if self.options.use_sparql_style && ! self.options.use_intellij_style {
                 writeln!(w, "PREFIX {}: <{}>", prefix, namespace).map_err(io_error)?;
             } else {
                 writeln!(w, "@prefix {}: <{}> .", prefix, namespace).map_err(io_error)?;
@@ -107,12 +137,12 @@ impl GraphWriter for TurtleWriter {
         //
         let mut blanks_to_write: Vec<&SubjectNodeRef> = Default::default();
         let mut blanks_written: Vec<SubjectNodeRef> = Default::default();
-        for subject in graph.subjects() {
+        for subject in graph.subjects().into_iter().sorted() {
             if subject.is_blank() {
                 blanks_to_write.push(subject);
             } else {
                 let mut inner_written = self
-                    .write_sub_graph(w, subject, &graph, Indenter::default())
+                    .write_sub_graph(w, subject, &graph, Indenter::with_width(self.options.indent_width))
                     .map_err(io_error)?;
                 blanks_written.append(&mut inner_written);
             }
@@ -124,7 +154,7 @@ impl GraphWriter for TurtleWriter {
         blanks_to_write.retain(|subject| !blanks_written.contains(subject));
         for subject in blanks_to_write {
             let _ = self
-                .write_sub_graph(w, subject, &graph, Indenter::default())
+                .write_sub_graph(w, subject, &graph, Indenter::with_width(self.options.indent_width))
                 .map_err(io_error)?;
         }
         Ok(())
@@ -227,6 +257,13 @@ impl TurtleWriter {
     ) -> std::io::Result<()> {
         if let Some(base) = &self.base {
             let iri = iri.to_string();
+            // If we're encountering an IRI whose prefix equals the `convert_to_base` IRI
+            // then write it to Turtle as if it's an IRI with the default base.
+            if let Some(ref convert_to_base) = self.options.convert_to_base {
+                if iri.starts_with(convert_to_base.as_str()) {
+                    return write!(w, "<{}> ", &iri[convert_to_base.len()..]);
+                }
+            }
             if iri.starts_with(base) {
                 return write!(w, "<{}> ", &iri[base.len()..]);
             }
