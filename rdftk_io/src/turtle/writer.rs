@@ -22,7 +22,7 @@ let writer = TurtleWriter::with_base(
 let result = write_graph_to_string(&writer, &make_graph());
 ```
 
-*/
+ */
 
 use std::cell::Ref;
 use std::io::Write;
@@ -51,7 +51,7 @@ pub struct TurtleOptions {
     /// If provided, any IRI that's written to Turtle that starts with the given
     /// string will be written to Turtle as if it's part of the base namespace.
     pub convert_to_base: Option<String>,
-    pub indent_width: usize
+    pub indent_width: usize,
 }
 
 #[derive(Debug)]
@@ -71,7 +71,7 @@ impl Default for TurtleOptions {
             use_sparql_style: false,
             use_intellij_style: false,
             convert_to_base: None,
-            indent_width: 2
+            indent_width: 2,
         }
     }
 }
@@ -110,22 +110,22 @@ impl GraphWriter for TurtleWriter {
         // Write out the graph base IRI
         //
         if let Some(base) = &self.base {
-            if self.options.use_sparql_style && ! self.options.use_intellij_style {
+            if self.options.use_sparql_style && !self.options.use_intellij_style {
                 writeln!(w, "BASE <{}>", base).map_err(io_error)?;
             } else {
                 writeln!(w, "@base <{}> .", base).map_err(io_error)?;
             }
         }
-        if ! self.options.use_intellij_style {
+        if !self.options.use_intellij_style {
             writeln!(w).map_err(io_error)?;
         }
         //
-        // Write all prefix mappings
+        // Write all prefix mappings, sort them by prefix
         //
         let mappings = graph.prefix_mappings();
         let mappings = mappings.borrow();
         for (prefix, namespace) in mappings.mappings().sorted() {
-            if self.options.use_sparql_style && ! self.options.use_intellij_style {
+            if self.options.use_sparql_style && !self.options.use_intellij_style {
                 writeln!(w, "PREFIX {}: <{}>", prefix, namespace).map_err(io_error)?;
             } else {
                 writeln!(w, "@prefix {}: <{}> .", prefix, namespace).map_err(io_error)?;
@@ -133,7 +133,9 @@ impl GraphWriter for TurtleWriter {
         }
         writeln!(w).map_err(io_error)?;
         //
-        // Write statements, start with those where subject is an IRI
+        // Write statements, start with those where subject is an IRI,
+        // sort them by URL so that we keep a consistent result avoiding git-diff to
+        // flag certain lines as changed.
         //
         let mut blanks_to_write: Vec<&SubjectNodeRef> = Default::default();
         let mut blanks_written: Vec<SubjectNodeRef> = Default::default();
@@ -214,7 +216,7 @@ impl TurtleWriter {
                             <&std::rc::Rc<dyn rdftk_core::model::statement::ObjectNode>>::clone(
                                 object,
                             )
-                            .clone(),
+                                .clone(),
                         )
                         .unwrap();
                     let mut inner_written =
