@@ -13,12 +13,13 @@ More detailed description, with
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
+use std::cmp::max;
 use std::fmt::{Display, Formatter};
 
 #[derive(Clone, Debug)]
 pub(crate) struct Indenter {
-    width: usize,
-    depth: usize,
+    width: u16,
+    pub(crate) depth: u8,
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -35,35 +36,30 @@ pub(crate) struct Indenter {
 
 impl Default for Indenter {
     fn default() -> Self {
-        Self { width: 2, depth: 0 }
+        Self::with_width(2)
     }
 }
 
 impl Display for Indenter {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:width$}", "", width = self.width * self.depth)
+        write!(f, "{:width$}", "", width = (self.width * self.depth as u16) as usize)
     }
 }
 
 impl Indenter {
-    #[allow(dead_code)]
-    pub(crate) fn with_width(width: usize) -> Self {
+    pub(crate) fn with_width(width: u16) -> Self {
         Self { width, depth: 0 }
     }
 
-    pub(crate) fn depth(&self) -> usize {
+    pub(crate) fn depth(&self) -> u8 {
         self.depth
     }
 
     pub(crate) fn indent(&self) -> Self {
-        Self {
-            width: self.width,
-            depth: self.depth + 1,
-        }
+        self.indent_by(1)
     }
 
-    #[allow(dead_code)]
-    pub(crate) fn indent_by(&self, by: usize) -> Self {
+    pub(crate) fn indent_by(&self, by: u8) -> Self {
         Self {
             width: self.width,
             depth: self.depth + by,
@@ -71,22 +67,19 @@ impl Indenter {
     }
 
     pub(crate) fn outdent(&self) -> Self {
+        self.outdent_by(1)
+    }
+
+    pub(crate) fn outdent_by(&self, by: u8) -> Self {
         Self {
             width: self.width,
-            depth: self.depth - 1,
+            depth: max(0,self.depth - by),
         }
     }
 
-    #[allow(dead_code)]
-    pub(crate) fn outdent_by(&self, by: usize) -> Self {
-        Self {
-            width: self.width,
-            depth: self.depth - by,
-        }
-    }
-
+    #[allow(unused)]
     pub(crate) fn one(&self) -> String {
-        format!("{:width$}", "", width = self.width)
+        format!("{:width$}", "", width = self.width as usize)
     }
 }
 

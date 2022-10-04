@@ -6,7 +6,14 @@ use rdftk_core::simple::statement::statement_factory;
 use rdftk_iri::{IRIRef, IRI};
 use std::str::FromStr;
 
-pub fn tony_benn_graph() -> GraphRef {
+#[derive(Eq, PartialEq)]
+pub enum TonyBennType {
+    NoType,
+    OneType,
+    TwoTypes,
+}
+
+pub fn tony_benn_graph(graph_type: TonyBennType) -> GraphRef {
     let mappings = graph_factory().mapping_factory().empty();
     {
         let mut mut_mappings = mappings.borrow_mut();
@@ -19,8 +26,13 @@ pub fn tony_benn_graph() -> GraphRef {
             "foaf",
             IRIRef::from(IRI::from_str("http://xmlns.com/foaf/0.1/").unwrap()),
         );
+        if graph_type == TonyBennType::TwoTypes {
+            mut_mappings.insert(
+                "fibo-fnd-aap-ppl",
+                IRIRef::from(IRI::from_str("https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/People/").unwrap()),
+            );
+        }
     }
-
     let st_factory = statement_factory();
     let lit_factory = literal_factory();
 
@@ -50,12 +62,46 @@ pub fn tony_benn_graph() -> GraphRef {
     statements.push(
         st_factory
             .statement(
-                st_factory.named_subject(subject_iri),
+                st_factory.named_subject(subject_iri.clone()),
                 IRIRef::from(IRI::from_str("http://purl.org/dc/elements/1.1/description").unwrap()),
                 st_factory.blank_object_named("B1").unwrap(),
             )
             .unwrap(),
     );
+    if graph_type == TonyBennType::OneType || graph_type == TonyBennType::TwoTypes {
+        statements.push(
+            st_factory
+                .statement(
+                    st_factory.named_subject(subject_iri.clone()),
+                    IRIRef::from(
+                        IRI::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#type").unwrap(),
+                    ),
+                    st_factory.named_object(
+                        IRI::from_str("http://xmlns.com/foaf/0.1/Person")
+                            .unwrap()
+                            .into(),
+                    ),
+                )
+                .unwrap(),
+        );
+    }
+    if graph_type == TonyBennType::TwoTypes {
+        statements.push(
+            st_factory
+                .statement(
+                    st_factory.named_subject(subject_iri.clone()),
+                    IRIRef::from(
+                        IRI::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#type").unwrap(),
+                    ),
+                    st_factory.named_object(
+                        IRI::from_str("https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/People/Person")
+                            .unwrap()
+                            .into(),
+                    ),
+                )
+                .unwrap(),
+        );
+    }
     statements.push(
         st_factory
             .statement(

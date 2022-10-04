@@ -175,6 +175,20 @@ pub trait Graph: Debug + Featured {
     fn subjects(&self) -> HashSet<&SubjectNodeRef>;
 
     ///
+    /// Return a set of all subjects that are not blank nodes
+    ///
+    fn node_subjects(&self) -> HashSet<&SubjectNodeRef> {
+        self.subjects().into_iter().filter(|s| ! s.is_blank()).collect()
+    }
+
+    ///
+    /// Return a set of all subjects that are blank nodes
+    ///
+    fn blank_node_subjects(&self) -> HashSet<&SubjectNodeRef> {
+        self.subjects().into_iter().filter(|s| s.is_blank()).collect()
+    }
+
+    ///
     /// Return a set of all predicate in the graph, note that this is a set so that it removes
     /// duplicates.
     ///
