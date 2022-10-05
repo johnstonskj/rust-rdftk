@@ -127,3 +127,38 @@ fn write_to_turtle_with_options() {
     // assert!(output.contains("dc:description _:B1"));
     // assert!(output.contains("\n_:B1"));
 }
+
+#[test]
+fn write_many_use_cases() {
+    let graph = common::use_cases_graph();
+
+    let writer = TurtleWriter::with_base(
+        IRIRef::from(IRI::from_str("https://placeholder.kg/id/").unwrap()),
+        TurtleOptions::default()
+    );
+
+    let result = write_graph_to_string(&writer, &graph);
+    assert!(result.is_ok());
+    let output = result.unwrap();
+    let expected = indoc::formatdoc! {
+        r##"
+        @base <https://placeholder.kg/id/> .
+
+        @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+        @prefix use-case: <https://ekgf.org/ontology/use-case/> .
+
+        <use-case-currencies>
+          use-case:usesConcept <concept-capital-raise-currency>,
+                               <concept-currency-label>,
+                               <concept-currency-search-text>,
+                               <concept-currency-tag>,
+                               <concept-functional-currency-label>,
+                               <concept-functional-currency>,
+                               <concept-share-issue-denomination-currency> .
+        "##
+    };
+
+    println!("# format: turtle\n{}", output);
+
+    assert_eq!(output, expected);
+}

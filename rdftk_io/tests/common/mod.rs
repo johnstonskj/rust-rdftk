@@ -128,3 +128,62 @@ pub fn tony_benn_graph(graph_type: TonyBennType) -> GraphRef {
     );
     graph_factory().graph_from(&statements, Some(mappings))
 }
+
+///
+/// Create a test graph for this content:
+///
+/// ```
+/// @base <https://placeholder.kg/id/> .
+/// @prefix use-case: <https://ekgf.org/ontology/use-case/> .
+///
+/// <use-case-currencies>
+///     use-case:usesConcept <concept-functional-currency>,
+///                          <concept-currency-search-text>,
+///                          <concept-currency-label>,
+///                          <concept-currency-tag>,
+///                          <concept-capital-raise-currency>,
+///                          <concept-functional-currency-label>,
+///                          <concept-share-issue-denomination-currency> .
+/// ```
+pub fn use_cases_graph() -> GraphRef {
+
+    let mappings = graph_factory().mapping_factory().empty();
+    {
+        let mut mut_mappings = mappings.borrow_mut();
+        mut_mappings.include_rdf();
+        mut_mappings.insert(
+            "use-case",
+            IRIRef::from(IRI::from_str("https://ekgf.org/ontology/use-case/").unwrap()),
+        );
+    }
+    let st_factory = statement_factory();
+
+    let mut statements: StatementList = Default::default();
+
+    let subject_iri =
+        IRIRef::from(IRI::from_str("https://placeholder.kg/id/use-case-currencies").unwrap());
+
+    for concept_iri in [
+        "functional-currency",
+        "currency-search-text",
+        "currency-label",
+        "currency-tag",
+        "capital-raise-currency",
+        "functional-currency-label",
+        "share-issue-denomination-currency"
+    ].map(|c| IRIRef::from(
+        IRI::from_str(format!("https://placeholder.kg/id/concept-{c}").as_str()).unwrap()
+    )) {
+        statements.push(
+            st_factory
+                .statement(
+                    st_factory.named_subject(subject_iri.clone()),
+                    IRIRef::from(IRI::from_str("https://ekgf.org/ontology/use-case/usesConcept").unwrap()),
+                    st_factory.named_object(concept_iri),
+                )
+                .unwrap(),
+        );
+    }
+
+    graph_factory().graph_from(&statements, Some(mappings))
+}

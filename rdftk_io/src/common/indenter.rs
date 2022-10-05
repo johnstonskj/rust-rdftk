@@ -16,7 +16,7 @@ More detailed description, with
 use std::cmp::max;
 use std::fmt::{Display, Formatter};
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub(crate) struct Indenter {
     width: u16,
     pub(crate) depth: u8,
