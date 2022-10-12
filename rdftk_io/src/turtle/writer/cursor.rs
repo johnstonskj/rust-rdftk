@@ -19,6 +19,28 @@ use crate::turtle::writer::{io_error, utf8_error};
 use crate::turtle::writer::options::TurtleOptions;
 use crate::turtle::writer::triple_type::TurtleTripleType;
 
+type IsNextObjectBlankNode = bool;
+type IsBeingSorted = bool;
+type IsLastOfSubject = bool;
+type IsLastOfPredicate = bool;
+
+#[derive(Default, Copy, Clone, Debug)]
+struct TurtleCursorFlags {
+    /// `is_next_object_blank` is true when the next object in the series (also) a blank node?
+    /// In that case we do the formatting a bit different, showing ],[` as the separator
+    /// between blank nodes.
+    is_next_object_blank: IsNextObjectBlankNode,
+    /// `is_being_sorted` is true when we're being called by a sorting algorithm which means that
+    /// we can only produce content on one (sortable) line, avoid any line-feeds..
+    is_being_sorted: IsBeingSorted,
+    /// `is_last_of_subject` is true when we're working on the last triple of the current subject,
+    /// in which case we have to end a line with a dot instead of a semicolon.
+    is_last_of_subject: IsLastOfSubject,
+    /// `is_last_of_predicate` is true when the current object is the last object in the collection
+    /// of objects for the given `subject + predicate`.
+    is_last_of_predicate: IsLastOfPredicate,
+}
+
 pub(crate) struct TurtleCursor<'a, W> where W: Write + Sized {
     pub(crate) w: Rc<RefCell<W>>,
     pub(crate) graph: Rc<Ref<'a, dyn Graph>>,
@@ -63,12 +85,26 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
         Self {
             w,
             graph: other.graph.clone(),
-            indenter: other.indenter.clone(),
+            indenter: {
+                let mut clone = other.indenter.borrow().clone();
+                clone.depth = 0;
+                RefCell::new(clone)
+            },
             blanks_to_write: other.blanks_to_write.clone(),
             blanks_written: other.blanks_written.clone(),
             options: other.options.clone(),
             ..*other
         }
+    }
+
+    pub(crate) fn write(&self) -> rdftk_core::error::Result<()> {
+        self.write_normal_subjects()?;
+        let flags = TurtleCursorFlags::default();
+        // The given cursor object collects all the blank-node objects that have not been
+        // written to the turtle file yet but have been referred to during the call to
+        // `write_normal_subjects` above. Now process those unwritten blank nodes and add
+        // them to the end of the file.
+        self.write_blank_node_subjects(flags)
     }
 
     #[allow(unused_results)]
@@ -84,8 +120,12 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
         &self.indenter
     }
 
-    pub(crate) fn new_line(&self) -> rdftk_core::error::Result<()> {
-        write!(self, "\n{}", self.indenter.borrow()).map_err(io_error)
+    fn new_line(&self, flags: TurtleCursorFlags) -> rdftk_core::error::Result<()> {
+        if flags.is_being_sorted {
+            write!(self, " ").map_err(io_error)
+        } else {
+            write!(self, "\n{}", self.indenter.borrow()).map_err(io_error)
+        }
     }
 
     pub(crate) fn write_fmt(&self, fmt: std::fmt::Arguments<'_>) -> std::io::Result<()> {
@@ -116,26 +156,27 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
             .collect::<Vec<SubjectNodeRef>>()
     }
 
-    pub(crate) fn with_node_subjects_do<F>(&self, f: F) -> rdftk_core::error::Result<()>
-        where F: Fn(&Self, &SubjectNodeRef) -> rdftk_core::error::Result<()>
+    fn with_node_subjects_do<F>(&self, flags: TurtleCursorFlags, f: F) -> rdftk_core::error::Result<()>
+        where F: Fn(&Self, &SubjectNodeRef, TurtleCursorFlags) -> rdftk_core::error::Result<()>
     {
         for subject in self.sorted_subjects() {
-            f(self, &subject)?;
+            f(self, &subject, flags)?;
         }
         Ok(())
     }
 
-    pub(crate) fn with_unwritten_blank_node_subjects<F>(&mut self, f: F) -> rdftk_core::error::Result<()>
-        where F: Fn(&mut Self, SubjectNodeRef) -> rdftk_core::error::Result<()>
+    fn with_unwritten_blank_node_subjects<F>(&self, flags: TurtleCursorFlags, f: F) -> rdftk_core::error::Result<()>
+        where F: Fn(&Self, SubjectNodeRef, TurtleCursorFlags) -> rdftk_core::error::Result<()>
     {
         for subject in self.blanks_not_written().into_iter() {
-            f(self, subject.clone())?;
+            self.indenter.borrow_mut().depth = 0;
+            f(self, subject.clone(), flags)?;
         }
         Ok(())
     }
 
-    pub(crate) fn with_predicates_grouped<F>(&self, subject: &SubjectNodeRef, f: F) -> rdftk_core::error::Result<()>
-        where F: Fn(&Self, TurtleTripleType, &IRIRef, usize, bool) -> rdftk_core::error::Result<()>
+    fn with_predicates_grouped<F>(&self, subject: &SubjectNodeRef, flags: TurtleCursorFlags, f: F) -> rdftk_core::error::Result<()>
+        where F: Fn(&Self, TurtleTripleType, &IRIRef, usize, TurtleCursorFlags) -> rdftk_core::error::Result<()>
     {
         let all_predicates = Vec::from_iter(self.graph.predicates_for(subject));
         let mut count = 0;
@@ -147,7 +188,11 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
         for (group, ref preds) in TurtleTripleType::group_predicates(&all_predicates) {
             for predicate in preds {
                 count += 1;
-                f(self, group, predicate, max_len, count == total_number)?;
+                let flags = TurtleCursorFlags {
+                    is_last_of_subject: count == total_number,
+                    ..flags
+                };
+                f(self, group, predicate, max_len, flags)?;
             }
         }
 
@@ -171,16 +216,25 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
     ///
     /// Iterate through all sorted objects of the given subject and predicate
     ///
-    pub(crate) fn with_objects<F>(&self, subject: &SubjectNodeRef, predicate: &IRIRef, f: F) -> rdftk_core::error::Result<()>
-        where F: Fn(&Self, &ObjectNodeRef, bool) -> rdftk_core::error::Result<()>
+    fn with_objects<F>(&self, subject: &SubjectNodeRef, predicate: &IRIRef, flags: TurtleCursorFlags, f: F) -> rdftk_core::error::Result<()>
+        where F: Fn(&Self, &ObjectNodeRef, TurtleCursorFlags) -> rdftk_core::error::Result<()>
     {
         let mut objects = self.graph.deref().objects_for(subject, predicate).into_iter().collect_vec();
-        objects.sort_by_key(|o| {
-            self.object_sort_key(o).unwrap_or_default()
-        });
+        let is_collection_of_objects = objects.len() > 1;
+        if is_collection_of_objects {
+            objects.sort_by_key(|o| {
+                self.object_sort_key(o).unwrap_or_default()
+            });
+        }
         let mut o_iter = objects.iter().peekable();
         while let Some(object) = o_iter.next() {
-            f(self, object, o_iter.peek().is_none())?;
+            let next_object = o_iter.peek();
+            let flags = TurtleCursorFlags {
+                is_next_object_blank: next_object.is_some() && next_object.unwrap().is_blank(),
+                is_last_of_predicate: next_object.is_none(),
+                ..flags
+            };
+            f(self, object, flags)?;
         }
         Ok(())
     }
@@ -188,14 +242,18 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
     fn object_sort_key(&self, object: &ObjectNodeRef) -> rdftk_core::error::Result<String> {
         let buffer = Rc::new(RefCell::from(Vec::<u8>::new()));
         let new_cursor = TurtleCursor::new_with_writer(buffer.clone(), self);
-        new_cursor.write_object_content(object)?;
+        let flags = TurtleCursorFlags {
+            is_being_sorted: true,
+            ..Default::default()
+        };
+        new_cursor.write_object_content(object, flags)?;
         String::from_utf8(buffer.take()).map_err(utf8_error)
     }
 
-    pub(crate) fn write_object_content(&self, object: &ObjectNodeRef) -> rdftk_core::error::Result<()> {
+    fn write_object_content(&self, object: &ObjectNodeRef, flags: TurtleCursorFlags) -> rdftk_core::error::Result<()> {
         if object.is_blank() {
             if self.options.nest_blank_nodes {
-                self.write_nested_blank_node(object)?;
+                self.write_nested_blank_node(object, flags)?;
             } else {
                 write!(self, "_:{}", object.as_blank().unwrap()).map_err(io_error)?;
             }
@@ -239,9 +297,39 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
         }
     }
 
-    pub(crate) fn write_subject(&self, subject: SubjectNodeRef) -> rdftk_core::error::Result<()> {
+    ///
+    /// Write statements, start with those where subject is an IRI,
+    /// sort them by URL so that we keep a consistent result avoiding git-diff to
+    /// flag certain lines as changed.
+    ///
+    fn write_normal_subjects(&self) -> rdftk_core::error::Result<()> {
+        let flags = TurtleCursorFlags {
+            ..Default::default()
+        };
+        self.with_node_subjects_do(flags, |c, subject, flags| {
+            c.write_sub_graph(subject, flags)?;
+            writeln!(c).map_err(io_error)?;
+            Ok(())
+        })
+    }
+
+    ///
+    /// Write statements where subject is a blank node
+    ///
+    fn write_blank_node_subjects(&self, flags: TurtleCursorFlags) -> rdftk_core::error::Result<()> {
+        self.with_unwritten_blank_node_subjects(flags, |c, ref subject, flags| {
+            c.write_sub_graph(subject, flags)?;
+            Ok(())
+        })
+    }
+
+    fn write_subject(&self, subject: SubjectNodeRef, flags: TurtleCursorFlags) -> rdftk_core::error::Result<()> {
         if subject.is_blank() && self.indenter.borrow().depth() == 0 {
-            write!(self, "\n_:{}", subject.as_blank().unwrap()).map_err(io_error)?;
+            if flags.is_being_sorted {
+                write!(self, " _:{}", subject.as_blank().unwrap()).map_err(io_error)?;
+            } else {
+                write!(self, "\n_:{}", subject.as_blank().unwrap()).map_err(io_error)?;
+            }
         } else if subject.is_iri() {
             self.write_iri(subject.as_iri().unwrap()).map_err(io_error)?;
         }
@@ -265,11 +353,12 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
         }
     }
 
-    pub(crate) fn write_predicate(
+    fn write_predicate(
         &self,
         group: TurtleTripleType,
         predicate: &IRIRef,
         max_len: usize,
+        flags: TurtleCursorFlags,
     ) -> rdftk_core::error::Result<()> {
         //
         // Special treatment for `rdf:type`; show it in turtle as just "a"
@@ -278,14 +367,14 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
             return if self.options.place_type_on_subject_line {
                 write!(self, " a ").map_err(io_error)
             } else {
-                self.new_line()?;
+                self.new_line(flags)?;
                 write!(self, "{:<max_len$}", "a").map_err(io_error)
             };
         }
         //
         // Otherwise, go to the next line and write it as a normal predicate-IRI
         //
-        self.new_line()?;
+        self.new_line(flags)?;
 
         let buffer = Rc::new(RefCell::from(Vec::<u8>::new()));
         let new_cursor = TurtleCursor::new_with_writer(buffer.clone(), self);
@@ -294,67 +383,74 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
         write!(self, "{:<max_len$}", pred.as_str()).map_err(io_error)
     }
 
-    pub(crate) fn write_object(
+    fn write_object(
         &self,
         object: &ObjectNodeRef,
         max_len: usize,
-        is_last_of_predicate: bool,
-        is_last_of_subject: bool,
+        flags: TurtleCursorFlags,
     ) -> rdftk_core::error::Result<()> {
-        self.write_object_content(object)?;
-        if is_last_of_predicate {
-            if is_last_of_subject {
+        // if flags.is_collection_of_objects && flags.{
+        //     self.new_line(flags)?;
+        //     write!(self, "{:max_len$}", " ").map_err(io_error)?;
+        // }
+        self.write_object_content(object, flags)?;
+        if flags.is_last_of_predicate {
+            if flags.is_last_of_subject {
                 let _ = self.outdent();
             }
             if self.indenter.borrow().depth == 0 {
                 write!(self, " .").map_err(io_error)?;
-            } else {
+                self.new_line(flags)?;
+            } else if !flags.is_last_of_subject {
                 write!(self, " ;").map_err(io_error)?;
             }
         } else {
             write!(self, ",").map_err(io_error)?;
-            self.new_line()?;
-            write!(self, "{:max_len$}", " ").map_err(io_error)?;
+            if ! flags.is_next_object_blank {
+                self.new_line(flags)?;
+                write!(self, "{:max_len$}", " ").map_err(io_error)?;
+            }
         }
         Ok(())
     }
 
-    pub(crate) fn write_predicate_object(
+    fn write_predicate_object(
         &self,
         group: TurtleTripleType,
         subject: &SubjectNodeRef,
         predicate: &IRIRef,
         max_len: usize,
-        is_last_of_subject: bool,
+        flags: TurtleCursorFlags,
     ) -> rdftk_core::error::Result<()> {
         //
         // First, write the predicate
         //
-        self.write_predicate(group, predicate, max_len)?;
+        self.write_predicate(group, predicate, max_len, flags)?;
         //
         // Then, write the object(s) for that predicate (in sorted predictable order)
         //
-        self.with_objects(subject, predicate, |c, object, is_last| {
-            c.write_object(object, max_len, is_last, is_last_of_subject)
+        self.with_objects(subject, predicate, flags, |c, object, flags| {
+            c.write_object(object, max_len, flags)
         })
     }
 
-    pub(crate) fn write_sub_graph(&self, subject: &SubjectNodeRef) -> rdftk_core::error::Result<()> {
-        self.write_subject(subject.clone())?;
-        self.write_predicates_of_subject(subject.clone())
+    fn write_sub_graph(&self, subject: &SubjectNodeRef, flags: TurtleCursorFlags) -> rdftk_core::error::Result<()> {
+        self.write_subject(subject.clone(), flags)?;
+        self.write_predicates_of_subject(subject.clone(), flags)
     }
 
-    fn write_predicates_of_subject(&self, subject: SubjectNodeRef) -> rdftk_core::error::Result<()> {
+    fn write_predicates_of_subject(&self, subject: SubjectNodeRef, flags: TurtleCursorFlags) -> rdftk_core::error::Result<()> {
         self.with_predicates_grouped(
             &subject,
+            flags,
             |c, group,
-             predicate, max_len, is_last| {
+             predicate, max_len, flags| {
                 c.write_predicate_object(
                     group,
                     &subject,
                     predicate,
                     max_len,
-                    is_last,
+                    flags,
                 )
             },
         )
@@ -363,22 +459,24 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
     ///
     /// Deal with a nested blank node.
     ///
-    fn write_nested_blank_node(&self, object: &ObjectNodeRef) -> rdftk_core::error::Result<()> {
-        write!(self, " [").map_err(io_error)?;
+    fn write_nested_blank_node(
+        &self,
+        object: &ObjectNodeRef,
+        flags: TurtleCursorFlags,
+    ) -> rdftk_core::error::Result<()> {
+        write!(self, "[").map_err(io_error)?;
         let inner_subject: SubjectNodeRef = self.graph
             .statement_factory()
             .object_as_subject(
                 <&Rc<dyn ObjectNode>>::clone(&object).clone(),
             )
             .unwrap();
-        self.write_sub_graph(&inner_subject)?;
+        self.write_sub_graph(&inner_subject, flags)?;
         self.wrote_blank(&inner_subject);
-        self.new_line()?;
+        self.new_line(flags)?;
         write!(self, "]").map_err(io_error)?;
         Ok(())
     }
-
-
 }
 
 impl<'a, W: Write + Sized> Write for &TurtleCursor<'a, W> {

@@ -26,14 +26,13 @@ impl GraphWriter for TurtleWriter {
         self.write_base_iri(w)?;
         self.write_prefixes(w, graph)?;
 
-        let mut cursor = TurtleCursor::new(
+        let cursor = TurtleCursor::new(
             Rc::new(RefCell::from(w)),
             Rc::from(graph.deref().borrow()),
             self.options.clone(),
         );
 
-        self.write_normal_subjects(&mut cursor)?;
-        self.write_blank_node_subjects(&mut cursor)
+        cursor.write()
     }
 }
 
@@ -91,30 +90,6 @@ impl TurtleWriter {
         writeln!(w).map_err(io_error)
     }
 
-    ///
-    /// Write statements, start with those where subject is an IRI,
-    /// sort them by URL so that we keep a consistent result avoiding git-diff to
-    /// flag certain lines as changed.
-    ///
-    fn write_normal_subjects(&self, cursor: &mut TurtleCursor<'_, impl Write + Sized>) -> rdftk_core::error::Result<()> {
-        cursor.with_node_subjects_do(|c, subject| {
-            c.write_sub_graph(subject)?;
-            writeln!(c).map_err(io_error)?;
-            Ok(())
-        })
-    }
 
-    ///
-    /// Write statements where subject is a blank node
-    ///
-    fn write_blank_node_subjects(
-        &self,
-        cursor: &mut TurtleCursor<'_, impl Write + Sized>,
-    ) -> rdftk_core::error::Result<()> {
-        cursor.with_unwritten_blank_node_subjects(|c, ref subject| {
-            c.write_sub_graph(subject)?;
-            Ok(())
-        })
-    }
 
 }

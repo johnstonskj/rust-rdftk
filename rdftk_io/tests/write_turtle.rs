@@ -1,10 +1,13 @@
 #![cfg(feature = "turtle")]
 
-use rdftk_io::write_graph_to_string;
-use rdftk_iri::{IRIRef, IRI};
 use std::str::FromStr;
-use rdftk_io::turtle::writer::TurtleOptions;
-use rdftk_io::turtle::writer::TurtleWriter;
+
+use rdftk_io::{
+    turtle::writer::{TurtleOptions, TurtleWriter},
+    write_graph_to_string,
+};
+use rdftk_iri::{IRIRef, IRI};
+
 use crate::common::TonyBennType;
 
 mod common;
@@ -36,7 +39,10 @@ fn write_to_turtle_one_type() {
     let result = write_graph_to_string(&writer, &graph);
     assert!(result.is_ok());
     let output = result.unwrap();
-    println!("# format: turtle, no base IRI with type on new line\n{}", output);
+    println!(
+        "# format: turtle, no base IRI with type on new line\n{}",
+        output
+    );
 
     // assert!(output.contains("@prefix dc: <http://purl.org/dc/elements/1.1/> .\n"));
     // assert!(output.contains("<http://en.wikipedia.org/wiki/Tony_Benn> dc:"));
@@ -55,7 +61,10 @@ fn write_to_turtle_two_types() {
     let result = write_graph_to_string(&writer, &graph);
     assert!(result.is_ok());
     let output = result.unwrap();
-    println!("# format: turtle, no base IRI, intellij style with type on subject line\n{}", output);
+    println!(
+        "# format: turtle, no base IRI, intellij style with type on subject line\n{}",
+        output
+    );
 
     // assert!(output.contains("@prefix dc: <http://purl.org/dc/elements/1.1/> .\n"));
     // assert!(output.contains("<http://en.wikipedia.org/wiki/Tony_Benn> dc:"));
@@ -88,7 +97,7 @@ fn write_to_turtle_with_base() {
 
     let writer = TurtleWriter::with_base(
         IRIRef::from(IRI::from_str("http://en.wikipedia.org/wiki/").unwrap()),
-        TurtleOptions::default().with_indent_width(4)
+        TurtleOptions::default().with_indent_width(4),
     );
 
     let result = write_graph_to_string(&writer, &graph);
@@ -134,7 +143,7 @@ fn write_many_use_cases() {
 
     let writer = TurtleWriter::with_base(
         IRIRef::from(IRI::from_str("https://placeholder.kg/id/").unwrap()),
-        TurtleOptions::default()
+        TurtleOptions::default(),
     );
 
     let result = write_graph_to_string(&writer, &graph);
@@ -155,6 +164,51 @@ fn write_many_use_cases() {
                                <concept-functional-currency-label>,
                                <concept-functional-currency>,
                                <concept-share-issue-denomination-currency> .
+
+        "##
+    };
+
+    println!("# format: turtle\n{}", output);
+
+    assert_eq!(output, expected);
+}
+
+#[test]
+fn write_many_blank_nodes() {
+    let graph = common::many_blank_nodes_graph();
+
+    let writer = TurtleWriter::with_base(
+        IRIRef::from(IRI::from_str("https://placeholder.kg/id/").unwrap()),
+        TurtleOptions::default(),
+    );
+
+    let result = write_graph_to_string(&writer, &graph);
+    assert!(result.is_ok());
+    let output = result.unwrap();
+    let expected = indoc::formatdoc! {
+        r##"
+        @base <https://placeholder.kg/id/> .
+
+        @prefix concept: <https://ekgf.org/ontology/concept/> .
+        @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+        @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+        @prefix use-case: <https://ekgf.org/ontology/use-case/> .
+
+        <use-case-currencies>
+          use-case:usesConcept [
+            a          concept:Concept ;
+            rdfs:label "Capital Raise Currency"
+          ],[
+            a          concept:Concept ;
+            rdfs:label "Currency Label"
+          ],[
+            a          concept:Concept ;
+            rdfs:label "Currency Search Text"
+          ],[
+            a          concept:Concept ;
+            rdfs:label "Currency Tag"
+          ] .
+
         "##
     };
 
