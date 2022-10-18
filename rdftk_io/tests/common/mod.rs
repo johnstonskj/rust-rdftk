@@ -134,9 +134,11 @@ pub fn tony_benn_graph(graph_type: TonyBennType) -> GraphRef {
 ///
 /// ```
 /// @base <https://placeholder.kg/id/> .
+/// @prefix test: <https://whatever.org/ontology/test/> .
 /// @prefix use-case: <https://ekgf.org/ontology/use-case/> .
 ///
 /// <use-case-currencies>
+///     test:predicate       test:whatever;
 ///     use-case:usesConcept <concept-functional-currency>,
 ///                          <concept-currency-search-text>,
 ///                          <concept-currency-label>,
@@ -154,6 +156,10 @@ pub fn use_cases_graph() -> GraphRef {
         mut_mappings.insert(
             "use-case",
             IRIRef::from(IRI::from_str("https://ekgf.org/ontology/use-case/").unwrap()),
+        );
+        mut_mappings.insert(
+            "test",
+            IRIRef::from(IRI::from_str("https://whatever.org/ontology/test/").unwrap()),
         );
     }
     let st_factory = statement_factory();
@@ -184,6 +190,18 @@ pub fn use_cases_graph() -> GraphRef {
                 .unwrap(),
         );
     }
+
+    statements.push(
+        st_factory
+            .statement(
+                st_factory.named_subject(subject_iri.clone()),
+                IRIRef::from(IRI::from_str("https://whatever.org/ontology/test/predicate").unwrap()),
+                st_factory.named_object(
+                    IRIRef::from(IRI::from_str("https://whatever.org/ontology/test/whatever").unwrap())
+                ),
+            )
+            .unwrap(),
+    );
 
     graph_factory().graph_from(&statements, Some(mappings))
 }

@@ -154,9 +154,11 @@ fn write_many_use_cases() {
         @base <https://placeholder.kg/id/> .
 
         @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+        @prefix test: <https://whatever.org/ontology/test/> .
         @prefix use-case: <https://ekgf.org/ontology/use-case/> .
 
         <use-case-currencies>
+          test:predicate       test:whatever ;
           use-case:usesConcept <concept-capital-raise-currency>,
                                <concept-currency-label>,
                                <concept-currency-search-text>,
