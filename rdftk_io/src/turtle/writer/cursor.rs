@@ -6,15 +6,17 @@ use std::io::Write;
 use std::iter::FromIterator;
 use std::ops::{Deref, DerefMut};
 use std::rc::Rc;
+use std::str::FromStr;
 
 use itertools::Itertools;
-
 use rdftk_core::model::graph::Graph;
+
 use rdftk_core::model::qname::QName;
 use rdftk_core::model::statement::{ObjectNode, ObjectNodeRef, SubjectNodeRef};
-use rdftk_iri::IRIRef;
+use rdftk_iri::{IRI, IRIRef};
 
 use crate::common::indenter::Indenter;
+use crate::turtle::writer;
 use crate::turtle::writer::{io_error, utf8_error};
 use crate::turtle::writer::options::TurtleOptions;
 use crate::turtle::writer::triple_type::TurtleTripleType;
@@ -42,12 +44,12 @@ struct TurtleCursorFlags {
 }
 
 pub(crate) struct TurtleCursor<'a, W> where W: Write + Sized {
-    pub(crate) w: Rc<RefCell<W>>,
-    pub(crate) graph: Rc<Ref<'a, dyn Graph>>,
-    pub(crate) indenter: RefCell<Indenter>,
-    pub(crate) blanks_to_write: RefCell<Vec<SubjectNodeRef>>,
-    pub(crate) blanks_written: RefCell<Vec<SubjectNodeRef>>,
-    pub(crate) options: TurtleOptions,
+    w: Rc<RefCell<W>>,
+    graph: Rc<Ref<'a, dyn Graph>>,
+    indenter: RefCell<Indenter>,
+    blanks_to_write: RefCell<Vec<SubjectNodeRef>>,
+    blanks_written: RefCell<Vec<SubjectNodeRef>>,
+    options: TurtleOptions,
 }
 
 impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
@@ -81,7 +83,7 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
     ///
     /// Get a copy (you clone it first) of the current Cursor but then with the given writer.
     ///
-    pub(crate) fn new_with_writer<W2: Write + Sized>(w: Rc<RefCell<W>>, other: &'a TurtleCursor<'a, W2>) -> Self {
+    fn new_with_writer<W2: Write + Sized>(w: Rc<RefCell<W>>, other: &'a TurtleCursor<'a, W2>) -> Self {
         Self {
             w,
             graph: other.graph.clone(),
@@ -98,6 +100,8 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
     }
 
     pub(crate) fn write(&self) -> rdftk_core::error::Result<()> {
+        self.write_base_iri()?;
+        self.write_prefixes()?;
         self.write_normal_subjects()?;
         let flags = TurtleCursorFlags::default();
         // The given cursor object collects all the blank-node objects that have not been
@@ -108,14 +112,14 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
     }
 
     #[allow(unused_results)]
-    pub(crate) fn indent(&self) -> &RefCell<Indenter> {
+    fn indent(&self) -> &RefCell<Indenter> {
         self.indenter.replace_with(|old| old.indent());
         &self.indenter
     }
 
     #[allow(unused_results)]
     #[allow(unused)]
-    pub(crate) fn outdent(&self) -> &RefCell<Indenter> {
+    fn outdent(&self) -> &RefCell<Indenter> {
         self.indenter.replace_with(|old| old.outdent());
         &self.indenter
     }
@@ -128,11 +132,11 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
         }
     }
 
-    pub(crate) fn write_fmt(&self, fmt: std::fmt::Arguments<'_>) -> std::io::Result<()> {
+    fn write_fmt(&self, fmt: std::fmt::Arguments<'_>) -> std::io::Result<()> {
         self.w.as_ref().borrow_mut().write_fmt(fmt)
     }
 
-    pub(crate) fn wrote_blank(&self, blank: &SubjectNodeRef) {
+    fn wrote_blank(&self, blank: &SubjectNodeRef) {
         assert!(blank.is_blank());
         self.blanks_written.borrow_mut().push(blank.clone());
     }
@@ -147,13 +151,58 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
             .collect()
     }
 
-    pub(crate) fn sorted_subjects(&self) -> Vec<SubjectNodeRef> {
+    fn sorted_subjects(&self) -> Vec<SubjectNodeRef> {
         self.graph
             .node_subjects()
             .into_iter()
             .sorted()
             .cloned()
             .collect::<Vec<SubjectNodeRef>>()
+    }
+
+    ///
+    /// Write out the graph base IRI in either turtle
+    /// style (as '@base ..') or SPARQL style (as 'BASE ...')
+    ///
+    fn write_base_iri(&self) -> rdftk_core::error::Result<()> {
+        let TurtleOptions { use_sparql_style, use_intellij_style, .. } = self.options;
+        if let Some(base) = &self.options.id_base {
+            if use_sparql_style && !use_intellij_style {
+                writeln!(self, "BASE <{}>", base.to_string().as_str()).map_err(io_error)?;
+            } else {
+                writeln!(self, "@base <{}> .", base.to_string().as_str()).map_err(io_error)?;
+            }
+        }
+        if !use_intellij_style {
+            writeln!(self).map_err(io_error)?;
+        }
+        Ok(())
+    }
+
+    ///
+    /// Write all prefix mappings, sort them by prefix to avoid
+    /// random order and unnecessary changes in git
+    ///
+    fn write_prefixes(&self) -> rdftk_core::error::Result<()> {
+        let mappings = self.graph.deref().prefix_mappings();
+        let mappings = mappings.try_borrow().map_err(writer::borrow_error)?;
+        for (prefix, namespace) in mappings.mappings().sorted() {
+            let mut namespace_str = namespace.to_string();
+            // If we have any base IRI conversions to do for any of the namespaces, then do it now:
+            for (from_base, to_base) in self.options.convert_base.iter() {
+                let from_base_str = from_base.to_string();
+                if namespace_str.starts_with(from_base_str.as_str()) {
+                    namespace_str = format!("{}{}", to_base.to_string().as_str(), &namespace_str[from_base_str.len()..]);
+                    break;
+                }
+            }
+            if self.options.use_sparql_style && !self.options.use_intellij_style {
+                writeln!(self, "PREFIX {prefix}: <{namespace_str}>").map_err(io_error)?;
+            } else {
+                writeln!(self, "@prefix {prefix}: <{namespace_str}> .").map_err(io_error)?;
+            }
+        }
+        writeln!(self).map_err(io_error)
     }
 
     fn with_node_subjects_do<F>(&self, flags: TurtleCursorFlags, f: F) -> rdftk_core::error::Result<()>
@@ -185,7 +234,8 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
 
         // let max_len = all_predicates.iter().(|)
         //     .fold(std::u16::MIN, |a,b| a.max(b.borrow().));
-        for (group, ref preds) in TurtleTripleType::group_predicates(&all_predicates) {
+        for (group, ref mut preds) in TurtleTripleType::group_predicates(&all_predicates) {
+            preds.sort_by_cached_key(|iri| self.predicate_iri_as_string(iri).unwrap());
             for predicate in preds {
                 count += 1;
                 let flags = TurtleCursorFlags {
@@ -271,26 +321,35 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
     /// If we're encountering an IRI whose prefix equals the given (optional) `convert_to_base` IRI
     /// then write it to Turtle as if it's an IRI with the default base.
     ///
-    pub(crate) fn write_iri(&self, iri: &IRIRef) -> std::io::Result<()> {
+    fn write_iri(&self, iri: &IRIRef) -> std::io::Result<()> {
         self.compress_iri(self.w.deref().borrow_mut().deref_mut(), iri)
     }
 
-    pub(crate) fn compress_iri<W2: Write + Sized>(
+    fn compress_iri<W2: Write + Sized>(
         &self,
         writer: &mut W2,
         iri: &IRIRef,
     ) -> std::io::Result<()> {
-        if let Some(base) = &self.options.base {
-            let iri = iri.to_string();
-            if let Some(ref convert_to_base) = self.options.convert_to_base {
-                if iri.starts_with(convert_to_base.as_str()) {
-                    return write!(writer, "<{}> ", &iri[convert_to_base.len()..]);
+        let mut iri_str = iri.to_string();
+        if let Some(id_base) = &self.options.id_base {
+            if let Some(ref convert_to_id_base) = self.options.convert_to_id_base {
+                let target_id_base = convert_to_id_base.to_string();
+                if iri_str.starts_with(target_id_base.as_str()) {
+                    return write!(writer, "<{}>", &iri_str[target_id_base.len()..]);
                 }
             }
-            if iri.starts_with(base) {
-                return write!(writer, "<{}>", &iri[base.len()..]);
+            let id_base_str = id_base.to_string();
+            if iri_str.starts_with(id_base_str.as_str()) {
+                return write!(writer, "<{}>", &iri_str[id_base_str.len()..]);
             }
         }
+        for (from_base, to_base) in self.options.convert_base.iter() {
+            let from_base_str = from_base.to_string();
+            if iri_str.starts_with(from_base_str.as_str()) {
+                iri_str = format!("{}{}", to_base.to_string().as_str(), &iri_str[from_base_str.len()..]);
+            }
+        }
+        let iri = IRIRef::new(IRI::from_str(iri_str.as_str()).unwrap());
         match self.compress(&iri) {
             None => write!(writer, "<{iri}>"),
             Some(_qname) => write!(writer, "{_qname}"),
@@ -340,11 +399,11 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
     ///
     /// Compress an IRI into a qname, if possible.
     ///
-    pub(crate) fn compress(&self, iri: &IRIRef) -> Option<QName> {
+    fn compress(&self, iri: &IRIRef) -> Option<QName> {
         self.graph.deref().prefix_mappings().deref().borrow().compress(iri)
     }
 
-    pub(crate) fn write_literal(&self, literal: &ObjectNodeRef) -> std::io::Result<()> {
+    fn write_literal(&self, literal: &ObjectNodeRef) -> std::io::Result<()> {
         // TODO: compress data type IRIs
         if let Some(literal) = literal.as_literal() {
             write!(self, "{}", literal)
@@ -375,12 +434,15 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
         // Otherwise, go to the next line and write it as a normal predicate-IRI
         //
         self.new_line(flags)?;
+        let pred = self.predicate_iri_as_string(predicate)?;
+        write!(self, "{:<max_len$}", pred.as_str()).map_err(io_error)
+    }
 
+    fn predicate_iri_as_string(&self, predicate: &IRIRef) -> rdftk_core::error::Result<String> {
         let buffer = Rc::new(RefCell::from(Vec::<u8>::new()));
         let new_cursor = TurtleCursor::new_with_writer(buffer.clone(), self);
         new_cursor.write_iri(predicate).map_err(io_error)?;
-        let pred = String::from_utf8(buffer.take()).map_err(utf8_error)?;
-        write!(self, "{:<max_len$}", pred.as_str()).map_err(io_error)
+        String::from_utf8(buffer.take()).map_err(utf8_error)
     }
 
     fn write_object(

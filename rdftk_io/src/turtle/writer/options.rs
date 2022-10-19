@@ -2,7 +2,7 @@ use rdftk_iri::IRIRef;
 
 #[derive(Debug, Clone)]
 pub struct TurtleOptions {
-    pub base: Option<String>,
+    pub id_base: Option<IRIRef>,
     pub nest_blank_nodes: bool,
     pub use_sparql_style: bool,
     /// Use the same formatting style as used by the LNKD.tech editor plugin
@@ -12,28 +12,32 @@ pub struct TurtleOptions {
     /// the subject IRI.
     pub place_type_on_subject_line: bool,
     /// If provided, any IRI that's written to Turtle that starts with the given
-    /// string will be written to Turtle as if it's part of the base namespace.
-    pub convert_to_base: Option<String>,
+    /// IRI will be written to Turtle as if it's part of the base namespace.
+    pub convert_to_id_base: Option<IRIRef>,
+    /// If provided, any IRI that's written to Turtle that starts with the given
+    /// IRI will be converted with the provided second base IRI.
+    pub convert_base: Vec<(IRIRef, IRIRef)>,
     pub indent_width: u16,
 }
 
 impl Default for TurtleOptions {
     fn default() -> Self {
         Self {
-            base: None,
+            id_base: None,
             nest_blank_nodes: true,
             use_sparql_style: false,
             use_intellij_style: false,
             place_type_on_subject_line: false,
-            convert_to_base: None,
+            convert_to_id_base: None,
+            convert_base: Vec::new(),
             indent_width: 2,
         }
     }
 }
 
 impl TurtleOptions {
-    pub fn default_with_base(base: IRIRef) -> Self {
-        Self::default().with_base(base)
+    pub fn default_with_base(base: &IRIRef) -> Self {
+        Self::default().with_id_base(Some(base))
     }
 
     /// Set default options to make the generated Turtle RDF look like it's formatted
@@ -58,8 +62,21 @@ impl TurtleOptions {
         }
     }
 
-    pub fn with_base(mut self, base: IRIRef) -> Self {
-        self.base = Some(base.to_string());
+    /// Return a new instance of the given `TurtleOptions` where the `id_base` is set to the given
+    /// IRI which will instruct the `TurtleWriter` to generate a `@base <id_base>` or `BASE <id_base>`
+    /// statement at the top of the file.
+    pub fn with_id_base<'a>(mut self, id_base: Option<&'a IRIRef>) -> Self {
+        self.id_base = id_base.cloned();
+        self
+    }
+
+    pub fn with_conversion_to_id_base(mut self, from_base: Option<&IRIRef>) -> Self {
+        self.convert_to_id_base = from_base.cloned();
+        self
+    }
+
+    pub fn with_iri_conversion(mut self, from_base: IRIRef, to_base: IRIRef) -> Self {
+        self.convert_base.push((from_base, to_base));
         self
     }
 

@@ -17,13 +17,6 @@ impl TurtleTripleType {
     pub(crate) fn group_predicates<'a>(predicates: &[&'a IRIRef]) -> Vec<(TurtleTripleType, Vec<&'a IRIRef>)> {
         let mut result = predicates
             .iter()
-            // .sorted_by(|a, b| {
-            //     log::error!("a={a:?} b={b:?}");
-            //     let x = Self::group_predicate(a);
-            //     let y = Self::group_predicate(b);
-            //     log::error!("x={x:?} y={y:?}");
-            //     x.cmp(&y)
-            // })
             .group_by(Self::group_predicate)
             .into_iter()
             .map(|(triple_type, group)| (triple_type, group.cloned().collect()))
@@ -31,6 +24,7 @@ impl TurtleTripleType {
         result.sort_by_key(|a| a.0);
         result
     }
+
     fn group_predicate(predicate: &&&IRIRef) -> TurtleTripleType {
         match predicate.to_string().as_str() {
             "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" => TurtleTripleType::Type,

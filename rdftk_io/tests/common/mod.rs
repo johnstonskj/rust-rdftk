@@ -247,6 +247,10 @@ pub fn many_blank_nodes_graph() -> GraphRef {
             "concept",
             IRIRef::from(IRI::from_str("https://ekgf.org/ontology/concept/").unwrap()),
         );
+        mut_mappings.insert(
+            "graph",
+            IRIRef::from(IRI::from_str("https://yourcompany.com/graph/").unwrap()),
+        );
     }
     let st_factory = statement_factory();
     let li_factory = literal_factory();
@@ -254,7 +258,7 @@ pub fn many_blank_nodes_graph() -> GraphRef {
     let mut statements: StatementList = Default::default();
 
     let subject_iri =
-        IRIRef::from(IRI::from_str("https://placeholder.kg/id/use-case-currencies").unwrap());
+        IRIRef::from(IRI::from_str("https://yourcompany.com/id/use-case-currencies").unwrap());
 
     let concept_type_iri =
         IRIRef::from(IRI::from_str("https://ekgf.org/ontology/concept/Concept").unwrap());

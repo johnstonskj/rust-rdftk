@@ -95,8 +95,8 @@ fn write_to_turtle_two_types_with_type_on_new_line() {
 fn write_to_turtle_with_base() {
     let graph = common::tony_benn_graph(TonyBennType::TwoTypes);
 
-    let writer = TurtleWriter::with_base(
-        IRIRef::from(IRI::from_str("http://en.wikipedia.org/wiki/").unwrap()),
+    let writer = TurtleWriter::with_id_base(
+        &IRIRef::from(IRI::from_str("http://en.wikipedia.org/wiki/").unwrap()),
         TurtleOptions::default().with_indent_width(4),
     );
 
@@ -120,8 +120,8 @@ fn write_to_turtle_with_options() {
     let mut options = TurtleOptions::default();
     options.use_sparql_style = true;
     options.nest_blank_nodes = false;
-    let writer = TurtleWriter::with_base(
-        IRIRef::from(IRI::from_str("http://en.wikipedia.org/wiki/").unwrap()),
+    let writer = TurtleWriter::with_id_base(
+        &IRIRef::from(IRI::from_str("http://en.wikipedia.org/wiki/").unwrap()),
         options,
     );
 
@@ -141,8 +141,8 @@ fn write_to_turtle_with_options() {
 fn write_many_use_cases() {
     let graph = common::use_cases_graph();
 
-    let writer = TurtleWriter::with_base(
-        IRIRef::from(IRI::from_str("https://placeholder.kg/id/").unwrap()),
+    let writer = TurtleWriter::with_id_base(
+        &IRIRef::from(IRI::from_str("https://placeholder.kg/id/").unwrap()),
         TurtleOptions::default(),
     );
 
@@ -179,10 +179,19 @@ fn write_many_use_cases() {
 fn write_many_blank_nodes() {
     let graph = common::many_blank_nodes_graph();
 
-    let writer = TurtleWriter::with_base(
-        IRIRef::from(IRI::from_str("https://placeholder.kg/id/").unwrap()),
-        TurtleOptions::default(),
-    );
+    let options = TurtleOptions::default()
+        .with_id_base(Some(&IRIRef::from(
+            IRI::from_str("https://placeholder.kg/id/").unwrap(),
+        )))
+        .with_conversion_to_id_base(Some(&IRIRef::from(
+            IRI::from_str("https://yourcompany.com/id/").unwrap(),
+        )))
+        .with_iri_conversion(
+            IRIRef::from(IRI::from_str("https://yourcompany.com/graph/").unwrap()),
+            IRIRef::from(IRI::from_str("https://placeholder.kg/graph/").unwrap()),
+        );
+
+    let writer = TurtleWriter::new(options);
 
     let result = write_graph_to_string(&writer, &graph);
     assert!(result.is_ok());
@@ -192,6 +201,7 @@ fn write_many_blank_nodes() {
         @base <https://placeholder.kg/id/> .
 
         @prefix concept: <https://ekgf.org/ontology/concept/> .
+        @prefix graph: <https://placeholder.kg/graph/> .
         @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
         @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
         @prefix use-case: <https://ekgf.org/ontology/use-case/> .
