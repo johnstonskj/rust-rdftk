@@ -19,7 +19,7 @@ optimizations coming as necessary.
 More documentation may be found in the [RDFtk
 Book](https://simonkjohnston.life/rust-rdftk). 
 
-For contributors, please read our (contribution guidelines)[CONTRIBUTING.md] and (code of conduct)[CODE_OF_CONDUCT.md].
+For contributors, please read our [contribution guidelines](CONTRIBUTING.md) and [code of conduct](CODE_OF_CONDUCT.md).
 
 ## Crates
 
