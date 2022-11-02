@@ -705,9 +705,14 @@ const GRP_PATH: usize = 5;
 const GRP_QUERY: usize = 7;
 const GRP_FRAGMENT: usize = 9;
 
+lazy_static! {
+    static ref PARSE_IRI_REGEX: Regex =
+        Regex::new(r"^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?").unwrap();
+}
+
 fn parse_iri(s: &str) -> IriResult<IRI> {
     // From RFC-2396, appendix B. Parsing a URI Reference with a Regular Expression
-    let regex = Regex::new(r"^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?").unwrap();
+    let regex = &PARSE_IRI_REGEX;
     match regex.captures(s) {
         Some(captures) => Ok(IRI {
             scheme: match captures.get(GRP_SCHEME) {
