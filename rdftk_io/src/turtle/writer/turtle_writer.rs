@@ -8,9 +8,9 @@ use std::rc::Rc;
 use rdftk_core::model::graph::GraphRef;
 use rdftk_iri::IRIRef;
 
-use crate::GraphWriter;
 use crate::turtle::writer::cursor::TurtleCursor;
 use crate::turtle::writer::options::TurtleOptions;
+use crate::GraphWriter;
 
 #[derive(Debug, Default)]
 pub struct TurtleWriter {
@@ -35,9 +35,7 @@ impl TurtleWriter {
     /// options that are used when calling `Default::default`.
     ///
     pub fn new(options: TurtleOptions) -> Self {
-        Self {
-            options,
-        }
+        Self { options }
     }
 
     /// Return a new instance of the given `TurtleWriter` where the `id_base` (in its `TurtleOptions`)

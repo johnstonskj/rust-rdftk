@@ -114,9 +114,9 @@ impl Hash for dyn Literal {
 impl Display for dyn Literal {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self.data_type() {
-            Some(DataType::String) => write!(f, "\"{}\"", self.lexical_form()),
+            //            Some(DataType::String) => write!(f, "\"{}\"", self.lexical_form()),
             Some(DataType::IRI) => write!(f, "<{}>", self.lexical_form()),
-            Some(DataType::Boolean) => write!(f, "{}", self.lexical_form()),
+            //            Some(DataType::Boolean) => write!(f, "{}", self.lexical_form()),
             _ => {
                 write!(
                     f,
@@ -128,7 +128,6 @@ impl Display for dyn Literal {
                         _ => String::new(),
                     }
                 )
-
             }
         }
     }

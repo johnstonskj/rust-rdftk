@@ -7,7 +7,7 @@ mod common;
 
 #[test]
 fn write_to_ntriples() {
-    let graph = common::tony_benn_graph();
+    let graph = common::tony_benn_graph(common::TonyBennType::OneType);
 
     let writer = NTripleWriter::default();
 

@@ -32,7 +32,7 @@ log = "0.4"
 rdftk_core = { version = "0.3", path = "../rdftk_core" }
 rdftk_iri = { version = "0.1", path = "../rdftk_iri" }
 regex = "1.5"
-itertools = "0.10.5"
+itertools = "0.10"
 
 # feature-dependencies
 pest = { version = "2.1", optional = true }
@@ -43,6 +43,6 @@ xml-rs = { version = "0.8", optional = true }
 
 [dev-dependencies]
 env_logger = "0.9.1"
-pretty_assertions = "1.3.0"
+pretty_assertions = "1.3"
 pretty_env_logger = "0.4"
-indoc = "1.0.7"
+indoc = "1.0"

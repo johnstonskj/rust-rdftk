@@ -14,7 +14,9 @@ pub(crate) enum TurtleTripleType {
 }
 
 impl TurtleTripleType {
-    pub(crate) fn group_predicates<'a>(predicates: &[&'a IRIRef]) -> Vec<(TurtleTripleType, Vec<&'a IRIRef>)> {
+    pub(crate) fn group_predicates<'a>(
+        predicates: &[&'a IRIRef],
+    ) -> Vec<(TurtleTripleType, Vec<&'a IRIRef>)> {
         let mut result = predicates
             .iter()
             .group_by(Self::group_predicate)
@@ -33,7 +35,7 @@ impl TurtleTripleType {
             "http://purl.org/dc/elements/1.1/title" => TurtleTripleType::Label,
             "http://www.w3.org/2000/01/rdf-schema#comment" => TurtleTripleType::Comment,
             "http://purl.org/dc/elements/1.1/description" => TurtleTripleType::Comment,
-            _ => TurtleTripleType::Other
+            _ => TurtleTripleType::Other,
         }
     }
 }
@@ -45,9 +47,9 @@ mod tests {
 
     #[test]
     fn test_order() {
-        let mut v:Vec<TurtleTripleType> = vec![Comment, Label, Type, Other];
+        let mut v: Vec<TurtleTripleType> = vec![Comment, Label, Type, Other];
         v.sort();
-        let sorted = format!("{:?}",v );
+        let sorted = format!("{:?}", v);
         assert_eq!(sorted, "[Type, Label, Comment, Other]");
     }
 }

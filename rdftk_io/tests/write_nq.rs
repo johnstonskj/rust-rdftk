@@ -11,7 +11,7 @@ mod common;
 
 #[test]
 fn write_to_nquads() {
-    let graph = common::tony_benn_graph();
+    let graph = common::tony_benn_graph(common::TonyBennType::OneType);
     let data_set = data_set_factory().data_set(None);
     {
         let mut data_set = data_set.borrow_mut();

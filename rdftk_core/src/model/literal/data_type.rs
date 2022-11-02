@@ -39,7 +39,7 @@ pub enum DataType {
     UnsignedShort,
     /// Denotes a literal of type `xsd::unsignedByte`.
     UnsignedByte,
-     /// Denotes a literal of type `xsd::duration`.
+    /// Denotes a literal of type `xsd::duration`.
     Duration,
     /// Denotes a literal of type xsd:decimal
     Decimal,

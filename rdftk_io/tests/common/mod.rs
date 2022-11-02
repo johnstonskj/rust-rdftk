@@ -7,6 +7,7 @@ use rdftk_iri::{IRIRef, IRI};
 use std::str::FromStr;
 
 #[derive(Eq, PartialEq)]
+#[allow(dead_code)]
 pub enum TonyBennType {
     NoType,
     OneType,
@@ -147,6 +148,7 @@ pub fn tony_benn_graph(graph_type: TonyBennType) -> GraphRef {
 ///                          <concept-functional-currency-label>,
 ///                          <concept-share-issue-denomination-currency> .
 /// ```
+#[allow(dead_code)]
 pub fn use_cases_graph() -> GraphRef {
 
     let mappings = graph_factory().mapping_factory().empty();
@@ -232,6 +234,7 @@ pub fn use_cases_graph() -> GraphRef {
 ///     rdfs:label "Currency Tag"
 ///   ] .
 /// ```
+#[allow(dead_code)]
 pub fn many_blank_nodes_graph() -> GraphRef {
 
     let mappings = graph_factory().mapping_factory().empty();

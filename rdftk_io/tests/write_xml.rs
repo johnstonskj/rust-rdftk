@@ -7,7 +7,7 @@ mod common;
 
 #[test]
 fn write_to_flat_xml() {
-    let graph = common::tony_benn_graph();
+    let graph = common::tony_benn_graph(common::TonyBennType::OneType);
 
     let options = XmlOptions {
         style: XmlStyle::Flat,
@@ -24,7 +24,7 @@ fn write_to_flat_xml() {
 
 #[test]
 fn write_to_striped_xml() {
-    let graph = common::tony_benn_graph();
+    let graph = common::tony_benn_graph(common::TonyBennType::OneType);
 
     let options = XmlOptions {
         style: XmlStyle::Striped,
