@@ -42,7 +42,12 @@ impl Default for Indenter {
 
 impl Display for Indenter {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:width$}", "", width = (self.width * self.depth as u16) as usize)
+        write!(
+            f,
+            "{:width$}",
+            "",
+            width = (self.width * self.depth as u16) as usize
+        )
     }
 }
 
@@ -73,7 +78,7 @@ impl Indenter {
     pub(crate) fn outdent_by(&self, by: u8) -> Self {
         Self {
             width: self.width,
-            depth: max(0,self.depth - by),
+            depth: max(0, self.depth - by),
         }
     }
 

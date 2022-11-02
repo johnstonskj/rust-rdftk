@@ -1,7 +1,7 @@
-use std::cmp::Ordering;
 use crate::model::statement::{StatementRef, BLANK_NODE_NAMESPACE};
 use crate::model::{Equiv, Provided};
 use rdftk_iri::IRIRef;
+use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
@@ -141,14 +141,14 @@ impl PartialOrd for dyn SubjectNode {
         if self.is_iri() && other.is_iri() {
             if let Some(iri) = self.as_iri() {
                 if let Some(other_iri) = other.as_iri() {
-                    return iri.partial_cmp(other_iri)
+                    return iri.partial_cmp(other_iri);
                 }
             }
         }
         if self.is_blank() && other.is_blank() {
             if let Some(blank) = self.as_blank() {
                 if let Some(other_blank) = other.as_blank() {
-                    return blank.partial_cmp(other_blank)
+                    return blank.partial_cmp(other_blank);
                 }
             }
         }
@@ -169,7 +169,7 @@ impl Ord for dyn SubjectNode {
     fn cmp(&self, other: &Self) -> Ordering {
         let po = self.partial_cmp(other);
         if let Some(ordering) = po {
-            return ordering
+            return ordering;
         }
         Ordering::Less
     }

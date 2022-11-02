@@ -6,11 +6,11 @@ use somedoc::write::write_document_to_string;
 
 use rdftk_core::model::literal::{DataType, LanguageTag};
 use rdftk_core::simple::graph_factory;
-use rdftk_iri::{IRI, IRIRef};
+use rdftk_iri::{IRIRef, IRI};
 use rdftk_names::{dc, owl, xsd};
 use rdftk_skos::document::make_document_with_mappings;
 use rdftk_skos::model::{
-    Labeled, LiteralProperty, Propertied, Scheme, standard_mappings, to_rdf_graph,
+    standard_mappings, to_rdf_graph, Labeled, LiteralProperty, Propertied, Scheme,
 };
 
 fn make_unesco_computer() -> Scheme {

@@ -30,7 +30,12 @@ pub fn tony_benn_graph(graph_type: TonyBennType) -> GraphRef {
         if graph_type == TonyBennType::TwoTypes {
             mut_mappings.insert(
                 "fibo-fnd-aap-ppl",
-                IRIRef::from(IRI::from_str("https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/People/").unwrap()),
+                IRIRef::from(
+                    IRI::from_str(
+                        "https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/People/",
+                    )
+                    .unwrap(),
+                ),
             );
         }
     }
@@ -150,7 +155,6 @@ pub fn tony_benn_graph(graph_type: TonyBennType) -> GraphRef {
 /// ```
 #[allow(dead_code)]
 pub fn use_cases_graph() -> GraphRef {
-
     let mappings = graph_factory().mapping_factory().empty();
     {
         let mut mut_mappings = mappings.borrow_mut();
@@ -178,15 +182,20 @@ pub fn use_cases_graph() -> GraphRef {
         "currency-tag",
         "capital-raise-currency",
         "functional-currency-label",
-        "share-issue-denomination-currency"
-    ].map(|c| IRIRef::from(
-        IRI::from_str(format!("https://placeholder.kg/id/concept-{c}").as_str()).unwrap()
-    )) {
+        "share-issue-denomination-currency",
+    ]
+    .map(|c| {
+        IRIRef::from(
+            IRI::from_str(format!("https://placeholder.kg/id/concept-{c}").as_str()).unwrap(),
+        )
+    }) {
         statements.push(
             st_factory
                 .statement(
                     st_factory.named_subject(subject_iri.clone()),
-                    IRIRef::from(IRI::from_str("https://ekgf.org/ontology/use-case/usesConcept").unwrap()),
+                    IRIRef::from(
+                        IRI::from_str("https://ekgf.org/ontology/use-case/usesConcept").unwrap(),
+                    ),
                     st_factory.named_object(concept_iri),
                 )
                 .unwrap(),
@@ -197,10 +206,12 @@ pub fn use_cases_graph() -> GraphRef {
         st_factory
             .statement(
                 st_factory.named_subject(subject_iri.clone()),
-                IRIRef::from(IRI::from_str("https://whatever.org/ontology/test/predicate").unwrap()),
-                st_factory.named_object(
-                    IRIRef::from(IRI::from_str("https://whatever.org/ontology/test/whatever").unwrap())
+                IRIRef::from(
+                    IRI::from_str("https://whatever.org/ontology/test/predicate").unwrap(),
                 ),
+                st_factory.named_object(IRIRef::from(
+                    IRI::from_str("https://whatever.org/ontology/test/whatever").unwrap(),
+                )),
             )
             .unwrap(),
     );
@@ -236,7 +247,6 @@ pub fn use_cases_graph() -> GraphRef {
 /// ```
 #[allow(dead_code)]
 pub fn many_blank_nodes_graph() -> GraphRef {
-
     let mappings = graph_factory().mapping_factory().empty();
     {
         let mut mut_mappings = mappings.borrow_mut();
@@ -277,7 +287,9 @@ pub fn many_blank_nodes_graph() -> GraphRef {
             st_factory
                 .statement(
                     st_factory.named_subject(subject_iri.clone()),
-                    IRIRef::from(IRI::from_str("https://ekgf.org/ontology/use-case/usesConcept").unwrap()),
+                    IRIRef::from(
+                        IRI::from_str("https://ekgf.org/ontology/use-case/usesConcept").unwrap(),
+                    ),
                     bn.clone(),
                 )
                 .unwrap(),
@@ -286,7 +298,9 @@ pub fn many_blank_nodes_graph() -> GraphRef {
             st_factory
                 .statement(
                     st_factory.object_as_subject(bn.clone()).unwrap(),
-                    IRIRef::from(IRI::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#type").unwrap()),
+                    IRIRef::from(
+                        IRI::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#type").unwrap(),
+                    ),
                     st_factory.named_object(concept_type_iri.clone()),
                 )
                 .unwrap(),
@@ -295,10 +309,10 @@ pub fn many_blank_nodes_graph() -> GraphRef {
             st_factory
                 .statement(
                     st_factory.object_as_subject(bn.clone()).unwrap(),
-                    IRIRef::from(IRI::from_str("http://www.w3.org/2000/01/rdf-schema#label").unwrap()),
-                    st_factory.literal_object(
-                        li_factory.literal(concept_label)
+                    IRIRef::from(
+                        IRI::from_str("http://www.w3.org/2000/01/rdf-schema#label").unwrap(),
                     ),
+                    st_factory.literal_object(li_factory.literal(concept_label)),
                 )
                 .unwrap(),
         );

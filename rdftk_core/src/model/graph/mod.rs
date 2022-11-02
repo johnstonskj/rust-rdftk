@@ -178,14 +178,20 @@ pub trait Graph: Debug + Featured {
     /// Return a set of all subjects that are not blank nodes
     ///
     fn node_subjects(&self) -> HashSet<&SubjectNodeRef> {
-        self.subjects().into_iter().filter(|s| ! s.is_blank()).collect()
+        self.subjects()
+            .into_iter()
+            .filter(|s| !s.is_blank())
+            .collect()
     }
 
     ///
     /// Return a set of all subjects that are blank nodes
     ///
     fn blank_node_subjects(&self) -> HashSet<&SubjectNodeRef> {
-        self.subjects().into_iter().filter(|s| s.is_blank()).collect()
+        self.subjects()
+            .into_iter()
+            .filter(|s| s.is_blank())
+            .collect()
     }
 
     ///
