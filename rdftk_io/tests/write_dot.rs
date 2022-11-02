@@ -7,7 +7,7 @@ mod common;
 
 #[test]
 fn write_to_dot() {
-    let graph = common::tony_benn_graph();
+    let graph = common::tony_benn_graph(common::TonyBennType::OneType);
 
     let writer = DotWriter::default();
 
@@ -25,7 +25,7 @@ fn write_to_dot() {
 
 #[test]
 fn write_to_dot_with_options() {
-    let graph = common::tony_benn_graph();
+    let graph = common::tony_benn_graph(common::TonyBennType::OneType);
 
     let mut options = DotOptions::default();
     options.literal_color = "gold".to_string();
