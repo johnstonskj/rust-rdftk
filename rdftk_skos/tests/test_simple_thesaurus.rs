@@ -1,17 +1,17 @@
+use std::str::FromStr;
+
 use pretty_assertions::assert_eq;
-use rdftk_core::model::graph::PrefixMappings;
-use rdftk_core::model::literal::{DataType, LanguageTag, Literal};
+use somedoc::write::markdown::MarkdownFlavor;
+use somedoc::write::write_document_to_string;
+
+use rdftk_core::model::literal::{DataType, LanguageTag};
 use rdftk_core::simple::graph_factory;
-use rdftk_core::simple::statement::statement_factory;
-use rdftk_iri::{IRIRef, IRI};
+use rdftk_iri::{IRI, IRIRef};
 use rdftk_names::{dc, owl, xsd};
 use rdftk_skos::document::make_document_with_mappings;
 use rdftk_skos::model::{
-    standard_mappings, to_rdf_graph, Labeled, LiteralProperty, Propertied, Scheme,
+    Labeled, LiteralProperty, Propertied, Scheme, standard_mappings, to_rdf_graph,
 };
-use somedoc::write::markdown::MarkdownFlavor;
-use somedoc::write::write_document_to_string;
-use std::str::FromStr;
 
 fn make_unesco_computer() -> Scheme {
     // Taken from http://vocabularies.unesco.org/browser/rest/v1/thesaurus/data?uri=http%3A%2F%2Fvocabularies.unesco.org%2Fthesaurus%2Fconcept2258&format=text/turtle

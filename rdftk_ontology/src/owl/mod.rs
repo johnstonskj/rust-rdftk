@@ -31,22 +31,31 @@ pub enum HeaderProperty {
 
 #[derive(Clone, Debug)]
 pub struct Ontology {
+    #[allow(unused)]
     uri: IRIRef,
+    #[allow(unused)]
     label_properties: Vec<LabelProperty>,
+    #[allow(unused)]
     header_properties: Vec<HeaderProperty>,
+    #[allow(unused)]
     classes: HashMap<IRIRef, Class>,
+    #[allow(unused)]
     properties: HashMap<IRIRef, Property>,
 }
 
 #[derive(Clone, Debug)]
 pub struct Class {
+    #[allow(unused)]
     description: ClassDescription,
+    #[allow(unused)]
     axioms: Vec<ClassAxiom>,
+    #[allow(unused)]
     deprecated: bool,
 }
 
 #[derive(Clone, Debug)]
 pub struct Property {
+    #[allow(unused)]
     deprecated: bool,
 }
 

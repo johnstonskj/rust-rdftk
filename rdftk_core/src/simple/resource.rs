@@ -92,6 +92,7 @@ use std::str::FromStr;
 pub struct Resource {
     subject: SubjectNodeRef,
     statement_factory: StatementFactoryRef,
+    #[allow(unused)]
     literal_factory: LiteralFactoryRef,
     predicates: HashMap<IRIRef, RefCell<Vec<ResourceObject>>>,
 }

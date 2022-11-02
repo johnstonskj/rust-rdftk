@@ -39,8 +39,10 @@ pub enum DataType {
     UnsignedShort,
     /// Denotes a literal of type `xsd::unsignedByte`.
     UnsignedByte,
-    /// Denotes a literal of type `xsd::duration`.
+     /// Denotes a literal of type `xsd::duration`.
     Duration,
+    /// Denotes a literal of type xsd:decimal
+    Decimal,
     /// Denotes an escaped string containing XML content.
     XmlLiteral,
     /// Denotes a literal where the type is indicated by the provided `IRI`.
@@ -113,6 +115,7 @@ impl DataType {
             DataType::UnsignedShort => xsd::unsigned_short(),
             DataType::UnsignedByte => xsd::unsigned_byte(),
             DataType::Duration => xsd::duration(),
+            DataType::Decimal => xsd::decimal(),
             DataType::XmlLiteral => rdf::xml_literal(),
             DataType::Other(iri) => iri,
         }
