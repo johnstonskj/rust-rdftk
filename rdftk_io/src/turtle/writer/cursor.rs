@@ -40,11 +40,11 @@ struct TurtleCursorFlags {
     /// `is_being_sorted` is true when we're being called by a sorting algorithm
     /// which means that we can only produce content on one (sortable) line,
     /// avoid any line-feeds..
-    is_being_sorted:      IsBeingSorted,
+    is_being_sorted: IsBeingSorted,
     /// `is_last_of_subject` is true when we're working on the last triple of
     /// the current subject, in which case we have to end a line with a dot
     /// instead of a semicolon.
-    is_last_of_subject:   IsLastOfSubject,
+    is_last_of_subject: IsLastOfSubject,
     /// `is_last_of_predicate` is true when the current object is the last
     /// object in the collection of objects for the given `subject +
     /// predicate`.
@@ -52,14 +52,15 @@ struct TurtleCursorFlags {
 }
 
 pub(crate) struct TurtleCursor<'a, W>
-where W: Write + Sized
+where
+    W: Write + Sized,
 {
-    w:               Rc<RefCell<W>>,
-    graph:           Rc<Ref<'a, dyn Graph>>,
-    indenter:        RefCell<Indenter>,
+    w: Rc<RefCell<W>>,
+    graph: Rc<Ref<'a, dyn Graph>>,
+    indenter: RefCell<Indenter>,
     blanks_to_write: RefCell<Vec<SubjectNodeRef>>,
-    blanks_written:  RefCell<Vec<SubjectNodeRef>>,
-    options:         TurtleOptions,
+    blanks_written: RefCell<Vec<SubjectNodeRef>>,
+    options: TurtleOptions,
 }
 
 impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
@@ -108,7 +109,6 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
             blanks_to_write: other.blanks_to_write.clone(),
             blanks_written: other.blanks_written.clone(),
             options: other.options.clone(),
-            ..*other
         }
     }
 
@@ -209,9 +209,9 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
                     namespace_str = format!(
                         "{}{}",
                         to_base.to_string().as_str(),
-                        &namespace_str[from_base_str.len() ..]
+                        &namespace_str[from_base_str.len()..]
                     );
-                    break
+                    break;
                 }
             }
             if self.options.use_sparql_style && !self.options.use_intellij_style {
@@ -386,12 +386,12 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
             if let Some(ref convert_to_id_base) = self.options.convert_to_id_base {
                 let target_id_base = convert_to_id_base.to_string();
                 if iri_str.starts_with(target_id_base.as_str()) {
-                    return write!(writer, "<{}>", &iri_str[target_id_base.len() ..])
+                    return write!(writer, "<{}>", &iri_str[target_id_base.len()..]);
                 }
             }
             let id_base_str = id_base.to_string();
             if iri_str.starts_with(id_base_str.as_str()) {
-                return write!(writer, "<{}>", &iri_str[id_base_str.len() ..])
+                return write!(writer, "<{}>", &iri_str[id_base_str.len()..]);
             }
         }
         for (from_base, to_base) in self.options.convert_base.iter() {
@@ -400,7 +400,7 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
                 iri_str = format!(
                     "{}{}",
                     to_base.to_string().as_str(),
-                    &iri_str[from_base_str.len() ..]
+                    &iri_str[from_base_str.len()..]
                 );
             }
         }
@@ -483,7 +483,7 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
             } else {
                 self.new_line(flags)?;
                 write!(self, "{:<max_len$}", "a").map_err(io_error)
-            }
+            };
         }
         // Otherwise, go to the next line and write it as a normal predicate-IRI
         //
@@ -592,5 +592,7 @@ impl<'a, W: Write + Sized> Write for &TurtleCursor<'a, W> {
         self.w.deref().borrow_mut().write(buf)
     }
 
-    fn flush(&mut self) -> std::io::Result<()> { self.w.deref().borrow_mut().flush() }
+    fn flush(&mut self) -> std::io::Result<()> {
+        self.w.deref().borrow_mut().flush()
+    }
 }

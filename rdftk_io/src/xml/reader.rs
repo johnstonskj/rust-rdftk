@@ -199,9 +199,9 @@ fn parse_subject_element<R: Read>(
     graph: &mut GraphRef,
 ) -> Result<Option<SubjectNodeRef>> {
     let description_element = ExpectedName::new(ELEMENT_DESCRIPTION, rdf::namespace_str());
+    let mut subject: Option<SubjectNodeRef> = None;
     loop {
         let event = event_reader.next();
-        let mut subject: Option<SubjectNodeRef> = None;
         match &event {
             Ok(XmlEvent::StartElement {
                 name,
@@ -264,12 +264,12 @@ fn parse_subject_element<R: Read>(
                     &subject_node,
                     graph,
                 )?;
-                #[allow(unused_assignments)]
+                // set outer loop value
                 subject = Some(subject_node);
             }
             Ok(XmlEvent::EndElement { .. }) => {
                 trace_event!("parse_subject_element" => event);
-                return Ok(subject);
+                break;
             }
             Ok(_) => {
                 trace_event!("parse_subject_element" => ignore event);
@@ -279,6 +279,7 @@ fn parse_subject_element<R: Read>(
             }
         }
     }
+    Ok(subject)
 }
 
 #[inline]
@@ -329,9 +330,9 @@ fn parse_predicate_element<R: Read>(
     subject: &SubjectNodeRef,
     graph: &mut GraphRef,
 ) -> Result<()> {
+    let mut no_child_elements = false;
     loop {
         let event = event_reader.next();
-        let mut no_child_elements = false;
         match &event {
             Ok(XmlEvent::StartElement {
                 name,
@@ -356,7 +357,7 @@ fn parse_predicate_element<R: Read>(
                             )
                             .unwrap(),
                     );
-                    #[allow(unused_assignments)]
+                    // set outer loop value
                     no_child_elements = true;
                 } else {
                     let statement_factory = graph.borrow().statement_factory();
@@ -447,10 +448,10 @@ fn parse_object_element<R: Read>(
     graph: &mut GraphRef,
 ) -> Result<Option<String>> {
     let mut content = String::new();
+    let mut has_elements = false;
+    let mut has_characters = false;
     loop {
         let event = event_reader.next();
-        let mut has_elements = false;
-        let mut has_characters = false;
         match &event {
             Ok(XmlEvent::StartElement {
                 name,
@@ -461,7 +462,7 @@ fn parse_object_element<R: Read>(
                 if has_characters {
                     error_event!(state => "parse_object_element", &format!("found XML content, parseType != Literal ({:?})", name));
                 }
-                #[allow(unused_assignments)]
+                // set outer loop value
                 has_elements = true;
                 let attributes = parse_attributes(attributes)?;
                 let subject_node = graph.borrow().statement_factory().blank_subject();
@@ -485,7 +486,7 @@ fn parse_object_element<R: Read>(
                 if has_elements {
                     error_event!(state => "parse_object_element", &format!("found character content after element(s)"));
                 }
-                #[allow(unused_assignments)]
+                // set outer loop value
                 has_characters = true;
                 content.push_str(&value);
             }
@@ -494,7 +495,7 @@ fn parse_object_element<R: Read>(
                 if has_elements {
                     error_event!(state => "parse_object_element", "found character content after element(s)");
                 }
-                #[allow(unused_assignments)]
+                // set outer loop value
                 has_characters = true;
                 content.push_str(&value);
             }
