@@ -4,12 +4,11 @@ I'm really glad you're reading this, because we need volunteer developers to hel
 
 Firstly, read our [Code of Conduct](./CODE_OF_CONDUCT.md) to keep our community approachable and respectable.
 
-TBD
+You may like to pick up one of the issues marked [help wanted](../../labels/help%20wanted) or [good first issue](../../labels/good%20first%20issue) as an introduction. Alternatively, [documentation](../../labels/documentation) issues can be a great way to understand the project and help improve the developer experience.
 
 ## Submitting changes
 
-TBD
-
+Changes are submitted via pull requests, using the template [pull_request_template.md](./pull_request_template.md).
 
 Always write a clear log message for your commits. One-line messages are fine for small changes, but bigger changes should look like this:
 
