@@ -73,6 +73,7 @@
 */
 
 use crate::error::{Error as RdfError, ErrorKind};
+use crate::model::statement::BLANK_NODE_NAMESPACE;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
@@ -163,7 +164,11 @@ impl QName {
         }
     }
 
-    ///
+    /// Construct a new blank node as a QName.
+    pub fn blank(name: &str) -> Result<Self, RdfError> {
+        Self::with_prefix(BLANK_NODE_NAMESPACE, name)
+    }
+
     /// Construct a new QName **without** any validation checks on the given values.
     pub fn new_unchecked(prefix: Option<&str>, name: &str) -> Self {
         Self {
@@ -184,6 +189,14 @@ impl QName {
         } else {
             Ok(Self::new_unchecked(Some(prefix), name))
         }
+    }
+
+    /// Returns `true` if this QName is a blank node, else `false`.
+    pub fn is_blank(&self) -> bool {
+        self.prefix
+            .as_ref()
+            .map(|p| p == BLANK_NODE_NAMESPACE)
+            .is_some()
     }
 
     /// Returns `true` if this QName has a prefix, else `false`.

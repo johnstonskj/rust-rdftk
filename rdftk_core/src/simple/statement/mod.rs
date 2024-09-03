@@ -7,17 +7,17 @@ use crate::model::features::Featured;
 use crate::model::features::FEATURE_RDF_STAR;
 use crate::model::literal::{LiteralFactoryRef, LiteralRef};
 use crate::model::statement::{
-    ObjectNodeRef, Statement, StatementFactory, StatementFactoryRef, StatementRef, SubjectNodeRef,
+    BlankNode, ObjectNodeRef, Statement, StatementFactory, StatementFactoryRef, StatementRef,
+    SubjectNodeRef,
 };
 use crate::model::Provided;
-use crate::simple::statement::object::Object;
+use crate::simple::literal::literal_factory;
 use crate::simple::statement::subject::Subject;
-use rdftk_iri::IRIRef;
+use lazy_static::lazy_static;
+use rdftk_iri::IriRef;
 use std::ops::Deref;
 use std::rc::Rc;
 use std::sync::Arc;
-use unique_id::sequence::SequenceGenerator as IDGenerator;
-use unique_id::Generator;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -29,7 +29,7 @@ use unique_id::Generator;
 #[derive(Clone, Debug)]
 pub struct SimpleStatement {
     subject: SubjectNodeRef,
-    predicate: IRIRef,
+    predicate: IriRef,
     object: ObjectNodeRef,
 }
 
@@ -72,7 +72,7 @@ impl StatementFactory for SimpleStatementFactory {
     fn statement(
         &self,
         subject: SubjectNodeRef,
-        predicate: IRIRef,
+        predicate: IriRef,
         object: ObjectNodeRef,
     ) -> Result<StatementRef> {
         if self.provider_id() == subject.provider_id() && self.provider_id() == object.provider_id()
@@ -94,7 +94,7 @@ impl StatementFactory for SimpleStatementFactory {
     fn statement_with_predicate(
         &self,
         subject: StatementRef,
-        predicate: IRIRef,
+        predicate: IriRef,
         object: ObjectNodeRef,
     ) -> Result<StatementRef> {
         self.statement(subject.subject().clone(), predicate, object)
@@ -112,21 +112,15 @@ impl StatementFactory for SimpleStatementFactory {
         )
     }
 
-    fn blank_subject(&self) -> SubjectNodeRef {
+    fn blank_subject(&self, node: BlankNode) -> SubjectNodeRef {
         Rc::new(SimpleSubjectNode {
-            inner: Subject::BNode(new_blank_node_id()),
+            inner: Subject::BNode(node),
         })
     }
 
-    fn blank_subject_named(&self, name: &str) -> Result<SubjectNodeRef> {
-        Ok(Rc::new(SimpleSubjectNode {
-            inner: Subject::BNode(name.to_string()),
-        }))
-    }
-
-    fn named_subject(&self, name: IRIRef) -> SubjectNodeRef {
+    fn named_subject(&self, name: IriRef) -> SubjectNodeRef {
         Rc::new(SimpleSubjectNode {
-            inner: Subject::IRI(name),
+            inner: Subject::Iri(name),
         })
     }
 
@@ -138,7 +132,7 @@ impl StatementFactory for SimpleStatementFactory {
 
     fn object_as_subject(&self, obj: ObjectNodeRef) -> Option<SubjectNodeRef> {
         if let Some(blank) = obj.as_blank() {
-            return Some(self.blank_subject_named(blank).unwrap());
+            return Some(self.blank_subject_named(blank.as_ref()).unwrap());
         }
         if let Some(iri) = obj.as_iri() {
             return Some(self.named_subject(iri.clone()));
@@ -149,39 +143,25 @@ impl StatementFactory for SimpleStatementFactory {
         None
     }
 
-    fn blank_object(&self) -> ObjectNodeRef {
-        Rc::new(SimpleObjectNode {
-            inner: Object::BNode(new_blank_node_id()),
-        })
+    fn blank_object(&self, name: BlankNode) -> ObjectNodeRef {
+        Rc::new(SimpleObjectNode::from(name))
     }
 
-    fn blank_object_named(&self, name: &str) -> Result<ObjectNodeRef> {
-        Ok(Rc::new(SimpleObjectNode {
-            inner: Object::BNode(name.to_string()),
-        }))
-    }
-
-    fn named_object(&self, name: IRIRef) -> ObjectNodeRef {
-        Rc::new(SimpleObjectNode {
-            inner: Object::IRI(name),
-        })
+    fn named_object(&self, name: IriRef) -> ObjectNodeRef {
+        Rc::new(SimpleObjectNode::from(name))
     }
 
     fn literal_object(&self, value: LiteralRef) -> ObjectNodeRef {
-        Rc::new(SimpleObjectNode {
-            inner: Object::Literal(value),
-        })
+        Rc::new(SimpleObjectNode::from(value))
     }
 
     fn statement_object(&self, st: StatementRef) -> ObjectNodeRef {
-        Rc::new(SimpleObjectNode {
-            inner: Object::Star(st),
-        })
+        Rc::new(SimpleObjectNode::from(st))
     }
 
     fn subject_as_object(&self, sub: SubjectNodeRef) -> ObjectNodeRef {
         if let Some(blank) = sub.as_blank() {
-            return self.blank_object_named(blank).unwrap();
+            return self.blank_object(blank.clone());
         }
         if let Some(iri) = sub.as_iri() {
             return self.named_object(iri.clone());
@@ -196,7 +176,7 @@ impl StatementFactory for SimpleStatementFactory {
 // ------------------------------------------------------------------------------------------------
 
 impl Featured for SimpleStatement {
-    fn supports_feature(&self, feature: &IRIRef) -> bool {
+    fn supports_feature(&self, feature: &IriRef) -> bool {
         feature == FEATURE_RDF_STAR.deref()
     }
 }
@@ -210,11 +190,11 @@ impl Statement for SimpleStatement {
         self.subject = subject;
     }
 
-    fn predicate(&self) -> &IRIRef {
+    fn predicate(&self) -> &IriRef {
         &self.predicate
     }
 
-    fn set_predicate(&mut self, predicate: IRIRef) {
+    fn set_predicate(&mut self, predicate: IriRef) {
         self.predicate = predicate;
     }
 
@@ -243,10 +223,6 @@ impl Statement for SimpleStatement {
 // Private Functions
 // ------------------------------------------------------------------------------------------------
 
-fn new_blank_node_id() -> String {
-    format!("B{}", IDGenerator::default().next_id())
-}
-
 // ------------------------------------------------------------------------------------------------
 // Modules
 // ------------------------------------------------------------------------------------------------
@@ -257,5 +233,4 @@ pub use subject::SimpleSubjectNode;
 
 #[doc(hidden)]
 pub mod object;
-use crate::simple::literal::literal_factory;
 pub use object::SimpleObjectNode;

@@ -30,22 +30,22 @@ TBD
 
 use rdftk_core::model::literal::LiteralRef;
 use rdftk_core::model::statement::{StatementFactoryRef, StatementList};
-use rdftk_iri::IRIRef;
+use rdftk_iri::IriRef;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum LabelProperty {
     Label(LiteralRef),
     Comment(LiteralRef),
-    SeeAlso(IRIRef),
-    IsDefinedBy(IRIRef),
+    SeeAlso(IriRef),
+    IsDefinedBy(IriRef),
 }
 
 pub trait Resource {
-    fn uri(&self) -> &IRIRef;
+    fn uri(&self) -> &IriRef;
 }
 
 pub trait Labeled: Resource {
@@ -55,10 +55,10 @@ pub trait Labeled: Resource {
     fn add_comment(&mut self, value: LiteralRef) {
         self.add_label_property(LabelProperty::Comment(value))
     }
-    fn add_see_also(&mut self, value: IRIRef) {
+    fn add_see_also(&mut self, value: IriRef) {
         self.add_label_property(LabelProperty::SeeAlso(value))
     }
-    fn add_is_defined_by(&mut self, value: IRIRef) {
+    fn add_is_defined_by(&mut self, value: IriRef) {
         self.add_label_property(LabelProperty::IsDefinedBy(value))
     }
     fn add_label_property(&mut self, property: LabelProperty);
@@ -67,19 +67,19 @@ pub trait Labeled: Resource {
 }
 
 pub trait Individual: Labeled {
-    fn add_instance_of(&mut self, parent: IRIRef);
-    fn remove_instance_of(&mut self, parent: &IRIRef);
-    fn instance_of(&self) -> Vec<&IRIRef>;
-    fn is_instance_of(&self, parent: &IRIRef) -> bool {
+    fn add_instance_of(&mut self, parent: IriRef);
+    fn remove_instance_of(&mut self, parent: &IriRef);
+    fn instance_of(&self) -> Vec<&IriRef>;
+    fn is_instance_of(&self, parent: &IriRef) -> bool {
         self.instance_of().iter().any(|p| p == &parent)
     }
 }
 
 pub trait Subclassed: Individual {
-    fn add_parent(&mut self, parent: IRIRef);
-    fn remove_parent(&mut self, parent: &IRIRef);
-    fn parents(&self) -> Vec<&IRIRef>;
-    fn is_child_of(&self, parent: &IRIRef) -> bool {
+    fn add_parent(&mut self, parent: IriRef);
+    fn remove_parent(&mut self, parent: &IriRef);
+    fn parents(&self) -> Vec<&IriRef>;
+    fn is_child_of(&self, parent: &IriRef) -> bool {
         self.parents().iter().any(|p| p == &parent)
     }
 }
@@ -95,18 +95,6 @@ pub trait ToStatements {
 // ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
-
-impl PartialEq for LabelProperty {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::Label(lhs), Self::Label(rhs)) => lhs == rhs,
-            (Self::Comment(lhs), Self::Comment(rhs)) => lhs == rhs,
-            (Self::SeeAlso(lhs), Self::SeeAlso(rhs)) => lhs == rhs,
-            (Self::IsDefinedBy(lhs), Self::IsDefinedBy(rhs)) => lhs == rhs,
-            (_, _) => false,
-        }
-    }
-}
 
 // ------------------------------------------------------------------------------------------------
 // Private Types

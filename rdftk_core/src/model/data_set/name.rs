@@ -4,7 +4,7 @@ derived from [RDF 1.1 TriG](https://www.w3.org/TR/trig/), _RDF Dataset Language_
 [RDF 1.1: On Semantics of RDF Datasets](https://www.w3.org/TR/rdf11-datasets/).
 */
 
-use rdftk_iri::{IRIRef, IRI};
+use rdftk_iri::{Iri, IriRef};
 use std::fmt::{Display, Formatter};
 use std::rc::Rc;
 use unique_id::sequence::SequenceGenerator as IDGenerator;
@@ -15,7 +15,7 @@ use unique_id::Generator;
 // ------------------------------------------------------------------------------------------------
 
 ///
-/// This type denotes the identifier for a graph in a data set; a graph name MUST be either an IRI
+/// This type denotes the identifier for a graph in a data set; a graph name MUST be either an Iri
 /// or a blank node.
 ///
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -36,7 +36,7 @@ pub type GraphNameRef = Rc<GraphName>;
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 enum Name {
     BNode(String),
-    IRI(IRIRef),
+    Iri(IriRef),
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -50,26 +50,26 @@ impl Display for GraphName {
             "{}",
             match &self.inner {
                 Name::BNode(node) => format!("_:{}", node),
-                Name::IRI(iri) => format!("<{}>", iri),
+                Name::Iri(iri) => format!("<{}>", iri),
             }
         )
     }
 }
 
-impl From<IRI> for GraphName {
-    fn from(iri: IRI) -> Self {
+impl From<Iri> for GraphName {
+    fn from(iri: Iri) -> Self {
         GraphName::named(iri.into())
     }
 }
 
-impl From<IRIRef> for GraphName {
-    fn from(iri: IRIRef) -> Self {
+impl From<IriRef> for GraphName {
+    fn from(iri: IriRef) -> Self {
         GraphName::named(iri)
     }
 }
 
-impl From<&IRIRef> for GraphName {
-    fn from(iri: &IRIRef) -> Self {
+impl From<&IriRef> for GraphName {
+    fn from(iri: &IriRef) -> Self {
         GraphName::named(iri.clone())
     }
 }
@@ -101,18 +101,18 @@ impl GraphName {
     }
 
     ///
-    /// Construct a new graph name, with an IRI naming a resource.
+    /// Construct a new graph name, with an Iri naming a resource.
     ///
-    pub fn named(name: IRIRef) -> Self {
+    pub fn named(name: IriRef) -> Self {
         Self {
-            inner: Name::IRI(name),
+            inner: Name::Iri(name),
         }
     }
 
     ///
-    /// Construct a new graph name reference, with an IRI naming a resource.
+    /// Construct a new graph name reference, with an Iri naming a resource.
     ///
-    pub fn named_ref(name: IRIRef) -> GraphNameRef {
+    pub fn named_ref(name: IriRef) -> GraphNameRef {
         Rc::from(Self::named(name))
     }
 
@@ -134,18 +134,18 @@ impl GraphName {
     }
 
     ///
-    /// Return `true` if this graph name is an IRI, else `false`.
+    /// Return `true` if this graph name is an Iri, else `false`.
     ///
     pub fn is_iri(&self) -> bool {
-        matches!(self.inner, Name::IRI(_))
+        matches!(self.inner, Name::Iri(_))
     }
 
     ///
-    /// Return a named node IRI, if `self.is_iri()`, else `None`.
+    /// Return a named node Iri, if `self.is_iri()`, else `None`.
     ///
-    pub fn as_iri(&self) -> Option<&IRIRef> {
+    pub fn as_iri(&self) -> Option<&IriRef> {
         match &self.inner {
-            Name::IRI(u) => Some(u),
+            Name::Iri(u) => Some(u),
             _ => None,
         }
     }

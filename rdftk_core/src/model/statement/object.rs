@@ -1,7 +1,8 @@
 use crate::model::literal::LiteralRef;
+use crate::model::statement::BlankNode;
 use crate::model::statement::{StatementRef, BLANK_NODE_NAMESPACE};
 use crate::model::{Equiv, Provided};
-use rdftk_iri::IRIRef;
+use rdftk_iri::IriRef;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
@@ -26,19 +27,19 @@ pub trait ObjectNode: Debug + Provided {
     ///
     /// Return a blank node string, if `self.is_blank()`, else `None`.
     ///
-    fn as_blank(&self) -> Option<&String>;
+    fn as_blank(&self) -> Option<&BlankNode>;
 
     ///
-    /// Return `true` if this object is an IRI, else `false`.
+    /// Return `true` if this object is an Iri, else `false`.
     ///
     fn is_iri(&self) -> bool {
         self.as_iri().is_some()
     }
 
     ///
-    /// Return a named node IRI, if `self.is_iri()`, else `None`.
+    /// Return a named node Iri, if `self.is_iri()`, else `None`.
     ///
-    fn as_iri(&self) -> Option<&IRIRef>;
+    fn as_iri(&self) -> Option<&IriRef>;
 
     ///
     /// Return `true` if this object is a literal value, else `false`.
@@ -125,8 +126,8 @@ impl Display for dyn ObjectNode {
     }
 }
 
-impl Equiv<String> for dyn ObjectNode {
-    fn eqv(&self, other: &String) -> bool {
+impl Equiv<BlankNode> for dyn ObjectNode {
+    fn eqv(&self, other: &BlankNode) -> bool {
         if let Some(value) = self.as_blank() {
             value == other
         } else {
@@ -135,8 +136,8 @@ impl Equiv<String> for dyn ObjectNode {
     }
 }
 
-impl Equiv<IRIRef> for dyn ObjectNode {
-    fn eqv(&self, other: &IRIRef) -> bool {
+impl Equiv<IriRef> for dyn ObjectNode {
+    fn eqv(&self, other: &IriRef) -> bool {
         if let Some(value) = self.as_iri() {
             value == other
         } else {

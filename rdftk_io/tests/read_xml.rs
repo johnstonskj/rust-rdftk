@@ -27,7 +27,6 @@ fn read_example_00() {
 }
 
 #[test]
-#[ignore]
 fn read_example_01() {
     let mut xml = r##"<?xml version="1.0"?>
 <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"

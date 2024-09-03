@@ -1,6 +1,8 @@
 /*!
 The shared `Error`, `ErrorKind`, and `Result` common to the entire toolkit.
-*/
+ */
+
+use error_chain::error_chain;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -63,10 +65,19 @@ error_chain! {
             description("Cited model.formulae, from N3, are not supported by this representation.")
             display("Cited model.formulae, from N3, are not supported by the {:?} representation.", representation)
         }
+        #[doc = "Could not read or write query results in this representation."]
+        QueryResultsFormat(representation: String) {
+            description("Could not read or write query results in this representation."),
+            display("Could not read or write query results in the {:?} representation.", representation),
+        }
     }
 
     foreign_links {
-        Iri(::rdftk_iri::error::Error) #[doc = "A wrapped error parsing IRI strings."];
+        LanguageTag(language_tags::ParseError) #[doc = "An eror parsing language-tag strings."];
+        Iri(::rdftk_iri::Error) #[doc = "An error parsing IRI strings."];
+        Io(::std::io::Error) #[doc = "An error in the standard I/O library."];
+        Utf8(::std::string::FromUtf8Error) #[doc = "An error occured converting to UTF-8 text."];
+        //WriterInner(::std::io::IntoInnerError) #[doc = "An error occured fetching the contents of a BufWriter."];
     }
 }
 
@@ -116,11 +127,6 @@ fn trace_one(e: &dyn std::error::Error, count: i32) -> String {
     let mut trace = String::new();
 
     writeln!(&mut trace, "{}. {}", count, e.to_string()).expect("Failed to write message.");
-
-    #[cfg(feature = "error-backtrace")]
-    if let Some(backtrace) = e.backtrace() {
-        writeln!(&mut trace, "{}", backtrace).expect("Failed to write backtrace.");
-    }
 
     if let Some(source) = e.source() {
         write!(&mut trace, "{}", trace_one(source, count + 1)).expect("Failed to write source.");

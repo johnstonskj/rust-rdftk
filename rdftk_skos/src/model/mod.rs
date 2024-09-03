@@ -6,12 +6,11 @@ that it's extensibility with OWL is limited.
 use crate::ns;
 use rdftk_core::model::graph::mapping::PrefixMappingRef;
 use rdftk_core::model::graph::{GraphFactoryRef, GraphRef};
-use rdftk_core::model::literal::{LanguageTag, LiteralFactoryRef};
 use rdftk_core::model::statement::{
     ObjectNodeRef, StatementFactoryRef, StatementList, StatementRef, SubjectNodeRef,
 };
 use rdftk_iri::IRIRef;
-use rdftk_names::{dc, owl};
+use rdftk_names::{dc, owl, rdf, xsd};
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -110,7 +109,7 @@ pub fn to_rdf_graph(
     default_namespace: Option<IRIRef>,
     factory: &GraphFactoryRef,
 ) -> GraphRef {
-    let ns_mappings = standard_mappings(factory);
+    let ns_mappings = standard_mappings();
     if let Some(default_namespace) = default_namespace {
         let mut ns_mappings = ns_mappings.borrow_mut();
         let _ = ns_mappings.set_default_namespace(default_namespace);
@@ -137,25 +136,26 @@ pub fn to_rdf_graph_with_mappings(
     graph
 }
 
-pub fn from_rdf_graph<'a>(_graph: &GraphRef) -> Vec<Scheme> {
-    // let schemes = Default::default();
-    // let graph = graph.borrow();
-    // let scheme_subjects: Vec<&SubjectNodeRef> = graph
-    //     .statements()
-    //     .filter_map(|st| {
-    //         if st.predicate() == rdf::a_type() && object_eq_iri(st.object(), ns::concept_scheme()) {
-    //             Some(st.subject())
-    //         } else {
-    //             None
-    //         }
-    //     })
-    //     .collect();
+pub fn from_rdf_graph<'a>(graph: &GraphRef) -> Vec<Scheme> {
+    let schemes = Default::default();
+    let graph = graph.borrow();
+    let scheme_subjects: Vec<&SubjectNodeRef> = graph
+        .statements()
+        .filter_map(|st| {
+            if st.predicate() == rdf::a_type() && object_eq_iri(st.object(), ns::concept_scheme()) {
+                Some(st.subject())
+            } else {
+                None
+            }
+        })
+        .collect();
     //for subject in scheme_subjects {}
-    todo!()
+    todo!();
+    schemes
 }
 
-pub fn standard_mappings(factory: &GraphFactoryRef) -> PrefixMappingRef {
-    let mappings = factory.mapping_factory().common();
+pub fn standard_mappings() -> PrefixMappingRef {
+    let mappings = empty_mappings();
     {
         let mut mut_mappings = mappings.borrow_mut();
         let _ = mut_mappings.insert(ns::default_prefix(), ns::namespace_iri().clone());
@@ -169,7 +169,9 @@ pub fn standard_mappings(factory: &GraphFactoryRef) -> PrefixMappingRef {
             dc::terms::default_prefix(),
             dc::terms::namespace_iri().clone(),
         );
+        let _ = mut_mappings.insert(rdf::default_prefix(), rdf::namespace_iri().clone());
         let _ = mut_mappings.insert(owl::default_prefix(), owl::namespace_iri().clone());
+        let _ = mut_mappings.insert(xsd::default_prefix(), xsd::namespace_iri().clone());
     }
     mappings
 }
@@ -178,7 +180,6 @@ pub fn standard_mappings(factory: &GraphFactoryRef) -> PrefixMappingRef {
 // Private Functions
 // ------------------------------------------------------------------------------------------------
 
-#[allow(dead_code)]
 fn object_eq_iri(object: &ObjectNodeRef, iri: &IRIRef) -> bool {
     if let Some(lhs) = object.as_iri() {
         lhs == iri
@@ -202,3 +203,5 @@ pub use collection::Collection;
 
 pub mod properties;
 pub use properties::{Label, LiteralProperty};
+use rdftk_core::model::literal::{LanguageTag, LiteralFactoryRef};
+use rdftk_core::simple::empty_mappings;

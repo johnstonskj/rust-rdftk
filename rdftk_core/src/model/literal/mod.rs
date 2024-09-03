@@ -50,6 +50,9 @@ use std::rc::Rc;
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
+// Re-export this
+pub use language_tags::LanguageTag;
+
 ///
 /// This trait describes an RDF literal which may be the object of a statement.
 ///
@@ -113,23 +116,27 @@ impl Hash for dyn Literal {
 
 impl Display for dyn Literal {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self.data_type() {
-            //            Some(DataType::String) => write!(f, "\"{}\"", self.lexical_form()),
-            Some(DataType::IRI) => write!(f, "<{}>", self.lexical_form()),
-            //            Some(DataType::Boolean) => write!(f, "{}", self.lexical_form()),
-            _ => {
-                write!(
-                    f,
-                    "\"{}\"{}",
-                    self.lexical_form(),
-                    match (self.data_type(), self.language()) {
-                        (Some(data_type), None) => format!("^^<{}>", data_type.as_iri()),
-                        (None, Some(language)) => format!("@{}", language),
-                        _ => String::new(),
-                    }
-                )
+        write!(
+            f,
+            "{}",
+            match self.data_type() {
+                //            Some(DataType::String) => write!(f, "\"{}\"", self.lexical_form()),
+                Some(DataType::IRI) => write!(f, "<{}>", self.lexical_form()),
+                //            Some(DataType::Boolean) => write!(f, "{}", self.lexical_form()),
+                _ => {
+                    write!(
+                        f,
+                        "\"{}\"{}",
+                        self.lexical_form(),
+                        match (self.data_type(), self.language()) {
+                            (Some(data_type), None) => format!("^^<{}>", data_type.as_iri()),
+                            (None, Some(language)) => format!("@{}", language),
+                            _ => String::new(),
+                        }
+                    )
+                }
             }
-        }
+        )
     }
 }
 
@@ -151,7 +158,3 @@ pub use data_type::*;
 #[doc(hidden)]
 mod factory;
 pub use factory::*;
-
-#[doc(hidden)]
-mod lang;
-pub use lang::*;

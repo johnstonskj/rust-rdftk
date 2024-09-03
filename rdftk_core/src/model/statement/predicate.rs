@@ -1,12 +1,10 @@
-// use ...
+use crate::model::Provided;
+use std::fmt::Debug;
+use std::rc::Rc;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
-
-use crate::model::Provided;
-use std::fmt::Debug;
-use std::rc::Rc;
 
 pub trait PredicateNode: Debug + Provided {}
 

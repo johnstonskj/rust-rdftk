@@ -57,31 +57,35 @@ The following features are present in this crate.
 
 ## Changes
 
-**Version 0.1.9**
+### Version 0.2.0
+
+- Refactor: replaced own implementation of IRI with the `url` crate.
+
+### Version 0.1.9
 
 * Added a feature to enable genid creation.
 * Made IRI PartialOrd + Ord, it can now be sorted.
 * Added PercentEncoding trait for percent encoding components.
 
-**Version 0.1.8**
+### Version 0.1.8
 
 * Minor fix to parser to fix some precedence rules.
 * Some documentation fixes.
 
-**Version 0.1.7**
+### Version 0.1.7
 
 * Added support for well-known IRIs to the Path and IRI types.
 
-**Version 0.1.6**
+### Version 0.1.6
 
 * Applied a lot more warnings in lib.rs
 * Applied more Clippy suggestions.
 
-**Version 0.1.5**
+### Version 0.1.5
 
 * Applied all Clippy suggestions.
 
-**Version 0.1.4**
+### Version 0.1.4
 
 * A lot more testing, and local coverage reporting.
 * Fixed a bug where separator missing in `UserInfo::to_string`.
@@ -90,7 +94,7 @@ The following features are present in this crate.
 * Changes `with_new_query` and `with_new_fragment` on `IRI` to not take `Option`.
 * Added `blob` known value to `Scheme`.
 
-**Version 0.1.3**
+### Version 0.1.3
 
 * Mostly testing
   1. Moved any tests out of the main code if they only use the public API.
@@ -99,18 +103,18 @@ The following features are present in this crate.
 * Fixed bug in `IRI::is_absolute`, to ignore authority and take the fragment into account.
 * Added `IRI::is_relative_reference`.
 
-**Version 0.1.2**
+### Version 0.1.2
 
 * Mostly documentation additions.
 * Adding test cases where possible.
 * Added helper functions and API shortcuts where they make sense.
 * Added `path_iri` and `uuid_iri` features.
 
-**Version 0.1.1**
+### Version 0.1.1
 
 * Added `IRIRef` type.
 
-**Version 0.1.0**
+### Version 0.1.0
 
 * First release.
 

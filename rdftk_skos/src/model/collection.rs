@@ -289,7 +289,7 @@ fn make_list_node(
     from: Option<SubjectNodeRef>,
     factory: &StatementFactoryRef,
 ) -> SubjectNodeRef {
-    let new_node = factory.blank_subject();
+    let new_node = factory.blank_subject_new();
     if let Some(from) = from {
         statements.push(
             factory

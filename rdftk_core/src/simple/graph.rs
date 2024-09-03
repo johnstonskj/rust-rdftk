@@ -3,22 +3,23 @@ Simple, in-memory implementation of the `Graph` and `GraphFactory` traits.
 */
 
 use crate::model::features::{Featured, FEATURE_GRAPH_DUPLICATES, FEATURE_RDF_STAR};
-use crate::model::graph::mapping::PrefixMappingFactoryRef;
 use crate::model::graph::{Graph, GraphFactory, GraphFactoryRef, GraphRef, PrefixMappingRef};
 use crate::model::literal::LiteralFactoryRef;
 use crate::model::statement::{
     ObjectNodeRef, StatementFactoryRef, StatementList, StatementRef, SubjectNodeRef,
 };
 use crate::model::Provided;
+use crate::simple::empty_mappings;
 use crate::simple::literal::literal_factory;
 use crate::simple::statement::statement_factory;
-use rdftk_iri::IRIRef;
+use rdftk_iri::IriRef;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::iter::FromIterator;
 use std::ops::Deref;
 use std::rc::Rc;
 use std::sync::Arc;
+use lazy_static::lazy_static;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -48,6 +49,9 @@ pub fn graph_factory() -> GraphFactoryRef {
 // Private Types
 // ------------------------------------------------------------------------------------------------
 
+///
+/// Simple, in-memory implementation of the `GraphFactory` trait.
+///
 #[derive(Clone, Debug)]
 struct SimpleGraphFactory {}
 
@@ -73,11 +77,7 @@ impl Provided for SimpleGraphFactory {
 
 impl GraphFactory for SimpleGraphFactory {
     fn graph(&self) -> GraphRef {
-        self.with_mappings(self.mapping_factory().empty())
-    }
-
-    fn mapping_factory(&self) -> PrefixMappingFactoryRef {
-        crate::simple::mapping::prefix_mapping_factory()
+        self.with_mappings(empty_mappings())
     }
 
     fn with_mappings(&self, mappings: PrefixMappingRef) -> GraphRef {
@@ -91,7 +91,7 @@ impl GraphFactory for SimpleGraphFactory {
 // ------------------------------------------------------------------------------------------------
 
 impl Featured for SimpleGraph {
-    fn supports_feature(&self, feature: &IRIRef) -> bool {
+    fn supports_feature(&self, feature: &IriRef) -> bool {
         feature == FEATURE_GRAPH_DUPLICATES.deref() || feature == FEATURE_RDF_STAR.deref()
     }
 }
@@ -109,7 +109,7 @@ impl Graph for SimpleGraph {
         self.statements.iter().any(|st| st.subject() == subject)
     }
 
-    fn contains_individual(&self, subject: &IRIRef) -> bool {
+    fn contains_individual(&self, subject: &IriRef) -> bool {
         let factory = self.statement_factory();
         let subject = factory.named_subject(subject.clone());
         self.contains_subject(&subject)
@@ -118,7 +118,7 @@ impl Graph for SimpleGraph {
     fn matches(
         &self,
         subject: Option<&SubjectNodeRef>,
-        predicate: Option<&IRIRef>,
+        predicate: Option<&IriRef>,
         object: Option<&ObjectNodeRef>,
     ) -> HashSet<&StatementRef> {
         self.statements
@@ -140,11 +140,11 @@ impl Graph for SimpleGraph {
         self.statements.iter().map(|st| st.subject()).collect()
     }
 
-    fn predicates(&self) -> HashSet<&IRIRef> {
+    fn predicates(&self) -> HashSet<&IriRef> {
         self.statements.iter().map(|st| st.predicate()).collect()
     }
 
-    fn predicates_for(&self, subject: &SubjectNodeRef) -> HashSet<&IRIRef> {
+    fn predicates_for(&self, subject: &SubjectNodeRef) -> HashSet<&IriRef> {
         self.statements
             .iter()
             .filter_map(|st| {
@@ -161,7 +161,7 @@ impl Graph for SimpleGraph {
         self.statements.iter().map(|st| st.object()).collect()
     }
 
-    fn objects_for(&self, subject: &SubjectNodeRef, predicate: &IRIRef) -> HashSet<&ObjectNodeRef> {
+    fn objects_for(&self, subject: &SubjectNodeRef, predicate: &IriRef) -> HashSet<&ObjectNodeRef> {
         self.statements
             .iter()
             .filter_map(|st| {

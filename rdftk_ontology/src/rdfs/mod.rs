@@ -10,9 +10,9 @@ More detailed description, with
 
 */
 
-use crate::{Individual, LabelProperty, Labeled, Resource, Subclassed, ToStatements};
+use crate::{LabelProperty, Labeled, Subclassed, ToStatements};
 use rdftk_core::model::statement::{StatementFactoryRef, StatementList, StatementRef};
-use rdftk_iri::{IRIRef, IRI};
+use rdftk_iri::{Iri, IriRef};
 use rdftk_names::{rdf, rdfs};
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -22,28 +22,28 @@ use std::str::FromStr;
 
 #[derive(Clone, Debug)]
 pub struct Vocabulary {
-    uri: IRIRef,
+    uri: IriRef,
     label_properties: Vec<LabelProperty>,
-    classes: HashMap<IRIRef, Class>,
-    properties: HashMap<IRIRef, Property>,
+    classes: HashMap<IriRef, Class>,
+    properties: HashMap<IriRef, Property>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Class {
-    uri: IRIRef,
+    uri: IriRef,
     label_properties: Vec<LabelProperty>,
-    instance_of: Vec<IRIRef>,
-    parents: Vec<IRIRef>,
+    instance_of: Vec<IriRef>,
+    parents: Vec<IriRef>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Property {
-    uri: IRIRef,
+    uri: IriRef,
     label_properties: Vec<LabelProperty>,
-    instance_of: Vec<IRIRef>,
-    parents: Vec<IRIRef>,
-    domain: Vec<IRIRef>,
-    range: Vec<IRIRef>,
+    instance_of: Vec<IriRef>,
+    parents: Vec<IriRef>,
+    domain: Vec<IriRef>,
+    range: Vec<IriRef>,
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -56,7 +56,7 @@ pub struct Property {
 
 pub fn rdf_schema() -> Vocabulary {
     let mut schema = Vocabulary::new(rdfs::namespace_iri().clone());
-    let iri = IRIRef::from(IRI::from_str("https://www.w3.org/TR/rdf-schema").unwrap());
+    let iri = IriRef::from(Iri::from_str("https://www.w3.org/TR/rdf-schema").unwrap());
     schema.add_is_defined_by(iri.into());
     //    schema.add_comment("W3C Recommendation 25 February 2014".into());
 
@@ -205,7 +205,7 @@ pub fn rdf_schema() -> Vocabulary {
 impl_subclassed!(Class);
 
 impl Class {
-    pub fn new(uri: IRIRef) -> Self {
+    pub fn new(uri: IriRef) -> Self {
         Self {
             uri,
             label_properties: vec![],
@@ -214,7 +214,7 @@ impl Class {
         }
     }
 
-    pub fn new_instance(uri: IRIRef, instance_of: IRIRef) -> Self {
+    pub fn new_instance(uri: IriRef, instance_of: IriRef) -> Self {
         Self {
             uri,
             label_properties: vec![],
@@ -223,7 +223,7 @@ impl Class {
         }
     }
 
-    pub fn new_subclass(uri: IRIRef, parent: IRIRef) -> Self {
+    pub fn new_subclass(uri: IriRef, parent: IriRef) -> Self {
         Self {
             uri,
             label_properties: vec![],
@@ -232,7 +232,7 @@ impl Class {
         }
     }
 
-    pub fn new_instance_and_subclass(uri: IRIRef, instance_of: IRIRef, parent: IRIRef) -> Self {
+    pub fn new_instance_and_subclass(uri: IriRef, instance_of: IriRef, parent: IriRef) -> Self {
         Self {
             uri,
             label_properties: vec![],
@@ -243,7 +243,7 @@ impl Class {
 
     // --------------------------------------------------------------------------------------------
 
-    pub fn instance(&self, uri: IRIRef) -> Self {
+    pub fn instance(&self, uri: IriRef) -> Self {
         Self {
             uri,
             label_properties: vec![],
@@ -252,7 +252,7 @@ impl Class {
         }
     }
 
-    pub fn subclass(&self, uri: IRIRef) -> Self {
+    pub fn subclass(&self, uri: IriRef) -> Self {
         Self {
             uri,
             label_properties: vec![],
@@ -267,7 +267,7 @@ impl Class {
 impl_subclassed!(Property);
 
 impl Property {
-    pub fn new(uri: IRIRef) -> Self {
+    pub fn new(uri: IriRef) -> Self {
         Self {
             uri,
             label_properties: vec![],
@@ -278,7 +278,7 @@ impl Property {
         }
     }
 
-    pub fn new_with(uri: IRIRef, domain: IRIRef, range: IRIRef) -> Self {
+    pub fn new_with(uri: IriRef, domain: IriRef, range: IriRef) -> Self {
         Self {
             uri,
             label_properties: vec![],
@@ -289,7 +289,7 @@ impl Property {
         }
     }
 
-    pub fn new_instance(uri: IRIRef, instance_of: IRIRef) -> Self {
+    pub fn new_instance(uri: IriRef, instance_of: IriRef) -> Self {
         Self {
             uri,
             label_properties: vec![],
@@ -300,7 +300,7 @@ impl Property {
         }
     }
 
-    pub fn new_sub_property(uri: IRIRef, parent: IRIRef) -> Self {
+    pub fn new_sub_property(uri: IriRef, parent: IriRef) -> Self {
         Self {
             uri,
             label_properties: vec![],
@@ -313,7 +313,7 @@ impl Property {
 
     // --------------------------------------------------------------------------------------------
 
-    pub fn instance(&self, uri: IRIRef) -> Self {
+    pub fn instance(&self, uri: IriRef) -> Self {
         Self {
             uri,
             label_properties: vec![],
@@ -324,7 +324,7 @@ impl Property {
         }
     }
 
-    pub fn sub_property(&self, uri: IRIRef) -> Self {
+    pub fn sub_property(&self, uri: IriRef) -> Self {
         Self {
             uri,
             label_properties: vec![],
@@ -337,29 +337,29 @@ impl Property {
 
     // --------------------------------------------------------------------------------------------
 
-    pub fn add_domain(&mut self, domain: IRIRef) {
+    pub fn add_domain(&mut self, domain: IriRef) {
         self.domain.push(domain);
     }
 
-    pub fn remove_domain(&mut self, domain: &IRIRef) {
+    pub fn remove_domain(&mut self, domain: &IriRef) {
         self.domain.retain(|d| d != domain)
     }
 
-    pub fn domain(&self) -> Vec<&IRIRef> {
+    pub fn domain(&self) -> Vec<&IriRef> {
         self.domain.iter().collect()
     }
 
     // --------------------------------------------------------------------------------------------
 
-    pub fn add_range(&mut self, range: IRIRef) {
+    pub fn add_range(&mut self, range: IriRef) {
         self.range.push(range);
     }
 
-    pub fn remove_range(&mut self, range: &IRIRef) {
+    pub fn remove_range(&mut self, range: &IriRef) {
         self.range.retain(|d| d != range)
     }
 
-    pub fn range(&self) -> Vec<&IRIRef> {
+    pub fn range(&self) -> Vec<&IriRef> {
         self.range.iter().collect()
     }
 }
@@ -412,7 +412,7 @@ impl ToStatements for Vocabulary {
 impl_labeled!(Vocabulary);
 
 impl Vocabulary {
-    pub fn new(uri: IRIRef) -> Self {
+    pub fn new(uri: IriRef) -> Self {
         Self {
             uri,
             label_properties: vec![],

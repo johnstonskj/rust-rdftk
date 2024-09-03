@@ -8,7 +8,7 @@ a common value factory by store rather than by graph.
 use crate::error::Result;
 use crate::model::literal::{DataType, LanguageTag, LiteralRef};
 use crate::model::Provided;
-use rdftk_iri::IRIRef;
+use rdftk_iri::IriRef;
 use std::fmt::Debug;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -20,7 +20,7 @@ use std::time::Duration;
 
 ///
 /// A value factory can be used to provide previously cached values rather than creating duplicates
-/// within a graph. Such a factory may only be retrieved using the `Graph::literal_factory` method.
+/// within a graph.
 ///
 pub trait LiteralFactory: Debug + Provided {
     /// Returns a cached *untyped* literal value with the provided string.
@@ -47,9 +47,9 @@ pub trait LiteralFactory: Debug + Provided {
         self.with_data_type(v, DataType::QName)
     }
 
-    /// Returns a cached literal value with the provided IRI.
-    fn uri(&self, v: &IRIRef) -> LiteralRef {
-        self.with_data_type(&v.to_string(), DataType::IRI)
+    /// Returns a cached literal value with the provided Iri.
+    fn uri(&self, v: &IriRef) -> LiteralRef {
+        self.with_data_type(&v.to_string(), DataType::Iri)
     }
 
     /// Returns a cached literal value with the provided boolean.

@@ -31,7 +31,7 @@ use crate::GraphWriter;
 use rdftk_core::error::{ErrorKind, Result};
 use rdftk_core::model::graph::{Graph, GraphRef};
 use rdftk_core::model::statement::SubjectNodeRef;
-use rdftk_iri::IRIRef;
+use rdftk_iri::IriRef;
 use rdftk_names::{dc, foaf, geo, owl, rdf, rdfs, xsd};
 use std::cell::Ref;
 use std::collections::HashMap;
@@ -51,7 +51,7 @@ use xml::EmitterConfig;
 pub enum XmlStyle {
     /// Flatten the graph so all subjects are at the same level in the document.
     Flat,
-    /// Nest blank nodes so that the document only has IRI subjects at the same level.
+    /// Nest blank nodes so that the document only has Iri subjects at the same level.
     Striped,
 }
 
@@ -81,7 +81,7 @@ pub struct XmlWriter {
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-lazy_static! {
+lazy_static::lazy_static! {
     static ref RDF_ABOUT: String = format!("{}:{}", rdf::default_prefix(), ATTRIBUTE_ABOUT);
     static ref RDF_DATATYPE: String = format!("{}:{}", rdf::default_prefix(), ATTRIBUTE_DATATYPE);
     static ref RDF_DESCRIPTION: String =
@@ -250,7 +250,7 @@ impl XmlWriter {
                 writer
                     .write(
                         XmlEvent::start_element(RDF_DESCRIPTION.as_str())
-                            .attr(RDF_NODE_ID.as_str(), blank),
+                            .attr(RDF_NODE_ID.as_str(), blank.as_ref()),
                     )
                     .map_err(xml_error)?;
             } else {
@@ -286,17 +286,14 @@ impl XmlWriter {
                     writer.write(element).map_err(xml_error)?;
                 } else if let Some(blank) = object.as_blank() {
                     if flat {
-                        element = element.attr(RDF_NODE_ID.as_str(), blank);
+                        element = element.attr(RDF_NODE_ID.as_str(), blank.as_ref());
                         writer.write(element).map_err(xml_error)?;
                     } else {
                         writer.write(element).map_err(xml_error)?;
                         self.write_subject(
                             writer,
                             graph,
-                            &graph
-                                .statement_factory()
-                                .blank_subject_named(blank)
-                                .unwrap(),
+                            &graph.statement_factory().blank_subject(blank.clone()),
                             flat,
                         )?;
                     }
@@ -347,7 +344,7 @@ fn xml_error(e: xml::writer::Error) -> rdftk_core::error::Error {
     rdftk_core::error::Error::with_chain(e, ErrorKind::ReadWrite(super::NAME.to_string()))
 }
 
-fn split_uri(iri: &IRIRef) -> (String, String) {
+fn split_uri(iri: &IriRef) -> (String, String) {
     let iri = iri.to_string();
     let index = iri
         .chars()

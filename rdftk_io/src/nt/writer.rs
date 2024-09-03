@@ -20,7 +20,6 @@ use crate::nq::writer::NQuadGraphWriter;
 use crate::GraphWriter;
 use rdftk_core::error::Result;
 use rdftk_core::model::graph::GraphRef;
-use std::borrow::Borrow;
 use std::io::Write;
 
 // ------------------------------------------------------------------------------------------------
@@ -46,7 +45,6 @@ impl Default for NTripleWriter {
 
 impl GraphWriter for NTripleWriter {
     fn write(&self, w: &mut impl Write, graph: &GraphRef) -> Result<()> {
-        let graph = graph.borrow();
         let inner_writer = NQuadGraphWriter::default();
         inner_writer.write(w, graph)
     }

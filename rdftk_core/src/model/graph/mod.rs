@@ -19,14 +19,12 @@ fn simple_graph_writer(graph: &impl Graph)
 */
 
 use crate::model::features::Featured;
-use crate::model::graph::mapping::PrefixMappingFactoryRef;
 use crate::model::literal::LiteralFactoryRef;
 use crate::model::statement::{
     ObjectNodeRef, StatementFactoryRef, StatementList, StatementRef, SubjectNodeRef,
 };
 use crate::model::Provided;
-pub use mapping::{PrefixMappingRef, PrefixMappings};
-use rdftk_iri::IRIRef;
+use rdftk_iri::IriRef;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::fmt::Debug;
@@ -49,11 +47,6 @@ pub trait GraphFactory: Debug + Provided {
     /// Create a new graph instance.
     ///
     fn graph(&self) -> GraphRef;
-
-    ///
-    /// Retrieve a prefix-mapping factory.
-    ///
-    fn mapping_factory(&self) -> PrefixMappingFactoryRef;
 
     ///
     /// Create a new graph instance with the provided namespace mappings.
@@ -115,10 +108,10 @@ pub trait Graph: Debug + Featured {
     fn contains_subject(&self, subject: &SubjectNodeRef) -> bool;
 
     ///
-    /// Returns `true` if this graph contains any statement with the provided IRI as subject, else
+    /// Returns `true` if this graph contains any statement with the provided Iri as subject, else
     /// `false`.
     ///
-    fn contains_individual(&self, subject: &IRIRef) -> bool;
+    fn contains_individual(&self, subject: &IriRef) -> bool;
 
     ///
     /// Returns `true` if this graph contains the provided statement, else `false`.
@@ -140,7 +133,7 @@ pub trait Graph: Debug + Featured {
     fn contains_all(
         &self,
         subject: &SubjectNodeRef,
-        predicate: &IRIRef,
+        predicate: &IriRef,
         object: &ObjectNodeRef,
     ) -> bool {
         !self
@@ -155,7 +148,7 @@ pub trait Graph: Debug + Featured {
     fn matches(
         &self,
         subject: Option<&SubjectNodeRef>,
-        predicate: Option<&IRIRef>,
+        predicate: Option<&IriRef>,
         object: Option<&ObjectNodeRef>,
     ) -> HashSet<&StatementRef>;
 
@@ -198,13 +191,13 @@ pub trait Graph: Debug + Featured {
     /// Return a set of all predicate in the graph, note that this is a set so that it removes
     /// duplicates.
     ///
-    fn predicates(&self) -> HashSet<&IRIRef>;
+    fn predicates(&self) -> HashSet<&IriRef>;
 
     ///
     /// Return a set of all predicate referenced by the provided subject in graph, note that
     /// this is a set so that it removes duplicates.
     ///
-    fn predicates_for(&self, subject: &SubjectNodeRef) -> HashSet<&IRIRef>;
+    fn predicates_for(&self, subject: &SubjectNodeRef) -> HashSet<&IriRef>;
 
     ///
     /// Return a set of all objects in the graph, note that this is a set so that it removes
@@ -216,7 +209,7 @@ pub trait Graph: Debug + Featured {
     /// Return a set of all objects referenced by the provided subject and predicate in the graph,
     /// note that this is a set so that it removes duplicates.
     ///
-    fn objects_for(&self, subject: &SubjectNodeRef, predicate: &IRIRef) -> HashSet<&ObjectNodeRef>;
+    fn objects_for(&self, subject: &SubjectNodeRef, predicate: &IriRef) -> HashSet<&ObjectNodeRef>;
 
     // --------------------------------------------------------------------------------------------
     // Namespace Management
@@ -318,5 +311,6 @@ pub type GraphRef = Rc<RefCell<dyn Graph>>;
 // ------------------------------------------------------------------------------------------------
 
 pub mod mapping;
+pub use mapping::{PrefixMappingRef, PrefixMappings};
 
 pub mod skolem;

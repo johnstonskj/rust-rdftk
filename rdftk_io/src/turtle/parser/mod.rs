@@ -11,7 +11,8 @@ More detailed description, with
 
 use crate::common::parser_error::ParserErrorFactory;
 use pest::iterators::Pair;
-use pest::Parser;
+use pest::Parser as _;
+use pest_derive::Parser;
 use rdftk_core::error::Error;
 use rdftk_core::model::graph::GraphRef;
 use rdftk_core::simple::graph::graph_factory;
@@ -55,7 +56,7 @@ pub(super) fn parse_text(input: &str) -> Result<GraphRef, Error> {
 fn turtle_star_doc(input_pair: Pair<'_, Rule>) -> Result<GraphRef, Error> {
     let graph: GraphRef = graph_factory().graph();
 
-    trace!("turtle_star_doc({:?})", &input_pair.as_rule());
+    log::trace!("turtle_star_doc({:?})", &input_pair.as_rule());
 
     match input_pair.as_rule() {
         Rule::turtleStarDoc => {}

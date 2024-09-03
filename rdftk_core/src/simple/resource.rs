@@ -9,7 +9,7 @@
 * particulary useful where the object is a blank node.
 *
 * Additionally a `Predicate` builder is provided where it is more readable to add only the values
-* individually rather than repeating the same predicate IRI as the `Resource` interface requires. The
+* individually rather than repeating the same predicate Iri as the `Resource` interface requires. The
 * interface for `Predicate` is intended to be a precise sub-set of the `Resource` methods so that the
 * same look and feel is maintained.
 *
@@ -22,13 +22,13 @@
 * ```rust
 * use rdftk_core::simple::literal::literal_factory;
 * use rdftk_core::simple::resource::Resource;
-* use rdftk_iri::IRI;
+* use rdftk_core::Iri;
 * use rdftk_names::{dc::elements as dc, foaf, rdf};
 * use std::str::FromStr;
 * use rdftk_core::model::statement::StatementList;
 *
-* fn contact(name: &str) -> IRI {
-*     IRI::from_str(&format!(
+* fn contact(name: &str) -> Iri {
+*     Iri::from_str(&format!(
 *         "http://www.w3.org/2000/10/swap/pim/contact#{}",
 *         name
 *     ))
@@ -36,7 +36,7 @@
 * }
 *
 * let resource =
-*     Resource::named(IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap().into())
+*     Resource::named(Iri::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap().into())
 *         .value_of(dc::publisher().clone(), literal_factory().literal("Wikipedia"))
 *         .value_of(dc::title().clone(), literal_factory().literal("Tony Benn"))
 *         .resource(
@@ -70,11 +70,12 @@
 */
 
 use crate::error::{ErrorKind, Result};
-use crate::model::literal::{DataType, LanguageTag, LiteralFactoryRef, LiteralRef};
+use crate::model::literal::{DataType, LiteralFactoryRef, LiteralRef};
 use crate::model::statement::{StatementFactoryRef, StatementList, SubjectNodeRef};
 use crate::simple;
 use crate::simple::literal::literal_factory;
-use rdftk_iri::IRIRef;
+use language_tags::LanguageTag;
+use rdftk_iri::IriRef;
 use rdftk_names::rdf;
 use simple::statement::statement_factory;
 use std::cell::RefCell;
@@ -92,9 +93,8 @@ use std::str::FromStr;
 pub struct Resource {
     subject: SubjectNodeRef,
     statement_factory: StatementFactoryRef,
-    #[allow(unused)]
     literal_factory: LiteralFactoryRef,
-    predicates: HashMap<IRIRef, RefCell<Vec<ResourceObject>>>,
+    predicates: HashMap<IriRef, RefCell<Vec<ResourceObject>>>,
 }
 
 ///
@@ -102,7 +102,7 @@ pub struct Resource {
 ///
 #[derive(Clone, Debug)]
 pub struct Predicate {
-    name: IRIRef,
+    name: IriRef,
     objects: Vec<ResourceObject>,
 }
 
@@ -123,7 +123,7 @@ enum ContainerKind {
     Alt,
     Bag,
     Seq,
-    Other(IRIRef),
+    Other(IriRef),
 }
 
 #[derive(Clone, Debug)]
@@ -138,9 +138,9 @@ struct Container<T> {
 
 impl Predicate {
     ///
-    /// Construct a new Predicate instance with the provided `IRI` name.
+    /// Construct a new Predicate instance with the provided `Iri` name.
     ///
-    pub fn new(name: IRIRef) -> Self {
+    pub fn new(name: IriRef) -> Self {
         Self {
             name,
             objects: Default::default(),
@@ -198,7 +198,7 @@ impl Predicate {
     /// The value of this property object is a container of the provided values with a specified
     /// type.
     ///
-    pub fn property_container(&mut self, values: &[LiteralRef], kind: IRIRef) -> &mut Self {
+    pub fn property_container(&mut self, values: &[LiteralRef], kind: IriRef) -> &mut Self {
         self.objects.push(ResourceObject::Literals(Container {
             kind: ContainerKind::Other(kind),
             values: values.to_vec(),
@@ -218,9 +218,9 @@ impl Predicate {
     }
 
     ///
-    /// Add a new resource object, an IRI, to this predicate.
+    /// Add a new resource object, an Iri, to this predicate.
     ///
-    pub fn resource_named(&mut self, name: IRIRef) -> &mut Self {
+    pub fn resource_named(&mut self, name: IriRef) -> &mut Self {
         self.objects
             .push(ResourceObject::Resource(Resource::named(name)));
         self
@@ -275,7 +275,7 @@ impl Predicate {
     /// The value of this resource object is a container of the provided values with a specified
     /// type.
     ///
-    pub fn resource_container(&mut self, values: &[Resource], kind: IRIRef) -> &mut Self {
+    pub fn resource_container(&mut self, values: &[Resource], kind: IriRef) -> &mut Self {
         self.objects.push(ResourceObject::Resources(Container {
             kind: ContainerKind::Other(kind),
             values: values.to_vec(),
@@ -346,7 +346,7 @@ impl Resource {
     pub fn blank() -> Self {
         let statement_factory = statement_factory();
         Self {
-            subject: statement_factory.blank_subject(),
+            subject: statement_factory.blank_subject_new(),
             statement_factory,
             literal_factory: literal_factory(),
             predicates: Default::default(),
@@ -367,9 +367,9 @@ impl Resource {
     }
 
     ///
-    /// Construct a new `Resource` with the provided `IRI` as the subject.
+    /// Construct a new `Resource` with the provided `Iri` as the subject.
     ///
-    pub fn named(name: IRIRef) -> Self {
+    pub fn named(name: IriRef) -> Self {
         let statement_factory = statement_factory();
         Self {
             subject: statement_factory.named_subject(name),
@@ -382,7 +382,7 @@ impl Resource {
     // --------------------------------------------------------------------------------------------
 
     ///
-    /// Returns `true` if this instance is a resource in web terms, that is it's subject is an `IRI`.
+    /// Returns `true` if this instance is a resource in web terms, that is it's subject is an `Iri`.
     ///
     #[inline]
     pub fn is_a_resource(&self) -> bool {
@@ -415,29 +415,29 @@ impl Resource {
     ///
     /// Add a new property predicate with a literal value to this resource.
     ///
-    pub fn property(&mut self, predicate: IRIRef, value: LiteralRef) -> &mut Self {
+    pub fn property(&mut self, predicate: IriRef, value: LiteralRef) -> &mut Self {
         self.literal(predicate, value)
     }
 
     ///
     /// Add a new property predicate with a literal value to this resource.
     ///
-    pub fn value_of(&mut self, predicate: IRIRef, value: LiteralRef) -> &mut Self {
+    pub fn value_of(&mut self, predicate: IriRef, value: LiteralRef) -> &mut Self {
         self.literal(predicate, value)
     }
 
     ///
     /// Add a new property predicate with a literal value to this resource.
     ///
-    pub fn literal(&mut self, predicate: IRIRef, value: LiteralRef) -> &mut Self {
+    pub fn literal(&mut self, predicate: IriRef, value: LiteralRef) -> &mut Self {
         self.insert(predicate, ResourceObject::Literal(value))
     }
 
     ///
     /// Add a new property predicate with a literal value to this resource.
     ///
-    pub fn literal_str(&mut self, predicate: IRIRef, value: &str) -> &mut Self {
-        let value = literal_factory().literal(value);
+    pub fn literal_str(&mut self, predicate: IriRef, value: &str) -> &mut Self {
+        let value = self.literal_factory.literal(value);
         self.insert(predicate, ResourceObject::Literal(value))
     }
 
@@ -446,11 +446,11 @@ impl Resource {
     ///
     pub fn literal_typed_str(
         &mut self,
-        predicate: IRIRef,
+        predicate: IriRef,
         value: &str,
         data_type: DataType,
     ) -> &mut Self {
-        let value = literal_factory().with_data_type(value, data_type);
+        let value = self.literal_factory.with_data_type(value, data_type);
         self.insert(predicate, ResourceObject::Literal(value))
     }
 
@@ -459,11 +459,11 @@ impl Resource {
     ///
     pub fn literal_language_str(
         &mut self,
-        predicate: IRIRef,
+        predicate: IriRef,
         value: &str,
         language: LanguageTag,
     ) -> &mut Self {
-        let value = literal_factory().with_language(value, language);
+        let value = self.literal_factory.with_language(value, language);
         self.insert(predicate, ResourceObject::Literal(value))
     }
 
@@ -472,12 +472,13 @@ impl Resource {
     ///
     pub fn literal_language_str_str(
         &mut self,
-        predicate: IRIRef,
+        predicate: IriRef,
         value: &str,
         language: &str,
     ) -> &mut Self {
-        let value =
-            literal_factory().with_language(value, LanguageTag::from_str(language).unwrap());
+        let value = self
+            .literal_factory
+            .with_language(value, LanguageTag::from_str(language).unwrap());
         self.insert(predicate, ResourceObject::Literal(value))
     }
 
@@ -486,7 +487,7 @@ impl Resource {
     ///
     /// The value of this property predicate is a container denoting the provided values as alternatives.
     ///
-    pub fn property_alternatives(&mut self, predicate: IRIRef, values: &[LiteralRef]) -> &mut Self {
+    pub fn property_alternatives(&mut self, predicate: IriRef, values: &[LiteralRef]) -> &mut Self {
         self.insert(
             predicate,
             ResourceObject::Literals(Container {
@@ -500,7 +501,7 @@ impl Resource {
     /// The value of this property predicate is a container denoting the provided values as an
     /// unordered bag.
     ///
-    pub fn property_bag(&mut self, predicate: IRIRef, values: &[LiteralRef]) -> &mut Self {
+    pub fn property_bag(&mut self, predicate: IriRef, values: &[LiteralRef]) -> &mut Self {
         self.insert(
             predicate,
             ResourceObject::Literals(Container {
@@ -514,7 +515,7 @@ impl Resource {
     /// The value of this property predicate is a container denoting the provided values as an ordered
     /// sequence.
     ///
-    pub fn property_sequence(&mut self, predicate: IRIRef, values: &[LiteralRef]) -> &mut Self {
+    pub fn property_sequence(&mut self, predicate: IriRef, values: &[LiteralRef]) -> &mut Self {
         self.insert(
             predicate,
             ResourceObject::Literals(Container {
@@ -530,9 +531,9 @@ impl Resource {
     ///
     pub fn property_container(
         &mut self,
-        predicate: IRIRef,
+        predicate: IriRef,
         values: &[LiteralRef],
-        kind: IRIRef,
+        kind: IriRef,
     ) -> &mut Self {
         self.insert(
             predicate,
@@ -548,7 +549,7 @@ impl Resource {
     ///
     /// Add a new resource predicate, a blank node, to this predicate.
     ///
-    pub fn resource_blank_named(&mut self, predicate: IRIRef, name: &str) -> &mut Self {
+    pub fn resource_blank_named(&mut self, predicate: IriRef, name: &str) -> &mut Self {
         self.insert(
             predicate,
             ResourceObject::Resource(Resource::blank_named(name)),
@@ -556,16 +557,16 @@ impl Resource {
     }
 
     ///
-    /// Add a new resource predicate, an IRI, to this predicate.
+    /// Add a new resource predicate, an Iri, to this predicate.
     ///
-    pub fn resource_named(&mut self, predicate: IRIRef, name: IRIRef) -> &mut Self {
+    pub fn resource_named(&mut self, predicate: IriRef, name: IriRef) -> &mut Self {
         self.insert(predicate, ResourceObject::Resource(Resource::named(name)))
     }
 
     ///
     /// Add a new resource predicate, another resource, to this predicate.
     ///
-    pub fn resource(&mut self, predicate: IRIRef, resource: Resource) -> &mut Self {
+    pub fn resource(&mut self, predicate: IriRef, resource: Resource) -> &mut Self {
         self.insert(predicate, ResourceObject::Resource(resource))
     }
 
@@ -574,7 +575,7 @@ impl Resource {
     ///
     /// The value of this resource predicate is a container denoting the provided values as alternatives.
     ///
-    pub fn resource_alternatives(&mut self, predicate: IRIRef, values: &[Resource]) -> &mut Self {
+    pub fn resource_alternatives(&mut self, predicate: IriRef, values: &[Resource]) -> &mut Self {
         self.insert(
             predicate,
             ResourceObject::Resources(Container {
@@ -588,7 +589,7 @@ impl Resource {
     /// The value of this resource predicate is a container denoting the provided values as an
     /// unordered bag.
     ///
-    pub fn resource_bag(&mut self, predicate: IRIRef, values: &[Resource]) -> &mut Self {
+    pub fn resource_bag(&mut self, predicate: IriRef, values: &[Resource]) -> &mut Self {
         self.insert(
             predicate,
             ResourceObject::Resources(Container {
@@ -602,7 +603,7 @@ impl Resource {
     /// The value of this resource predicate is a container denoting the provided values as an ordered
     /// sequence.
     ///
-    pub fn resource_sequence(&mut self, predicate: IRIRef, values: &[Resource]) -> &mut Self {
+    pub fn resource_sequence(&mut self, predicate: IriRef, values: &[Resource]) -> &mut Self {
         self.insert(
             predicate,
             ResourceObject::Resources(Container {
@@ -618,9 +619,9 @@ impl Resource {
     ///
     pub fn resource_container(
         &mut self,
-        predicate: IRIRef,
+        predicate: IriRef,
         values: &[Resource],
-        kind: IRIRef,
+        kind: IriRef,
     ) -> &mut Self {
         self.insert(
             predicate,
@@ -636,7 +637,7 @@ impl Resource {
     ///
     /// Set the RDF type (classifier) of this resource.
     ///
-    pub fn instance_of(&mut self, name: IRIRef) -> &mut Self {
+    pub fn instance_of(&mut self, name: IriRef) -> &mut Self {
         self.insert(
             rdf::a_type().clone(),
             ResourceObject::Resource(Resource::named(name)),
@@ -645,7 +646,7 @@ impl Resource {
 
     // --------------------------------------------------------------------------------------------
 
-    fn insert(&mut self, predicate: IRIRef, object: ResourceObject) -> &mut Self {
+    fn insert(&mut self, predicate: IriRef, object: ResourceObject) -> &mut Self {
         if !self.predicates.contains_key(&predicate) {
             let _ = self
                 .predicates
@@ -689,7 +690,7 @@ fn flatten(resource: &Resource, sts: &mut StatementList) {
                     ResourceObject::Literals(lc) => &lc.kind,
                     _ => unreachable!(),
                 };
-                let container = resource.statement_factory.blank_subject();
+                let container = resource.statement_factory.blank_subject_new();
                 sts.push(
                     resource
                         .statement_factory

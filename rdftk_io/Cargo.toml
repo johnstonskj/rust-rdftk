@@ -1,8 +1,8 @@
 [package]
 name = "rdftk_io"
-version = "0.2.1"
+version = "0.2.0"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
-edition = "2018"
+edition = "2021"
 description = "This crate provides traits for reading and writing Statements and Graphs as well as implementations of these for common representations."
 documentation = "https://docs.rs/rdftk_core/"
 repository = "https://github.com/johnstonskj/rust-rdftk.git"
@@ -25,12 +25,11 @@ trig = []
 turtle = ["pest", "pest_derive"]
 xml = ["xml-rs", "rdftk_names"]
 
-
 [dependencies]
 lazy_static = "1.4"
 log = "0.4"
 rdftk_core = { version = "0.3", path = "../rdftk_core" }
-rdftk_iri = { version = "0.1", path = "../rdftk_iri" }
+rdftk_iri = { version = "0.2", path = "../rdftk_iri" }
 regex = "1.5"
 itertools = "0.10"
 

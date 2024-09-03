@@ -17,7 +17,7 @@ TBD
     trivial_numeric_casts,
     // ---------- Public
     missing_debug_implementations,
-    missing_docs,
+    // TODO: missing_docs,
     unreachable_pub,
     // ---------- Unsafe
     unsafe_code,
@@ -51,3 +51,7 @@ TBD
 // ------------------------------------------------------------------------------------------------
 // Modules
 // ------------------------------------------------------------------------------------------------
+
+pub mod results;
+
+pub mod sparql;

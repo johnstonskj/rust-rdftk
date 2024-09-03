@@ -19,7 +19,7 @@ TBD
     trivial_numeric_casts,
     // ---------- Public
     missing_debug_implementations,
-    //missing_docs,
+    missing_docs,
     unreachable_pub,
     // ---------- Unsafe
     unsafe_code,
@@ -29,12 +29,6 @@ TBD
     unused_qualifications,
     unused_results,
 )]
-
-#[macro_use]
-extern crate lazy_static;
-
-#[macro_use]
-extern crate rdftk_names;
 
 // ------------------------------------------------------------------------------------------------
 // Modules

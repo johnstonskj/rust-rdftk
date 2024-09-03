@@ -21,7 +21,7 @@ use rdftk_core::error::{ErrorKind, Result};
 use rdftk_core::model::graph::{GraphFactoryRef, GraphRef};
 use rdftk_core::model::literal::{DataType, LanguageTag};
 use rdftk_core::model::statement::SubjectNodeRef;
-use rdftk_iri::{IRIRef, IRI};
+use rdftk_iri::{Iri, IriRef};
 use rdftk_names::rdf;
 use std::io::Read;
 use std::str::FromStr;
@@ -49,7 +49,7 @@ struct ExpectedName {
 #[derive(Clone, Debug)]
 enum SubjectType {
     BlankNamed(String),
-    Resource(IRIRef),
+    Resource(IriRef),
     RelativeResource(String),
 }
 
@@ -64,10 +64,10 @@ enum ParseType {
 struct Attributes<'a> {
     subject_type: Option<SubjectType>,
     parse_type: Option<ParseType>,
-    uri_base: Option<IRIRef>,
-    data_type: Option<IRIRef>,
+    uri_base: Option<IriRef>,
+    data_type: Option<IriRef>,
     language: Option<LanguageTag>,
-    resource: Option<IRIRef>,
+    resource: Option<IriRef>,
     inner: Vec<&'a OwnedAttribute>,
 }
 
@@ -87,7 +87,7 @@ impl Default for XmlReader {
 
 impl GraphReader for XmlReader {
     fn read(&self, r: &mut impl Read, factory: GraphFactoryRef) -> Result<GraphRef> {
-        let mut event_reader = xml::EventReader::new(r);
+        let mut event_reader = EventReader::new(r);
         parse_document(&mut event_reader, factory)
     }
 }
@@ -113,10 +113,10 @@ impl ExpectedName {
 
 macro_rules! trace_event {
     ($fn_name:expr => $event:expr) => {
-        trace!("XmlReader::{} event: {:?}", $fn_name, $event);
+        log::trace!("XmlReader::{} event: {:?}", $fn_name, $event);
     };
     ($fn_name:expr => ignore $event:expr) => {
-        trace!("XmlReader::{} ignoring event: {:?}", $fn_name, &$event);
+        log::trace!("XmlReader::{} ignoring event: {:?}", $fn_name, &$event);
     };
 }
 
@@ -142,7 +142,7 @@ macro_rules! error_event {
         error_event!($fn_name, inner);
     };
     ($fn_name:expr, $inner:expr) => {
-        error!("XmlReader::{} {}", $fn_name, $inner);
+        log::error!("XmlReader::{} {}", $fn_name, $inner);
         return Err(rdftk_core::error::Error::with_chain(
             $inner,
             ErrorKind::ReadWrite(super::NAME.to_string()),
@@ -194,7 +194,7 @@ fn parse_document<R: Read>(
 
 fn parse_subject_element<R: Read>(
     event_reader: &mut EventReader<&mut R>,
-    xml_base: &Option<IRIRef>,
+    xml_base: &Option<IriRef>,
     _subject: Option<&SubjectNodeRef>,
     graph: &mut GraphRef,
 ) -> Result<Option<SubjectNodeRef>> {
@@ -213,7 +213,7 @@ fn parse_subject_element<R: Read>(
                 let subject_node = match &attributes.subject_type {
                     None => {
                         // SPEC: §2.1 Introduction
-                        graph.borrow().statement_factory().blank_subject()
+                        graph.borrow().statement_factory().blank_subject_new()
                     }
                     Some(SubjectType::Resource(subject)) => {
                         // SPEC: §2.2 Node Elements and Property Elements
@@ -283,8 +283,8 @@ fn parse_subject_element<R: Read>(
 }
 
 #[inline]
-fn name_to_iri(name: &OwnedName) -> Result<IRIRef> {
-    Ok(IRIRef::new(IRI::from_str(&format!(
+fn name_to_iri(name: &OwnedName) -> Result<IriRef> {
+    Ok(IriRef::new(Iri::from_str(&format!(
         "{}{}",
         name.namespace.as_ref().unwrap(),
         name.local_name
@@ -292,8 +292,8 @@ fn name_to_iri(name: &OwnedName) -> Result<IRIRef> {
 }
 
 #[inline]
-fn value_to_iri(name: &str) -> Result<IRIRef> {
-    Ok(IRIRef::new(IRI::from_str(name)?))
+fn value_to_iri(name: &str) -> Result<IriRef> {
+    Ok(IriRef::new(Iri::from_str(name)?))
 }
 
 fn parse_predicate_attributes(
@@ -304,7 +304,7 @@ fn parse_predicate_attributes(
     // SPEC: §2.5 Property Attributes
     // SPEC: §2.12 Omitting Nodes: Property Attributes on an empty Property Element
     for attribute in attributes {
-        trace!(
+        log::trace!(
             "XmlReader::parse_predicate_attributes attribute: {:?}",
             attribute
         );
@@ -326,7 +326,7 @@ fn parse_predicate_attributes(
 
 fn parse_predicate_element<R: Read>(
     event_reader: &mut EventReader<&mut R>,
-    xml_base: &Option<IRIRef>,
+    xml_base: &Option<IriRef>,
     subject: &SubjectNodeRef,
     graph: &mut GraphRef,
 ) -> Result<()> {
@@ -408,9 +408,9 @@ fn parse_predicate_element<R: Read>(
                         }
                         Some(ParseType::Resource) => {
                             // SPEC: §2.11 Omitting Blank Nodes: rdf:parseType="Resource"
-                            let subject_node = statement_factory.blank_subject();
+                            let subject_node = statement_factory.blank_subject_new();
                             //parse_predicate_attributes(&attributes.inner, &subject_node, graph)?;
-                            let _ = parse_subject_element(
+                            let subject = parse_subject_element(
                                 event_reader,
                                 if attributes.uri_base.is_some() {
                                     &attributes.uri_base
@@ -444,7 +444,7 @@ fn parse_predicate_element<R: Read>(
 
 fn parse_object_element<R: Read>(
     event_reader: &mut EventReader<&mut R>,
-    xml_base: &Option<IRIRef>,
+    xml_base: &Option<IriRef>,
     graph: &mut GraphRef,
 ) -> Result<Option<String>> {
     let mut content = String::new();
@@ -465,8 +465,8 @@ fn parse_object_element<R: Read>(
                 // set outer loop value
                 has_elements = true;
                 let attributes = parse_attributes(attributes)?;
-                let subject_node = graph.borrow().statement_factory().blank_subject();
-                let _ = parse_subject_element(
+                let subject_node = graph.borrow().statement_factory().blank_subject_new();
+                let subject = parse_subject_element(
                     event_reader,
                     if attributes.uri_base.is_some() {
                         &attributes.uri_base
@@ -477,7 +477,7 @@ fn parse_object_element<R: Read>(
                     graph,
                 )?;
             }
-            Ok(XmlEvent::EndElement { name: _ }) => {
+            Ok(XmlEvent::EndElement { .. }) => {
                 trace_event!("parse_content_element" => event);
                 return Ok(Some(content));
             }
@@ -549,7 +549,7 @@ fn parse_xml_literal_element<R: Read>(event_reader: &mut EventReader<&mut R>) ->
     }
 }
 
-fn parse_attributes(attributes: &[OwnedAttribute]) -> Result<Attributes<'_>> {
+fn parse_attributes<'a>(attributes: &'a [OwnedAttribute]) -> Result<Attributes<'a>> {
     let mut response = Attributes {
         subject_type: None,
         parse_type: None,
@@ -594,7 +594,7 @@ fn parse_attributes(attributes: &[OwnedAttribute]) -> Result<Attributes<'_>> {
         }
     }
 
-    trace!("parse_attributes -> {:?}", response);
+    log::trace!("parse_attributes -> {:?}", response);
 
     Ok(response)
 }

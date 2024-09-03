@@ -1,6 +1,6 @@
-use crate::model::statement::{StatementRef, SubjectNode};
+use crate::model::statement::{BlankNode, StatementRef, SubjectNode};
 use crate::model::Provided;
-use rdftk_iri::IRIRef;
+use rdftk_iri::IriRef;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -21,8 +21,8 @@ pub struct SimpleSubjectNode {
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Clone, Debug)]
 pub(crate) enum Subject {
-    BNode(String),
-    IRI(IRIRef),
+    BNode(BlankNode),
+    Iri(IriRef),
     Star(StatementRef),
 }
 
@@ -41,7 +41,7 @@ impl SubjectNode for SimpleSubjectNode {
         matches!(self.inner, Subject::BNode(_))
     }
 
-    fn as_blank(&self) -> Option<&String> {
+    fn as_blank(&self) -> Option<&BlankNode> {
         match &self.inner {
             Subject::BNode(s) => Some(s),
             _ => None,
@@ -49,12 +49,12 @@ impl SubjectNode for SimpleSubjectNode {
     }
 
     fn is_iri(&self) -> bool {
-        matches!(self.inner, Subject::IRI(_))
+        matches!(self.inner, Subject::Iri(_))
     }
 
-    fn as_iri(&self) -> Option<&IRIRef> {
+    fn as_iri(&self) -> Option<&IriRef> {
         match &self.inner {
-            Subject::IRI(u) => Some(u),
+            Subject::Iri(u) => Some(u),
             _ => None,
         }
     }

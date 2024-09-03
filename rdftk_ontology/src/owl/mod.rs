@@ -9,7 +9,7 @@ More detailed description, with
 
 use crate::LabelProperty;
 use rdftk_core::model::literal::LiteralRef;
-use rdftk_iri::IRIRef;
+use rdftk_iri::IriRef;
 use std::collections::HashMap;
 
 // ------------------------------------------------------------------------------------------------
@@ -23,39 +23,30 @@ use std::collections::HashMap;
 #[derive(Clone, Debug)]
 pub enum HeaderProperty {
     VersionInfo(LiteralRef),
-    PriorVersion(IRIRef),
-    BackwardCompatibleWith(IRIRef),
-    IncompatibleWith(IRIRef),
-    Imports(IRIRef),
+    PriorVersion(IriRef),
+    BackwardCompatibleWith(IriRef),
+    IncompatibleWith(IriRef),
+    Imports(IriRef),
 }
 
 #[derive(Clone, Debug)]
 pub struct Ontology {
-    #[allow(unused)]
-    uri: IRIRef,
-    #[allow(unused)]
+    uri: IriRef,
     label_properties: Vec<LabelProperty>,
-    #[allow(unused)]
     header_properties: Vec<HeaderProperty>,
-    #[allow(unused)]
-    classes: HashMap<IRIRef, Class>,
-    #[allow(unused)]
-    properties: HashMap<IRIRef, Property>,
+    classes: HashMap<IriRef, Class>,
+    properties: HashMap<IriRef, Property>,
 }
 
 #[derive(Clone, Debug)]
 pub struct Class {
-    #[allow(unused)]
     description: ClassDescription,
-    #[allow(unused)]
     axioms: Vec<ClassAxiom>,
-    #[allow(unused)]
     deprecated: bool,
 }
 
 #[derive(Clone, Debug)]
 pub struct Property {
-    #[allow(unused)]
     deprecated: bool,
 }
 
@@ -66,7 +57,7 @@ pub struct Property {
 #[allow(dead_code)]
 #[derive(Clone, Debug, PartialEq)]
 enum ClassDescription {
-    Identifier(IRIRef),
+    Identifier(IriRef),
     Enumeration(Vec<ClassDescription>),
     PropertyRestriction,
     Intersection(Vec<ClassDescription>),

@@ -49,130 +49,126 @@ pub fn make_statements() -> StatementList {
 
 ## Changes
 
-**Version 0.3.1**
+### Version 0.3.0
 
-* Added PrefixMappingFactory trait and a prefix_mapping_factory method on GraphFactory.
+- The abstract RDF API, described in module 'model', is now entirely trait based.
+- An implementation, in module 'simple', provides concrete in-memory types.
+- Added a new type LanguageTag to model these values more completely.
+- Added notion of features which denote capabilities supported by data sets, graphs, and statements implementations.
 
-**Version 0.3.0**
+### Version 0.2.4
 
-* The abstract RDF API, described in module 'model', is now entirely trait based.
-* An implementation, in module 'simple', provides concrete in-memory types.
-* Added a new type LanguageTag to model these values more completely.
-* Added notion of features which denote capabilities supported by data sets, graphs, and statements implementations.
-
-**Version 0.2.4**
-
-* Created new Featured trait implemented by a number of types that allow client query of various optional
+- Created new Featured trait implemented by a number of types that allow client query of various optional
   capabilities. This also subsumes the has_index/has_all_indices capability as all index queries are now
   feature queries.
 
-**Version 0.2.3**
+### Version 0.2.3
 
-* Copied some errors from rdftk_io.
-* Renamed the Io variant to ReadWrite.
+- Copied some errors from rdftk_io.
+- Renamed the Io variant to ReadWrite.
 
-**Version 0.2.2**
+### Version 0.2.2
 
-* Reworked APIs to take <name>Ref types and to be consistent in use of trait objects and types throughout.
-* Added factory type for data sets.
-* Made PrefixMappings a concrete type in the core::graph::mapping module.
-* Added InvalidMatch and Io variants to ErrorKind.
-* Added mutators to Statement.
+- Reworked APIs to take <name>Ref types and to be consistent in use of trait objects and types throughout.
+- Added factory type for data sets.
+- Made PrefixMappings a concrete type in the core::graph::mapping module.
+- Added InvalidMatch and Io variants to ErrorKind.
+- Added mutators to Statement.
 
-**Version 0.2.1**
+### Version 0.2.1
 
-* Changed API, removed mutable traits for Graph and DataSet, moved methods into their base traits.
-* Added factory types for graphs.
-* Added Skolemization function for graphs.
+- Changed API, removed mutable traits for Graph and DataSet, moved methods into their base traits.
+- Added factory types for graphs.
+- Added Skolemization function for graphs.
 
-**Version 0.2.0**
+### Version 0.2.0
 
-* A change to the API, all `Statement`, and statement components are now passed as `Rc` references.
-  * Added additional *_ref* constructors to allow cleaner client code.
-* A change to the API, `Graph` and `DataSet` now use type parameters to describe iterators returned by *query* methods.
-* A change to the API, `QName` constructors now return errors instead of panic on invalid values.
-* Added more constructors for literal values.
-* Added support for `chrono::Duration` in literals as well as the std version as chrono supports the correct output form.
-* Added `eq_` methods on `SubjectNode` and `ObjectNode` for simple testing of inner values.
-* Added documentation and examples throughout.
+- A change to the API, all `Statement`, and statement components are now passed as `Rc` references.
+  - Added additional *_ref* constructors to allow cleaner client code.
+- A change to the API, `Graph` and `DataSet` now use type parameters to describe iterators returned by *query* methods.
+- A change to the API, `QName` constructors now return errors instead of panic on invalid values.
+- Added more constructors for literal values.
+- Added support for `chrono::Duration` in literals as well as the std version as chrono supports the correct output form.
+- Added `eq_` methods on `SubjectNode` and `ObjectNode` for simple testing of inner values.
+- Added documentation and examples throughout.
 
-**Version 0.1.15**
+### Version 0.1.15
 
-* Fixed Clippy suggestions.
-* Removed Context from statements.
-* Added value_factory method to Graph. 
-* Placed all unit tests in tests folder.
+- Fixed Clippy suggestions.
+- Removed Context from statements.
+- Added value_factory method to Graph. 
+- Placed all unit tests in tests folder.
 
-**Version 0.1.14**
+### Version 0.1.14
 
-* Removed stand-alone named graph.
-* Added DataSet as a way to associate names to graphs.
-* Renamed CachingGraph to ValueFactory and made stand-alone.
+- Removed stand-alone named graph.
+- Added DataSet as a way to associate names to graphs.
+- Renamed CachingGraph to ValueFactory and made stand-alone.
 
-**Version 0.1.13**
+### Version 0.1.13
 
-* Bug: fixed Literal constructors to produce an escape-safe literal form for strings.
+- Bug: fixed Literal constructors to produce an escape-safe literal form for strings.
 
-**Version 0.1.12**
+### Version 0.1.12
 
-* Fixed: cargo fmt error.
+- Fixed: cargo fmt error.
 
-**Version 0.1.11**
+### Version 0.1.11
 
-* Added: public types `StatementRef` and `StatementList` rather than having `Rc` obviously in all APIs.
+- Added: public types `StatementRef` and `StatementList` rather than having `Rc` obviously in all APIs.
 
-**Version 0.1.10**
+### Version 0.1.10
 
-* **DEPRECATED** Support for [Datasets](https://www.w3.org/TR/rdf11-concepts/#section-dataset) and Quads by adding a context
+- **DEPRECATED** Support for [Datasets](https://www.w3.org/TR/rdf11-concepts/#section-dataset) and Quads by adding a context
   (type `ContextNode`) to `Statement`.
 
-**Version 0.1.9**
+### Version 0.1.9
 
-* Support for [RDF*](https://w3c.github.io/rdf-star/) in `Statement`.
-* Added additional constructors to `Statement`.
-* Renamed Resource method `rdf_type` to `instance_of` for compatibility with RDF schema usage.
-* Added `is_valid` associated function to `QName`.
+- Support for [RDF*](https://w3c.github.io/rdf-star/) in `Statement`.
+- Added additional constructors to `Statement`.
+- Renamed Resource method `rdf_type` to `instance_of` for compatibility with RDF schema usage.
+- Added `is_valid` associated function to `QName`.
 
-**Version 0.1.8**
+### Version 0.1.8
 
-* Explicit exports over `pub use *`.
+- Explicit exports over `pub use *`.
 
-**Version 0.1.7**
+### Version 0.1.7
 
-* Split `Graph` into `Graph` and `MutableGraph`.
-* Split `NamedGraph` into `NamedGraph` and `MutableNamedGraph`.
-* Added `get_default_namespace` to the `PrefixMappings` trait as a helper function.
-* Altered `PrefixMappings::compress` and `PrefixMappings::expand` to take references.
+- Split `Graph` into `Graph` and `MutableGraph`.
+- Split `NamedGraph` into `NamedGraph` and `MutableNamedGraph`.
+- Added `get_default_namespace` to the `PrefixMappings` trait as a helper function.
+- Altered `PrefixMappings::compress` and `PrefixMappings::expand` to take references.
 
-**Version 0.1.6**
+### Version 0.1.6
 
-* Explicit version management.
+- Explicit version management.
 
-**Version 0.1.5**
+### Version 0.1.5
 
-* Updates for rdftk_memgraph to build.
+- Updates for rdftk_memgraph to build.
 
-**Version 0.1.4**
+### Version 0.1.4
 
-* Made all local dependencies only major/minor valued.
+- Made all local dependencies only major/minor valued.
 
-**Version 0.1.3**
+### Version 0.1.3
 
-* Moved all `IRI` to `IRIRef` on interfaces.
-* Moved `Graph` and associated types into core and deprecated `rdftk_graph`.
+- Moved all `IRI` to `IRIRef` on interfaces.
+- Moved `Graph` and associated types into core and deprecated `rdftk_graph`.
 
-**Version 0.1.2**
+### Version 0.1.2
 
-* Clean-up changes.
+- Clean-up changes.
 
-**Version 0.1.1**
+### Version 0.1.1
 
-* Added `From` to allow direct construction of a `SubjectNode` from an `IRI`.
-* Fixed a bug in `QName` that dropped the ":" for non-prefixed values.
+- Added `From` to allow direct construction of a `SubjectNode` from an `IRI`.
+- Fixed a bug in `QName` that dropped the ":" for non-prefixed values.
  
-**Version 0.1.0**
+### Version 0.1.0
 
-* First release.
+- First release.
 
 ## TODO
 

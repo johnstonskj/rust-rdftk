@@ -1,8 +1,8 @@
 [package]
 name = "rdftk_skos"
-version = "0.2.0"
+version = "0.2.0-pre"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
-edition = "2018"
+edition = "2021"
 description = "This crate provides a data model for the Simple Knowledge Organization System (SKOS) vocabulary."
 documentation = "https://docs.rs/rdftk_skos/"
 repository = "https://github.com/johnstonskj/rust-rdftk.git"
@@ -20,17 +20,17 @@ default = ["documentation"]
 documentation = ["somedoc"]
 
 [dependencies]
-lazy_static = "1.4"
-paste = "1.0"
+lazy_static = "1.4.0"
+paste = "1.0.2"
 rdftk_io = { version = "0.2", path = "../rdftk_io" }
-rdftk_iri = { version = "0.1", path = "../rdftk_iri" }
-rdftk_core = { version = "0.3", path = "../rdftk_core" }
+rdftk_iri = { version = "0.2", path = "../rdftk_iri" }
+rdftk_core = { version = "0.3.0-pre", path = "../rdftk_core" }
 rdftk_names = { version = "0.1", path = "../rdftk_names" }
 
-somedoc = { version = "0.2", optional = true }
+somedoc = { version = "0.2.9", optional = true }
 
 [dev-dependencies]
-pretty_assertions = "1.0"
+pretty_assertions = "0.7.1"
 
 [dev-dependencies.cargo-husky]
 version = "1"

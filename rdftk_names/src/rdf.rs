@@ -1,6 +1,8 @@
 /*!
 Functions that create IRIs for the [RDF](https://www.w3.org/TR/rdf11-concepts/) namespace.
-*/
+ */
+
+use rdftk_iri::{Iri, IriRef};
 
 namespace! {
     "rdf",
@@ -34,8 +36,8 @@ namespace! {
 
 /// Create a numbered member in a container
 #[inline]
-pub fn member(index: usize) -> IRIRef {
-    IRI::from_str(&format!("{}_{}", NAMESPACE, index))
+pub fn member(index: usize) -> IriRef {
+    Iri::from_str(&format!("{}_{}", NAMESPACE, index))
         .unwrap()
         .into()
 }

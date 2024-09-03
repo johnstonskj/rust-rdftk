@@ -2,11 +2,11 @@
 Simple, in-memory implementation of the `Literal` and `LiteralFactory` traits.
 */
 use crate::model::features::Featured;
-use crate::model::literal::{
-    DataType, LanguageTag, Literal, LiteralFactory, LiteralFactoryRef, LiteralRef,
-};
+use crate::model::literal::{DataType, Literal, LiteralFactory, LiteralFactoryRef, LiteralRef};
 use crate::model::Provided;
-use rdftk_iri::IRIRef;
+use language_tags::LanguageTag;
+use lazy_static::lazy_static;
+use rdftk_iri::IriRef;
 use std::rc::Rc;
 use std::sync::Arc;
 
@@ -66,7 +66,7 @@ impl Provided for SimpleLiteralFactory {
 }
 
 impl Featured for SimpleLiteralFactory {
-    fn supports_feature(&self, _: &IRIRef) -> bool {
+    fn supports_feature(&self, _: &IriRef) -> bool {
         false
     }
 }

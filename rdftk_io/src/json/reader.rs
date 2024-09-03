@@ -15,7 +15,7 @@ use rdftk_core::model::graph::{GraphFactoryRef, GraphRef};
 use rdftk_core::model::literal::{DataType, LanguageTag};
 use rdftk_core::model::statement::SubjectNodeRef;
 use rdftk_core::simple::statement::statement_factory;
-use rdftk_iri::{IRIRef, IRI};
+use rdftk_iri::{Iri, IriRef};
 use serde_json::{Map, Value};
 use std::io::Read;
 use std::str::FromStr;
@@ -69,7 +69,7 @@ fn parse_graph(value: Value, factory: GraphFactoryRef) -> Result<GraphRef> {
         }
         Ok(graph)
     } else {
-        error!("parse_graph() - expecting Value::Object");
+        log::error!("parse_graph() - expecting Value::Object");
         Err(ErrorKind::ReadWrite(super::NAME.to_string()).into())
     }
 }
@@ -85,14 +85,14 @@ fn parse_statements(subject: &str, predicate_objects: &Value, graph: &GraphRef) 
             graph
                 .borrow()
                 .statement_factory()
-                .named_subject(IRIRef::new(IRI::from_str(subject)?))
+                .named_subject(IriRef::new(Iri::from_str(subject)?))
         };
         for (predicate, objects) in json.iter() {
             parse_predicates(&subject, predicate, objects, graph)?;
         }
         Ok(())
     } else {
-        error!("parse_statements() - expecting Value::Object");
+        log::error!("parse_statements() - expecting Value::Object");
         Err(ErrorKind::ReadWrite(super::NAME.to_string()).into())
     }
 }
@@ -104,20 +104,20 @@ fn parse_predicates(
     graph: &GraphRef,
 ) -> Result<()> {
     if let Value::Array(json) = objects {
-        let predicate = IRIRef::new(IRI::from_str(predicate)?);
+        let predicate = IriRef::new(Iri::from_str(predicate)?);
         for object in json {
             parse_object(subject, &predicate, object, graph)?;
         }
         Ok(())
     } else {
-        error!("parse_predicates() - expecting Value::Array");
+        log::error!("parse_predicates() - expecting Value::Array");
         Err(ErrorKind::ReadWrite(super::NAME.to_string()).into())
     }
 }
 
 fn parse_object(
     subject: &SubjectNodeRef,
-    predicate: &IRIRef,
+    predicate: &IriRef,
     object: &Value,
     graph: &GraphRef,
 ) -> Result<()> {
@@ -131,24 +131,24 @@ fn parse_object(
                 } else if s == OBJ_TYPE_URI {
                     parse_uri_object(subject, predicate, json, graph)
                 } else {
-                    error!("parse_object() - unknown 'type' key value: {}", s);
+                    log::error!("parse_object() - unknown 'type' key value: {}", s);
                     Err(ErrorKind::ReadWrite(super::NAME.to_string()).into())
                 }
             }
             _ => {
-                error!("parse_object() - no 'type' key in object");
+                log::error!("parse_object() - no 'type' key in object");
                 Err(ErrorKind::ReadWrite(super::NAME.to_string()).into())
             }
         }
     } else {
-        error!("parse_object() - expecting Value::Object");
+        log::error!("parse_object() - expecting Value::Object");
         Err(ErrorKind::ReadWrite(super::NAME.to_string()).into())
     }
 }
 
 fn parse_literal_object(
     subject: &SubjectNodeRef,
-    predicate: &IRIRef,
+    predicate: &IriRef,
     object: &Map<String, Value>,
     graph: &GraphRef,
 ) -> Result<()> {
@@ -163,13 +163,13 @@ fn parse_literal_object(
             .literal_factory()
             .with_language(v, LanguageTag::from_str(l)?),
         (Some(Value::String(v)), None, Some(Value::String(d))) => {
-            let data_type = IRIRef::new(IRI::from_str(d)?);
+            let data_type = IriRef::new(Iri::from_str(d)?);
             graph
                 .literal_factory()
                 .with_data_type(v, DataType::from(data_type))
         }
         _ => {
-            error!("parse_literal_object() - bad value/data type/language combination");
+            log::error!("parse_literal_object() - bad value/data type/language combination");
             return Err(ErrorKind::ReadWrite(super::NAME.to_string()).into());
         }
     });
@@ -182,7 +182,7 @@ fn parse_literal_object(
 
 fn parse_bnode_object(
     subject: &SubjectNodeRef,
-    predicate: &IRIRef,
+    predicate: &IriRef,
     object: &Map<String, Value>,
     graph: &GraphRef,
 ) -> Result<()> {
@@ -195,20 +195,20 @@ fn parse_bnode_object(
         graph.insert(st);
         Ok(())
     } else {
-        error!("parse_bnode_object() - expecting Value::String");
+        log::error!("parse_bnode_object() - expecting Value::String");
         Err(ErrorKind::ReadWrite(super::NAME.to_string()).into())
     }
 }
 
 fn parse_uri_object(
     subject: &SubjectNodeRef,
-    predicate: &IRIRef,
+    predicate: &IriRef,
     object: &Map<String, Value>,
     graph: &GraphRef,
 ) -> Result<()> {
     let mut graph = graph.borrow_mut();
     if let Some(Value::String(s)) = object.get(OBJ_KEY_VALUE) {
-        let uri = IRIRef::new(IRI::from_str(s)?);
+        let uri = IriRef::new(Iri::from_str(s)?);
         let object = graph.statement_factory().named_object(uri);
         let st = graph
             .statement_factory()
@@ -216,7 +216,7 @@ fn parse_uri_object(
         graph.insert(st);
         Ok(())
     } else {
-        error!("parse_uri_object() - expecting Value::String");
+        log::error!("parse_uri_object() - expecting Value::String");
         Err(ErrorKind::ReadWrite(super::NAME.to_string()).into())
     }
 }

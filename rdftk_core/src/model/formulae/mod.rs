@@ -7,14 +7,14 @@ More detailed description, with
 
 */
 
-// use ...
+use rdftk_iri::{Iri, IriRef};
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
 use crate::statement::StatementRef;
-use rdftk_iri::IRIRef;
+use rdftk_iri::IriRef;
 use std::collections::BTreeSet;
 use std::fmt::{Display, Formatter};
 use std::rc::Rc;
@@ -28,7 +28,7 @@ pub enum Quantification {
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Variable {
     quantification: Quantification,
-    id: IRIRef,
+    id: IriRef,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -66,25 +66,25 @@ impl Display for Variable {
 }
 
 impl Variable {
-    pub fn universal(iri: IRIRef) -> Self {
+    pub fn universal(iri: IriRef) -> Self {
         Self {
             quantification: Quantification::Universal,
             id: iri.clone(),
         }
     }
 
-    pub fn existential(iri: IRIRef) -> Self {
+    pub fn existential(iri: IriRef) -> Self {
         Self {
             quantification: Quantification::Existential,
             id: iri.clone(),
         }
     }
 
-    pub fn for_all(iri: IRIRef) -> Self {
+    pub fn for_all(iri: IriRef) -> Self {
         Self::universal(iri)
     }
 
-    pub fn for_some(iri: IRIRef) -> Self {
+    pub fn for_some(iri: IriRef) -> Self {
         Self::existential(iri)
     }
 

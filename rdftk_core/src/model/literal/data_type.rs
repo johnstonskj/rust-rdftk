@@ -1,4 +1,4 @@
-use rdftk_iri::IRIRef;
+use rdftk_iri::IriRef;
 use rdftk_names::{rdf, xsd};
 
 // ------------------------------------------------------------------------------------------------
@@ -16,7 +16,7 @@ pub enum DataType {
     QName,
     /// Denotes a literal of type `xsd::anyURI`.
     #[allow(clippy::upper_case_acronyms)]
-    IRI,
+    Iri,
     /// Denotes a literal of type `xsd::boolean`.
     Boolean,
     /// Denotes a literal of type `xsd::float`.
@@ -41,26 +41,24 @@ pub enum DataType {
     UnsignedByte,
     /// Denotes a literal of type `xsd::duration`.
     Duration,
-    /// Denotes a literal of type xsd:decimal
-    Decimal,
     /// Denotes an escaped string containing XML content.
     XmlLiteral,
-    /// Denotes a literal where the type is indicated by the provided `IRI`.
-    Other(IRIRef),
+    /// Denotes a literal where the type is indicated by the provided `Iri`.
+    Other(IriRef),
 }
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl From<IRIRef> for DataType {
-    fn from(iri: IRIRef) -> Self {
+impl From<IriRef> for DataType {
+    fn from(iri: IriRef) -> Self {
         if &iri == xsd::string() {
             DataType::String
         } else if &iri == xsd::q_name() {
             DataType::QName
         } else if &iri == xsd::any_uri() {
-            DataType::IRI
+            DataType::Iri
         } else if &iri == xsd::boolean() {
             DataType::Boolean
         } else if &iri == xsd::float() {
@@ -95,14 +93,14 @@ impl From<IRIRef> for DataType {
 
 impl DataType {
     ///
-    /// Return the IRI representing this data type. Primarily these are the XML Schema data types
+    /// Return the Iri representing this data type. Primarily these are the XML Schema data types
     /// used for literal values.
     ///
-    pub fn as_iri(&self) -> &IRIRef {
+    pub fn as_iri(&self) -> &IriRef {
         match &self {
             DataType::String => xsd::string(),
             DataType::QName => xsd::q_name(),
-            DataType::IRI => xsd::any_uri(),
+            DataType::Iri => xsd::any_uri(),
             DataType::Boolean => xsd::boolean(),
             DataType::Float => xsd::float(),
             DataType::Double => xsd::double(),
@@ -115,7 +113,6 @@ impl DataType {
             DataType::UnsignedShort => xsd::unsigned_short(),
             DataType::UnsignedByte => xsd::unsigned_byte(),
             DataType::Duration => xsd::duration(),
-            DataType::Decimal => xsd::decimal(),
             DataType::XmlLiteral => rdf::xml_literal(),
             DataType::Other(iri) => iri,
         }

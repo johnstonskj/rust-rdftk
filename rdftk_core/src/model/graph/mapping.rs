@@ -4,12 +4,11 @@ graph to provide more readable serialization forms.
 */
 
 use crate::model::qname::QName;
-use rdftk_iri::IRIRef;
+use rdftk_iri::IriRef;
 use rdftk_names::{rdf, rdfs, xsd};
 use std::cell::RefCell;
 use std::fmt::Debug;
 use std::rc::Rc;
-use std::sync::Arc;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -19,40 +18,6 @@ use std::sync::Arc;
 /// The prefix used to denote the default namespace in the prefix mapping.
 ///
 pub const DEFAULT_PREFIX: &str = "";
-
-///
-/// A prefix mapping factory provides an interface to create a new prefix mapping. This allows for
-/// implementations where underlying shared resources are required and so may be owned by the
-/// factory.
-///
-/// Such a factory may only be retrieved by the [`GraphFactory::prefix_mapping_factory`]() method.
-///
-pub trait PrefixMappingFactory: Debug {
-    ///
-    /// Return a new empty mapping.
-    ///
-    fn empty(&self) -> PrefixMappingRef;
-
-    ///
-    /// Return a new mapping containing the RDF, RDF Schema, and XML Schema Datatype namespace
-    /// mappings.
-    ///
-    fn common(&self) -> PrefixMappingRef {
-        let mapping = self.empty();
-        {
-            let mut mut_mapping = mapping.borrow_mut();
-            mut_mapping.include_rdf();
-            mut_mapping.include_rdfs();
-            mut_mapping.include_xsd();
-        }
-        mapping
-    }
-}
-
-///
-/// The actual object storage type, reference counted for memory management.
-///
-pub type PrefixMappingFactoryRef = Arc<dyn PrefixMappingFactory>;
 
 ///
 /// Prefix mappings are used in the serialization of graphs.
@@ -65,7 +30,7 @@ pub trait PrefixMappings: Debug {
     ///
     /// Construct a new mapping instance with the provided default namespace.
     ///
-    fn with_default(iri: IRIRef) -> Self
+    fn with_default(iri: IriRef) -> Self
     where
         Self: Sized;
 
@@ -107,32 +72,32 @@ pub trait PrefixMappings: Debug {
     ///
     /// Get the default namespace mapping, if present.
     ///
-    fn get_default_namespace(&self) -> Option<&IRIRef>;
+    fn get_default_namespace(&self) -> Option<&IriRef>;
 
     ///
     /// Set the default namespace mapping.
     ///
-    fn set_default_namespace(&mut self, iri: IRIRef);
+    fn set_default_namespace(&mut self, iri: IriRef);
 
     ///
-    /// Get the namespace IRI associated with this provided prefix, if present.
+    /// Get the namespace Iri associated with this provided prefix, if present.
     ///
-    fn get_namespace(&self, prefix: &str) -> Option<&IRIRef>;
+    fn get_namespace(&self, prefix: &str) -> Option<&IriRef>;
 
     ///
     /// Get the prefix associated with this provided namespace URI, if present.
     ///
-    fn get_prefix(&self, namespace: &IRIRef) -> Option<&String>;
+    fn get_prefix(&self, namespace: &IriRef) -> Option<&String>;
 
     ///
     /// Return an iterator over the contained mappings.
     ///
-    fn mappings<'a>(&'a self) -> Box<dyn Iterator<Item = (&'a String, &'a IRIRef)> + 'a>;
+    fn mappings<'a>(&'a self) -> Box<dyn Iterator<Item = (&'a String, &'a IriRef)> + 'a>;
 
     ///
-    /// Insert a mapping from the prefix string to the namespace IRI.
+    /// Insert a mapping from the prefix string to the namespace Iri.
     ///
-    fn insert(&mut self, prefix: &str, iri: IRIRef);
+    fn insert(&mut self, prefix: &str, iri: IriRef);
 
     ///
     /// Remove a mapping for the provided prefix. This operation has no effect if no mapping is present.
@@ -149,14 +114,14 @@ pub trait PrefixMappings: Debug {
     // --------------------------------------------------------------------------------------------
 
     ///
-    /// Expand a qname into an IRI, if possible.
+    /// Expand a qname into an Iri, if possible.
     ///
-    fn expand(&self, qname: &QName) -> Option<IRIRef>;
+    fn expand(&self, qname: &QName) -> Option<IriRef>;
 
     ///
-    /// Compress an IRI into a qname, if possible.
+    /// Compress an Iri into a qname, if possible.
     ///
-    fn compress(&self, iri: &IRIRef) -> Option<QName>;
+    fn compress(&self, iri: &IriRef) -> Option<QName>;
 }
 
 ///

@@ -1,22 +1,17 @@
-// use ...
+use crate::error::Result;
+use crate::model::literal::LiteralRef;
+use crate::model::statement::BlankNode;
+use crate::model::statement::{ObjectNodeRef, StatementRef, SubjectNodeRef};
+use crate::model::Provided;
+use rdftk_iri::IriRef;
+use std::fmt::Debug;
+use std::str::FromStr;
+use std::sync::Arc;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
-use crate::error::Result;
-use crate::model::literal::LiteralRef;
-use crate::model::statement::{ObjectNodeRef, StatementRef, SubjectNodeRef};
-use crate::model::Provided;
-use rdftk_iri::IRIRef;
-use std::fmt::Debug;
-use std::sync::Arc;
-
-///
-/// A statement factory provides an interface to create new statements and statement nodes. This
-/// allows for implementations where underlying shared resources are required and so may be owned
-/// by the factory. This factory may only be retrieved using the `Graph::statement_factory` method.
-///
 pub trait StatementFactory: Debug + Provided {
     // --------------------------------------------------------------------------------------------
     // Whole statements
@@ -28,7 +23,7 @@ pub trait StatementFactory: Debug + Provided {
     fn statement(
         &self,
         subject: SubjectNodeRef,
-        predicate: IRIRef,
+        predicate: IriRef,
         object: ObjectNodeRef,
     ) -> Result<StatementRef>;
 
@@ -38,7 +33,7 @@ pub trait StatementFactory: Debug + Provided {
     fn statement_with_predicate(
         &self,
         subject: StatementRef,
-        predicate: IRIRef,
+        predicate: IriRef,
         object: ObjectNodeRef,
     ) -> Result<StatementRef>;
 
@@ -58,18 +53,26 @@ pub trait StatementFactory: Debug + Provided {
     ///
     /// Construct a new subject node reference, as a blank node with a randomly assigned name.
     ///
-    fn blank_subject(&self) -> SubjectNodeRef;
+    fn blank_subject_new(&self) -> SubjectNodeRef {
+        self.blank_subject(BlankNode::generate())
+    }
 
     ///
-    /// Construct a new subject node reference, as a blank node with the specified name. This
-    /// will panic if name is not a valid blank node name.
+    /// Construct a new subject node reference, from the provided node.
     ///
-    fn blank_subject_named(&self, name: &str) -> Result<SubjectNodeRef>;
+    fn blank_subject(&self, name: BlankNode) -> SubjectNodeRef;
 
     ///
-    /// Construct a new subject node, with an IRI naming a resource.
+    /// Construct a new subject node reference, as a blank node with the specified name.
     ///
-    fn named_subject(&self, name: IRIRef) -> SubjectNodeRef;
+    fn blank_subject_named(&self, name: &str) -> Result<SubjectNodeRef> {
+        Ok(self.blank_subject(BlankNode::from_str(name)?))
+    }
+
+    ///
+    /// Construct a new subject node, with an Iri naming a resource.
+    ///
+    fn named_subject(&self, name: IriRef) -> SubjectNodeRef;
 
     ///
     /// Construct a new subject node, where the subject **is an** existing statement. This is
@@ -93,17 +96,26 @@ pub trait StatementFactory: Debug + Provided {
     ///
     /// Construct a new object node reference, as a blank node with a randomly assigned name.
     ///
-    fn blank_object(&self) -> ObjectNodeRef;
+    fn blank_object_new(&self) -> ObjectNodeRef {
+        self.blank_object(BlankNode::generate())
+    }
 
     ///
     /// Construct a new object node reference, as a blank node with the specified name.
     ///
-    fn blank_object_named(&self, name: &str) -> Result<ObjectNodeRef>;
+    fn blank_object(&self, name: BlankNode) -> ObjectNodeRef;
 
     ///
-    /// Construct a new object node, with an IRI naming a resource.
+    /// Construct a new object node reference, as a blank node with the specified name.
     ///
-    fn named_object(&self, name: IRIRef) -> ObjectNodeRef;
+    fn blank_object_named(&self, name: &str) -> Result<ObjectNodeRef> {
+        Ok(self.blank_object(BlankNode::from_str(name)?))
+    }
+
+    ///
+    /// Construct a new object node, with an Iri naming a resource.
+    ///
+    fn named_object(&self, name: IriRef) -> ObjectNodeRef;
 
     ///
     /// Construct a new object node, with with a literal value.

@@ -29,7 +29,7 @@ pub(crate) struct ParserError {
 
 macro_rules! unexpected {
     ($fn_name:expr, $pair:expr) => {{
-        error!("ParserError::unexpected({}, {:?})", $fn_name, $pair);
+        ::log::error!("ParserError::unexpected({}, {:?})", $fn_name, $pair);
         return Err(ERROR.error($fn_name).unexpected(&$pair).clone().into());
     }};
 }
@@ -37,7 +37,7 @@ macro_rules! unexpected {
 #[allow(unused_macros)]
 macro_rules! unreachable {
     ($fn_name:expr) => {{
-        error!("ParserError::unreachable({)", $fn_name);
+        ::log::error!("ParserError::unreachable({)", $fn_name);
         return ERROR.error($fn_name).unreachable().into();
     }};
 }
@@ -45,7 +45,7 @@ macro_rules! unreachable {
 #[allow(unused_macros)]
 macro_rules! expecting {
     ($fn_name:expr, $rule:expr) => {{
-        error!("ParserError::new({}, {:?})", $fn_name, $rule);
+        ::log::error!("ParserError::new({}, {:?})", $fn_name, $rule);
         return ERROR
             .error($fn_name)
             .expecting(stringify!($rule.to_string()))

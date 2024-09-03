@@ -7,28 +7,17 @@ More detailed description, with
 
 */
 
-// use ...
+use std::fmt::{Display, Formatter};
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
-use std::cmp::max;
-use std::fmt::{Display, Formatter};
-
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub(crate) struct Indenter {
-    width: u16,
-    pub(crate) depth: u8,
+    width: usize,
+    depth: usize,
 }
-
-// ------------------------------------------------------------------------------------------------
-// Private Types
-// ------------------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------------------
-// Public Functions
-// ------------------------------------------------------------------------------------------------
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
@@ -36,7 +25,7 @@ pub(crate) struct Indenter {
 
 impl Default for Indenter {
     fn default() -> Self {
-        Self::with_width(2)
+        Self { width: 2, depth: 0 }
     }
 }
 
@@ -52,11 +41,12 @@ impl Display for Indenter {
 }
 
 impl Indenter {
-    pub(crate) fn with_width(width: u16) -> Self {
+    #[allow(dead_code)]
+    pub(crate) fn with_width(width: usize) -> Self {
         Self { width, depth: 0 }
     }
 
-    pub(crate) fn depth(&self) -> u8 {
+    pub(crate) fn depth(&self) -> usize {
         self.depth
     }
 
@@ -64,7 +54,8 @@ impl Indenter {
         self.indent_by(1)
     }
 
-    pub(crate) fn indent_by(&self, by: u8) -> Self {
+    #[allow(dead_code)]
+    pub(crate) fn indent_by(&self, by: usize) -> Self {
         Self {
             width: self.width,
             depth: self.depth + by,
@@ -75,23 +66,15 @@ impl Indenter {
         self.outdent_by(1)
     }
 
-    pub(crate) fn outdent_by(&self, by: u8) -> Self {
+    #[allow(dead_code)]
+    pub(crate) fn outdent_by(&self, by: usize) -> Self {
         Self {
             width: self.width,
-            depth: max(0, self.depth - by),
+            depth: self.depth - by,
         }
     }
 
-    #[allow(unused)]
     pub(crate) fn one(&self) -> String {
-        format!("{:width$}", "", width = self.width as usize)
+        format!("{:width$}", "", width = self.width)
     }
 }
-
-// ------------------------------------------------------------------------------------------------
-// Private Functions
-// ------------------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------------------
-// Modules
-// ------------------------------------------------------------------------------------------------

@@ -7,16 +7,16 @@ use crate::model::features::{
     Featured, FEATURE_GRAPH_DUPLICATES, FEATURE_IDX_OBJECT, FEATURE_IDX_PREDICATE,
     FEATURE_IDX_SUBJECT, FEATURE_RDF_STAR,
 };
-use crate::model::graph::mapping::PrefixMappingFactoryRef;
 use crate::model::graph::{Graph, GraphFactory, GraphFactoryRef, GraphRef, PrefixMappingRef};
 use crate::model::literal::LiteralFactoryRef;
 use crate::model::statement::{
     ObjectNodeRef, StatementFactoryRef, StatementList, StatementRef, SubjectNodeRef,
 };
 use crate::model::Provided;
+use crate::simple::empty_mappings;
 use crate::simple::literal::literal_factory;
 use crate::simple::statement::statement_factory;
-use rdftk_iri::IRIRef;
+use rdftk_iri::IriRef;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
@@ -24,6 +24,7 @@ use std::iter::FromIterator;
 use std::ops::Deref;
 use std::rc::Rc;
 use std::sync::Arc;
+use lazy_static::lazy_static;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -37,7 +38,7 @@ pub struct IndexedSimpleGraph {
     statements: StatementList,
     mappings: PrefixMappingRef,
     s_index: HashMap<SubjectNodeRef, StatementList>,
-    p_index: HashMap<IRIRef, StatementList>,
+    p_index: HashMap<IriRef, StatementList>,
     o_index: HashMap<ObjectNodeRef, StatementList>,
 }
 
@@ -85,11 +86,7 @@ impl Provided for IndexedSimpleGraphFactory {
 
 impl GraphFactory for IndexedSimpleGraphFactory {
     fn graph(&self) -> GraphRef {
-        self.with_mappings(self.mapping_factory().empty())
-    }
-
-    fn mapping_factory(&self) -> PrefixMappingFactoryRef {
-        crate::simple::mapping::prefix_mapping_factory()
+        self.with_mappings(empty_mappings())
     }
 
     fn with_mappings(&self, prefix_mappings: PrefixMappingRef) -> GraphRef {
@@ -106,7 +103,7 @@ impl GraphFactory for IndexedSimpleGraphFactory {
 // ------------------------------------------------------------------------------------------------
 
 impl Featured for IndexedSimpleGraph {
-    fn supports_feature(&self, feature: &IRIRef) -> bool {
+    fn supports_feature(&self, feature: &IriRef) -> bool {
         feature == FEATURE_GRAPH_DUPLICATES.deref()
             || feature == FEATURE_RDF_STAR.deref()
             || feature == FEATURE_IDX_SUBJECT.deref()
@@ -128,7 +125,7 @@ impl Graph for IndexedSimpleGraph {
         self.s_index.contains_key(subject)
     }
 
-    fn contains_individual(&self, subject: &IRIRef) -> bool {
+    fn contains_individual(&self, subject: &IriRef) -> bool {
         let factory = self.statement_factory();
         let subject = factory.named_subject(subject.clone());
         self.contains_subject(&subject)
@@ -137,7 +134,7 @@ impl Graph for IndexedSimpleGraph {
     fn matches(
         &self,
         subject: Option<&SubjectNodeRef>,
-        predicate: Option<&IRIRef>,
+        predicate: Option<&IriRef>,
         object: Option<&ObjectNodeRef>,
     ) -> HashSet<&StatementRef> {
         let s_sts: HashSet<&StatementRef> = subject
@@ -181,11 +178,11 @@ impl Graph for IndexedSimpleGraph {
         self.s_index.keys().collect()
     }
 
-    fn predicates(&self) -> HashSet<&IRIRef> {
+    fn predicates(&self) -> HashSet<&IriRef> {
         self.p_index.keys().collect()
     }
 
-    fn predicates_for(&self, subject: &SubjectNodeRef) -> HashSet<&IRIRef> {
+    fn predicates_for(&self, subject: &SubjectNodeRef) -> HashSet<&IriRef> {
         self.s_index
             .get(subject)
             .map(|sts| sts.iter().map(|st| st.predicate()).collect())
@@ -196,7 +193,7 @@ impl Graph for IndexedSimpleGraph {
         self.o_index.keys().collect()
     }
 
-    fn objects_for(&self, subject: &SubjectNodeRef, predicate: &IRIRef) -> HashSet<&ObjectNodeRef> {
+    fn objects_for(&self, subject: &SubjectNodeRef, predicate: &IriRef) -> HashSet<&ObjectNodeRef> {
         self.matches(Some(subject), Some(predicate), None)
             .iter()
             .map(|st| st.object())

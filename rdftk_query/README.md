@@ -8,10 +8,6 @@ This crate provides a placeholder for a query API and the [*SPARQL Query Languag
 
 ## Changes
 
-**Version 0.1.3**
-
-* Using new 0.3 core.
-
 **Version 0.1.2**
 
 * Applied a lot more warnings in lib.rs

@@ -138,7 +138,7 @@ impl JsonWriter {
 // ------------------------------------------------------------------------------------------------
 
 fn json_error(e: serde_json::Error) -> Error {
-    error!("Error parsing JSON source: {:?}", e);
+    log::error!("Error parsing JSON source: {:?}", e);
     Error::with_chain(e, ErrorKind::ReadWrite(NAME.to_string()))
 }
 

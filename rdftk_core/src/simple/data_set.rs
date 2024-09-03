@@ -9,7 +9,8 @@ use crate::model::features::Featured;
 use crate::model::graph::{GraphFactoryRef, GraphRef};
 use crate::model::Provided;
 use crate::simple::graph_factory;
-use rdftk_iri::IRIRef;
+use lazy_static::lazy_static;
+use rdftk_iri::IriRef;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -75,7 +76,7 @@ impl DataSetFactory for SimpleDataSetFactory {
 // ------------------------------------------------------------------------------------------------
 
 impl Featured for SimpleDataSet {
-    fn supports_feature(&self, _feature: &IRIRef) -> bool {
+    fn supports_feature(&self, _feature: &IriRef) -> bool {
         false
     }
 }

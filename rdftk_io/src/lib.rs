@@ -63,17 +63,6 @@ let graph = reader.read(&mut file, graph_factory()).unwrap();
     unused_results,
 )]
 
-#[allow(unused_imports)]
-#[macro_use]
-extern crate lazy_static;
-
-#[macro_use]
-extern crate log;
-
-#[cfg(any(feature = "nt", feature = "turtle"))]
-#[macro_use]
-extern crate pest_derive;
-
 use rdftk_core::error::Result;
 use rdftk_core::model::data_set::DataSetRef;
 use rdftk_core::model::graph::{GraphFactoryRef, GraphRef};

@@ -15,7 +15,7 @@
 *
 * ```rust
 * use rdftk_core::model::statement::{Statement, StatementList, ObjectNode};
-* use rdftk_iri::IRI;
+* use rdftk_core::Iri;
 * use std::rc::Rc;
 * use std::str::FromStr;use rdftk_core::simple::statement::statement_factory;use rdftk_core::simple::literal::literal_factory;
 *
@@ -23,8 +23,8 @@
 * let mut statements: StatementList = Default::default();
 *
 * statements.push(factory.statement(
-*     factory.named_subject(IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap().into()),
-*     IRI::from_str("http://purl.org/dc/elements/1.1/title").unwrap().into(),
+*     factory.named_subject(Iri::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap().into()),
+*     Iri::from_str("http://purl.org/dc/elements/1.1/title").unwrap().into(),
 *     factory.literal_object(literal_factory().literal("Tony Benn")),
 * ).unwrap());
 * ```
@@ -37,11 +37,15 @@
 use crate::error::Result;
 use crate::model::features::Featured;
 use crate::model::literal::LiteralFactoryRef;
-use rdftk_iri::IRIRef;
+use crate::model::qname::{is_xml_name, QName};
+use rdftk_iri::IriRef;
 use rdftk_names::rdf;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::rc::Rc;
+use std::str::FromStr;
+use unique_id::sequence::SequenceGenerator as IDGenerator;
+use unique_id::Generator;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -64,12 +68,12 @@ pub trait Statement: Debug + Featured {
     ///
     /// Return the predicate of this statement.
     ///
-    fn predicate(&self) -> &IRIRef;
+    fn predicate(&self) -> &IriRef;
 
     ///
     /// Set the value of this statement's predicate.
     ///
-    fn set_predicate(&mut self, predicate: IRIRef);
+    fn set_predicate(&mut self, predicate: IriRef);
 
     ///
     /// Return the object of this statement.
@@ -123,9 +127,20 @@ pub type StatementRef = Rc<dyn Statement>;
 pub type StatementList = Vec<StatementRef>;
 
 ///
+/// A String wrapper for blank nodes.
+///
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct BlankNode(String);
+
+///
 /// The reserved namespace value used to identify a serialized blank node.
 ///
 pub const BLANK_NODE_NAMESPACE: &str = "_";
+
+///
+/// The reserved prefix value used to identify a serialized blank node.
+///
+pub const BLANK_NODE_PREFIX: &str = "_:";
 
 // ------------------------------------------------------------------------------------------------
 // Public Functions
@@ -139,7 +154,7 @@ pub fn reify_statement(
     factory: &StatementFactoryRef,
 ) -> Result<(SubjectNodeRef, Vec<StatementRef>)> {
     let mut statements: Vec<StatementRef> = Default::default();
-    let new_subject = factory.blank_subject();
+    let new_subject = factory.blank_subject_new();
     statements.push(factory.statement(
         new_subject.clone(),
         rdf::a_type().clone(),
@@ -214,6 +229,68 @@ impl Hash for dyn Statement {
         self.subject().hash(state);
         self.predicate().hash(state);
         self.object().hash(state);
+    }
+}
+
+// ------------------------------------------------------------------------------------------------
+
+impl AsRef<str> for BlankNode {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl Display for BlankNode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl FromStr for BlankNode {
+    type Err = crate::error::Error;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        if Self::is_valid(s) {
+            Ok(Self(s.to_string()))
+        } else {
+            unimplemented!()
+        }
+    }
+}
+
+impl From<BlankNode> for String {
+    fn from(v: BlankNode) -> Self {
+        v.0
+    }
+}
+
+impl BlankNode {
+    ///
+    /// Construct a new blank node with a generated identifier.
+    ///
+    pub fn generate() -> Self {
+        Self(format!("B{}", IDGenerator::default().next_id()))
+    }
+
+    ///
+    /// Returns `true` if the string is a valid blank node identifier, else
+    /// `false`. Note that this function will accept simple names, or those
+    /// with the reserved prefix `"_:"`.
+    ///
+    pub fn is_valid(s: &str) -> bool {
+        is_xml_name(if let Some(s) = s.strip_prefix(BLANK_NODE_PREFIX) {
+            s
+        } else {
+            s
+        })
+    }
+
+    ///
+    /// Return a qualified version of the blank node, i.e. with the reserved
+    /// namespace value `"_"`.
+    ///
+    pub fn to_qname(&self) -> QName {
+        QName::new_unchecked(Some(BLANK_NODE_NAMESPACE), &self.0)
     }
 }
 

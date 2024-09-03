@@ -55,8 +55,7 @@ pub fn make_document(
     language: Option<LanguageTag>,
     default_namespace: Option<IRIRef>,
 ) -> Result<Document, Error> {
-    let factory = simple::graph_factory();
-    let ns_mappings = standard_mappings(&factory);
+    let ns_mappings = standard_mappings();
     if let Some(default_namespace) = default_namespace {
         let mut ns_mappings = ns_mappings.borrow_mut();
         let _ = ns_mappings.set_default_namespace(default_namespace);

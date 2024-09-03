@@ -1,6 +1,7 @@
+use crate::model::statement::BlankNode;
 use crate::model::statement::{StatementRef, BLANK_NODE_NAMESPACE};
 use crate::model::{Equiv, Provided};
-use rdftk_iri::IRIRef;
+use rdftk_iri::IriRef;
 use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
@@ -26,19 +27,19 @@ pub trait SubjectNode: Debug + Provided {
     ///
     /// Return a blank node string, if `self.is_blank()`, else `None`.
     ///
-    fn as_blank(&self) -> Option<&String>;
+    fn as_blank(&self) -> Option<&BlankNode>;
 
     ///
-    /// Return `true` if this subject is an IRI, else `false`.
+    /// Return `true` if this subject is an Iri, else `false`.
     ///
     fn is_iri(&self) -> bool {
         self.as_iri().is_some()
     }
 
     ///
-    /// Return a named node IRI, if `self.is_iri()`, else `None`.
+    /// Return a named node Iri, if `self.is_iri()`, else `None`.
     ///
-    fn as_iri(&self) -> Option<&IRIRef>;
+    fn as_iri(&self) -> Option<&IriRef>;
 
     ///
     /// Return `true` if this subject is an [RDF-star](https://w3c.github.io/rdf-star/cg-spec/editors_draft.html) statement, else `false`.
@@ -106,8 +107,8 @@ impl Display for dyn SubjectNode {
     }
 }
 
-impl Equiv<String> for dyn SubjectNode {
-    fn eqv(&self, other: &String) -> bool {
+impl Equiv<BlankNode> for dyn SubjectNode {
+    fn eqv(&self, other: &BlankNode) -> bool {
         if let Some(value) = self.as_blank() {
             value == other
         } else {
@@ -116,8 +117,8 @@ impl Equiv<String> for dyn SubjectNode {
     }
 }
 
-impl Equiv<IRIRef> for dyn SubjectNode {
-    fn eqv(&self, other: &IRIRef) -> bool {
+impl Equiv<IriRef> for dyn SubjectNode {
+    fn eqv(&self, other: &IriRef) -> bool {
         if let Some(value) = self.as_iri() {
             value == other
         } else {

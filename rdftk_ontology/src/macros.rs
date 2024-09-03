@@ -4,8 +4,8 @@
 
 macro_rules! impl_resource {
     ($actual:ident) => {
-        impl Resource for $actual {
-            fn uri(&self) -> &IRIRef {
+        impl $crate::Resource for $actual {
+            fn uri(&self) -> &::rdftk_iri::IriRef {
                 &self.uri
             }
         }
@@ -16,16 +16,16 @@ macro_rules! impl_labeled {
     ($actual:ident) => {
         impl_resource!($actual);
 
-        impl Labeled for $actual {
-            fn add_label_property(&mut self, property: LabelProperty) {
+        impl $crate::Labeled for $actual {
+            fn add_label_property(&mut self, property: $crate::LabelProperty) {
                 self.label_properties.push(property);
             }
 
-            fn remove_label_property(&mut self, property: &LabelProperty) {
+            fn remove_label_property(&mut self, property: &$crate::LabelProperty) {
                 self.label_properties.retain(|p| p != property)
             }
 
-            fn label_properties(&self) -> Vec<&LabelProperty> {
+            fn label_properties(&self) -> Vec<&$crate::LabelProperty> {
                 self.label_properties.iter().collect()
             }
         }
@@ -36,16 +36,16 @@ macro_rules! impl_individual {
     ($actual:ident) => {
         impl_labeled!($actual);
 
-        impl Individual for $actual {
-            fn add_instance_of(&mut self, parent: IRIRef) {
+        impl $crate::Individual for $actual {
+            fn add_instance_of(&mut self, parent: ::rdftk_iri::IriRef) {
                 self.instance_of.push(parent)
             }
 
-            fn remove_instance_of(&mut self, parent: &IRIRef) {
+            fn remove_instance_of(&mut self, parent: &::rdftk_iri::IriRef) {
                 self.instance_of.retain(|p| p != parent)
             }
 
-            fn instance_of(&self) -> Vec<&IRIRef> {
+            fn instance_of(&self) -> Vec<&::rdftk_iri::IriRef> {
                 self.instance_of.iter().collect()
             }
         }
@@ -56,16 +56,16 @@ macro_rules! impl_subclassed {
     ($actual:ident) => {
         impl_individual!($actual);
 
-        impl Subclassed for $actual {
-            fn add_parent(&mut self, parent: IRIRef) {
+        impl $crate::Subclassed for $actual {
+            fn add_parent(&mut self, parent: ::rdftk_iri::IriRef) {
                 self.parents.push(parent)
             }
 
-            fn remove_parent(&mut self, parent: &IRIRef) {
+            fn remove_parent(&mut self, parent: &::rdftk_iri::IriRef) {
                 self.parents.retain(|p| p != parent)
             }
 
-            fn parents(&self) -> Vec<&IRIRef> {
+            fn parents(&self) -> Vec<&::rdftk_iri::IriRef> {
                 self.parents.iter().collect()
             }
         }

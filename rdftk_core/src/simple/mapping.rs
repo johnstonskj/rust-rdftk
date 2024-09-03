@@ -2,61 +2,53 @@
 Simple, in-memory implementation of the `PrefixMappings` trait.
 */
 
-use crate::model::graph::mapping::{PrefixMappingFactory, PrefixMappingFactoryRef, DEFAULT_PREFIX};
+use crate::model::graph::mapping::DEFAULT_PREFIX;
 use crate::model::graph::{PrefixMappingRef, PrefixMappings};
 use crate::model::qname::QName;
 use bimap::BiHashMap;
-use rdftk_iri::{Fragment, IRIRef};
+use rdftk_iri::{IriExtra, IriRef};
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::sync::Arc;
 
 // ------------------------------------------------------------------------------------------------
 // Public Functions
 // ------------------------------------------------------------------------------------------------
 
 ///
-/// Retrieve the `GraphFactory` factory for `simple::SimpleGraph` instances.
+/// Create a new prefix mapping instance with no mappings.
 ///
-pub fn prefix_mapping_factory() -> PrefixMappingFactoryRef {
-    FACTORY.clone()
+pub fn empty_mappings() -> PrefixMappingRef {
+    SimplePrefixMappings::default().into()
+}
+
+///
+/// Create a new prefix mapping instance with the RDF, RDF Schema, and XML Namespace mappings.
+///
+pub fn common_mappings() -> PrefixMappingRef {
+    let mapping = empty_mappings();
+    {
+        let mut mut_mapping = mapping.borrow_mut();
+        mut_mapping.include_rdf();
+        mut_mapping.include_rdfs();
+        mut_mapping.include_xsd();
+    }
+    mapping
 }
 
 // ------------------------------------------------------------------------------------------------
 // Private Types
 // ------------------------------------------------------------------------------------------------
 
-#[derive(Clone, Debug)]
-struct SimplePrefixMappingFactory {}
-
-lazy_static! {
-    static ref FACTORY: Arc<SimplePrefixMappingFactory> =
-        Arc::new(SimplePrefixMappingFactory::default());
-}
-
+///
+/// Simple, in-memory implementation of the `PrefixMappings` trait.
+///
 #[derive(Clone, Debug)]
 struct SimplePrefixMappings {
-    map: BiHashMap<String, IRIRef>,
+    map: BiHashMap<String, IriRef>,
 }
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
-// ------------------------------------------------------------------------------------------------
-
-impl Default for SimplePrefixMappingFactory {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
-impl PrefixMappingFactory for SimplePrefixMappingFactory {
-    fn empty(&self) -> PrefixMappingRef {
-        Rc::new(RefCell::new(SimplePrefixMappings {
-            map: Default::default(),
-        }))
-    }
-}
-
 // ------------------------------------------------------------------------------------------------
 
 impl Default for SimplePrefixMappings {
@@ -74,7 +66,7 @@ impl From<SimplePrefixMappings> for PrefixMappingRef {
 }
 
 impl PrefixMappings for SimplePrefixMappings {
-    fn with_default(iri: IRIRef) -> Self {
+    fn with_default(iri: IriRef) -> Self {
         let mut mut_self = Self::default();
         mut_self.set_default_namespace(iri);
         mut_self
@@ -88,27 +80,27 @@ impl PrefixMappings for SimplePrefixMappings {
         self.map.len()
     }
 
-    fn get_default_namespace(&self) -> Option<&IRIRef> {
+    fn get_default_namespace(&self) -> Option<&IriRef> {
         self.get_namespace(DEFAULT_PREFIX)
     }
 
-    fn set_default_namespace(&mut self, iri: IRIRef) {
+    fn set_default_namespace(&mut self, iri: IriRef) {
         let _ = self.map.insert(DEFAULT_PREFIX.to_string(), iri);
     }
 
-    fn get_namespace(&self, prefix: &str) -> Option<&IRIRef> {
+    fn get_namespace(&self, prefix: &str) -> Option<&IriRef> {
         self.map.get_by_left(prefix)
     }
 
-    fn get_prefix(&self, namespace: &IRIRef) -> Option<&String> {
+    fn get_prefix(&self, namespace: &IriRef) -> Option<&String> {
         self.map.get_by_right(namespace)
     }
 
-    fn mappings<'a>(&'a self) -> Box<dyn Iterator<Item = (&'a String, &'a IRIRef)> + 'a> {
+    fn mappings<'a>(&'a self) -> Box<dyn Iterator<Item = (&'a String, &'a IriRef)> + 'a> {
         Box::new(self.map.iter())
     }
 
-    fn insert(&mut self, prefix: &str, iri: IRIRef) {
+    fn insert(&mut self, prefix: &str, iri: IriRef) {
         let _ = self.map.insert(prefix.to_string(), iri);
     }
 
@@ -120,43 +112,27 @@ impl PrefixMappings for SimplePrefixMappings {
         self.map.clear();
     }
 
-    fn expand(&self, qname: &QName) -> Option<IRIRef> {
+    fn expand(&self, qname: &QName) -> Option<IriRef> {
         let default_ns = DEFAULT_PREFIX.to_string();
-        match self.get_namespace(&qname.prefix().as_ref().unwrap_or(&default_ns)) {
+        match self.get_namespace(qname.prefix().as_ref().unwrap_or(&default_ns)) {
             None => None,
             Some(namespace) => {
-                if namespace.has_fragment() {
-                    Some(IRIRef::from(
-                        namespace.with_new_fragment(qname.name().parse().unwrap()),
-                    ))
+                if let Some(namespaced_name) = namespace.make_name(qname.name()) {
+                    Some(IriRef::from(namespaced_name))
                 } else {
-                    let mut path = namespace.path().clone();
-                    if path.push(qname.name()).is_ok() {
-                        Some(IRIRef::from(namespace.with_new_path(path)))
-                    } else {
-                        None
-                    }
+                    None
                 }
             }
         }
     }
 
-    fn compress(&self, iri: &IRIRef) -> Option<QName> {
-        let (iri, name) = if iri.has_fragment() {
-            let fragment = iri.fragment();
-            let fragment = fragment.as_ref().unwrap();
-            (
-                iri.with_new_fragment(Fragment::default()),
-                fragment.value().clone(),
-            )
-        } else if iri.path().has_slug() {
-            let mut path = iri.path().clone();
-            let name = path.pop_slug();
-            (iri.with_new_path(path), name.unwrap())
+    fn compress(&self, iri: &IriRef) -> Option<QName> {
+        let (iri, name) = if let Some((iri, name)) = iri.split() {
+            (iri, name)
         } else {
             return None;
         };
-        match self.get_prefix(&IRIRef::from(iri)) {
+        match self.get_prefix(&IriRef::from(iri)) {
             None => None,
             Some(prefix) => {
                 if prefix == DEFAULT_PREFIX {
