@@ -1,7 +1,6 @@
 use rdftk_core::model::statement::StatementList;
 use rdftk_core::simple::resource::Resource;
-use rdftk_iri::IriRef;
-use rdftk_iri::Iri;
+use rdftk_iri::{Iri, IriRef};
 use std::str::FromStr;
 
 fn contact(name: &str) -> IriRef {

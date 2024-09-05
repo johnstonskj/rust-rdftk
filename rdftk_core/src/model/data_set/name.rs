@@ -156,5 +156,5 @@ impl GraphName {
 // ------------------------------------------------------------------------------------------------
 
 fn new_blank_node_id() -> String {
-    format!("B{}", IDGenerator::default().next_id())
+    format!("B{}", IDGenerator.next_id())
 }

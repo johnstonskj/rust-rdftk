@@ -75,7 +75,7 @@ impl BlankNode {
     /// Construct a new blank node with a generated identifier.
     ///
     pub fn generate() -> Self {
-        Self(format!("B{}", IDGenerator::default().next_id()))
+        Self(format!("B{}", IDGenerator.next_id()))
     }
 
     ///

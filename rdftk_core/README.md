@@ -52,6 +52,10 @@ pub fn make_statements() -> StatementList {
 
 ## Changes
 
+### Version 0.4.1
+
+* Build: cargo audit/outdated/udeps
+
 ### Version 0.4.0
 
 * Feature: moved to new `rdftk_iri` package which uses the `url::Url` and is more

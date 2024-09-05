@@ -4,7 +4,7 @@ use rdftk_core::simple::graph::graph_factory as simple_graph_factory;
 use rdftk_core::simple::indexed::graph_factory as indexed_graph_factory;
 use rdftk_core::simple::mapping::empty_mappings;
 use rdftk_core::simple::PROVIDER_ID;
-use rdftk_iri::{IriRef, Iri};
+use rdftk_iri::{Iri, IriRef};
 use std::str::FromStr;
 
 pub fn tony_benn_graph(graph_factory: GraphFactoryRef) -> GraphRef {
