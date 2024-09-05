@@ -74,6 +74,10 @@ namespace! {
 
 ## Changes
 
+### Version 0.2.1
+
+* Build: cargo audit/outdated/udeps
+
 ### Version 0.2.0
 
 * Feature: moved to new `rdftk_iri` package which uses the `url::Url` and is more
