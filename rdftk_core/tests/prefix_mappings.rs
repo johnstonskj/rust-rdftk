@@ -2,15 +2,15 @@ use rdftk_core::model::graph::mapping::DEFAULT_PREFIX;
 use rdftk_core::model::graph::PrefixMappingRef;
 use rdftk_core::model::qname::QName;
 use rdftk_core::simple::mapping::common_mappings;
-use rdftk_iri::{IRIRef, IRI};
+use rdftk_iri::{Iri, IriRef};
 use std::str::FromStr;
 
 fn make_mappings() -> PrefixMappingRef {
     let mappings = common_mappings();
     {
         let mut mut_mappings = mappings.borrow_mut();
-        mut_mappings.set_default_namespace(IRIRef::from(
-            IRI::from_str("http://xmlns.com/foaf/0.1/").unwrap(),
+        mut_mappings.set_default_namespace(IriRef::from(
+            Iri::from_str("http://xmlns.com/foaf/0.1/").unwrap(),
         ));
     }
     mappings
@@ -35,29 +35,29 @@ fn test_mapping_expand() {
 
     {
         let mut mut_mappings = mappings.borrow_mut();
-        let _ = mut_mappings.insert(
+        mut_mappings.insert(
             "foo",
-            IRIRef::from(IRI::from_str("http://example.com/schema/foo/1.0").unwrap()),
+            IriRef::from(Iri::from_str("http://example.com/schema/foo/1.0/").unwrap()),
         );
     }
 
     let mappings = mappings.borrow();
     assert_eq!(
         mappings.expand(&QName::new_unchecked(Some("rdf"), "Bag")),
-        Some(IRIRef::from(
-            IRI::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#Bag").unwrap()
+        Some(IriRef::from(
+            Iri::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#Bag").unwrap()
         ))
     );
     assert_eq!(
         mappings.expand(&QName::new_unchecked(None, "knows")),
-        Some(IRIRef::from(
-            IRI::from_str("http://xmlns.com/foaf/0.1/knows").unwrap()
+        Some(IriRef::from(
+            Iri::from_str("http://xmlns.com/foaf/0.1/knows").unwrap()
         ))
     );
     assert_eq!(
         mappings.expand(&QName::new_unchecked(Some("foo"), "Bar")),
-        Some(IRIRef::from(
-            IRI::from_str("http://example.com/schema/foo/1.0/Bar").unwrap()
+        Some(IriRef::from(
+            Iri::from_str("http://example.com/schema/foo/1.0/Bar").unwrap()
         ))
     );
 
@@ -73,20 +73,20 @@ fn test_mapping_compress() {
     let mappings = mappings.borrow();
 
     assert_eq!(
-        mappings.compress(&IRIRef::from(
-            IRI::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#Bag").unwrap()
+        mappings.compress(&IriRef::from(
+            Iri::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#Bag").unwrap()
         )),
         Some(QName::new_unchecked(Some("rdf"), "Bag"))
     );
     assert_eq!(
-        mappings.compress(&IRIRef::from(
-            IRI::from_str("http://xmlns.com/foaf/0.1/knows").unwrap()
+        mappings.compress(&IriRef::from(
+            Iri::from_str("http://xmlns.com/foaf/0.1/knows").unwrap()
         )),
         Some(QName::new_unchecked(None, "knows"))
     );
     assert_eq!(
-        mappings.compress(&IRIRef::from(
-            IRI::from_str("http://www.w3.org/2003/01/geo/wgs84_pos#SpatialThing").unwrap()
+        mappings.compress(&IriRef::from(
+            Iri::from_str("http://www.w3.org/2003/01/geo/wgs84_pos#SpatialThing").unwrap()
         )),
         None
     );

@@ -10,9 +10,7 @@ use rdftk_iri::IriRef;
 /// Simple, in-memory implementation of the `SubjectNode` trait.
 ///
 #[derive(Clone, Debug)]
-pub struct SimpleSubjectNode {
-    pub(crate) inner: Subject,
-}
+pub struct SimpleSubjectNode(Subject);
 
 // ------------------------------------------------------------------------------------------------
 // Private Types
@@ -20,7 +18,7 @@ pub struct SimpleSubjectNode {
 
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Clone, Debug)]
-pub(crate) enum Subject {
+enum Subject {
     BNode(BlankNode),
     Iri(IriRef),
     Star(StatementRef),
@@ -30,6 +28,30 @@ pub(crate) enum Subject {
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
+impl From<BlankNode> for SimpleSubjectNode {
+    fn from(v: BlankNode) -> Self {
+        Subject::BNode(v).into()
+    }
+}
+
+impl From<IriRef> for SimpleSubjectNode {
+    fn from(v: IriRef) -> Self {
+        Subject::Iri(v).into()
+    }
+}
+
+impl From<StatementRef> for SimpleSubjectNode {
+    fn from(v: StatementRef) -> Self {
+        Subject::Star(v).into()
+    }
+}
+
+impl From<Subject> for SimpleSubjectNode {
+    fn from(value: Subject) -> Self {
+        Self(value)
+    }
+}
+
 impl Provided for SimpleSubjectNode {
     fn provider_id(&self) -> &'static str {
         crate::simple::PROVIDER_ID
@@ -38,33 +60,33 @@ impl Provided for SimpleSubjectNode {
 
 impl SubjectNode for SimpleSubjectNode {
     fn is_blank(&self) -> bool {
-        matches!(self.inner, Subject::BNode(_))
+        matches!(self.0, Subject::BNode(_))
     }
 
     fn as_blank(&self) -> Option<&BlankNode> {
-        match &self.inner {
+        match &self.0 {
             Subject::BNode(s) => Some(s),
             _ => None,
         }
     }
 
     fn is_iri(&self) -> bool {
-        matches!(self.inner, Subject::Iri(_))
+        matches!(self.0, Subject::Iri(_))
     }
 
     fn as_iri(&self) -> Option<&IriRef> {
-        match &self.inner {
+        match &self.0 {
             Subject::Iri(u) => Some(u),
             _ => None,
         }
     }
 
     fn is_statement(&self) -> bool {
-        matches!(self.inner, Subject::Star(_))
+        matches!(self.0, Subject::Star(_))
     }
 
     fn as_statement(&self) -> Option<&StatementRef> {
-        match &self.inner {
+        match &self.0 {
             Subject::Star(st) => Some(st),
             _ => None,
         }

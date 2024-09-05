@@ -8,7 +8,7 @@ and [Replacing Blank Nodes with IRIs](https://www.w3.org/TR/rdf11-concepts/#sect
 use crate::error::{Error, ErrorKind};
 use crate::model::graph::{Graph, GraphRef};
 use crate::model::statement::{BlankNode, StatementRef};
-use rdftk_iri::{new_genid, IriRef};
+use rdftk_iri::{genid, IriRef};
 use std::collections::HashMap;
 use std::rc::Rc;
 
@@ -37,7 +37,7 @@ pub fn skolemize(graph: &impl Graph, base: &IriRef) -> Result<GraphRef, Error> {
         };
         if let Some(blank) = mut_statement.subject().as_blank() {
             if !mapping.contains_key(blank) {
-                let _ = mapping.insert(blank.clone(), new_genid(base)?);
+                let _ = mapping.insert(blank.clone(), genid(base)?);
             }
             let name = mapping.get(blank).unwrap().clone();
             let subject = factory.named_subject(name);
@@ -45,7 +45,7 @@ pub fn skolemize(graph: &impl Graph, base: &IriRef) -> Result<GraphRef, Error> {
         }
         if let Some(blank) = mut_statement.object().as_blank() {
             if !mapping.contains_key(blank) {
-                let _ = mapping.insert(blank.clone(), new_genid(base)?);
+                let _ = mapping.insert(blank.clone(), genid(base)?);
             }
             let name = mapping.get(blank).unwrap().clone();
             let object = factory.named_object(name);

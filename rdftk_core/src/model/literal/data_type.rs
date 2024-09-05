@@ -6,7 +6,7 @@ use rdftk_names::{rdf, xsd};
 // ------------------------------------------------------------------------------------------------
 
 ///
-///
+/// The set of known datatypes based on XML Schema, part 2.
 ///
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum DataType {

@@ -28,7 +28,7 @@ fn string_with_language() {
     assert!(!value.has_data_type());
     assert!(value.has_language());
     assert_eq!(value.lexical_form(), "a string");
-    assert_eq!(value.to_string(), "\"a string\"@en-us");
+    assert_eq!(value.to_string(), "\"a string\"@en-US");
 }
 
 #[test]

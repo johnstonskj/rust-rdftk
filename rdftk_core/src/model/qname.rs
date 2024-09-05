@@ -19,9 +19,9 @@
 *
 * # Specification -- QName
 *
-* 1. https://www.w3.org/TR/REC-xml-names/
-* 2. https://www.w3.org/TR/REC-xml/#NT-Name
-* 3. https://www.w3.org/2001/tag/doc/qnameids
+* 1. <https://www.w3.org/TR/REC-xml-names/>
+* 2. <https://www.w3.org/TR/REC-xml/#NT-Name>
+* 3. <https://www.w3.org/2001/tag/doc/qnameids>
 *
 * From (1):
 *
@@ -55,7 +55,7 @@
 *
 * # Specification -- Curie
 *
-* 1. https://www.w3.org/TR/curie/
+* 1. <https://www.w3.org/TR/curie/>
 *
 * ```text
 * safe_curie  :=   '[' curie ']'
@@ -67,8 +67,9 @@
 * reference   :=   irelative-ref (as defined in IRI)
 * ```
 *
-* Note that while the empty string matches the production for curie above, an empty string is NOT a valid CURIE.
-* The CURIE prefix '_' is reserved for use by languages that support RDF. For this reason, the prefix '_' SHOULD be avoided by authors.
+* Note that while the empty string matches the production for curie above, an empty string is NOT a
+* valid CURIE. The CURIE prefix '_' is reserved for use by languages that support RDF. For this
+* reason, the prefix '_' SHOULD be avoided by authors.
 *
 */
 
@@ -123,7 +124,7 @@ impl FromStr for QName {
             let parts: Vec<&str> = s.split(':').collect();
             match parts.len() {
                 NAME_ONLY => {
-                    let name = *parts.get(0).unwrap();
+                    let name = *parts.first().unwrap();
                     if QName::is_valid(name) {
                         Ok(QName {
                             prefix: None,
@@ -134,7 +135,7 @@ impl FromStr for QName {
                     }
                 }
                 PREFIX_AND_NAME => {
-                    let prefix = *parts.get(0).unwrap();
+                    let prefix = *parts.first().unwrap();
                     let name = *parts.get(1).unwrap();
                     if QName::is_valid(prefix) && QName::is_valid(name) {
                         Ok(QName {
@@ -238,9 +239,9 @@ impl QName {
 
 pub(crate) fn is_xml_name_start_char(c: char) -> bool {
     c == ':'
-        || ('A'..='Z').contains(&c)
+        || c.is_ascii_uppercase()
         || c == '_'
-        || ('a'..='z').contains(&c)
+        || c.is_ascii_lowercase()
         || ('\u{C0}'..='\u{D6}').contains(&c)
         || ('\u{D8}'..='\u{F6}').contains(&c)
         || ('\u{0F8}'..='\u{2FF}').contains(&c)
@@ -259,7 +260,7 @@ pub(crate) fn is_xml_name_char(c: char) -> bool {
     is_xml_name_start_char(c)
         || c == '-'
         || c == '.'
-        || ('0'..='9').contains(&c)
+        || c.is_ascii_digit()
         || c == '\u{B7}'
         || ('\u{0300}'..='\u{036F}').contains(&c)
         || ('\u{203F}'..='\u{2040}').contains(&c)

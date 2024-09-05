@@ -12,6 +12,7 @@ use crate::model::Provided;
 use crate::simple::empty_mappings;
 use crate::simple::literal::literal_factory;
 use crate::simple::statement::statement_factory;
+use lazy_static::lazy_static;
 use rdftk_iri::IriRef;
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -19,7 +20,6 @@ use std::iter::FromIterator;
 use std::ops::Deref;
 use std::rc::Rc;
 use std::sync::Arc;
-use lazy_static::lazy_static;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -52,7 +52,7 @@ pub fn graph_factory() -> GraphFactoryRef {
 ///
 /// Simple, in-memory implementation of the `GraphFactory` trait.
 ///
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 struct SimpleGraphFactory {}
 
 lazy_static! {
@@ -62,12 +62,6 @@ lazy_static! {
 // ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
-
-impl Default for SimpleGraphFactory {
-    fn default() -> Self {
-        Self {}
-    }
-}
 
 impl Provided for SimpleGraphFactory {
     fn provider_id(&self) -> &'static str {
@@ -124,7 +118,6 @@ impl Graph for SimpleGraph {
         self.statements
             .iter()
             .filter(|st| {
-                let st = st;
                 (subject.is_some() && st.subject() == subject.unwrap())
                     && (predicate.is_some() && st.predicate() == predicate.unwrap())
                     && (object.is_some() && st.object() == object.unwrap())
@@ -165,7 +158,6 @@ impl Graph for SimpleGraph {
         self.statements
             .iter()
             .filter_map(|st| {
-                let st = st;
                 if st.subject() == subject && st.predicate() == predicate {
                     Some(st.object())
                 } else {
@@ -212,14 +204,14 @@ impl Graph for SimpleGraph {
             (HashSet::<StatementRef>::default(), StatementList::default()),
             |(mut keep, mut discard), st| {
                 if keep.contains(st) {
-                    (&mut discard).push(st.clone());
+                    discard.push(st.clone());
                 } else {
-                    let _ = (&mut keep).insert(st.clone());
+                    let _ = keep.insert(st.clone());
                 }
                 (keep, discard)
             },
         );
-        self.statements = StatementList::from_iter(keep.into_iter());
+        self.statements = StatementList::from_iter(keep);
         discard
     }
 

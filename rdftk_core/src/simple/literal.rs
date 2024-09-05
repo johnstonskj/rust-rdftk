@@ -42,7 +42,7 @@ pub fn literal_factory() -> LiteralFactoryRef {
 ///
 /// Simple, in-memory implementation of the `LiteralFactory` trait.
 ///
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 struct SimpleLiteralFactory {}
 
 lazy_static! {
@@ -52,12 +52,6 @@ lazy_static! {
 // ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
-
-impl Default for SimpleLiteralFactory {
-    fn default() -> Self {
-        Self {}
-    }
-}
 
 impl Provided for SimpleLiteralFactory {
     fn provider_id(&self) -> &'static str {

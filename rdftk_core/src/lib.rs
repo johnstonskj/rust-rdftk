@@ -15,54 +15,77 @@
 * > There can be three kinds of nodes in an RDF graph: IRIs, literals, and blank nodes.
 *
 * In this library the triple, or statement, as well as subject, predicate, and object types are
-* in the module [`statement`](statement/index.html). Literal's as objects are supported in the
-* [`literal`](literal/index.html) module. Traits that describe graphs are provided by the
-* [`graph`](graph/index.html) module.
+* in the module [`statement`](model/statement/index.html). Literal's as objects are supported in the
+* [`literal`](model/literal/index.html) module. Traits that describe graphs are provided by the
+* [`graph`](model/graph/index.html) module.
 *
-* Additional features are provided such as support for data sets (module [`model.data_set`](model.data_set/index.html))
+* Additional features are provided such as support for data sets (module [`data_set`](model/data_set/index.html))
 * as well as support for extensions to the core RDF abstract model such as
 * [RDF-star](https://w3c.github.io/rdf-star/cg-spec/editors_draft.html).
 *
 * # Example
 *
 * ```rust
-* use rdftk_core::model::statement::{ObjectNode, Statement, StatementList, SubjectNode};
+* use rdftk_core::model::statement::{
+*     ObjectNode, Statement, StatementList, SubjectNode,
+* };
 * use rdftk_core::simple;
-* use rdftk_iri::IRI;
+* use rdftk_iri::Iri;
 * use std::rc::Rc;
 * use std::str::FromStr;
 *
 * let mut statements: StatementList = Default::default();
 * let factory = simple::statement::statement_factory();
-* let literal = simple::literal::literal_factory();
+* let literals = simple::literal::literal_factory();
 *
 * statements.push(factory.statement(
-*     factory.named_subject(IRI::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap().into()),
-*     IRI::from_str("http://purl.org/dc/elements/1.1/title").unwrap().into(),
-*     factory.literal_object(literal.string("Tony Benn")),
+*     factory.named_subject(
+*         Iri::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap().into()
+*     ),
+*     Iri::from_str("http://purl.org/dc/elements/1.1/title").unwrap().into(),
+*     factory.literal_object(literals.string("Tony Benn")),
 * ).unwrap());
 * ```
 *
 */
 
 #![warn(
+    unknown_lints,
     // ---------- Stylistic
-    future_incompatible,
-    nonstandard_style,
+    absolute_paths_not_starting_with_crate,
+    elided_lifetimes_in_paths,
+    explicit_outlives_requirements,
+    macro_use_extern_crate,
+    nonstandard_style, /* group */
+    noop_method_call,
     rust_2018_idioms,
+    single_use_lifetimes,
     trivial_casts,
     trivial_numeric_casts,
+    // ---------- Future
+    future_incompatible, /* group */
+    rust_2021_compatibility, /* group */
     // ---------- Public
     missing_debug_implementations,
-    missing_docs,
+    // missing_docs,
     unreachable_pub,
     // ---------- Unsafe
     unsafe_code,
+    unsafe_op_in_unsafe_fn,
     // ---------- Unused
-    unused_extern_crates,
-    unused_import_braces,
-    unused_qualifications,
-    unused_results,
+    unused, /* group */
+)]
+#![deny(
+    // ---------- Public
+    exported_private_dependencies,
+    // ---------- Deprecated
+    anonymous_parameters,
+    bare_trait_objects,
+    ellipsis_inclusive_range_patterns,
+    // ---------- Unsafe
+    deref_nullptr,
+    drop_bounds,
+    dyn_drop,
 )]
 
 // ------------------------------------------------------------------------------------------------

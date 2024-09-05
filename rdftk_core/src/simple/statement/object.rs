@@ -1,5 +1,5 @@
 use crate::model::literal::LiteralRef;
-use crate::model::statement::{BlankNode, ObjectNode, StatementRef};
+use crate::model::statement::{BlankNode, ObjectNode, StatementRef, SubjectNode};
 use crate::model::Provided;
 use rdftk_iri::IriRef;
 
@@ -60,7 +60,7 @@ impl Provided for SimpleObjectNode {
     }
 }
 
-impl ObjectNode for SimpleObjectNode {
+impl SubjectNode for SimpleObjectNode {
     fn is_blank(&self) -> bool {
         matches!(self.0, Object::BNode(_))
     }
@@ -83,17 +83,6 @@ impl ObjectNode for SimpleObjectNode {
         }
     }
 
-    fn is_literal(&self) -> bool {
-        matches!(self.0, Object::Literal(_))
-    }
-
-    fn as_literal(&self) -> Option<&LiteralRef> {
-        match &self.0 {
-            Object::Literal(l) => Some(l),
-            _ => None,
-        }
-    }
-
     fn is_statement(&self) -> bool {
         matches!(self.0, Object::Star(_))
     }
@@ -101,6 +90,19 @@ impl ObjectNode for SimpleObjectNode {
     fn as_statement(&self) -> Option<&StatementRef> {
         match &self.0 {
             Object::Star(st) => Some(st),
+            _ => None,
+        }
+    }
+}
+
+impl ObjectNode for SimpleObjectNode {
+    fn is_literal(&self) -> bool {
+        matches!(self.0, Object::Literal(_))
+    }
+
+    fn as_literal(&self) -> Option<&LiteralRef> {
+        match &self.0 {
+            Object::Literal(l) => Some(l),
             _ => None,
         }
     }

@@ -116,34 +116,30 @@ impl Hash for dyn Literal {
 
 impl Display for dyn Literal {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self.data_type() {
-                //            Some(DataType::String) => write!(f, "\"{}\"", self.lexical_form()),
-                Some(DataType::IRI) => write!(f, "<{}>", self.lexical_form()),
-                //            Some(DataType::Boolean) => write!(f, "{}", self.lexical_form()),
-                _ => {
-                    write!(
-                        f,
-                        "\"{}\"{}",
-                        self.lexical_form(),
-                        match (self.data_type(), self.language()) {
-                            (Some(data_type), None) => format!("^^<{}>", data_type.as_iri()),
-                            (None, Some(language)) => format!("@{}", language),
-                            _ => String::new(),
-                        }
-                    )
-                }
+        match self.data_type() {
+            //            Some(DataType::String) => write!(f, "\"{}\"", self.lexical_form()),
+            Some(DataType::Iri) => write!(f, "<{}>", self.lexical_form()),
+            //            Some(DataType::Boolean) => write!(f, "{}", self.lexical_form()),
+            _ => {
+                write!(
+                    f,
+                    "\"{}\"{}",
+                    self.lexical_form(),
+                    match (self.data_type(), self.language()) {
+                        (Some(data_type), None) => format!("^^<{}>", data_type.as_iri()),
+                        (None, Some(language)) => format!("@{}", language),
+                        _ => String::new(),
+                    }
+                )
             }
-        )
+        }
     }
 }
 
 impl Equiv<String> for dyn Literal {
     fn eqv(&self, other: &String) -> bool {
         self.lexical_form() == other && self.data_type() == Some(&DataType::String)
-            || self.data_type() == None
+            || self.data_type().is_none()
     }
 }
 

@@ -97,6 +97,17 @@ macro_rules! invalid_str_err {
 // ------------------------------------------------------------------------------------------------
 
 ///
+/// Create Error object.
+///
+pub fn invalid_from_str<S1, S2>(value: S1, type_name: S2) -> Error
+where
+    S1: Into<String>,
+    S2: Into<String>,
+{
+    ErrorKind::InvalidFromStr(value.into(), type_name.into()).into()
+}
+
+///
 /// Display an error trace to stdout.
 ///
 pub fn print_trace(e: &dyn std::error::Error) {
@@ -126,7 +137,7 @@ fn trace_one(e: &dyn std::error::Error, count: i32) -> String {
 
     let mut trace = String::new();
 
-    writeln!(&mut trace, "{}. {}", count, e.to_string()).expect("Failed to write message.");
+    writeln!(&mut trace, "{}. {}", count, e).expect("Failed to write message.");
 
     if let Some(source) = e.source() {
         write!(&mut trace, "{}", trace_one(source, count + 1)).expect("Failed to write source.");

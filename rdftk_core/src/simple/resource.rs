@@ -22,7 +22,7 @@
 * ```rust
 * use rdftk_core::simple::literal::literal_factory;
 * use rdftk_core::simple::resource::Resource;
-* use rdftk_core::Iri;
+* use rdftk_iri::Iri;
 * use rdftk_names::{dc::elements as dc, foaf, rdf};
 * use std::str::FromStr;
 * use rdftk_core::model::statement::StatementList;

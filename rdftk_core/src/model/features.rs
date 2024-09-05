@@ -1,9 +1,18 @@
 /*!
-One-line description.
+This module provides the trait [`Featured`] and the set of feature identifiers (IRIs)..
 
 More detailed description, with
 
 # Example
+
+```rust
+use rdftk_core::model::features::{Featured, FEATURE_GRAPH_DUPLICATES};
+use rdftk_core::simple::graph::graph_factory;
+
+let graph = graph_factory().graph();
+
+println!("Allows Duplicates: {}", graph.borrow().supports_feature(&FEATURE_GRAPH_DUPLICATES));
+```
 
 */
 use lazy_static::lazy_static;

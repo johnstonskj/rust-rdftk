@@ -1,9 +1,8 @@
 use crate::model::literal::LiteralRef;
-use crate::model::statement::BlankNode;
-use crate::model::statement::{StatementRef, BLANK_NODE_NAMESPACE};
-use crate::model::{Equiv, Provided};
+use crate::model::statement::{BlankNode, StatementRef, SubjectNode, BLANK_NODE_NAMESPACE};
+use crate::model::Equiv;
 use rdftk_iri::IriRef;
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::rc::Rc;
@@ -12,35 +11,10 @@ use std::rc::Rc;
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
-pub trait ObjectNode: Debug + Provided {
-    // --------------------------------------------------------------------------------------------
-    // Inner type checks/accessors
-    // --------------------------------------------------------------------------------------------
-
-    ///
-    /// Return `true` if this object is a blank node, else `false`.
-    ///
-    fn is_blank(&self) -> bool {
-        self.as_blank().is_some()
-    }
-
-    ///
-    /// Return a blank node string, if `self.is_blank()`, else `None`.
-    ///
-    fn as_blank(&self) -> Option<&BlankNode>;
-
-    ///
-    /// Return `true` if this object is an Iri, else `false`.
-    ///
-    fn is_iri(&self) -> bool {
-        self.as_iri().is_some()
-    }
-
-    ///
-    /// Return a named node Iri, if `self.is_iri()`, else `None`.
-    ///
-    fn as_iri(&self) -> Option<&IriRef>;
-
+///
+/// This trait models the *object* component of an RDF statement.
+///
+pub trait ObjectNode: SubjectNode {
     ///
     /// Return `true` if this object is a literal value, else `false`.
     ///
@@ -52,22 +26,10 @@ pub trait ObjectNode: Debug + Provided {
     /// Return a literal value, if `self.is_literal()`, else `None`.
     ///
     fn as_literal(&self) -> Option<&LiteralRef>;
-
-    ///
-    /// Return `true` if this object is an [RDF-star](https://w3c.github.io/rdf-star/cg-spec/editors_draft.html) statement, else `false`.
-    ///
-    fn is_statement(&self) -> bool {
-        self.as_statement().is_some()
-    }
-
-    ///
-    /// Return a statement reference, if `self.is_statement()`, else `None`.
-    ///
-    fn as_statement(&self) -> Option<&StatementRef>;
 }
 
 ///
-/// The actual object storage type, reference counted for memory management.
+/// A reference counted wrapper around a [`ObjectNode`] instance.
 ///
 pub type ObjectNodeRef = Rc<dyn ObjectNode>;
 
@@ -119,7 +81,7 @@ impl Display for dyn ObjectNode {
         } else if let Some(literal) = self.as_literal() {
             write!(f, "{}", literal)
         } else if let Some(st) = self.as_statement() {
-            write!(f, "<< {} >>", st.deref().to_string())
+            write!(f, "<< {} >>", st.deref())
         } else {
             unreachable!()
         }

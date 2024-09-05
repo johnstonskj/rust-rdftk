@@ -12,6 +12,9 @@ use std::rc::Rc;
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
+///
+/// This trait models the *subject* component of an RDF statement.
+///
 pub trait SubjectNode: Debug + Provided {
     // --------------------------------------------------------------------------------------------
     // Inner type checks/accessors
@@ -55,7 +58,7 @@ pub trait SubjectNode: Debug + Provided {
 }
 
 ///
-/// The actual subject storage type, reference counted for memory management.
+/// A reference counted wrapper around a [`SubjectNode`] instance.
 ///
 pub type SubjectNodeRef = Rc<dyn SubjectNode>;
 
@@ -100,7 +103,7 @@ impl Display for dyn SubjectNode {
         } else if let Some(iri) = self.as_iri() {
             write!(f, "<{}>", iri)
         } else if let Some(st) = self.as_statement() {
-            write!(f, "<< {} >>", st.deref().to_string())
+            write!(f, "<< {} >>", st.deref())
         } else {
             unreachable!()
         }
@@ -139,17 +142,23 @@ impl Equiv<StatementRef> for dyn SubjectNode {
 
 impl PartialOrd for dyn SubjectNode {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for dyn SubjectNode {
+    fn cmp(&self, other: &Self) -> Ordering {
         if self.is_iri() && other.is_iri() {
             if let Some(iri) = self.as_iri() {
                 if let Some(other_iri) = other.as_iri() {
-                    return iri.partial_cmp(other_iri);
+                    return iri.cmp(other_iri);
                 }
             }
         }
         if self.is_blank() && other.is_blank() {
             if let Some(blank) = self.as_blank() {
                 if let Some(other_blank) = other.as_blank() {
-                    return blank.partial_cmp(other_blank);
+                    return blank.cmp(other_blank);
                 }
             }
         }
@@ -157,21 +166,11 @@ impl PartialOrd for dyn SubjectNode {
             todo!("sorting rdf-star statements is not yet supported");
         }
         if self.is_iri() {
-            Some(Ordering::Less)
+            Ordering::Less
         } else if self.is_blank() {
-            Some(Ordering::Greater)
+            Ordering::Greater
         } else {
-            None
+            Ordering::Less
         }
-    }
-}
-
-impl Ord for dyn SubjectNode {
-    fn cmp(&self, other: &Self) -> Ordering {
-        let po = self.partial_cmp(other);
-        if let Some(ordering) = po {
-            return ordering;
-        }
-        Ordering::Less
     }
 }

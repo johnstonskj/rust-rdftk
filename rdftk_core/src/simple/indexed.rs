@@ -16,6 +16,7 @@ use crate::model::Provided;
 use crate::simple::empty_mappings;
 use crate::simple::literal::literal_factory;
 use crate::simple::statement::statement_factory;
+use lazy_static::lazy_static;
 use rdftk_iri::IriRef;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -24,7 +25,6 @@ use std::iter::FromIterator;
 use std::ops::Deref;
 use std::rc::Rc;
 use std::sync::Arc;
-use lazy_static::lazy_static;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -49,7 +49,7 @@ pub struct IndexedSimpleGraph {
 ///
 /// Simple, in-memory implementation of the `GraphFactory` trait.
 ///
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 struct IndexedSimpleGraphFactory {}
 
 lazy_static! {
@@ -71,12 +71,6 @@ pub fn graph_factory() -> GraphFactoryRef {
 // ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
-
-impl Default for IndexedSimpleGraphFactory {
-    fn default() -> Self {
-        Self {}
-    }
-}
 
 impl Provided for IndexedSimpleGraphFactory {
     fn provider_id(&self) -> &'static str {
@@ -141,7 +135,7 @@ impl Graph for IndexedSimpleGraph {
             .map(|subject| {
                 self.s_index
                     .get(subject)
-                    .map(|sts| HashSet::from_iter(sts))
+                    .map(HashSet::from_iter)
                     .unwrap_or_default()
             })
             .unwrap_or_default();
@@ -149,7 +143,7 @@ impl Graph for IndexedSimpleGraph {
             .map(|predicate| {
                 self.p_index
                     .get(predicate)
-                    .map(|sts| HashSet::from_iter(sts))
+                    .map(HashSet::from_iter)
                     .unwrap_or_default()
             })
             .unwrap_or_default();
@@ -157,7 +151,7 @@ impl Graph for IndexedSimpleGraph {
             .map(|object| {
                 self.o_index
                     .get(object)
-                    .map(|sts| HashSet::from_iter(sts))
+                    .map(HashSet::from_iter)
                     .unwrap_or_default()
             })
             .unwrap_or_default();
@@ -270,9 +264,9 @@ impl Graph for IndexedSimpleGraph {
             (HashSet::<StatementRef>::default(), StatementList::default()),
             |(mut keep, mut discard), st| {
                 if keep.contains(st) {
-                    (&mut discard).push(st.clone());
+                    discard.push(st.clone());
                 } else {
-                    let _ = (&mut keep).insert(st.clone());
+                    let _ = keep.insert(st.clone());
                 }
                 (keep, discard)
             },

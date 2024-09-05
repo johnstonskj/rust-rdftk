@@ -12,7 +12,6 @@ use crate::model::statement::{
 };
 use crate::model::Provided;
 use crate::simple::literal::literal_factory;
-use crate::simple::statement::subject::Subject;
 use lazy_static::lazy_static;
 use rdftk_iri::IriRef;
 use std::ops::Deref;
@@ -113,21 +112,15 @@ impl StatementFactory for SimpleStatementFactory {
     }
 
     fn blank_subject(&self, node: BlankNode) -> SubjectNodeRef {
-        Rc::new(SimpleSubjectNode {
-            inner: Subject::BNode(node),
-        })
+        Rc::new(SimpleSubjectNode::from(node))
     }
 
     fn named_subject(&self, name: IriRef) -> SubjectNodeRef {
-        Rc::new(SimpleSubjectNode {
-            inner: Subject::Iri(name),
-        })
+        Rc::new(SimpleSubjectNode::from(name))
     }
 
     fn statement_subject(&self, st: StatementRef) -> SubjectNodeRef {
-        Rc::new(SimpleSubjectNode {
-            inner: Subject::Star(st),
-        })
+        Rc::new(SimpleSubjectNode::from(st))
     }
 
     fn object_as_subject(&self, obj: ObjectNodeRef) -> Option<SubjectNodeRef> {
@@ -218,10 +211,6 @@ impl Statement for SimpleStatement {
         self.subject().is_statement() || self.object().is_statement()
     }
 }
-
-// ------------------------------------------------------------------------------------------------
-// Private Functions
-// ------------------------------------------------------------------------------------------------
 
 // ------------------------------------------------------------------------------------------------
 // Modules

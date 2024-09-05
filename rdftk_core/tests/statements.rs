@@ -2,7 +2,7 @@ use rdftk_core::model::literal::DataType;
 use rdftk_core::model::statement::reify_statement;
 use rdftk_core::simple::literal::literal_factory;
 use rdftk_core::simple::statement::statement_factory;
-use rdftk_iri::IRI;
+use rdftk_iri::Iri;
 use rdftk_names::{rdf, rdfs};
 use std::str::FromStr;
 
@@ -11,12 +11,12 @@ fn make_a_statement() {
     let factory = statement_factory();
     let st = factory
         .statement(
-            factory.blank_subject_named("01").unwrap(),
+            factory.blank_subject_named("B01").unwrap(),
             rdf::a_type().clone(),
             factory.named_object(rdfs::class().clone()),
         )
         .unwrap();
-    assert_eq!(st.to_string(), "_:01 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2000/01/rdf-schema#Class>");
+    assert_eq!(st.to_string(), "_:B01 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2000/01/rdf-schema#Class>");
 }
 
 #[test]
@@ -24,7 +24,7 @@ fn reify_a_statement() {
     let factory = statement_factory();
     let st = factory
         .statement(
-            factory.blank_subject_named("01").unwrap(),
+            factory.blank_subject_named("B01").unwrap(),
             rdf::a_type().clone(),
             factory.named_object(rdfs::class().clone()),
         )
@@ -39,7 +39,7 @@ fn reify_nested_statement() {
 
     let st = factory
         .statement(
-            factory.blank_subject_named("01").unwrap(),
+            factory.blank_subject_named("B01").unwrap(),
             rdf::a_type().clone(),
             factory.named_object(rdfs::class().clone()),
         )
@@ -68,14 +68,14 @@ fn make_literal_statement() {
     let literals = literal_factory();
     let st = factory
         .statement(
-            factory.blank_subject_named("01").unwrap(),
+            factory.blank_subject_named("B01").unwrap(),
             rdfs::label().clone(),
             factory.literal_object(literals.literal("some thing")),
         )
         .unwrap();
     assert_eq!(
         st.to_string(),
-        "_:01 <http://www.w3.org/2000/01/rdf-schema#label> \"some thing\""
+        "_:B01 <http://www.w3.org/2000/01/rdf-schema#label> \"some thing\""
     );
 }
 
@@ -85,14 +85,14 @@ fn make_typed_literal_statement() {
     let literals = literal_factory();
     let st = factory
         .statement(
-            factory.blank_subject_named("01").unwrap(),
+            factory.blank_subject_named("B01").unwrap(),
             rdfs::label().clone(),
             factory.literal_object(literals.with_data_type("2020", DataType::Int)),
         )
         .unwrap();
     assert_eq!(
         st.to_string(),
-        "_:01 <http://www.w3.org/2000/01/rdf-schema#label> \"2020\"^^<http://www.w3.org/2001/XMLSchema#int>"
+        "_:B01 <http://www.w3.org/2000/01/rdf-schema#label> \"2020\"^^<http://www.w3.org/2001/XMLSchema#int>"
     );
 }
 
@@ -103,16 +103,16 @@ fn make_an_embedded_statement() {
     //  <<...>> <http://example.org/p> <http://example.org/o>
     let about = factory
         .statement(
-            factory.named_subject(IRI::from_str("http://example.org/s").unwrap().into()),
-            IRI::from_str("http://example.org/p").unwrap().into(),
-            factory.named_object(IRI::from_str("http://example.org/o").unwrap().into()),
+            factory.named_subject(Iri::from_str("http://example.org/s").unwrap().into()),
+            Iri::from_str("http://example.org/p").unwrap().into(),
+            factory.named_object(Iri::from_str("http://example.org/o").unwrap().into()),
         )
         .unwrap();
 
     let st = factory
         .statement(
             factory.blank_subject_named("a").unwrap(),
-            IRI::from_str("http://example.org/v/occurenceOf")
+            Iri::from_str("http://example.org/v/occurenceOf")
                 .unwrap()
                 .into(),
             factory.statement_object(about),

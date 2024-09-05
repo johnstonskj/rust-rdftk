@@ -42,7 +42,7 @@ pub fn common_mappings() -> PrefixMappingRef {
 ///
 /// Simple, in-memory implementation of the `PrefixMappings` trait.
 ///
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 struct SimplePrefixMappings {
     map: BiHashMap<String, IriRef>,
 }
@@ -50,14 +50,6 @@ struct SimplePrefixMappings {
 // ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
-
-impl Default for SimplePrefixMappings {
-    fn default() -> Self {
-        Self {
-            map: Default::default(),
-        }
-    }
-}
 
 impl From<SimplePrefixMappings> for PrefixMappingRef {
     fn from(v: SimplePrefixMappings) -> Self {
@@ -116,13 +108,7 @@ impl PrefixMappings for SimplePrefixMappings {
         let default_ns = DEFAULT_PREFIX.to_string();
         match self.get_namespace(qname.prefix().as_ref().unwrap_or(&default_ns)) {
             None => None,
-            Some(namespace) => {
-                if let Some(namespaced_name) = namespace.make_name(qname.name()) {
-                    Some(IriRef::from(namespaced_name))
-                } else {
-                    None
-                }
-            }
+            Some(namespace) => namespace.make_name(qname.name()).map(IriRef::from),
         }
     }
 
