@@ -6,60 +6,47 @@ This crate provides an implementation of the `IRI` and `URI` specifications.
 [![crates.io](https://img.shields.io/crates/v/rdftk_iri.svg)](https://crates.io/crates/rdftk_iri)
 [![docs.rs](https://docs.rs/rdftk_iri/badge.svg)](https://docs.rs/rdftk_iri)
 
-As with the rest of the RDFtk project the aim of this crate is usability over optimization and so it may perform
+As with the rest of the RDFtk project the aim of this crate is usability over optimization, and so it may perform
 more clones than necessary and parse more slowly than could be the case. For the most part clients should use the
-`IRIRef` type that is an `Arc` reference and so can be reused without cloning the whole `IRI` value.
+`IriRef` type that is an `Arc` reference and so can be reused without cloning the whole `Iri` value.
 
 # Example
 
 The most common use is the parsing of an `IRI` value from a string.
 
 ```rust
-use rdftk_iri::IRI;
-use std::convert::from_str;
+use rdftk_iri::{Iri, IriExtra as _};
+use std::str::FromStr;
 
-let result = IRI::from_str(
-    "https://john.doe@www.example.com:123/forum/questions/?tag=networking&order=newest#top",
+let namespace = Iri::from_str(
+    "https://example.org/ns/things#",
+).unwrap();
+assert!(namespace.looks_like_namespace());
+
+let name = namespace.make_name("ThisThing").unwrap();
+assert_eq!(
+    name.to_string(),
+    "https://example.org/ns/things#ThisThing".to_string(),
+);
+
+assert_eq!(
+    name.namespace(),
+    Some(namespace),
+);
+
+assert_eq!(
+    name.name(),
+    Some("ThisThing".to_string()),
 );
 ```
-
-The `builder` module allows for more programmatic construction of `IRI`s.
-
-```rust
-use rdftk_iri::{IRI, Scheme};
-use rdftk_iri::builder::IriBuilder;
-
-let mut builder = IriBuilder::default();
-let result: IriResult<IRI> = builder
-    .scheme(&Scheme::https())
-    .user_name("john.doe")
-    .host("www.example.com")?
-    .port(123.into())
-    .path_str("/forum/questions/")?
-    .query_str("tag=networking&order=newest")?
-    .fragment_str("top")?
-    .try_into();
-```
-
-Note also the use of `Scheme::https()`, both the `Scheme` and `Port` types include associated functions
-to construct well-known values.
-
-# Features
-
-The following features are present in this crate.
-
-* `builder` [default] -- include the `builder` module, which in turn includes the `IriBuilder` type.
-* `genid` [default] -- includes a constructor to create `"genid"` well-known IRI values.
-* `path_iri` [default] -- provides an implementation of `TryFrom<&PathBuf>` and `TryFrom<PathBuf>`
-  for `IRI`.
-* `uuid_iri` [default] -- provides an implementation of `TryFrom<&Uuid>` and `TryFrom<Uuid>`
-  for `IRI`.
 
 ## Changes
 
 ### Version 0.2.0
 
 - Refactor: replaced own implementation of IRI with the `url` crate.
+  - Added trait `IriExtra` to provide new methods to the `url::Url` type.
+  - Added doc comments/tests for `IriExtra`.
 
 ### Version 0.1.9
 
