@@ -47,68 +47,61 @@ assert_eq!(
 - Refactor: replaced own implementation of IRI with the `url` crate.
   - Added trait `IriExtra` to provide new methods to the `url::Url` type.
   - Added doc comments/tests for `IriExtra`.
+- Build: updated Rust edition from 2018 to 2021.
 
 ### Version 0.1.9
 
-* Added a feature to enable genid creation.
-* Made IRI PartialOrd + Ord, it can now be sorted.
-* Added PercentEncoding trait for percent encoding components.
+- Feature: added a feature to enable genid creation.
+- Feature: made `IRI` implement `PartialOrd` + `Ord`, it can now be sorted.
+- Feature: added `PercentEncoding` trait for percent encoding components.
 
 ### Version 0.1.8
 
-* Minor fix to parser to fix some precedence rules.
-* Some documentation fixes.
+- Fix: parser to fix some precedence rules.
+- Docs: some documentation fixes.
 
 ### Version 0.1.7
 
-* Added support for well-known IRIs to the Path and IRI types.
+- Feature: added support for well-known IRIs to the Path and IRI types.
 
 ### Version 0.1.6
 
-* Applied a lot more warnings in lib.rs
-* Applied more Clippy suggestions.
+- Style: applied a lot more warnings in lib.rs
+- Style: applied more Clippy suggestions.
 
 ### Version 0.1.5
 
-* Applied all Clippy suggestions.
+- Style: applied all Clippy suggestions.
 
 ### Version 0.1.4
 
-* A lot more testing, and local coverage reporting.
-* Fixed a bug where separator missing in `UserInfo::to_string`.
-* Fixed a parsing bug `IpvFuture::from_str`.
-* Added `host`, `path_root`, `path` methods to `IriBuilder`.
-* Changes `with_new_query` and `with_new_fragment` on `IRI` to not take `Option`.
-* Added `blob` known value to `Scheme`.
+- Test: more testing, and local coverage reporting.
+- Fix: bug where separator missing in `UserInfo::to_string`.
+- Fix: parsing bug `IpvFuture::from_str`.
+- Feature: added `host`, `path_root`, `path` methods to `IriBuilder`.
+- Feature: ahanges `with_new_query` and `with_new_fragment` on `IRI` to not take `Option`.
+- Feature: added `blob` known value to `Scheme`.
 
 ### Version 0.1.3
 
-* Mostly testing
+- Test:
   1. Moved any tests out of the main code if they only use the public API.
   1. Added a set of files for gathering whole `IRI` examples.
   1. Added [proptest](https://docs.rs/proptest/0.10.1/proptest/index.html) for `Scheme`, will add for more.
-* Fixed bug in `IRI::is_absolute`, to ignore authority and take the fragment into account.
-* Added `IRI::is_relative_reference`.
+- Fix: bug in `IRI::is_absolute`, to ignore authority and take the fragment into account.
+- Feature: added `IRI::is_relative_reference`.
 
 ### Version 0.1.2
 
-* Mostly documentation additions.
-* Adding test cases where possible.
-* Added helper functions and API shortcuts where they make sense.
-* Added `path_iri` and `uuid_iri` features.
+- Doc: mostly documentation additions.
+- Test: adding test cases where possible.
+- Feature: added helper functions and API shortcuts where they make sense.
+- Feature: added `path_iri` and `uuid_iri` features.
 
 ### Version 0.1.1
 
-* Added `IRIRef` type.
+- Feature: added `IRIRef` type.
 
 ### Version 0.1.0
 
-* First release.
-
-## TODO
-
-1. [Complete IRI normalization](https://github.com/johnstonskj/rust-rdftk/issues/4)
-1. [Complete IRI resolver](https://github.com/johnstonskj/rust-rdftk/issues/5)
-1. [Complete IRI relativizer](https://github.com/johnstonskj/rust-rdftk/issues/6)
-
-[![RDF](https://www.w3.org/Icons/SW/Buttons/sw-rdf-blue.png)](http://www.w3.org/2001/sw/wiki/RDF)
+- First release.
