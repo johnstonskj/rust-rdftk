@@ -383,7 +383,7 @@ pub trait IriExtra {
 pub fn genid(base: &IriRef) -> Result<IriRef, Error> {
     let new_uuid = uuid::Uuid::new_v4();
     let new_uuid = new_uuid
-        .to_simple()
+        .simple()
         .encode_lower(&mut uuid::Uuid::encode_buffer())
         .to_string();
     let path = format!("/.well-known/genid/{new_uuid}");

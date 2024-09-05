@@ -44,69 +44,73 @@ assert_eq!(
 
 ## Changes
 
+### Version 0.2.1
+
+* Build: cargo audit/outdated/udeps
+
 ### Version 0.2.0
 
-- Refactor: replaced own implementation of IRI with the `url` crate.
-  - Added trait `IriExtra` to provide new methods to the `url::Url` type.
-  - Added doc comments/tests for `IriExtra`.
-- Build: updated Rust edition from 2018 to 2021.
-- Docs: run markuplint on `README.md`.
+* Refactor: replaced own implementation of IRI with the `url` crate.
+  * Added trait `IriExtra` to provide new methods to the `url::Url` type.
+  * Added doc comments/tests for `IriExtra`.
+* Build: updated Rust edition from 2018 to 2021.
+* Docs: run markuplint on `README.md`.
 
 ### Version 0.1.9
 
-- Feature: added a feature to enable genid creation.
-- Feature: made `IRI` implement `PartialOrd` + `Ord`, it can now be sorted.
-- Feature: added `PercentEncoding` trait for percent encoding components.
+* Feature: added a feature to enable genid creation.
+* Feature: made `IRI` implement `PartialOrd` + `Ord`, it can now be sorted.
+* Feature: added `PercentEncoding` trait for percent encoding components.
 
 ### Version 0.1.8
 
-- Fix: parser to fix some precedence rules.
-- Docs: some documentation fixes.
+* Fix: parser to fix some precedence rules.
+* Docs: some documentation fixes.
 
 ### Version 0.1.7
 
-- Feature: added support for well-known IRIs to the Path and IRI types.
+* Feature: added support for well-known IRIs to the Path and IRI types.
 
 ### Version 0.1.6
 
-- Style: applied a lot more warnings in lib.rs
-- Style: applied more Clippy suggestions.
+* Style: applied a lot more warnings in lib.rs
+* Style: applied more Clippy suggestions.
 
 ### Version 0.1.5
 
-- Style: applied all Clippy suggestions.
+* Style: applied all Clippy suggestions.
 
 ### Version 0.1.4
 
-- Test: more testing, and local coverage reporting.
-- Fix: bug where separator missing in `UserInfo::to_string`.
-- Fix: parsing bug `IpvFuture::from_str`.
-- Feature: added `host`, `path_root`, `path` methods to `IriBuilder`.
-- Feature: ahanges `with_new_query` and `with_new_fragment` on `IRI` to not take
+* Test: more testing, and local coverage reporting.
+* Fix: bug where separator missing in `UserInfo::to_string`.
+* Fix: parsing bug `IpvFuture::from_str`.
+* Feature: added `host`, `path_root`, `path` methods to `IriBuilder`.
+* Feature: ahanges `with_new_query` and `with_new_fragment` on `IRI` to not take
   `Option`.
-- Feature: added `blob` known value to `Scheme`.
+* Feature: added `blob` known value to `Scheme`.
 
 ### Version 0.1.3
 
-- Test:
+* Test:
   1. Moved any tests out of the main code if they only use the public API.
   1. Added a set of files for gathering whole `IRI` examples.
   1. Added [proptest](https://docs.rs/proptest/0.10.1/proptest/index.html) for `Scheme`, will add for more.
-- Fix: bug in `IRI::is_absolute`, to ignore authority and take the fragment into
+* Fix: bug in `IRI::is_absolute`, to ignore authority and take the fragment into
   account.
-- Feature: added `IRI::is_relative_reference`.
+* Feature: added `IRI::is_relative_reference`.
 
 ### Version 0.1.2
 
-- Doc: mostly documentation additions.
-- Test: adding test cases where possible.
-- Feature: added helper functions and API shortcuts where they make sense.
-- Feature: added `path_iri` and `uuid_iri` features.
+* Doc: mostly documentation additions.
+* Test: adding test cases where possible.
+* Feature: added helper functions and API shortcuts where they make sense.
+* Feature: added `path_iri` and `uuid_iri` features.
 
 ### Version 0.1.1
 
-- Feature: added `IRIRef` type.
+* Feature: added `IRIRef` type.
 
 ### Version 0.1.0
 
-- First release.
+* First release.
