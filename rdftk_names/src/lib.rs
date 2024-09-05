@@ -11,17 +11,10 @@ macro uses `paste::item` the client will need to have a dependency on the
 [paste crate](https://crates.io/crates/paste).
 
 
-```rust,ignore
-#[macro_use]
-extern crate paste;
-
-#[macro_use]
-extern crate rdftk_names;
-
-use rdftk_names::Vocabulary;
+```rust
+use rdftk_names::namespace;
 
 namespace! {
-    GeoSpatialVocabulary,
     "geo",
     "http://www.w3.org/2003/01/geo/wgs84_pos#",
     {
@@ -65,89 +58,98 @@ namespace! {
 // ------------------------------------------------------------------------------------------------
 
 ///
-/// This macro produces the constants and functions to describe a vocabulary. It creates the
-/// following items.
-///
-/// 1. An identifier for the vocabulary struct.
-/// 1. A constant, `PREFIX` that contains the string passed in the `$prefix` parameter.
-/// 1. A constant, `NAMESPACE` that contains the string passed in the `namespace` parameter.
-/// 1. For each pair of `$fn_name`, `$name` (assuming `foo` and `"Foo"`):
-///    1. create a function `fn foo() -> Iri` that returns the name as a full Iri. This concatenates
-///       `NAMESPACE` and `$name`.
-///    1. create a function `fn foo_qname() -> String` that returns a qualified name String. This
-///       concatenates the `PREFIX`, `":"`, and `$name`.
+/// This macro produces the constants and functions to describe a vocabulary.
 ///
 /// # Example
 ///
 /// Given the following namespace invocation,
 ///
-/// ```rust,ignore
-/// #[macro_use]
-/// extern crate rdftk_names;
+/// ```rust
+/// use rdftk_names::namespace;
 ///
-/// namespace!(FooBarVocab, "fb", "http://example.com/schema/FooBar#", { foo, "Foo" } );
+/// namespace!(
+///     "fb",
+///     "http://example.com/schema/FooBar#",
+///     {
+///         foo, "Foo"
+///     }
+/// );
 /// ```
 ///
 /// The following would be generated.
 ///
-/// ```rust, ignore
-/// use rdftk_iri::Iri;
-/// use std::str::FromStr;
+/// ```rust
+/// /// Returns the commonly used prefix string for this namespace.
+/// pub fn default_prefix() -> &'static str { todo!() }
 ///
-/// pub struct FooBarVocab { ... }
+/// /// Returns the Iri, as a string, identifying this namespace.
+/// pub fn namespace_str() -> &'static str { todo!() }
 ///
-/// impl Default for FooBarVocab { ... }
+/// ///  Returns the Iri identifying this namespace.
+/// pub fn namespace_iri() -> &'static ::rdftk_iri::IriRef { todo!() }
 ///
-/// impl Vocabulary for FooBarVocab { ... }
+/// // ***** For each namespace member: *****
 ///
-/// impl FooBarVocab {
-///     pub fn foo(&self) -> &IriRef { ... }
-///     pub foo_qname(&self) -> &String { ... }
-/// }
+/// /// Returns the qualified Iri for the namespace member `Foo`.
+/// pub fn foo() -> &'static ::rdftk_iri::IriRef { todo!() }
+///
+/// /// Returns a qualified name, using the default prefix, for the namespace  member `Foo`.
+/// pub fn foo_qname() -> &'static str { todo!() }
 /// ```
 ///
 #[macro_export]
 macro_rules! namespace {
     ($prefix:expr, $namespace:expr, { $($fn_name:ident, $name:expr),* }) => {
-        use std::str::FromStr;
 
+        #[doc(hidden)]
         const PREFIX: &str = $prefix;
 
+        #[doc(hidden)]
         const NAMESPACE: &str = $namespace;
 
         ::lazy_static::lazy_static! {
+            #[doc(hidden)]
             static ref NS_IRI: ::rdftk_iri::IriRef = ::rdftk_iri::IriRef::from(
-                ::rdftk_iri::Iri::from_str(NAMESPACE).unwrap()
+                <::rdftk_iri::Iri as ::std::str::FromStr>::from_str(NAMESPACE).unwrap()
             );
-            static ref NS_CACHE: ::std::collections::HashMap<String, (::rdftk_iri::IriRef, String)> = make_cache();
+
+            #[doc(hidden)]
+            static ref NS_CACHE: ::std::collections::HashMap<String, (::rdftk_iri::IriRef, &'static str)>
+                = make_cache();
         }
 
-        fn make_cache() -> ::std::collections::HashMap<String, (::rdftk_iri::IriRef, String)> {
-            let mut cache: ::std::collections::HashMap<String, (::rdftk_iri::IriRef, String)> = Default::default();
+        #[doc(hidden)]
+        fn make_cache() -> ::std::collections::HashMap<String, (::rdftk_iri::IriRef, &'static str)> {
+            let mut cache: ::std::collections::HashMap<String, (::rdftk_iri::IriRef, &'static str)>
+                = Default::default();
             $(
-            let _ = cache.insert($name.to_string(), (
-                ::rdftk_iri::IriRef::new(::rdftk_iri::Iri::from_str(&format!("{}{}", NAMESPACE, $name)).unwrap()),
-                format!("{}:{}", PREFIX, $name),
-                )
-            );
+                let _ = cache.insert(
+                    $name.to_string(),
+                    (
+                        ::rdftk_iri::IriRef::new(
+                            <::rdftk_iri::Iri as ::rdftk_iri::IriExtra>::make_name(&NS_IRI, $name).unwrap()
+                        ),
+                        concat!($prefix, ":", $name),
+                    )
+                );
             )*
             cache
         }
 
-        #[inline]
-        #[doc = "Returns the commonly used prefix for this namespace."]
+        #[inline(always)]
+        #[doc = "Returns the commonly used prefix string for this namespace."]
         pub fn default_prefix() -> &'static str { PREFIX }
 
-        #[inline]
-        #[doc = "Returns the Iri, as a string, for this namespace."]
+        #[inline(always)]
+        #[doc = "Returns the IRI, as a string, identifying this namespace."]
         pub fn namespace_str() -> &'static str { NAMESPACE }
 
-        #[inline]
-        #[doc = "Returns the Iri for this namespace."]
+        #[inline(always)]
+        #[doc = "Returns the IRI identifying this namespace."]
         pub fn namespace_iri() -> &'static ::rdftk_iri::IriRef { &NS_IRI }
 
         $(
-            nsname!($fn_name, $name);
+            $crate::nsname!($fn_name, $name);
         )*
     };
 }
@@ -161,20 +163,22 @@ macro_rules! namespace {
 /// 1. a function with the same identifier, but the suffix `_qname` which returns a qualified name
 ///    using the value of `PREFIX` in the current scope.
 ///
-
 #[macro_export]
 macro_rules! nsname {
+    ($fn_name:ident, _) => {
+        nsname!{ $fn_name, stringify!($fn_name) }
+    };
     ($fn_name:ident, $name:expr) => {
-        #[inline]
-        #[doc = "Returns the Iri for this namespace member."]
-        pub fn $fn_name() -> &'static ::rdftk_iri::IriRef {
-            &NS_CACHE.get($name).unwrap().0
-        }
+        ::paste::paste! {
+            #[inline(always)]
+            #[doc = "Returns the qualified IRI for the namespace member `" $name "`."]
+            pub fn $fn_name() -> &'static ::rdftk_iri::IriRef {
+                &NS_CACHE.get($name).unwrap().0
+            }
 
-        ::paste::item! {
-            #[inline]
-            #[doc = "Returns a qname, using the default prefix, for this namespace member."]
-            pub fn [<$fn_name _qname>]() -> &'static String {
+            #[inline(always)]
+            #[doc = "Returns a qualified name, using the default prefix, for the namespace  member `" $name "`."]
+            pub fn [<$fn_name _qname>]() -> &'static str {
                 &NS_CACHE.get($name).unwrap().1
             }
         }
@@ -208,22 +212,37 @@ mod tests {
     #![allow(unreachable_pub)]
 
     use super::*;
+    use rdftk_iri::{Iri, IriRef};
+    use std::str::FromStr;
 
     namespace!("p", "heep://schema/com/p#", { foo, "Foo", bar, "Bar" } );
 
     #[test]
-    fn test_expansion() {
+    fn test_expand_default_prefix() {
         assert_eq!(default_prefix(), "p".to_string());
+    }
 
+    #[test]
+    fn test_expand_namespace_str() {
         assert_eq!(namespace_str(), "heep://schema/com/p#");
+    }
+
+    #[test]
+    fn test_expand_namespace_iri() {
         assert_eq!(
             namespace_iri(),
             &IriRef::new(Iri::from_str("heep://schema/com/p#").unwrap())
         );
+    }
 
+    #[test]
+    fn test_expand_member_foo() {
         assert_eq!(foo().to_string(), "heep://schema/com/p#Foo");
         assert_eq!(foo_qname(), "p:Foo");
+    }
 
+    #[test]
+    fn test_expand_member_bar() {
         assert_eq!(bar().to_string(), "heep://schema/com/p#Bar");
         assert_eq!(bar_qname(), "p:Bar");
     }

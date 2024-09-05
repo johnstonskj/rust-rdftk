@@ -3,6 +3,7 @@ Functions that create IRIs for the [RDF](https://www.w3.org/TR/rdf11-concepts/) 
  */
 
 use rdftk_iri::{Iri, IriRef};
+use std::str::FromStr;
 
 namespace! {
     "rdf",

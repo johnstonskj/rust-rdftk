@@ -6,9 +6,11 @@ This crate provides an implementation of the `IRI` and `URI` specifications.
 [![crates.io](https://img.shields.io/crates/v/rdftk_iri.svg)](https://crates.io/crates/rdftk_iri)
 [![docs.rs](https://docs.rs/rdftk_iri/badge.svg)](https://docs.rs/rdftk_iri)
 
-As with the rest of the RDFtk project the aim of this crate is usability over optimization, and so it may perform
-more clones than necessary and parse more slowly than could be the case. For the most part clients should use the
-`IriRef` type that is an `Arc` reference and so can be reused without cloning the whole `Iri` value.
+As with the rest of the RDFtk project the aim of this crate is usability over
+optimization, and so it may perform more clones than necessary and parse more
+slowly than could be the case. For the most part clients should use the `IriRef`
+type that is an `Arc` reference and so can be reused without cloning the whole `Iri`
+value.
 
 # Example
 
@@ -48,6 +50,7 @@ assert_eq!(
   - Added trait `IriExtra` to provide new methods to the `url::Url` type.
   - Added doc comments/tests for `IriExtra`.
 - Build: updated Rust edition from 2018 to 2021.
+- Docs: run markuplint on `README.md`.
 
 ### Version 0.1.9
 
@@ -79,7 +82,8 @@ assert_eq!(
 - Fix: bug where separator missing in `UserInfo::to_string`.
 - Fix: parsing bug `IpvFuture::from_str`.
 - Feature: added `host`, `path_root`, `path` methods to `IriBuilder`.
-- Feature: ahanges `with_new_query` and `with_new_fragment` on `IRI` to not take `Option`.
+- Feature: ahanges `with_new_query` and `with_new_fragment` on `IRI` to not take
+  `Option`.
 - Feature: added `blob` known value to `Scheme`.
 
 ### Version 0.1.3
@@ -88,7 +92,8 @@ assert_eq!(
   1. Moved any tests out of the main code if they only use the public API.
   1. Added a set of files for gathering whole `IRI` examples.
   1. Added [proptest](https://docs.rs/proptest/0.10.1/proptest/index.html) for `Scheme`, will add for more.
-- Fix: bug in `IRI::is_absolute`, to ignore authority and take the fragment into account.
+- Fix: bug in `IRI::is_absolute`, to ignore authority and take the fragment into
+  account.
 - Feature: added `IRI::is_relative_reference`.
 
 ### Version 0.1.2
