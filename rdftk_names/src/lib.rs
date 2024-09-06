@@ -80,18 +80,21 @@ namespace! {
 ///
 /// ```rust
 /// /// Returns the commonly used prefix string for this namespace.
-/// pub fn default_prefix() -> &'static str { todo!() }
+/// pub fn default_prefix() -> &'static ::rdftk_iri::Name { todo!() }
+///
+/// ///  Returns the Iri identifying this namespace.
+/// pub fn namespace() -> &'static ::rdftk_iri::IriRef { todo!() }
 ///
 /// /// Returns the Iri, as a string, identifying this namespace.
 /// pub fn namespace_str() -> &'static str { todo!() }
-///
-/// ///  Returns the Iri identifying this namespace.
-/// pub fn namespace_iri() -> &'static ::rdftk_iri::IriRef { todo!() }
 ///
 /// // ***** For each namespace member: *****
 ///
 /// /// Returns the qualified Iri for the namespace member `Foo`.
 /// pub fn foo() -> &'static ::rdftk_iri::IriRef { todo!() }
+///
+/// /// Returns this member's name, as the string "Foo".
+/// pub fn foo_str() -> &'static str { todo!() }
 ///
 /// /// Returns a qualified name, using the default prefix, for the namespace  member `Foo`.
 /// pub fn foo_qname() -> &'static str { todo!() }
@@ -114,6 +117,10 @@ macro_rules! namespace {
             );
 
             #[doc(hidden)]
+            static ref NS_PREFIX: ::rdftk_iri::Name =
+                <::rdftk_iri::Name as ::std::str::FromStr>::from_str(PREFIX).unwrap();
+
+            #[doc(hidden)]
             static ref NS_CACHE: ::std::collections::HashMap<String, (::rdftk_iri::IriRef, &'static str)>
                 = make_cache();
         }
@@ -127,7 +134,10 @@ macro_rules! namespace {
                     $name.to_string(),
                     (
                         ::rdftk_iri::IriRef::new(
-                            <::rdftk_iri::Iri as ::rdftk_iri::IriExtra>::make_name(&NS_IRI, $name).unwrap()
+                            <::rdftk_iri::Iri as ::rdftk_iri::IriExtra>::make_name(
+                                &NS_IRI,
+                                <::rdftk_iri::Name as ::std::str::FromStr>::from_str($name).unwrap()
+                            ).unwrap()
                         ),
                         concat!($prefix, ":", $name),
                     )
@@ -138,7 +148,7 @@ macro_rules! namespace {
 
         #[inline(always)]
         #[doc = "Returns the commonly used prefix string for this namespace."]
-        pub fn default_prefix() -> &'static str { PREFIX }
+        pub fn default_prefix() -> &'static ::rdftk_iri::Name { &NS_PREFIX }
 
         #[inline(always)]
         #[doc = "Returns the IRI, as a string, identifying this namespace."]
@@ -146,7 +156,7 @@ macro_rules! namespace {
 
         #[inline(always)]
         #[doc = "Returns the IRI identifying this namespace."]
-        pub fn namespace_iri() -> &'static ::rdftk_iri::IriRef { &NS_IRI }
+        pub fn namespace() -> &'static ::rdftk_iri::IriRef { &NS_IRI }
 
         $(
             $crate::nsname!($fn_name, $name);
@@ -160,6 +170,8 @@ macro_rules! namespace {
 ///
 /// 1. a function with the same identifier which returns a complete Iri using the
 ///    value of `NAMESPACE` in the current scope, and
+/// 1. a function with the same identifier, but the suffix `_str` which returns the name
+///    as a string.
 /// 1. a function with the same identifier, but the suffix `_qname` which returns a qualified name
 ///    using the value of `PREFIX` in the current scope.
 ///
@@ -177,11 +189,17 @@ macro_rules! nsname {
             }
 
             #[inline(always)]
+            #[doc = "Returns this member's name, as the string \"" $name "\"."]
+            pub fn [<$fn_name _str>]() -> &'static str {
+                $name
+            }
+
+            #[inline(always)]
             #[doc = "Returns a qualified name, using the default prefix, for the namespace  member `" $name "`."]
             pub fn [<$fn_name _qname>]() -> &'static str {
                 &NS_CACHE.get($name).unwrap().1
             }
-        }
+         }
     };
 }
 
@@ -219,7 +237,7 @@ mod tests {
 
     #[test]
     fn test_expand_default_prefix() {
-        assert_eq!(default_prefix(), "p".to_string());
+        assert_eq!(default_prefix().as_ref(), "p".to_string());
     }
 
     #[test]
@@ -230,7 +248,7 @@ mod tests {
     #[test]
     fn test_expand_namespace_iri() {
         assert_eq!(
-            namespace_iri(),
+            namespace(),
             &IriRef::new(Iri::from_str("heep://schema/com/p#").unwrap())
         );
     }
@@ -238,12 +256,14 @@ mod tests {
     #[test]
     fn test_expand_member_foo() {
         assert_eq!(foo().to_string(), "heep://schema/com/p#Foo");
+        assert_eq!(foo_str(), "Foo");
         assert_eq!(foo_qname(), "p:Foo");
     }
 
     #[test]
     fn test_expand_member_bar() {
         assert_eq!(bar().to_string(), "heep://schema/com/p#Bar");
+        assert_eq!(bar_str(), "Bar");
         assert_eq!(bar_qname(), "p:Bar");
     }
 }
