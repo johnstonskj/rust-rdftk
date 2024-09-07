@@ -76,6 +76,7 @@ error_chain! {
         LanguageTag(language_tags::ParseError) #[doc = "An eror parsing language-tag strings."];
         Iri(::rdftk_iri::Error) #[doc = "An error parsing IRI strings."];
         Io(::std::io::Error) #[doc = "An error in the standard I/O library."];
+        Name(::rdftk_iri::NameParseError) #[doc = "An error parsing Name strings."];
         Utf8(::std::string::FromUtf8Error) #[doc = "An error occured converting to UTF-8 text."];
         //WriterInner(::std::io::IntoInnerError) #[doc = "An error occured fetching the contents of a BufWriter."];
     }

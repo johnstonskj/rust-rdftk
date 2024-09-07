@@ -2,31 +2,27 @@ use parameterized::parameterized;
 use rdftk_core::model::graph::{GraphFactoryRef, GraphRef};
 use rdftk_core::simple::graph::graph_factory as simple_graph_factory;
 use rdftk_core::simple::indexed::graph_factory as indexed_graph_factory;
-use rdftk_core::simple::mapping::empty_mappings;
+use rdftk_core::simple::mapping::default_mappings;
 use rdftk_core::simple::PROVIDER_ID;
 use rdftk_iri::{Iri, IriRef};
 use std::str::FromStr;
 
 pub fn tony_benn_graph(graph_factory: GraphFactoryRef) -> GraphRef {
-    let mappings = empty_mappings();
+    let mappings = default_mappings();
 
     {
         let mut mut_mappings = mappings.borrow_mut();
-        mut_mappings.include_rdf();
-        mut_mappings.insert(
-            "dc",
-            IriRef::from(Iri::from_str("http://purl.org/dc/elements/1.1/").unwrap()),
-        );
-        mut_mappings.insert(
-            "foaf",
-            IriRef::from(Iri::from_str("http://xmlns.com/foaf/0.1/").unwrap()),
-        );
+        mut_mappings.insert_rdf();
+        mut_mappings.insert_dcterms();
+        mut_mappings.insert_foaf();
     }
 
-    let graph = graph_factory.with_mappings(mappings);
+    let graph = graph_factory.graph();
 
     {
         let mut ref_graph = graph.borrow_mut();
+
+        ref_graph.set_prefix_mappings(mappings);
 
         let st_factory = ref_graph.statement_factory();
         let lit_factory = ref_graph.literal_factory();

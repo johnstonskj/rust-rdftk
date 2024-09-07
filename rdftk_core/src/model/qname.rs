@@ -6,15 +6,20 @@
 *
 * ```rust
 * use rdftk_core::model::qname::QName;
+* use rdftk_iri::Name;
+* use std::str::FromStr;
 *
 * let prefixed: QName = "prefix:name".parse().expect("parse error");
 * let un_prefixed: QName = "name".parse().expect("parse error");
 *
-* let prefixed: QName = QName::with_prefix("prefix", "name").unwrap();
-* let un_prefixed: QName = QName::new("name").unwrap();
+* let prefixed: QName = QName::new(
+*     Name::new_unchecked("prefix"),
+*     Name::new_unchecked("name"),
+* ).unwrap();
+* let un_prefixed: QName = QName::new_unqualified(Name::new_unchecked("name")).unwrap();
 *
-* assert!(QName::new("").is_err());
-* assert!(QName::new("hello world").is_err());
+* assert!(QName::from_str("").is_err());
+* assert!(QName::from_str("hello world").is_err());
 * ```
 *
 * # Specification -- QName
@@ -73,6 +78,8 @@
 *
 */
 
+use rdftk_iri::{Name, NameParser};
+
 use crate::error::{Error as RdfError, ErrorKind};
 use crate::model::statement::BLANK_NODE_NAMESPACE;
 use std::fmt::{Display, Formatter};
@@ -88,8 +95,8 @@ use std::str::FromStr;
 ///
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct QName {
-    prefix: Option<String>,
-    name: String,
+    prefix: Option<Name>,
+    name: Name,
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -118,6 +125,7 @@ impl FromStr for QName {
     type Err = RdfError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let name_parser = NameParser::Xml;
         if s.is_empty() {
             Err(ErrorKind::EmptyQName.into())
         } else {
@@ -125,10 +133,10 @@ impl FromStr for QName {
             match parts.len() {
                 NAME_ONLY => {
                     let name = *parts.first().unwrap();
-                    if QName::is_valid(name) {
+                    if Name::is_valid_str(name, name_parser) {
                         Ok(QName {
                             prefix: None,
-                            name: name.to_string(),
+                            name: Name::from_str(name)?,
                         })
                     } else {
                         Err(ErrorKind::InvalidQName(s.to_string()).into())
@@ -137,10 +145,12 @@ impl FromStr for QName {
                 PREFIX_AND_NAME => {
                     let prefix = *parts.first().unwrap();
                     let name = *parts.get(1).unwrap();
-                    if QName::is_valid(prefix) && QName::is_valid(name) {
+                    if Name::is_valid_str(prefix, name_parser)
+                        && Name::is_valid_str(name, name_parser)
+                    {
                         Ok(QName {
-                            prefix: Some(prefix.to_string()),
-                            name: name.to_string(),
+                            prefix: Some(Name::from_str(prefix)?),
+                            name: Name::from_str(name)?,
                         })
                     } else {
                         Err(ErrorKind::InvalidQName(s.to_string()).into())
@@ -153,50 +163,36 @@ impl FromStr for QName {
 }
 
 impl QName {
-    /// Construct a new unqualified QName: "`:{name}`". This will return an error if either
-    /// the name is empty or is an invalid QName part.
-    pub fn new(name: &str) -> Result<Self, RdfError> {
-        if name.is_empty() {
-            Err(ErrorKind::EmptyQName.into())
-        } else if !QName::is_valid(name) {
-            Err(ErrorKind::InvalidQName(name.to_string()).into())
-        } else {
-            Ok(Self::new_unchecked(None, name))
-        }
+    /// Construct a new qualified QName: "`{prefix}:{name}`". This will return an error if either
+    /// the prefix or name is empty or is an invalid QName part.
+    pub fn new(prefix: Name, name: Name) -> Result<Self, RdfError> {
+        Ok(Self::new_unchecked(Some(prefix), name))
     }
 
-    /// Construct a new blank node as a QName.
-    pub fn blank(name: &str) -> Result<Self, RdfError> {
-        Self::with_prefix(BLANK_NODE_NAMESPACE, name)
+    /// Construct a new unqualified QName: "`:{name}`". This will return an error if either
+    /// the name is empty or is an invalid QName part.
+    pub fn new_unqualified(name: Name) -> Result<Self, RdfError> {
+        Ok(Self::new_unchecked(None, name))
     }
 
     /// Construct a new QName **without** any validation checks on the given values.
-    pub fn new_unchecked(prefix: Option<&str>, name: &str) -> Self {
-        Self {
-            prefix: prefix.map(str::to_string),
-            name: name.to_string(),
-        }
+    pub fn new_unchecked(prefix: Option<Name>, name: Name) -> Self {
+        Self { prefix, name }
     }
 
-    /// Construct a new qualified QName: "`{prefix}:{name}`". This will return an error if either
-    /// the prefix or name is empty or is an invalid QName part.
-    pub fn with_prefix(prefix: &str, name: &str) -> Result<Self, RdfError> {
-        if prefix.is_empty() || name.is_empty() {
-            Err(ErrorKind::EmptyQName.into())
-        } else if !QName::is_valid(prefix) {
-            Err(ErrorKind::InvalidQName(prefix.to_string()).into())
-        } else if !QName::is_valid(name) {
-            Err(ErrorKind::InvalidQName(name.to_string()).into())
-        } else {
-            Ok(Self::new_unchecked(Some(prefix), name))
-        }
+    /// Construct a new blank node as a QName.
+    pub fn new_blank(name: Name) -> Result<Self, RdfError> {
+        Ok(Self::new_unchecked(
+            Some(Name::new_unchecked(BLANK_NODE_NAMESPACE)),
+            name,
+        ))
     }
 
     /// Returns `true` if this QName is a blank node, else `false`.
     pub fn is_blank(&self) -> bool {
         self.prefix
             .as_ref()
-            .map(|p| p == BLANK_NODE_NAMESPACE)
+            .map(|p| p.as_ref() == BLANK_NODE_NAMESPACE)
             .is_some()
     }
 
@@ -206,12 +202,12 @@ impl QName {
     }
 
     /// Returns the prefix part of this QName, if present.
-    pub fn prefix(&self) -> &Option<String> {
-        &self.prefix
+    pub fn prefix(&self) -> Option<&Name> {
+        self.prefix.as_ref()
     }
 
     /// Returns the name part of this QName.
-    pub fn name(&self) -> &String {
+    pub fn name(&self) -> &Name {
         &self.name
     }
 
@@ -221,51 +217,9 @@ impl QName {
             "[{}:{}]",
             match &self.prefix {
                 None => "",
-                Some(prefix) => prefix,
+                Some(prefix) => prefix.as_ref(),
             },
             &self.name
         )
     }
-
-    /// Returns true if `part` is a valid identifier for either name or prefix.
-    pub fn is_valid(part: &str) -> bool {
-        is_xml_name(part)
-    }
-}
-
-// ------------------------------------------------------------------------------------------------
-// Private Functions
-// ------------------------------------------------------------------------------------------------
-
-pub(crate) fn is_xml_name_start_char(c: char) -> bool {
-    c == ':'
-        || c.is_ascii_uppercase()
-        || c == '_'
-        || c.is_ascii_lowercase()
-        || ('\u{C0}'..='\u{D6}').contains(&c)
-        || ('\u{D8}'..='\u{F6}').contains(&c)
-        || ('\u{0F8}'..='\u{2FF}').contains(&c)
-        || ('\u{370}'..='\u{37D}').contains(&c)
-        || ('\u{037F}'..='\u{1FFF}').contains(&c)
-        || ('\u{200C}'..='\u{200D}').contains(&c)
-        || ('\u{2070}'..='\u{218F}').contains(&c)
-        || ('\u{2C00}'..='\u{2FEF}').contains(&c)
-        || ('\u{3001}'..='\u{D7FF}').contains(&c)
-        || ('\u{F900}'..='\u{FDCF}').contains(&c)
-        || ('\u{FDF0}'..='\u{FFFD}').contains(&c)
-        || ('\u{10000}'..='\u{EFFFF}').contains(&c)
-}
-
-pub(crate) fn is_xml_name_char(c: char) -> bool {
-    is_xml_name_start_char(c)
-        || c == '-'
-        || c == '.'
-        || c.is_ascii_digit()
-        || c == '\u{B7}'
-        || ('\u{0300}'..='\u{036F}').contains(&c)
-        || ('\u{203F}'..='\u{2040}').contains(&c)
-}
-
-pub(crate) fn is_xml_name(s: &str) -> bool {
-    !s.is_empty() && s.starts_with(is_xml_name_start_char) && s[1..].chars().all(is_xml_name_char)
 }

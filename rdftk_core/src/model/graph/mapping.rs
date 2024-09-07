@@ -4,8 +4,8 @@ graph to provide more readable serialization forms.
 */
 
 use crate::model::qname::QName;
-use rdftk_iri::IriRef;
-use rdftk_names::{rdf, rdfs, xsd};
+use rdftk_iri::{IriRef, Name};
+use rdftk_names::{dc, foaf, owl, rdf, rdfs, xsd};
 use std::cell::RefCell;
 use std::fmt::Debug;
 use std::rc::Rc;
@@ -30,29 +30,61 @@ pub trait PrefixMappings: Debug {
     ///
     /// Construct a new mapping instance with the provided default namespace.
     ///
-    fn with_default(iri: IriRef) -> Self
+    fn with_default(self, iri: IriRef) -> Self
     where
-        Self: Sized;
+        Self: Sized,
+    {
+        let mut mut_self = self;
+        mut_self.set_default_namespace(iri);
+        mut_self
+    }
 
     ///
-    /// Include the common "xsd" (XML Schema Data types) mapping.
+    /// Include the common "owl" mapping.
     ///
-    fn include_xsd(&mut self) {
-        self.insert(xsd::default_prefix(), xsd::namespace_iri().clone());
+    fn with_owl(self) -> Self
+    where
+        Self: Sized,
+    {
+        let mut mut_self = self;
+        mut_self.insert_owl();
+        mut_self
     }
 
     ///
     /// Include the common "rdf" mapping.
     ///
-    fn include_rdf(&mut self) {
-        self.insert(rdf::default_prefix(), rdf::namespace_iri().clone());
+    fn with_rdf(self) -> Self
+    where
+        Self: Sized,
+    {
+        let mut mut_self = self;
+        mut_self.insert_rdf();
+        mut_self
     }
 
     ///
     /// Include the common "rdfs" mapping.
     ///
-    fn include_rdfs(&mut self) {
-        self.insert(rdfs::default_prefix(), rdfs::namespace_iri().clone());
+    fn with_rdfs(self) -> Self
+    where
+        Self: Sized,
+    {
+        let mut mut_self = self;
+        mut_self.insert_rdfs();
+        mut_self
+    }
+
+    ///
+    /// Include the common "xsd" (XML Schema Data types) mapping.
+    ///
+    fn with_xsd(self) -> Self
+    where
+        Self: Sized,
+    {
+        let mut mut_self = self;
+        mut_self.insert_xsd();
+        mut_self
     }
 
     // --------------------------------------------------------------------------------------------
@@ -79,30 +111,59 @@ pub trait PrefixMappings: Debug {
     ///
     fn set_default_namespace(&mut self, iri: IriRef);
 
+    fn remove_default_namespace(&mut self);
+
     ///
     /// Get the namespace Iri associated with this provided prefix, if present.
     ///
-    fn get_namespace(&self, prefix: &str) -> Option<&IriRef>;
+    fn get_namespace(&self, prefix: &Name) -> Option<&IriRef>;
 
     ///
     /// Get the prefix associated with this provided namespace URI, if present.
     ///
-    fn get_prefix(&self, namespace: &IriRef) -> Option<&String>;
+    fn get_prefix(&self, namespace: &IriRef) -> Option<&Option<Name>>;
 
     ///
     /// Return an iterator over the contained mappings.
     ///
-    fn mappings<'a>(&'a self) -> Box<dyn Iterator<Item = (&'a String, &'a IriRef)> + 'a>;
+    fn mappings<'a>(&'a self) -> Box<dyn Iterator<Item = (&'a Option<Name>, &'a IriRef)> + 'a>;
 
     ///
     /// Insert a mapping from the prefix string to the namespace Iri.
     ///
-    fn insert(&mut self, prefix: &str, iri: IriRef);
+    fn insert(&mut self, prefix: Name, iri: IriRef);
+
+    fn insert_owl(&mut self) {
+        self.insert(owl::default_prefix().clone(), owl::namespace().clone());
+    }
+
+    fn insert_rdf(&mut self) {
+        self.insert(rdf::default_prefix().clone(), rdf::namespace().clone());
+    }
+
+    fn insert_rdfs(&mut self) {
+        self.insert(rdfs::default_prefix().clone(), rdfs::namespace().clone());
+    }
+
+    fn insert_xsd(&mut self) {
+        self.insert(xsd::default_prefix().clone(), xsd::namespace().clone());
+    }
+
+    fn insert_foaf(&mut self) {
+        self.insert(foaf::default_prefix().clone(), foaf::namespace().clone());
+    }
+
+    fn insert_dcterms(&mut self) {
+        self.insert(
+            dc::terms::default_prefix().clone(),
+            dc::terms::namespace().clone(),
+        );
+    }
 
     ///
     /// Remove a mapping for the provided prefix. This operation has no effect if no mapping is present.
     ///
-    fn remove(&mut self, prefix: &str);
+    fn remove(&mut self, prefix: &Name);
 
     ///
     /// Remove all mappings from this instance.

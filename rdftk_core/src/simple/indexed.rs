@@ -7,13 +7,13 @@ use crate::model::features::{
     Featured, FEATURE_GRAPH_DUPLICATES, FEATURE_IDX_OBJECT, FEATURE_IDX_PREDICATE,
     FEATURE_IDX_SUBJECT, FEATURE_RDF_STAR,
 };
+use crate::model::graph::named::{GraphNameRef, NamedGraph};
 use crate::model::graph::{Graph, GraphFactory, GraphFactoryRef, GraphRef, PrefixMappingRef};
 use crate::model::literal::LiteralFactoryRef;
 use crate::model::statement::{
     ObjectNodeRef, StatementFactoryRef, StatementList, StatementRef, SubjectNodeRef,
 };
 use crate::model::Provided;
-use crate::simple::empty_mappings;
 use crate::simple::literal::literal_factory;
 use crate::simple::statement::statement_factory;
 use lazy_static::lazy_static;
@@ -26,6 +26,8 @@ use std::ops::Deref;
 use std::rc::Rc;
 use std::sync::Arc;
 
+use super::mapping::default_mappings;
+
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
@@ -35,11 +37,23 @@ use std::sync::Arc;
 ///
 #[derive(Clone, Debug)]
 pub struct IndexedSimpleGraph {
+    name: Option<GraphNameRef>,
     statements: StatementList,
     mappings: PrefixMappingRef,
     s_index: HashMap<SubjectNodeRef, StatementList>,
     p_index: HashMap<IriRef, StatementList>,
     o_index: HashMap<ObjectNodeRef, StatementList>,
+}
+
+// ------------------------------------------------------------------------------------------------
+// Public Functions
+// ------------------------------------------------------------------------------------------------
+
+///
+/// Retrieve the `GraphFactory` factory for `simple::SimpleGraph` instances.
+///
+pub fn graph_factory() -> GraphFactoryRef {
+    FACTORY.clone()
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -58,17 +72,6 @@ lazy_static! {
 }
 
 // ------------------------------------------------------------------------------------------------
-// Public Functions
-// ------------------------------------------------------------------------------------------------
-
-///
-/// Retrieve the `GraphFactory` factory for `simple::SimpleGraph` instances.
-///
-pub fn graph_factory() -> GraphFactoryRef {
-    FACTORY.clone()
-}
-
-// ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
@@ -80,17 +83,63 @@ impl Provided for IndexedSimpleGraphFactory {
 
 impl GraphFactory for IndexedSimpleGraphFactory {
     fn graph(&self) -> GraphRef {
-        self.with_mappings(empty_mappings())
+        Rc::from(RefCell::from(self.create(None, &[], None)))
     }
 
-    fn with_mappings(&self, prefix_mappings: PrefixMappingRef) -> GraphRef {
-        Rc::new(RefCell::new(IndexedSimpleGraph {
-            statements: Default::default(),
-            mappings: prefix_mappings,
+    fn named_graph(
+        &self,
+        name: Option<crate::model::graph::named::GraphNameRef>,
+    ) -> crate::model::graph::NamedGraphRef {
+        Rc::from(RefCell::from(self.create(name, &[], None)))
+    }
+
+    fn graph_from(
+        &self,
+        statements: &[StatementRef],
+        prefix_mappings: Option<PrefixMappingRef>,
+    ) -> GraphRef {
+        Rc::from(RefCell::from(self.create(
+            None,
+            statements,
+            prefix_mappings,
+        )))
+    }
+
+    fn named_graph_from(
+        &self,
+        name: Option<crate::model::graph::named::GraphNameRef>,
+        statements: &[StatementRef],
+        prefix_mappings: Option<PrefixMappingRef>,
+    ) -> crate::model::graph::NamedGraphRef {
+        Rc::from(RefCell::from(self.create(
+            name,
+            statements,
+            prefix_mappings,
+        )))
+    }
+}
+
+impl IndexedSimpleGraphFactory {
+    fn create(
+        &self,
+        name: Option<GraphNameRef>,
+        statements: &[StatementRef],
+        prefix_mappings: Option<PrefixMappingRef>,
+    ) -> IndexedSimpleGraph {
+        let mut graph = IndexedSimpleGraph {
+            name,
+            statements: statements.to_vec(),
+            mappings: prefix_mappings.unwrap_or_else(|| default_mappings()),
             s_index: Default::default(),
             p_index: Default::default(),
             o_index: Default::default(),
-        }))
+        };
+
+        for st in statements {
+            graph.insert(st.clone());
+        }
+
+        graph
     }
 }
 
@@ -305,6 +354,20 @@ impl Graph for IndexedSimpleGraph {
         self.s_index.clear();
         self.p_index.clear();
         self.o_index.clear();
+    }
+}
+
+impl NamedGraph for IndexedSimpleGraph {
+    fn name(&self) -> Option<&GraphNameRef> {
+        self.name.as_ref()
+    }
+
+    fn set_name(&mut self, name: GraphNameRef) {
+        self.name = Some(name);
+    }
+
+    fn unset_name(&mut self) {
+        self.name = None;
     }
 }
 

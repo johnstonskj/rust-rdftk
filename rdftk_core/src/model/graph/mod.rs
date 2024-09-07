@@ -24,6 +24,7 @@ use crate::model::statement::{
     ObjectNodeRef, StatementFactoryRef, StatementList, StatementRef, SubjectNodeRef,
 };
 use crate::model::Provided;
+use named::GraphNameRef;
 use rdftk_iri::IriRef;
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -49,9 +50,9 @@ pub trait GraphFactory: Debug + Provided {
     fn graph(&self) -> GraphRef;
 
     ///
-    /// Create a new graph instance with the provided namespace mappings.
+    /// Create a new named graph instance.
     ///
-    fn with_mappings(&self, prefix_mappings: PrefixMappingRef) -> GraphRef;
+    fn named_graph(&self, name: Option<GraphNameRef>) -> NamedGraphRef;
 
     ///
     ///  Create a new graph instance from the given statements and prefix mappings.
@@ -60,19 +61,17 @@ pub trait GraphFactory: Debug + Provided {
         &self,
         statements: &[StatementRef],
         prefix_mappings: Option<PrefixMappingRef>,
-    ) -> GraphRef {
-        let graph = self.graph();
-        {
-            let mut graph = graph.borrow_mut();
-            for st in statements {
-                graph.insert(st.clone());
-            }
-            if let Some(prefix_mappings) = prefix_mappings {
-                graph.set_prefix_mappings(prefix_mappings)
-            }
-        }
-        graph
-    }
+    ) -> GraphRef;
+
+    ///
+    ///  Create a new graph instance from the given statements and prefix mappings.
+    ///
+    fn named_graph_from(
+        &self,
+        name: Option<GraphNameRef>,
+        statements: &[StatementRef],
+        prefix_mappings: Option<PrefixMappingRef>,
+    ) -> NamedGraphRef;
 }
 
 ///
@@ -312,5 +311,8 @@ pub type GraphRef = Rc<RefCell<dyn Graph>>;
 
 pub mod mapping;
 pub use mapping::{PrefixMappingRef, PrefixMappings};
+
+pub mod named;
+pub use named::NamedGraphRef;
 
 pub mod skolem;

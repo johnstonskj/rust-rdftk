@@ -2,11 +2,9 @@
 Simple, in-memory implementation of the `DataSet` and `DataSetFactory` traits.
 */
 
-use crate::model::data_set::{
-    DataSet, DataSetFactory, DataSetFactoryRef, DataSetRef, GraphNameRef,
-};
+use crate::model::data_set::{DataSet, DataSetFactory, DataSetFactoryRef, DataSetRef};
 use crate::model::features::Featured;
-use crate::model::graph::{GraphFactoryRef, GraphRef};
+use crate::model::graph::{named::GraphNameRef, GraphFactoryRef, NamedGraphRef};
 use crate::model::Provided;
 use crate::simple::graph_factory;
 use lazy_static::lazy_static;
@@ -25,8 +23,7 @@ use std::sync::Arc;
 ///
 #[derive(Clone, Debug)]
 pub struct SimpleDataSet {
-    default_graph: Option<GraphRef>,
-    graphs: HashMap<GraphNameRef, GraphRef>,
+    graphs: HashMap<Option<GraphNameRef>, NamedGraphRef>,
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -65,9 +62,8 @@ impl Provided for SimpleDataSetFactory {
 }
 
 impl DataSetFactory for SimpleDataSetFactory {
-    fn data_set(&self, default_graph: Option<GraphRef>) -> DataSetRef {
+    fn data_set(&self) -> DataSetRef {
         Rc::new(RefCell::new(SimpleDataSet {
-            default_graph,
             graphs: Default::default(),
         }))
     }
@@ -83,56 +79,62 @@ impl Featured for SimpleDataSet {
 
 impl DataSet for SimpleDataSet {
     fn is_empty(&self) -> bool {
-        self.graphs.is_empty() && self.default_graph.is_none()
+        self.graphs.is_empty()
     }
 
     fn len(&self) -> usize {
-        self.graphs.len() + (if self.default_graph.is_some() { 1 } else { 0 })
+        self.graphs.len()
     }
 
-    fn has_default_graph(&self) -> bool {
-        self.default_graph.is_some()
-    }
-
-    fn default_graph(&self) -> Option<&GraphRef> {
-        self.default_graph.as_ref()
+    fn default_graph(&self) -> Option<&NamedGraphRef> {
+        self.graphs.get(&None)
     }
 
     fn has_graph_named(&self, name: &GraphNameRef) -> bool {
-        self.graphs.contains_key(name)
+        self.graphs.contains_key(&Some(name.clone()))
     }
 
-    fn graph_named(&self, name: &GraphNameRef) -> Option<&GraphRef> {
-        self.graphs.get(name)
+    fn graph_named(&self, name: &GraphNameRef) -> Option<&NamedGraphRef> {
+        self.graphs.get(&Some(name.clone()))
     }
 
-    fn graphs<'a>(&'a self) -> Box<dyn Iterator<Item = (&'a GraphNameRef, &'a GraphRef)> + 'a> {
-        Box::new(self.graphs.iter())
+    fn graphs(&self) -> Box<dyn Iterator<Item = &NamedGraphRef> + '_> {
+        Box::from(self.graphs.values())
+    }
+
+    fn graph_names(&self) -> Box<dyn Iterator<Item = &GraphNameRef> + '_> {
+        Box::from(self.graphs.keys().filter_map(|name| {
+            if let Some(name) = name {
+                Some(name)
+            } else {
+                None
+            }
+        }))
     }
 
     // --------------------------------------------------------------------------------------------
     // Mutators
     // --------------------------------------------------------------------------------------------
 
-    fn set_default_graph(&mut self, graph: GraphRef) {
-        self.default_graph = Some(graph);
+    fn insert(&mut self, graph: NamedGraphRef) {
+        let graph_name = graph.borrow().name().cloned();
+        let _ = self.graphs.insert(graph_name, graph);
     }
 
-    fn unset_default_graph(&mut self) {
-        self.default_graph = None;
-    }
-
-    fn insert(&mut self, name: GraphNameRef, graph: GraphRef) {
-        let _ = self.graphs.insert(name, graph);
+    fn extend(&mut self, graphs: Vec<NamedGraphRef>) {
+        graphs.into_iter().for_each(|g| self.insert(g))
     }
 
     fn remove(&mut self, name: &GraphNameRef) {
-        let _ = self.graphs.remove(name);
+        let _ = self.graphs.remove(&Some(name.clone()));
+    }
+
+    fn remove_default(&mut self) {
+        let _ = self.graphs.remove(&None);
     }
 
     fn clear(&mut self) {
         self.graphs.clear();
-        self.default_graph = None;
     }
 
     fn factory(&self) -> DataSetFactoryRef {

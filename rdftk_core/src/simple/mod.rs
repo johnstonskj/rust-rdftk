@@ -51,7 +51,6 @@ pub mod indexed;
 pub mod literal;
 
 pub mod mapping;
-pub use mapping::empty_mappings;
 
 pub mod resource;
 

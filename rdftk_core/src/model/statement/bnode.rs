@@ -1,5 +1,5 @@
-use crate::error::invalid_from_str;
-use crate::model::qname::{is_xml_name, QName};
+use crate::model::qname::QName;
+use rdftk_iri::Name;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
 use std::rc::Rc;
@@ -15,7 +15,7 @@ use unique_id::Generator;
 /// A String wrapper for blank nodes.
 ///
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct BlankNode(String);
+pub struct BlankNode(Name);
 
 ///
 /// A reference counted wrapper around a [`ObjectNode`] instance.
@@ -40,9 +40,15 @@ pub const BLANK_NODE_PREFIX: &str = "_:";
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
+impl AsRef<Name> for BlankNode {
+    fn as_ref(&self) -> &Name {
+        &self.0
+    }
+}
+
 impl AsRef<str> for BlankNode {
     fn as_ref(&self) -> &str {
-        &self.0
+        self.0.as_ref()
     }
 }
 
@@ -56,17 +62,31 @@ impl FromStr for BlankNode {
     type Err = crate::error::Error;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        if Self::is_valid(s) {
-            Ok(Self(s.to_string()))
-        } else {
-            Err(invalid_from_str(s, "BlankNode"))
-        }
+        Ok(Self(Name::from_str(s)?))
+    }
+}
+
+impl From<BlankNode> for Name {
+    fn from(v: BlankNode) -> Self {
+        v.0
     }
 }
 
 impl From<BlankNode> for String {
     fn from(v: BlankNode) -> Self {
-        v.0
+        v.0.into()
+    }
+}
+
+impl From<Name> for BlankNode {
+    fn from(value: Name) -> Self {
+        Self(value)
+    }
+}
+
+impl From<&Name> for BlankNode {
+    fn from(value: &Name) -> Self {
+        Self(value.clone())
     }
 }
 
@@ -75,7 +95,7 @@ impl BlankNode {
     /// Construct a new blank node with a generated identifier.
     ///
     pub fn generate() -> Self {
-        Self(format!("B{}", IDGenerator.next_id()))
+        Self(Name::new_unchecked(format!("B{}", IDGenerator.next_id())))
     }
 
     ///
@@ -84,11 +104,14 @@ impl BlankNode {
     /// with the reserved prefix `"_:"`.
     ///
     pub fn is_valid(s: &str) -> bool {
-        is_xml_name(if let Some(s) = s.strip_prefix(BLANK_NODE_PREFIX) {
-            s
-        } else {
-            s
-        })
+        Name::is_valid_str(
+            if let Some(s) = s.strip_prefix(BLANK_NODE_PREFIX) {
+                s
+            } else {
+                s
+            },
+            Default::default(),
+        )
     }
 
     ///
@@ -96,6 +119,6 @@ impl BlankNode {
     /// namespace value `"_"`.
     ///
     pub fn to_qname(&self) -> QName {
-        QName::new_unchecked(Some(BLANK_NODE_NAMESPACE), &self.0)
+        QName::new_blank(self.0.clone()).unwrap()
     }
 }

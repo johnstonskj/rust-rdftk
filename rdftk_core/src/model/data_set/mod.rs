@@ -7,40 +7,43 @@ Additional semantics taken from [RDF 1.1 TriG](https://www.w3.org/TR/trig/), _RD
 
 ```rust
 use rdftk_core::model::data_set::{DataSet, DataSetRef};
-use rdftk_core::model::graph::GraphRef;
+use rdftk_core::model::graph::NamedGraphRef;
 use rdftk_core::model::statement::StatementRef;
 
 fn simple_dataset_writer(data_set: &DataSetRef)
 {
     let data_set = data_set.borrow();
     if let Some(graph) = data_set.default_graph() {
-        println!("{{");
         simple_graph_writer(graph);
-        println!("}}");
     }
-    for (name, graph) in data_set.graphs() {
-        println!("{} {{", name);
+    for graph in data_set.graphs() {
         simple_graph_writer(graph);
-        println!("}}");
     }
 }
 
-fn simple_graph_writer(graph: &GraphRef)
+fn simple_graph_writer(graph: &NamedGraphRef)
 {
     let graph = graph.borrow();
+    if graph.is_named() {
+        println!("{} {{", graph.name().unwrap());
+    } else {
+        println!("{{");
+    }
     for statement in graph.statements() {
         println!("    {}", statement);
     }
+    println!("}}");
 }
 ```
 
 */
 
 use crate::model::features::Featured;
-use crate::model::graph::{GraphFactoryRef, GraphRef};
+use crate::model::graph::named::GraphNameRef;
+use crate::model::graph::named::NamedGraphRef;
+use crate::model::graph::GraphFactoryRef;
 use crate::model::Provided;
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::fmt::Debug;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -58,21 +61,17 @@ pub trait DataSetFactory: Debug + Provided {
     ///
     /// Create a new graph instance.
     ///
-    fn data_set(&self, default_graph: Option<GraphRef>) -> DataSetRef;
+    fn data_set(&self) -> DataSetRef;
 
     ///
     ///  Create a new graph instance from the given statements and prefix mappings.
     ///
-    fn data_set_from(
-        &self,
-        default_graph: Option<GraphRef>,
-        graphs: HashMap<GraphNameRef, GraphRef>,
-    ) -> DataSetRef {
-        let data_set = self.data_set(default_graph);
+    fn data_set_from(&self, graphs: Vec<NamedGraphRef>) -> DataSetRef {
+        let data_set = self.data_set();
         {
             let mut data_set = data_set.borrow_mut();
-            for (name, graph) in graphs {
-                data_set.insert(name, graph);
+            for graph in graphs {
+                data_set.insert(graph);
             }
         }
         data_set
@@ -104,12 +103,14 @@ pub trait DataSet: Debug + Featured {
     ///
     /// Return `true` if this data set has a default graph, else `false`.
     ///
-    fn has_default_graph(&self) -> bool;
+    fn has_default_graph(&self) -> bool {
+        self.default_graph().is_some()
+    }
 
     ///
     /// Return the default graph for this data set, if it exists.
     ///
-    fn default_graph(&self) -> Option<&GraphRef>;
+    fn default_graph(&self) -> Option<&NamedGraphRef>;
 
     ///
     /// Return `true` if this data set has a graph with the provided name, else `false`.
@@ -119,34 +120,39 @@ pub trait DataSet: Debug + Featured {
     ///
     /// Return the graph with the provided name from this data set, if it exists.
     ///
-    fn graph_named(&self, name: &GraphNameRef) -> Option<&GraphRef>;
+    fn graph_named(&self, name: &GraphNameRef) -> Option<&NamedGraphRef>;
 
     ///
-    /// Return an iterator over graph-name/graph pairs.
+    /// Return an iterator over all graphs.
     ///
-    fn graphs<'a>(&'a self) -> Box<dyn Iterator<Item = (&'a GraphNameRef, &'a GraphRef)> + 'a>;
+    fn graphs(&self) -> Box<dyn Iterator<Item = &NamedGraphRef> + '_>;
 
     ///
-    /// Set the provided graph as the default, unnamed graph, for this data set. Only one graph may
-    /// be the default.
+    /// Return an iterator over graph names.
     ///
-    fn set_default_graph(&mut self, graph: GraphRef);
-
-    ///
-    /// Remove any graph that may be set as the current default. This operation has no effect if
-    /// no default graph is present.
-    fn unset_default_graph(&mut self);
+    fn graph_names(&self) -> Box<dyn Iterator<Item = &GraphNameRef> + '_>;
 
     ///
     /// Insert a new graph with it's associated name into the data set.
     ///
-    fn insert(&mut self, name: GraphNameRef, graph: GraphRef);
+    fn insert(&mut self, graph: NamedGraphRef);
+
+    ///
+    /// Add all the graphs from the provided vector.
+    ///
+    fn extend(&mut self, graphs: Vec<NamedGraphRef>);
 
     ///
     /// Remove the graph with the provided name from this data set. This operation has no effect if
     /// no such graph is present.
     ///
-    fn remove(&mut self, name: &GraphNameRef);
+    fn remove(&mut self, named: &GraphNameRef);
+
+    ///
+    /// Remove the default graph from this data set. This operation has no effect if no default
+    /// graph is present.
+    ///
+    fn remove_default(&mut self);
 
     ///
     /// Remove all graphs from this data set.
@@ -174,10 +180,3 @@ pub trait DataSet: Debug + Featured {
 /// The reference type for a graph data set.
 ///
 pub type DataSetRef = Rc<RefCell<dyn DataSet>>;
-
-// ------------------------------------------------------------------------------------------------
-// Modules
-// ------------------------------------------------------------------------------------------------
-
-pub mod name;
-pub use name::{GraphName, GraphNameRef};

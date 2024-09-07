@@ -52,6 +52,15 @@ pub fn make_statements() -> StatementList {
 
 ## Changes
 
+### Version 0.4.2
+
+* Feature: changed some methods to use `Name` instead of strings
+* Feature: added new `NamedGraph` trait.
+* Feature: updated `DataSet` to use `NamedGraph` instead of separate name/graph
+  pairs.
+* Build: updated dependency `rdftk_iri`.
+* Build: updated dependency `rdftk_names`.
+
 ### Version 0.4.1
 
 * Build: cargo audit/outdated/udeps

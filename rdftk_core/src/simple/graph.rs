@@ -3,13 +3,15 @@ Simple, in-memory implementation of the `Graph` and `GraphFactory` traits.
 */
 
 use crate::model::features::{Featured, FEATURE_GRAPH_DUPLICATES, FEATURE_RDF_STAR};
-use crate::model::graph::{Graph, GraphFactory, GraphFactoryRef, GraphRef, PrefixMappingRef};
+use crate::model::graph::named::{GraphNameRef, NamedGraph};
+use crate::model::graph::{
+    Graph, GraphFactory, GraphFactoryRef, GraphRef, NamedGraphRef, PrefixMappingRef,
+};
 use crate::model::literal::LiteralFactoryRef;
 use crate::model::statement::{
     ObjectNodeRef, StatementFactoryRef, StatementList, StatementRef, SubjectNodeRef,
 };
 use crate::model::Provided;
-use crate::simple::empty_mappings;
 use crate::simple::literal::literal_factory;
 use crate::simple::statement::statement_factory;
 use lazy_static::lazy_static;
@@ -21,6 +23,8 @@ use std::ops::Deref;
 use std::rc::Rc;
 use std::sync::Arc;
 
+use super::mapping::default_mappings;
+
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
@@ -30,6 +34,7 @@ use std::sync::Arc;
 ///
 #[derive(Clone, Debug)]
 pub struct SimpleGraph {
+    name: Option<GraphNameRef>,
     statements: StatementList,
     mappings: PrefixMappingRef,
 }
@@ -71,14 +76,57 @@ impl Provided for SimpleGraphFactory {
 
 impl GraphFactory for SimpleGraphFactory {
     fn graph(&self) -> GraphRef {
-        self.with_mappings(empty_mappings())
+        Rc::from(RefCell::from(self.create(None, &[], None)))
     }
 
-    fn with_mappings(&self, mappings: PrefixMappingRef) -> GraphRef {
-        Rc::new(RefCell::new(SimpleGraph {
-            statements: Default::default(),
-            mappings,
-        }))
+    fn named_graph(&self, name: Option<GraphNameRef>) -> crate::model::graph::NamedGraphRef {
+        Rc::from(RefCell::from(self.create(name, &[], None)))
+    }
+
+    fn graph_from(
+        &self,
+        statements: &[StatementRef],
+        prefix_mappings: Option<PrefixMappingRef>,
+    ) -> GraphRef {
+        Rc::from(RefCell::from(self.create(
+            None,
+            statements,
+            prefix_mappings,
+        )))
+    }
+
+    fn named_graph_from(
+        &self,
+        name: Option<GraphNameRef>,
+        statements: &[StatementRef],
+        prefix_mappings: Option<PrefixMappingRef>,
+    ) -> NamedGraphRef {
+        Rc::from(RefCell::from(self.create(
+            name,
+            statements,
+            prefix_mappings,
+        )))
+    }
+}
+
+impl SimpleGraphFactory {
+    fn create(
+        &self,
+        name: Option<GraphNameRef>,
+        statements: &[StatementRef],
+        prefix_mappings: Option<PrefixMappingRef>,
+    ) -> SimpleGraph {
+        let mut graph = SimpleGraph {
+            name,
+            statements: statements.to_vec(),
+            mappings: prefix_mappings.unwrap_or_else(|| default_mappings()),
+        };
+
+        for st in statements {
+            graph.insert(st.clone());
+        }
+
+        graph
     }
 }
 
@@ -242,6 +290,36 @@ impl Graph for SimpleGraph {
 
     fn clear(&mut self) {
         self.statements.clear()
+    }
+}
+
+impl NamedGraph for SimpleGraph {
+    fn name(&self) -> Option<&GraphNameRef> {
+        self.name.as_ref()
+    }
+
+    fn set_name(&mut self, name: GraphNameRef) {
+        self.name = Some(name);
+    }
+
+    fn unset_name(&mut self) {
+        self.name = None;
+    }
+}
+
+impl SimpleGraph {
+    ///
+    /// Return a reference to the current instance as a [`Graph`].
+    ///
+    pub fn as_graph(&self) -> &impl Graph {
+        self
+    }
+
+    ///
+    /// Return a reference to the current instance as a [`Named'\'Graph`].
+    ///
+    pub fn as_named_graph(&self) -> &impl NamedGraph {
+        self
     }
 }
 
