@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use rdftk_iri::IRIRef;
+use rdftk_iri::IriRef;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub(crate) enum TurtleTripleType {
@@ -15,19 +15,19 @@ pub(crate) enum TurtleTripleType {
 
 impl TurtleTripleType {
     pub(crate) fn group_predicates<'a>(
-        predicates: &[&'a IRIRef],
-    ) -> Vec<(TurtleTripleType, Vec<&'a IRIRef>)> {
+        predicates: &[&'a IriRef],
+    ) -> Vec<(TurtleTripleType, Vec<&'a IriRef>)> {
         let mut result = predicates
             .iter()
-            .group_by(Self::group_predicate)
+            .chunk_by(Self::group_predicate)
             .into_iter()
             .map(|(triple_type, group)| (triple_type, group.cloned().collect()))
-            .collect::<Vec<(TurtleTripleType, Vec<&IRIRef>)>>();
+            .collect::<Vec<(TurtleTripleType, Vec<&IriRef>)>>();
         result.sort_by_key(|a| a.0);
         result
     }
 
-    fn group_predicate(predicate: &&&IRIRef) -> TurtleTripleType {
+    fn group_predicate(predicate: &&&IriRef) -> TurtleTripleType {
         match predicate.to_string().as_str() {
             "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" => TurtleTripleType::Type,
             "http://www.w3.org/2000/01/rdf-schema#label" => TurtleTripleType::Label,

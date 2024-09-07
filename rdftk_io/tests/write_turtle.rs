@@ -1,15 +1,15 @@
 #![cfg(feature = "turtle")]
 
 use rdftk_io::turtle::writer::{TurtleOptions, TurtleWriter};
-use rdftk_io::write_graph_to_string;
-use rdftk_iri::{IRIRef, IRI};
+use rdftk_io::{write_graph_to_string, write_graph_to_string_with_options};
+use rdftk_iri::{Iri, IriRef};
 use std::str::FromStr;
 
 mod common;
 
 #[test]
 fn write_to_turtle() {
-    let graph = common::tony_benn_graph();
+    let graph = common::tony_benn_graph(Default::default());
 
     let writer = TurtleWriter::default();
 
@@ -27,14 +27,14 @@ fn write_to_turtle() {
 
 #[test]
 fn write_to_turtle_with_base() {
-    let graph = common::tony_benn_graph();
+    let graph = common::tony_benn_graph(Default::default());
 
-    let writer = TurtleWriter::with_base(
-        IRIRef::from(IRI::from_str("http://en.wikipedia.org/wiki/").unwrap()),
-        TurtleOptions::default(),
-    );
+    let options = TurtleOptions::default().with_id_base(IriRef::from(
+        Iri::from_str("http://en.wikipedia.org/wiki/").unwrap(),
+    ));
+    let writer = TurtleWriter::default();
 
-    let result = write_graph_to_string(&writer, &graph);
+    let result = write_graph_to_string_with_options(&writer, &graph, &options);
     assert!(result.is_ok());
     let output = result.unwrap();
     println!("# format: turtle\n{}", output);
@@ -49,17 +49,17 @@ fn write_to_turtle_with_base() {
 
 #[test]
 fn write_to_turtle_with_options() {
-    let graph = common::tony_benn_graph();
+    let graph = common::tony_benn_graph(Default::default());
 
-    let mut options = TurtleOptions::default();
-    options.use_sparql_style = true;
-    options.nest_blank_nodes = false;
-    let writer = TurtleWriter::with_base(
-        IRIRef::from(IRI::from_str("http://en.wikipedia.org/wiki/").unwrap()),
-        options,
-    );
+    let options = TurtleOptions::default()
+        .with_id_base(IriRef::from(
+            Iri::from_str("http://en.wikipedia.org/wiki/").unwrap(),
+        ))
+        .with_sparql_style()
+        .with_nested_blank_nodes();
+    let writer = TurtleWriter::default();
 
-    let result = write_graph_to_string(&writer, &graph);
+    let result = write_graph_to_string_with_options(&writer, &graph, &options);
     assert!(result.is_ok());
     let output = result.unwrap();
     println!("# format: turtle\n{}", output);

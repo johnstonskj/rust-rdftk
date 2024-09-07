@@ -57,7 +57,10 @@ impl Default for JsonWriter {
 }
 
 impl GraphWriter for JsonWriter {
-    fn write(&self, w: &mut impl Write, graph: &GraphRef) -> Result<()> {
+    fn write<W>(&self, w: &mut W, graph: &GraphRef) -> Result<()>
+    where
+        W: Write,
+    {
         let graph = graph.borrow();
 
         let mut json_graph = Map::new();

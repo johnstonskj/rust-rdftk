@@ -86,7 +86,10 @@ impl Default for XmlReader {
 }
 
 impl GraphReader for XmlReader {
-    fn read(&self, r: &mut impl Read, factory: GraphFactoryRef) -> Result<GraphRef> {
+    fn read<R>(&self, r: &mut R, factory: GraphFactoryRef) -> Result<GraphRef>
+    where
+        R: Read,
+    {
         let mut event_reader = EventReader::new(r);
         parse_document(&mut event_reader, factory)
     }
@@ -126,21 +129,21 @@ macro_rules! error_event {
             ErrorKind::Msg(format!("error parsing XML: {:?}", $error,)).into();
         error_event!($fn_name, inner);
     };
-    (unexpected => $fn_name:expr, $event:expr) => {
-        let inner: rdftk_core::error::Error =
-            ErrorKind::Msg(format!("unexpected XML Event: {:?}", $event,)).into();
-        error_event!(inner);
-    };
+    //(unexpected => $fn_name:expr, $event:expr) => {
+    //    let inner: rdftk_core::error::Error =
+    //        ErrorKind::Msg(format!("unexpected XML Event: {:?}", $event,)).into();
+    //    error_event!(inner);
+    //};
     (state => $fn_name:expr, $msg:expr) => {
         let inner: rdftk_core::error::Error =
             ErrorKind::Msg(format!("invalid state: {}", $msg,)).into();
         error_event!($fn_name, inner);
     };
-    (unsupported => $fn_name:expr, $feature:expr) => {
-        let inner: rdftk_core::error::Error =
-            ErrorKind::Msg(format!("unsupported feature/capability: {}", $feature)).into();
-        error_event!($fn_name, inner);
-    };
+    //(unsupported => $fn_name:expr, $feature:expr) => {
+    //    let inner: rdftk_core::error::Error =
+    //        ErrorKind::Msg(format!("unsupported feature/capability: {}", $feature)).into();
+    //    error_event!($fn_name, inner);
+    //};
     ($fn_name:expr, $inner:expr) => {
         log::error!("XmlReader::{} {}", $fn_name, $inner);
         return Err(rdftk_core::error::Error::with_chain(
@@ -410,7 +413,7 @@ fn parse_predicate_element<R: Read>(
                             // SPEC: §2.11 Omitting Blank Nodes: rdf:parseType="Resource"
                             let subject_node = statement_factory.blank_subject_new();
                             //parse_predicate_attributes(&attributes.inner, &subject_node, graph)?;
-                            let subject = parse_subject_element(
+                            let _subject = parse_subject_element(
                                 event_reader,
                                 if attributes.uri_base.is_some() {
                                     &attributes.uri_base
@@ -466,7 +469,7 @@ fn parse_object_element<R: Read>(
                 has_elements = true;
                 let attributes = parse_attributes(attributes)?;
                 let subject_node = graph.borrow().statement_factory().blank_subject_new();
-                let subject = parse_subject_element(
+                let _subject = parse_subject_element(
                     event_reader,
                     if attributes.uri_base.is_some() {
                         &attributes.uri_base

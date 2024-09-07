@@ -150,7 +150,10 @@ impl Default for XmlWriter {
 }
 
 impl GraphWriter for XmlWriter {
-    fn write(&self, w: &mut impl Write, graph: &GraphRef) -> Result<()> {
+    fn write<W>(&self, w: &mut W, graph: &GraphRef) -> Result<()>
+    where
+        W: Write,
+    {
         let graph = graph.borrow();
 
         let config = EmitterConfig::new()
@@ -170,7 +173,7 @@ impl GraphWriter for XmlWriter {
         writer
             .write(
                 XmlEvent::start_element(container_name.as_str())
-                    .ns(rdf::default_prefix(), rdf::namespace_str()),
+                    .ns(rdf::default_prefix().as_ref(), rdf::namespace_str()),
             )
             .map_err(xml_error)?;
 
@@ -204,31 +207,31 @@ impl XmlWriter {
     fn default_mappings() -> HashMap<String, String> {
         let mappings: HashMap<String, String> = [
             (
-                dc::elements::namespace_iri().to_string(),
+                dc::elements::namespace().to_string(),
                 dc::elements::default_prefix().to_string(),
             ),
             (
-                foaf::namespace_iri().to_string(),
+                foaf::namespace().to_string(),
                 foaf::default_prefix().to_string(),
             ),
             (
-                geo::namespace_iri().to_string(),
+                geo::namespace().to_string(),
                 geo::default_prefix().to_string(),
             ),
             (
-                owl::namespace_iri().to_string(),
+                owl::namespace().to_string(),
                 owl::default_prefix().to_string(),
             ),
             (
-                rdf::namespace_iri().to_string(),
+                rdf::namespace().to_string(),
                 rdf::default_prefix().to_string(),
             ),
             (
-                rdfs::namespace_iri().to_string(),
+                rdfs::namespace().to_string(),
                 rdfs::default_prefix().to_string(),
             ),
             (
-                xsd::namespace_iri().to_string(),
+                xsd::namespace().to_string(),
                 xsd::default_prefix().to_string(),
             ),
         ]

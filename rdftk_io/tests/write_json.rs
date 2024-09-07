@@ -7,7 +7,7 @@ mod common;
 
 #[test]
 fn write_json_plain() {
-    let graph = common::tony_benn_graph(common::TonyBennType::OneType);
+    let graph = common::tony_benn_graph(common::TonyBennType::default());
 
     let writer = JsonWriter::default();
 
@@ -22,7 +22,7 @@ fn write_json_plain() {
 
 #[test]
 fn write_json_pretty() {
-    let graph = common::tony_benn_graph(common::TonyBennType::OneType);
+    let graph = common::tony_benn_graph(common::TonyBennType::default());
 
     let writer = JsonWriter::pretty();
 

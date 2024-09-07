@@ -46,34 +46,48 @@ let graph = reader.read(&mut file, graph_factory()).unwrap();
 
 ## Changes
 
-**Version 0.2.1**
+### Version 0.3.1
+
+* Feature: add `NamedGraphWriter` trait.
+* Feature: add corresponding `WithOptions` trait for all `Reader` and `Writeer` traits.
+* Build: update `rdftk_core` dependency.
+
+### Version 0.3.0
+
+* Feature: moved to new `rdftk_core` package.
+* Build: updated Rust edition from 2018 to 2021.
+* Build: cargo audit/outdated/udeps
+* Docs: added API docs as much as possible.
+* Docs: run markuplint on `README.md`.
+
+### Version 0.2.1
 
 * Added JSON reader.
 
-**Version 0.2.0**
+### Version 0.2.0
 
 * Updated rdftk_core dependency to 0.3.0, this is a significant API change.
 * All read operations require a graph factory now.
 
-**Version 0.1.9**
+### Version 0.1.9
 
 * Added unicode escape handling into the IRI parsing.
 * All W3C test cases for NTriples now passing.
 * Removed local error module, using core error types now.
 
-**Version 0.1.8**
+### Version 0.1.8
 
 * Using new style interfaces, a consistent use of traits and trait reference types.
 * Have a working NTriple parser.
 
-**Version 0.1.7**
+### Version 0.1.7
 
 * Using rdftk_core 0.2, this has changes in the signature of both Graph and DataSet traits.
   * This results in changes to both GraphWriter and DataSetWriter traits.
 * Applied a lot more warnings in lib.rs
 * Fixed resulting Clippy suggestions.
 
-**Version 0.1.6**
+### Version 0.1.6
 
 * Made all modules have separate reader/writer sub-modules.
 * Put all modules behind features.
@@ -83,24 +97,24 @@ let graph = reader.read(&mut file, graph_factory()).unwrap();
 * Fixed formatting in Turtle writer.
 * Added XML writer.
 
-**Version 0.1.5**
+### Version 0.1.5
 
 * Internal change to use `StatementRef`.
 
-**Version 0.1.4**
+### Version 0.1.4
 
 * API changes in core crate:
   * Altered `PrefixMappings::compress` and `PrefixMappings::expand` to take references.
 
-**Version 0.1.2**
+### Version 0.1.2
 
 * Made all `IRI` into `IRIRef`.
 
-**Version 0.1.1**
+### Version 0.1.1
 
 * Made all local dependencies only major/minor valued.
 
-**Version 0.1.0**
+### Version 0.1.0
 
 * First release.
 * Provides write support only for N-Triples, N-Quads, and GraphViz.

@@ -49,7 +49,10 @@ impl Default for JsonReader {
 }
 
 impl GraphReader for JsonReader {
-    fn read(&self, r: &mut impl Read, factory: GraphFactoryRef) -> Result<GraphRef> {
+    fn read<R>(&self, r: &mut R, factory: GraphFactoryRef) -> Result<GraphRef>
+    where
+        R: Read,
+    {
         let value: Value = serde_json::from_reader(r).map_err(|e| {
             rdftk_core::error::Error::with_chain(e, ErrorKind::ReadWrite(super::NAME.to_string()))
         })?;

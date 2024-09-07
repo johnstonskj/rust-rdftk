@@ -112,7 +112,10 @@ impl Default for DotWriter {
 }
 
 impl GraphWriter for DotWriter {
-    fn write(&self, w: &mut impl Write, graph: &GraphRef) -> rdftk_core::error::Result<()> {
+    fn write<W>(&self, w: &mut impl W, graph: &GraphRef) -> rdftk_core::error::Result<()>
+    where
+        W: Write,
+    {
         writeln!(w, "digraph {{\n    rankdir=BT\n    charset=\"utf-8\";").map_err(io_error)?;
 
         writeln!(w).map_err(io_error)?;

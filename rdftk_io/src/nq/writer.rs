@@ -20,10 +20,10 @@ let result = write_data_set_to_string(&writer, &make_data_set());
 
 */
 
-use crate::{DataSetWriter, GraphWriter};
+use crate::{DataSetWriter, NamedGraphWriter};
 use rdftk_core::error::Result;
-use rdftk_core::model::data_set::{DataSetRef, GraphNameRef};
-use rdftk_core::model::graph::GraphRef;
+use rdftk_core::model::data_set::DataSetRef;
+use rdftk_core::model::graph::named::NamedGraphRef;
 use std::io::Write;
 
 // ------------------------------------------------------------------------------------------------
@@ -38,13 +38,11 @@ use std::io::Write;
 pub struct NQuadDataSetWriter {}
 
 ///
-/// This struct implements the `DataSetWriter` trait and will write out a serialized form of the
-/// entire data set.
+/// This struct implements the `NamedGraphWriter` trait and will write out a serialized form of a
+/// member graph.
 ///
 #[derive(Debug)]
-pub struct NQuadGraphWriter {
-    name: Option<GraphNameRef>,
-}
+pub struct NQuadGraphWriter {}
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
@@ -57,15 +55,14 @@ impl Default for NQuadDataSetWriter {
 }
 
 impl DataSetWriter for NQuadDataSetWriter {
-    fn write(&self, w: &mut impl Write, data_set: &DataSetRef) -> Result<()> {
+    fn write<W>(&self, w: &mut W, data_set: &DataSetRef) -> Result<()>
+    where
+        W: Write,
+    {
         let data_set = data_set.borrow();
-        if let Some(graph) = data_set.default_graph() {
-            let inner_writer = NQuadGraphWriter::default();
-            inner_writer.write(w, graph)?;
-        }
-        for (name, graph) in data_set.graphs() {
-            let inner_writer = NQuadGraphWriter::named(name.clone());
-            inner_writer.write(w, graph)?;
+        let graph_writer = NQuadGraphWriter::default();
+        for graph in data_set.graphs() {
+            graph_writer.write(w, graph)?;
         }
         Ok(())
     }
@@ -75,17 +72,21 @@ impl DataSetWriter for NQuadDataSetWriter {
 
 impl Default for NQuadGraphWriter {
     fn default() -> Self {
-        Self { name: None }
+        Self {}
     }
 }
 
-impl GraphWriter for NQuadGraphWriter {
-    fn write(&self, w: &mut impl Write, graph: &GraphRef) -> Result<()> {
+impl NamedGraphWriter for NQuadGraphWriter {
+    fn write<W>(&self, w: &mut W, graph: &NamedGraphRef) -> Result<()>
+    where
+        W: Write,
+    {
         let graph = graph.borrow();
+        let graph_name = graph.name();
         for subject in graph.subjects() {
             for predicate in graph.predicates_for(subject) {
                 for object in graph.objects_for(subject, predicate) {
-                    if let Some(graph_name) = &self.name {
+                    if let Some(graph_name) = graph_name {
                         writeln!(w, "{} <{}> {} {} .", subject, predicate, object, graph_name)
                             .map_err(io_error)?;
                     } else {
@@ -96,13 +97,6 @@ impl GraphWriter for NQuadGraphWriter {
             }
         }
         Ok(())
-    }
-}
-
-impl NQuadGraphWriter {
-    /// Construct a new quad writer with the provided graph name.
-    pub fn named(name: GraphNameRef) -> Self {
-        Self { name: Some(name) }
     }
 }
 

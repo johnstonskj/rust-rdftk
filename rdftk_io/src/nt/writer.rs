@@ -16,7 +16,7 @@ let result = write_graph_to_string(&writer, &make_graph());
 
 */
 
-use crate::nq::writer::NQuadGraphWriter;
+use crate::turtle::writer::io_error;
 use crate::GraphWriter;
 use rdftk_core::error::Result;
 use rdftk_core::model::graph::GraphRef;
@@ -44,8 +44,18 @@ impl Default for NTripleWriter {
 }
 
 impl GraphWriter for NTripleWriter {
-    fn write(&self, w: &mut impl Write, graph: &GraphRef) -> Result<()> {
-        let inner_writer = NQuadGraphWriter::default();
-        inner_writer.write(w, graph)
+    fn write<W>(&self, w: &mut W, graph: &GraphRef) -> Result<()>
+    where
+        W: Write,
+    {
+        let graph = graph.borrow();
+        for subject in graph.subjects() {
+            for predicate in graph.predicates_for(subject) {
+                for object in graph.objects_for(subject, predicate) {
+                    writeln!(w, "{} <{}> {} .", subject, predicate, object).map_err(io_error)?;
+                }
+            }
+        }
+        Ok(())
     }
 }

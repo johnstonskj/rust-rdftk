@@ -53,7 +53,10 @@ impl Default for NTriplesReader {
 }
 
 impl GraphReader for NTriplesReader {
-    fn read(&self, r: &mut impl Read, factory: GraphFactoryRef) -> Result<GraphRef> {
+    fn read<R>(&self, r: &mut R, factory: GraphFactoryRef) -> Result<GraphRef>
+    where
+        R: Read,
+    {
         let mut content: String = String::new();
         let _ = r.read_to_string(&mut content).map_err(io_error)?;
         parser::parse_graph(&content, factory)

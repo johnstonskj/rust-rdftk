@@ -44,28 +44,47 @@ let graph = reader.read(&mut file, graph_factory()).unwrap();
 */
 
 #![warn(
+    unknown_lints,
     // ---------- Stylistic
-    future_incompatible,
-    nonstandard_style,
+    absolute_paths_not_starting_with_crate,
+    elided_lifetimes_in_paths,
+    explicit_outlives_requirements,
+    macro_use_extern_crate,
+    nonstandard_style, /* group */
+    noop_method_call,
     rust_2018_idioms,
+    single_use_lifetimes,
     trivial_casts,
     trivial_numeric_casts,
+    // ---------- Future
+    future_incompatible, /* group */
+    rust_2021_compatibility, /* group */
     // ---------- Public
     missing_debug_implementations,
-    missing_docs,
+    // missing_docs,
     unreachable_pub,
     // ---------- Unsafe
     unsafe_code,
+    unsafe_op_in_unsafe_fn,
     // ---------- Unused
-    unused_extern_crates,
-    unused_import_braces,
-    unused_qualifications,
-    unused_results,
+    unused, /* group */
+)]
+#![deny(
+    // ---------- Public
+    exported_private_dependencies,
+    // ---------- Deprecated
+    anonymous_parameters,
+    bare_trait_objects,
+    ellipsis_inclusive_range_patterns,
+    // ---------- Unsafe
+    deref_nullptr,
+    drop_bounds,
+    dyn_drop,
 )]
 
 use rdftk_core::error::Result;
 use rdftk_core::model::data_set::DataSetRef;
-use rdftk_core::model::graph::{GraphFactoryRef, GraphRef};
+use rdftk_core::model::graph::{GraphFactoryRef, GraphRef, NamedGraphRef};
 use std::io::{Read, Write};
 
 // ------------------------------------------------------------------------------------------------
@@ -78,7 +97,23 @@ use std::io::{Read, Write};
 ///
 pub trait GraphReader {
     /// Read a graph from the read implementation `r`.
-    fn read(&self, r: &mut impl Read, factory: GraphFactoryRef) -> Result<GraphRef>;
+    fn read<R>(&self, r: &mut R, factory: GraphFactoryRef) -> Result<GraphRef>
+    where
+        R: Read;
+}
+
+pub trait GraphReaderWithOptions {
+    type Options: Default;
+
+    /// Read a graph from the read implementation `r`.
+    fn read_with_options<R>(
+        &self,
+        r: &mut R,
+        factory: GraphFactoryRef,
+        options: &Self::Options,
+    ) -> Result<GraphRef>
+    where
+        R: Read;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -90,7 +125,49 @@ pub trait GraphReader {
 ///
 pub trait GraphWriter {
     /// Write the formatted graph `Graph` using the write implementation `w`.
-    fn write(&self, w: &mut impl Write, graph: &GraphRef) -> Result<()>;
+    fn write<W>(&self, w: &mut W, graph: &GraphRef) -> Result<()>
+    where
+        W: Write;
+}
+
+pub trait GraphWriterWithOptions {
+    type Options: Default;
+
+    /// Write the formatted graph `Graph` using the write implementation `w`.
+    fn write_with_options<W>(
+        &self,
+        w: &mut W,
+        graph: &GraphRef,
+        options: &Self::Options,
+    ) -> Result<()>
+    where
+        W: Write;
+}
+
+///
+/// Write all [`Statement`](../rdftk_core/statement/struct.Statement.html)s in the
+/// [`NamedGraph`](../rdftk_graph/graph/trait.NamedGraph.html) using the provided implementation of
+/// [`Write`](https://doc.rust-lang.org/std/io/trait.Write.html).
+///
+pub trait NamedGraphWriter {
+    /// Write the formatted graph `NamedGraph` using the write implementation `w`.
+    fn write<W>(&self, w: &mut W, graph: &NamedGraphRef) -> Result<()>
+    where
+        W: Write;
+}
+
+pub trait NamedGraphWriterWithOptions {
+    type Options: Default;
+
+    /// Write the formatted graph `Graph` using the write implementation `w`.
+    fn write_with_options<W>(
+        &self,
+        w: &mut W,
+        graph: &NamedGraphRef,
+        options: &Self::Options,
+    ) -> Result<()>
+    where
+        W: Write;
 }
 
 ///
@@ -100,7 +177,23 @@ pub trait GraphWriter {
 ///
 pub trait DataSetWriter {
     /// Write the formatted graph `NamedGraph` using the write implementation `w`.
-    fn write(&self, w: &mut impl Write, data_set: &DataSetRef) -> Result<()>;
+    fn write<W>(&self, w: &mut W, data_set: &DataSetRef) -> Result<()>
+    where
+        W: Write;
+}
+
+pub trait DataSetWriterWithOptions {
+    type Options: Default;
+
+    /// Write the formatted graph `NamedGraph` using the write implementation `w`.
+    fn write_with_options<W>(
+        &self,
+        w: &mut W,
+        data_set: &DataSetRef,
+        options: &Self::Options,
+    ) -> Result<()>
+    where
+        W: Write;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -119,14 +212,138 @@ pub fn write_graph_to_string(w: &impl GraphWriter, graph: &GraphRef) -> Result<S
 }
 
 ///
+/// A convenience function that will return a String containing the output of the `GraphWriter`
+/// for the given `Graph` instance, and options.
+///
+pub fn write_graph_to_string_with_options<T>(
+    w: &impl GraphWriterWithOptions<Options = T>,
+    graph: &GraphRef,
+    options: &T,
+) -> Result<String>
+where
+    T: Default,
+{
+    use std::io::Cursor;
+    let mut buffer = Cursor::new(Vec::new());
+    w.write_with_options(&mut buffer, graph, options)?;
+    Ok(String::from_utf8(buffer.into_inner()).unwrap())
+}
+
+///
 /// A convenience function that will return a String containing the output of the `NamedGraphWriter`
 /// for the given `NamedGraph` instance.
+///
+pub fn write_named_graph_to_string(
+    w: &impl NamedGraphWriter,
+    graph: &NamedGraphRef,
+) -> Result<String> {
+    use std::io::Cursor;
+    let mut buffer = Cursor::new(Vec::new());
+    w.write(&mut buffer, graph)?;
+    Ok(String::from_utf8(buffer.into_inner()).unwrap())
+}
+
+///
+/// A convenience function that will return a String containing the output of the `NamedGraphWriter`
+/// for the given `NamedGraph` instance, and options.
+///
+pub fn write_named_graph_to_string_with_options<T>(
+    w: &impl NamedGraphWriterWithOptions<Options = T>,
+    graph: &NamedGraphRef,
+    options: &T,
+) -> Result<String>
+where
+    T: Default,
+{
+    use std::io::Cursor;
+    let mut buffer = Cursor::new(Vec::new());
+    w.write_with_options(&mut buffer, graph, options)?;
+    Ok(String::from_utf8(buffer.into_inner()).unwrap())
+}
+
+///
+/// A convenience function that will return a String containing the output of the `DataSetWriter`
+/// for the given `DataSet` instance.
 ///
 pub fn write_data_set_to_string(w: &impl DataSetWriter, data_set: &DataSetRef) -> Result<String> {
     use std::io::Cursor;
     let mut buffer = Cursor::new(Vec::new());
     w.write(&mut buffer, data_set)?;
     Ok(String::from_utf8(buffer.into_inner()).unwrap())
+}
+
+///
+/// A convenience function that will return a String containing the output of the `DataSetWriter`
+/// for the given `DataSet` instance, and options.
+///
+pub fn write_data_set_to_string_with_options<T>(
+    w: &impl DataSetWriterWithOptions<Options = T>,
+    data_set: &DataSetRef,
+    options: &T,
+) -> Result<String>
+where
+    T: Default,
+{
+    use std::io::Cursor;
+    let mut buffer = Cursor::new(Vec::new());
+    w.write_with_options(&mut buffer, data_set, options)?;
+    Ok(String::from_utf8(buffer.into_inner()).unwrap())
+}
+
+// ------------------------------------------------------------------------------------------------
+// Implementations
+// ------------------------------------------------------------------------------------------------
+
+impl<T: GraphReaderWithOptions> GraphReader for T {
+    fn read<R>(&self, r: &mut R, factory: GraphFactoryRef) -> Result<GraphRef>
+    where
+        R: Read,
+    {
+        self.read_with_options(
+            r,
+            factory,
+            &<Self as GraphReaderWithOptions>::Options::default(),
+        )
+    }
+}
+
+impl<T: GraphWriterWithOptions> GraphWriter for T {
+    fn write<W>(&self, w: &mut W, graph: &GraphRef) -> Result<()>
+    where
+        W: Write,
+    {
+        self.write_with_options(
+            w,
+            graph,
+            &<Self as GraphWriterWithOptions>::Options::default(),
+        )
+    }
+}
+
+impl<T: NamedGraphWriterWithOptions> NamedGraphWriter for T {
+    fn write<W>(&self, w: &mut W, graph: &NamedGraphRef) -> Result<()>
+    where
+        W: Write,
+    {
+        self.write_with_options(
+            w,
+            graph,
+            &<Self as NamedGraphWriterWithOptions>::Options::default(),
+        )
+    }
+}
+
+impl<T: DataSetWriterWithOptions> DataSetWriter for T {
+    fn write<W>(&self, w: &mut W, dataset: &DataSetRef) -> Result<()>
+    where
+        W: Write,
+    {
+        self.write_with_options(
+            w,
+            dataset,
+            &<Self as DataSetWriterWithOptions>::Options::default(),
+        )
+    }
 }
 
 // ------------------------------------------------------------------------------------------------

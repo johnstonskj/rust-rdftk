@@ -25,16 +25,8 @@ let result = write_graph_to_string(&writer, &make_graph());
 */
 
 #[allow(unused_imports)]
-use std::borrow::Borrow as XXX;
+use std::borrow::Borrow as _;
 use std::string::FromUtf8Error;
-
-mod cursor;
-mod options;
-mod triple_type;
-mod turtle_writer;
-
-pub use options::TurtleOptions;
-pub use turtle_writer::TurtleWriter;
 
 // ------------------------------------------------------------------------------------------------
 // Private Functions
@@ -54,3 +46,17 @@ pub fn borrow_error(e: std::cell::BorrowError) -> rdftk_core::error::Error {
     use rdftk_core::error::ErrorKind;
     rdftk_core::error::Error::with_chain(e, ErrorKind::InvalidState)
 }
+
+// ------------------------------------------------------------------------------------------------
+// Modules
+// ------------------------------------------------------------------------------------------------
+
+mod cursor;
+
+mod options;
+pub use options::TurtleOptions;
+
+mod triple_type;
+
+mod turtle_writer;
+pub use turtle_writer::TurtleWriter;

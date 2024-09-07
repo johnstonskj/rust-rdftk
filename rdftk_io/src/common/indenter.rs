@@ -31,30 +31,31 @@ impl Default for Indenter {
 
 impl Display for Indenter {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{:width$}",
-            "",
-            width = (self.width * self.depth as u16) as usize
-        )
+        write!(f, "{:width$}", "", width = self.width * self.depth)
     }
 }
 
 impl Indenter {
-    #[allow(dead_code)]
-    pub(crate) fn with_width(width: usize) -> Self {
-        Self { width, depth: 0 }
+    pub(crate) fn with_width(self, width: usize) -> Self {
+        Self { width, ..self }
+    }
+
+    pub(crate) fn with_depth(self, depth: usize) -> Self {
+        Self { depth, ..self }
     }
 
     pub(crate) fn depth(&self) -> usize {
         self.depth
     }
 
+    pub(crate) fn reset_depth(&mut self) {
+        self.depth = 0
+    }
+
     pub(crate) fn indent(&self) -> Self {
         self.indent_by(1)
     }
 
-    #[allow(dead_code)]
     pub(crate) fn indent_by(&self, by: usize) -> Self {
         Self {
             width: self.width,
@@ -66,7 +67,6 @@ impl Indenter {
         self.outdent_by(1)
     }
 
-    #[allow(dead_code)]
     pub(crate) fn outdent_by(&self, by: usize) -> Self {
         Self {
             width: self.width,
@@ -74,7 +74,7 @@ impl Indenter {
         }
     }
 
-    pub(crate) fn one(&self) -> String {
-        format!("{:width$}", "", width = self.width)
-    }
+    //pub(crate) fn one(&self) -> String {
+    //    format!("{:width$}", "", width = self.width)
+    //}
 }
