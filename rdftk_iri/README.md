@@ -44,6 +44,10 @@ assert_eq!(
 
 ## Changes
 
+### Version 0.2.3
+
+* Feature: added `From<&Name>` for `String`.
+
 ### Version 0.2.2
 
 * Feat: added new `Name` structure (and `NameParseError`) to validate the name

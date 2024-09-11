@@ -52,6 +52,10 @@ pub fn make_statements() -> StatementList {
 
 ## Changes
 
+### Version 0.4.3
+
+* Feature: added `From<&BlankNode>` for both `Name` and `String`.
+
 ### Version 0.4.2
 
 * Feature: changed some methods to use `Name` instead of strings
