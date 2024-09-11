@@ -525,6 +525,12 @@ impl From<Name> for String {
     }
 }
 
+impl From<&Name> for String {
+    fn from(value: &Name) -> Self {
+        value.0.clone()
+    }
+}
+
 impl Name {
     ///
     /// Returns a new `Name` instance from the string `s` **without** any validation.

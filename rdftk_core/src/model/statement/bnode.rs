@@ -78,6 +78,18 @@ impl From<BlankNode> for String {
     }
 }
 
+impl From<&BlankNode> for Name {
+    fn from(v: &BlankNode) -> Self {
+        v.0.clone()
+    }
+}
+
+impl From<&BlankNode> for String {
+    fn from(v: &BlankNode) -> Self {
+        (&v.0).into()
+    }
+}
+
 impl From<Name> for BlankNode {
     fn from(value: Name) -> Self {
         Self(value)
