@@ -7,7 +7,7 @@ More detailed description, with
 
  */
 
-use super::common::{prologue, iri_ref};
+use super::common::{iri_ref, prologue};
 use combine::parser::char::char;
 use combine::{choice, optional, value, ParseError, Parser, RangeStream};
 
@@ -61,12 +61,10 @@ where
     I: RangeStream<Token = char, Range = &'a str>,
     I::Error: ParseError<I::Token, I::Range, I::Position>,
 {
-    (
-        keyword("graph").skip(spaces()),
-        iri_ref(),
-    ).with(value(())).expected("GraphRef")
+    (keyword("graph").skip(spaces()), iri_ref())
+        .with(value(()))
+        .expected("GraphRef")
 }
-
 
 pub fn graph_ref_all<'a, I>() -> impl Parser<I, Output = ()>
 where
@@ -78,7 +76,9 @@ where
         keyword("default"),
         keyword("named"),
         keyword("all"),
-    )).with(value(())).expected("GraphRef")
+    ))
+    .with(value(()))
+    .expected("GraphRef")
 }
 
 // ------------------------------------------------------------------------------------------------
