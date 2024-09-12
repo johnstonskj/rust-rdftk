@@ -157,7 +157,7 @@ fn parse_document<R: Read>(
             }) => {
                 trace_event!("parse_document" => event);
                 let attributes = parse_attributes(attributes)?;
-                if rdf_element.matches(&name) {
+                if rdf_element.matches(name) {
                     let _ = parse_subject_element(
                         event_reader,
                         &attributes.uri_base,
@@ -225,7 +225,7 @@ fn parse_subject_element<R: Read>(
                             .unwrap()
                     }
                 };
-                if !description_element.matches(&name) {
+                if !description_element.matches(name) {
                     // SPEC: §2.13 Typed Node Elements
                     let statement_factory = graph.borrow().statement_factory();
                     let mut graph = graph.borrow_mut();
@@ -234,7 +234,7 @@ fn parse_subject_element<R: Read>(
                             .statement(
                                 subject_node.clone(),
                                 rdf::a_type().clone(),
-                                statement_factory.named_object(name_to_iri(&name)?),
+                                statement_factory.named_object(name_to_iri(name)?),
                             )
                             .unwrap(),
                     );
@@ -338,7 +338,7 @@ fn parse_predicate_element<R: Read>(
                         statement_factory
                             .statement(
                                 subject.clone(),
-                                name_to_iri(&name)?,
+                                name_to_iri(name)?,
                                 statement_factory.named_object(resource),
                             )
                             .unwrap(),
@@ -367,7 +367,7 @@ fn parse_predicate_element<R: Read>(
                                     statement_factory
                                         .statement(
                                             subject.clone(),
-                                            name_to_iri(&name)?,
+                                            name_to_iri(name)?,
                                             statement_factory.literal_object(literal),
                                         )
                                         .unwrap(),
@@ -383,7 +383,7 @@ fn parse_predicate_element<R: Read>(
                                 statement_factory
                                     .statement(
                                         subject.clone(),
-                                        name_to_iri(&name)?,
+                                        name_to_iri(name)?,
                                         statement_factory.literal_object(
                                             literal_factory
                                                 .with_data_type(&content, DataType::XmlLiteral),
@@ -470,11 +470,11 @@ fn parse_object_element<R: Read>(
             Ok(XmlEvent::CData(value)) => {
                 trace_event!("parse_content_element" => event);
                 if has_elements {
-                    error_event!(state => "parse_object_element", &format!("found character content after element(s)"));
+                    error_event!(state => "parse_object_element", format!("found character content after element(s)"));
                 }
                 // set outer loop value
                 has_characters = true;
-                content.push_str(&value);
+                content.push_str(value);
             }
             Ok(XmlEvent::Characters(value)) => {
                 trace_event!("parse_content_element" => event);
@@ -483,7 +483,7 @@ fn parse_object_element<R: Read>(
                 }
                 // set outer loop value
                 has_characters = true;
-                content.push_str(&value);
+                content.push_str(value);
             }
             Ok(_) => {
                 trace_event!("parse_object_element" => ignore event);
@@ -537,7 +537,7 @@ fn parse_xml_literal_element<R: Read>(
     }
 }
 
-fn parse_attributes<'a>(attributes: &'a [OwnedAttribute]) -> Result<Attributes<'a>, Error> {
+fn parse_attributes(attributes: &[OwnedAttribute]) -> Result<Attributes<'_>, Error> {
     let mut response = Attributes {
         subject_type: None,
         parse_type: None,

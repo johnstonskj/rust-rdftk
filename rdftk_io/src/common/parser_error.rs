@@ -82,24 +82,21 @@ impl Display for ParserError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{}{}",
-            format!(
-                "{}{}{}{}",
-                &self.fn_name,
-                match &self.rule {
-                    None => String::new(),
-                    Some(s) => format!(", rule: {}", s),
-                },
-                match &self.expecting {
-                    None => String::new(),
-                    Some(s) => format!(", expecting: {}", s),
-                },
-                if self.unreachable {
-                    ", should have been unreachable".to_string()
-                } else {
-                    String::new()
-                },
-            ),
+            "{}{}{}{}{}",
+            &self.fn_name,
+            match &self.rule {
+                None => String::new(),
+                Some(s) => format!(", rule: {}", s),
+            },
+            match &self.expecting {
+                None => String::new(),
+                Some(s) => format!(", expecting: {}", s),
+            },
+            if self.unreachable {
+                ", should have been unreachable".to_string()
+            } else {
+                String::new()
+            },
             match &self.context {
                 None => String::new(),
                 Some(s) => format!(", context: '{}'", s),

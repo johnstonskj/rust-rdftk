@@ -491,7 +491,7 @@ impl IriExtra for Iri {
         if self.fragment() == Some("") {
             Some(self.with_new_fragment(name.as_ref()))
         } else if self.path().ends_with("/") && self.query().is_none() {
-            Some(self.with_new_path(&format!("{}{}", self.path(), name.as_ref())))
+            Some(self.with_new_path(format!("{}{}", self.path(), name.as_ref())))
         } else {
             None
         }

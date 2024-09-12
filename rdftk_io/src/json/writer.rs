@@ -57,10 +57,7 @@ pub struct JsonOptions {
 
 impl JsonOptions {
     pub fn with_pretty_print(self, pretty_print: bool) -> Self {
-        Self {
-            pretty_print,
-            ..self
-        }
+        Self { pretty_print }
     }
 
     pub fn set_pretty_print(&mut self, pretty_print: bool) {

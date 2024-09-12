@@ -49,9 +49,9 @@ impl ObjectReader<NamedGraphRef> for NQuadReader {
 
         let mut parsed = NQuadParser::parse(Rule::nquadsDoc, &buffer)
             .map_err(|e| read_write_error_with(super::NAME, e))?;
-        let top_node = parsed.next().unwrap();
+        let _top_node = parsed.next().unwrap();
 
-        let factory = self.options().factory().clone();
+        let _factory = self.options().factory().clone();
         //ntriples_doc(top_node, factory)
         todo!()
     }

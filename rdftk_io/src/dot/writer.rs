@@ -39,7 +39,7 @@ pub struct DotOptions {
 /// This struct implements the `GraphWriter` trait and will write out a serialized form for the
 /// entire graph.
 ///
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct DotWriter {
     nodes: RefCell<HashMap<String, Node>>,
     options: DotOptions,
@@ -52,7 +52,7 @@ pub struct DotWriter {
 #[derive(Debug)]
 enum NodeKind {
     Blank,
-    IRI,
+    Iri,
     Literal,
 }
 
@@ -262,15 +262,6 @@ impl DotOptions {
 
 // ------------------------------------------------------------------------------------------------
 
-impl Default for DotWriter {
-    fn default() -> Self {
-        Self {
-            nodes: Default::default(),
-            options: Default::default(),
-        }
-    }
-}
-
 impl_has_options!(DotWriter, DotOptions);
 
 impl ObjectWriter<GraphRef> for DotWriter {
@@ -294,7 +285,7 @@ impl ObjectWriter<GraphRef> for DotWriter {
                 self.options.node_prefix,
                 self.subject_id(statement.subject()),
                 self.object_id(statement.object()),
-                match mappings.borrow().compress(&statement.predicate()) {
+                match mappings.borrow().compress(statement.predicate()) {
                     None => statement.predicate().to_string(),
                     Some(qname) => qname.to_string(),
                 }
@@ -328,7 +319,7 @@ impl ObjectWriter<GraphRef> for DotWriter {
                         )?;
                     }
                 }
-                NodeKind::IRI => {
+                NodeKind::Iri => {
                     writeln!(
                         w,
                         "    \"{}{}\" [URL=\"{}\",label=\"{}\",shape={},color={}];",
@@ -390,7 +381,7 @@ impl DotWriter {
                     node.to_string(),
                     Node {
                         id: id.clone(),
-                        kind: NodeKind::IRI,
+                        kind: NodeKind::Iri,
                         label: node.as_iri().unwrap().to_string(),
                     },
                 );
@@ -419,7 +410,7 @@ impl DotWriter {
                     node.to_string(),
                     Node {
                         id: id.clone(),
-                        kind: NodeKind::IRI,
+                        kind: NodeKind::Iri,
                         label: node.as_iri().unwrap().to_string(),
                     },
                 );

@@ -83,11 +83,11 @@ fn parse_statements(
     graph: &GraphRef,
 ) -> Result<(), Error> {
     if let Value::Object(json) = predicate_objects {
-        let subject = if subject.starts_with(BNODE_PREFIX) {
+        let subject = if let Some(subject) = subject.strip_prefix(BNODE_PREFIX) {
             graph
                 .borrow()
                 .statement_factory()
-                .blank_subject_named(&subject[2..])?
+                .blank_subject_named(subject)?
         } else {
             graph
                 .borrow()

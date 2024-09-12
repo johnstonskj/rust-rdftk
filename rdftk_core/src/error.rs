@@ -362,6 +362,7 @@ impl From<::std::string::FromUtf8Error> for Error {
     }
 }
 
+#[allow(clippy::from_over_into)]
 impl<T> Into<Result<T>> for Error {
     fn into(self) -> Result<T> {
         Err(self)
