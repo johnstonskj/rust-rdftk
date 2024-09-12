@@ -5,7 +5,7 @@ and [Replacing Blank Nodes with IRIs](https://www.w3.org/TR/rdf11-concepts/#sect
 
 */
 
-use crate::error::{Error, ErrorKind};
+use crate::error::{invalid_state_error, Error};
 use crate::model::graph::{Graph, GraphRef};
 use crate::model::statement::{BlankNode, StatementRef};
 use rdftk_iri::{genid, IriRef};
@@ -32,7 +32,7 @@ pub fn skolemize(graph: &impl Graph, base: &IriRef) -> Result<GraphRef, Error> {
         let factory = graph.statement_factory();
         let mut new_statement: StatementRef = statement.clone();
         let mut_statement = match Rc::get_mut(&mut new_statement) {
-            None => return Err(ErrorKind::InvalidState.into()),
+            None => return invalid_state_error().into(),
             Some(st) => st,
         };
         if let Some(blank) = mut_statement.subject().as_blank() {

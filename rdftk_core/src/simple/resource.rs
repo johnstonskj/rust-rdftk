@@ -69,7 +69,7 @@
 *
 */
 
-use crate::error::{ErrorKind, Result};
+use crate::error::{provider_mismatch_error, Result};
 use crate::model::literal::{DataType, LiteralFactoryRef, LiteralRef};
 use crate::model::statement::{StatementFactoryRef, StatementList, SubjectNodeRef};
 use crate::simple;
@@ -319,17 +319,13 @@ impl Resource {
         literal_factory: LiteralFactoryRef,
     ) -> Result<Self> {
         if statement_factory.provider_id() != literal_factory.provider_id() {
-            Err(ErrorKind::ProviderMismatch(
-                statement_factory.provider_id().to_string(),
-                literal_factory.provider_id().to_string(),
+            provider_mismatch_error(
+                statement_factory.provider_id(),
+                literal_factory.provider_id(),
             )
-            .into())
+            .into()
         } else if subject.provider_id() != statement_factory.provider_id() {
-            Err(ErrorKind::ProviderMismatch(
-                subject.provider_id().to_string(),
-                statement_factory.provider_id().to_string(),
-            )
-            .into())
+            provider_mismatch_error(subject.provider_id(), statement_factory.provider_id()).into()
         } else {
             Ok(Self {
                 subject,

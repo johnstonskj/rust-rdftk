@@ -78,10 +78,9 @@
 *
 */
 
-use rdftk_iri::{Name, NameParser};
-
-use crate::error::{Error as RdfError, ErrorKind};
+use crate::error::{empty_qname_error, invalid_qname_error, Error as RdfError};
 use crate::model::statement::BLANK_NODE_NAMESPACE;
+use rdftk_iri::{Name, NameParser};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
@@ -127,7 +126,7 @@ impl FromStr for QName {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let name_parser = NameParser::Xml;
         if s.is_empty() {
-            Err(ErrorKind::EmptyQName.into())
+            empty_qname_error().into()
         } else {
             let parts: Vec<&str> = s.split(':').collect();
             match parts.len() {
@@ -139,7 +138,7 @@ impl FromStr for QName {
                             name: Name::from_str(name)?,
                         })
                     } else {
-                        Err(ErrorKind::InvalidQName(s.to_string()).into())
+                        invalid_qname_error(s).into()
                     }
                 }
                 PREFIX_AND_NAME => {
@@ -153,10 +152,10 @@ impl FromStr for QName {
                             name: Name::from_str(name)?,
                         })
                     } else {
-                        Err(ErrorKind::InvalidQName(s.to_string()).into())
+                        invalid_qname_error(s).into()
                     }
                 }
-                _ => Err(ErrorKind::InvalidQName(s.to_string()).into()),
+                _ => invalid_qname_error(s).into(),
             }
         }
     }

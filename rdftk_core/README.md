@@ -52,6 +52,10 @@ pub fn make_statements() -> StatementList {
 
 ## Changes
 
+### Version 0.4.4
+
+* Refactor: re-wrote `Error` type and removed `error_chain` dependency.
+
 ### Version 0.4.3
 
 * Feature: added `From<&BlankNode>` for both `Name` and `String`.

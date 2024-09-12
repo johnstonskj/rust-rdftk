@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_core"
-version = "0.4.3"
+version = "0.4.4"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2021"
 description = "This crate provides the core RDF data model; concrete implementations for Statements and Literals, along with a Resource type that provides a builder-like experience for models."
@@ -21,7 +21,6 @@ chrono_types = ["chrono"]
 
 [dependencies]
 bimap = "0.6"
-error-chain = "0.12"
 language-tags = "0.3.2"
 lazy_static = "1.5"
 rdftk_iri = { version = "0.2.3", path = "../rdftk_iri" }

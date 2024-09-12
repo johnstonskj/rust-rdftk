@@ -2,7 +2,7 @@
 Simple, in-memory implementation of the `Statement` and `StatementFactory` traits.
 */
 
-use crate::error::{ErrorKind, Result};
+use crate::error::{provider_mismatch_error, Result};
 use crate::model::features::Featured;
 use crate::model::features::FEATURE_RDF_STAR;
 use crate::model::literal::{LiteralFactoryRef, LiteralRef};
@@ -82,11 +82,7 @@ impl StatementFactory for SimpleStatementFactory {
                 object,
             }))
         } else {
-            Err(ErrorKind::ProviderMismatch(
-                self.provider_id().to_string(),
-                object.provider_id().to_string(),
-            )
-            .into())
+            provider_mismatch_error(self.provider_id(), object.provider_id()).into()
         }
     }
 
