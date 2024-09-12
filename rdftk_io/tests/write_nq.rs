@@ -1,9 +1,9 @@
 #![cfg(feature = "nq")]
 
+use objio::ObjectWriter;
 use rdftk_core::model::data_set::DataSetRef;
 use rdftk_core::simple::data_set::data_set_factory;
 use rdftk_io::nq::NQuadWriter;
-use objio::ObjectWriter;
 
 mod common;
 

@@ -1,7 +1,7 @@
 #![cfg(feature = "dot")]
 
-use rdftk_io::dot::{DotOptions, DotWriter};
 use objio::{HasOptions, ObjectWriter};
+use rdftk_io::dot::{DotOptions, DotWriter};
 
 mod common;
 

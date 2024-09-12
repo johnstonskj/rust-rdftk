@@ -1,7 +1,7 @@
 #![cfg(feature = "nt")]
 
-use rdftk_io::nt::NTripleWriter;
 use objio::ObjectWriter;
+use rdftk_io::nt::NTripleWriter;
 
 mod common;
 

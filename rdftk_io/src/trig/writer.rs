@@ -7,7 +7,7 @@ More detailed description, with
 
 */
 
-use crate::{turtle::writer::TurtleOptions};
+use crate::turtle::writer::TurtleOptions;
 use objio::{impl_has_options, ObjectWriter};
 use rdftk_core::error::Error;
 use rdftk_core::model::{data_set::DataSetRef, graph::NamedGraphRef};
