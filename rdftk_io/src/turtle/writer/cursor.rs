@@ -1,9 +1,6 @@
 use crate::{
     common::indenter::Indenter,
-    turtle::{
-        writer,
-        writer::{io_error, options::TurtleOptions, triple_type::TurtleTripleType, utf8_error},
-    },
+    turtle::writer::{options::TurtleOptions, triple_type::TurtleTripleType},
 };
 use itertools::Itertools;
 use rdftk_core::model::{
@@ -136,9 +133,9 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
 
     fn new_line(&self, flags: TurtleCursorFlags) -> rdftk_core::error::Result<()> {
         if flags.is_being_sorted {
-            write!(self, " ").map_err(io_error)
+            Ok(write!(self, " ")?)
         } else {
-            write!(self, "\n{}", self.indenter.borrow()).map_err(io_error)
+            Ok(write!(self, "\n{}", self.indenter.borrow())?)
         }
     }
 
@@ -175,13 +172,13 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
     fn write_base_iri(&self) -> rdftk_core::error::Result<()> {
         if let Some(base) = &self.options.id_base() {
             if self.options.use_sparql_style() && !self.options.use_intellij_style() {
-                writeln!(self, "BASE <{}>", base.to_string().as_str()).map_err(io_error)?;
+                writeln!(self, "BASE <{}>", base.to_string().as_str())?;
             } else {
-                writeln!(self, "@base <{}> .", base.to_string().as_str()).map_err(io_error)?;
+                writeln!(self, "@base <{}> .", base.to_string().as_str())?;
             }
         }
         if !self.options.use_intellij_style() {
-            writeln!(self).map_err(io_error)?;
+            writeln!(self)?;
         }
         Ok(())
     }
@@ -190,7 +187,7 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
     /// random order and unnecessary changes in git
     fn write_prefixes(&self) -> rdftk_core::error::Result<()> {
         let mappings = self.graph.deref().prefix_mappings();
-        let mappings = mappings.try_borrow().map_err(writer::borrow_error)?;
+        let mappings = mappings.try_borrow()?;
         for (prefix, namespace) in mappings.mappings().sorted() {
             let prefix = prefix.as_ref().map(|n| n.as_ref()).unwrap_or("");
             let mut namespace_str = namespace.to_string();
@@ -208,12 +205,12 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
                 }
             }
             if self.options.use_sparql_style() && !self.options.use_intellij_style() {
-                writeln!(self, "PREFIX {prefix}: <{namespace_str}>").map_err(io_error)?;
+                writeln!(self, "PREFIX {prefix}: <{namespace_str}>")?;
             } else {
-                writeln!(self, "@prefix {prefix}: <{namespace_str}> .").map_err(io_error)?;
+                writeln!(self, "@prefix {prefix}: <{namespace_str}> .")?;
             }
         }
-        writeln!(self).map_err(io_error)
+        Ok(writeln!(self)?)
     }
 
     fn with_node_subjects_do<F>(
@@ -287,8 +284,8 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
             .iter()
             .map(|iri| {
                 let mut buffer = Vec::<u8>::new();
-                self.compress_iri(&mut buffer, iri).map_err(io_error)?;
-                String::from_utf8(buffer).map_err(utf8_error)
+                self.compress_iri(&mut buffer, iri)?;
+                Ok(String::from_utf8(buffer)?)
             })
             .collect::<Result<Vec<String>, rdftk_core::error::Error>>()?
             .iter()
@@ -338,7 +335,7 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
             ..Default::default()
         };
         new_cursor.write_object_content(object, flags)?;
-        String::from_utf8(buffer.take()).map_err(utf8_error)
+        Ok(String::from_utf8(buffer.take())?)
     }
 
     fn write_object_content(
@@ -350,12 +347,12 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
             if self.options.nest_blank_nodes() {
                 self.write_nested_blank_node(object, flags)?;
             } else {
-                write!(self, "_:{}", object.as_blank().unwrap()).map_err(io_error)?;
+                write!(self, "_:{}", object.as_blank().unwrap())?;
             }
         } else if object.is_iri() {
-            self.write_iri(object.as_iri().unwrap()).map_err(io_error)?;
+            self.write_iri(object.as_iri().unwrap())?;
         } else {
-            self.write_literal(object).map_err(io_error)?;
+            self.write_literal(object)?;
         }
         Ok(())
     }
@@ -410,7 +407,7 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
     fn write_normal_subjects(&self, flags: TurtleCursorFlags) -> rdftk_core::error::Result<()> {
         self.with_node_subjects_do(flags, |c, subject, flags| {
             c.write_sub_graph(subject, flags)?;
-            writeln!(c).map_err(io_error)?;
+            writeln!(c)?;
             Ok(())
         })
     }
@@ -430,13 +427,12 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
     ) -> rdftk_core::error::Result<()> {
         if subject.is_blank() && self.indenter.borrow().depth() == 0 {
             if flags.is_being_sorted {
-                write!(self, " _:{}", subject.as_blank().unwrap()).map_err(io_error)?;
+                write!(self, " _:{}", subject.as_blank().unwrap())?;
             } else {
-                write!(self, "\n_:{}", subject.as_blank().unwrap()).map_err(io_error)?;
+                write!(self, "\n_:{}", subject.as_blank().unwrap())?;
             }
         } else if subject.is_iri() {
-            self.write_iri(subject.as_iri().unwrap())
-                .map_err(io_error)?;
+            self.write_iri(subject.as_iri().unwrap())?;
         }
         let _ = self.indent();
         Ok(())
@@ -472,24 +468,24 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
         //
         if group == TurtleTripleType::Type {
             return if self.options.place_type_on_subject_line() {
-                write!(self, " a ").map_err(io_error)
+                Ok(write!(self, " a ")?)
             } else {
                 self.new_line(flags)?;
-                write!(self, "{:<max_len$}", "a").map_err(io_error)
+                Ok(write!(self, "{:<max_len$}", "a")?)
             };
         }
         // Otherwise, go to the next line and write it as a normal predicate-Iri
         //
         self.new_line(flags)?;
         let pred = self.predicate_iri_as_string(predicate)?;
-        write!(self, "{:<max_len$}", pred.as_str()).map_err(io_error)
+        Ok(write!(self, "{:<max_len$}", pred.as_str())?)
     }
 
     fn predicate_iri_as_string(&self, predicate: &IriRef) -> rdftk_core::error::Result<String> {
         let buffer = Rc::new(RefCell::from(Vec::<u8>::new()));
         let new_cursor = TurtleCursor::new_with_writer(buffer.clone(), self);
-        new_cursor.write_iri(predicate).map_err(io_error)?;
-        String::from_utf8(buffer.take()).map_err(utf8_error)
+        new_cursor.write_iri(predicate)?;
+        Ok(String::from_utf8(buffer.take())?)
     }
 
     fn write_object(
@@ -498,26 +494,22 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
         max_len: usize,
         flags: TurtleCursorFlags,
     ) -> rdftk_core::error::Result<()> {
-        // if flags.is_collection_of_objects && flags.{
-        //     self.new_line(flags)?;
-        //     write!(self, "{:max_len$}", " ").map_err(io_error)?;
-        // }
         self.write_object_content(object, flags)?;
         if flags.is_last_of_predicate {
             if flags.is_last_of_subject {
                 let _ = self.outdent();
             }
             if self.indenter.borrow().depth() == 0 {
-                write!(self, " .").map_err(io_error)?;
+                write!(self, " .")?;
                 self.new_line(flags)?;
             } else if !flags.is_last_of_subject {
-                write!(self, " ;").map_err(io_error)?;
+                write!(self, " ;")?;
             }
         } else {
-            write!(self, ",").map_err(io_error)?;
+            write!(self, ",")?;
             if !flags.is_next_object_blank {
                 self.new_line(flags)?;
-                write!(self, "{:max_len$}", " ").map_err(io_error)?;
+                write!(self, "{:max_len$}", " ")?;
             }
         }
         Ok(())
@@ -566,7 +558,7 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
         object: &ObjectNodeRef,
         flags: TurtleCursorFlags,
     ) -> rdftk_core::error::Result<()> {
-        write!(self, "[").map_err(io_error)?;
+        write!(self, "[")?;
         let inner_subject: SubjectNodeRef = self
             .graph
             .statement_factory()
@@ -575,7 +567,7 @@ impl<'a, W: Write + Sized> TurtleCursor<'a, W> {
         self.write_sub_graph(&inner_subject, flags)?;
         self.wrote_blank(&inner_subject);
         self.new_line(flags)?;
-        write!(self, "]").map_err(io_error)?;
+        write!(self, "]")?;
         Ok(())
     }
 }

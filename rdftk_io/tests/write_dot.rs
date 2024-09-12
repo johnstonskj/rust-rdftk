@@ -1,7 +1,7 @@
 #![cfg(feature = "dot")]
 
-use rdftk_io::dot::writer::{DotOptions, DotWriter};
-use rdftk_io::write_graph_to_string;
+use rdftk_io::dot::{DotOptions, DotWriter};
+use objio::{HasOptions, ObjectWriter};
 
 mod common;
 
@@ -11,7 +11,7 @@ fn write_to_dot() {
 
     let writer = DotWriter::default();
 
-    let result = write_graph_to_string(&writer, &graph);
+    let result = writer.write_to_string(&graph);
     assert!(result.is_ok());
     let output = result.unwrap();
     println!("# format: dot\n{}", output);
@@ -27,14 +27,16 @@ fn write_to_dot() {
 fn write_to_dot_with_options() {
     let graph = common::tony_benn_graph(common::TonyBennType::OneType);
 
-    let mut options = DotOptions::default();
-    options.literal_color = "gold".to_string();
-    options.literal_shape = "square".to_string();
-    options.blank_color = "red".to_string();
-    options.iri_color = "black".to_string();
-    let writer = DotWriter::new(options);
+    let options = DotOptions::default()
+        .with_blank_color("red")
+        .with_literal_color("gold")
+        .with_literal_shape("square")
+        .with_iri_color("black");
 
-    let result = write_graph_to_string(&writer, &graph);
+    let mut writer = DotWriter::default();
+    writer.set_options(options);
+
+    let result = writer.write_to_string(&graph);
     assert!(result.is_ok());
     let output = result.unwrap();
     println!("# format: dot\n{}", output);

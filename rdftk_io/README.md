@@ -46,15 +46,10 @@ let graph = reader.read(&mut file, graph_factory()).unwrap();
 
 ## Changes
 
-### Version 0.3.1
-
-* Feature: add `NamedGraphWriter` trait.
-* Feature: add corresponding `WithOptions` trait for all `Reader` and `Writeer` traits.
-* Build: update `rdftk_core` dependency.
-
 ### Version 0.3.0
 
 * Feature: moved to new `rdftk_core` package.
+* Refactor: moved reader/writer traits to new `objio` crate.
 * Build: updated Rust edition from 2018 to 2021.
 * Build: cargo audit/outdated/udeps
 * Docs: added API docs as much as possible.

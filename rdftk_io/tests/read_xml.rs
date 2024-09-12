@@ -1,6 +1,5 @@
-use rdftk_core::simple::graph_factory;
+use objio::ObjectReader;
 use rdftk_io::xml::reader::XmlReader;
-use rdftk_io::GraphReader;
 
 // https://www.w3.org/RDF/Validator/rdfval
 
@@ -18,7 +17,7 @@ fn read_example_00() {
     logging::try_init();
 
     let reader = XmlReader::default();
-    let result = reader.read(&mut xml, graph_factory());
+    let result = reader.read(&mut xml);
     println!("{:#?}", result);
     assert!(result.is_ok());
     let graph = result.unwrap();
@@ -50,7 +49,7 @@ fn read_example_01() {
     logging::try_init();
 
     let reader = XmlReader::default();
-    let result = reader.read(&mut xml, graph_factory());
+    let result = reader.read(&mut xml);
     assert!(result.is_ok());
     let graph = result.unwrap();
     for st in graph.borrow().statements() {

@@ -2,8 +2,8 @@
 
 use rdftk_core::model::data_set::DataSetRef;
 use rdftk_core::simple::data_set::data_set_factory;
-use rdftk_io::nq::writer::NQuadDataSetWriter;
-use rdftk_io::write_data_set_to_string;
+use rdftk_io::nq::NQuadWriter;
+use objio::ObjectWriter;
 
 mod common;
 
@@ -16,9 +16,9 @@ fn write_to_nquads() {
         data_set.insert(graph);
     }
 
-    let writer = NQuadDataSetWriter::default();
+    let writer = NQuadWriter::default();
 
-    let result = write_data_set_to_string(&writer, &(data_set as DataSetRef));
+    let result = writer.write_to_string(&(data_set as DataSetRef));
     assert!(result.is_ok());
     let output = result.unwrap();
     println!("# format: N-Quads\n{}", output);

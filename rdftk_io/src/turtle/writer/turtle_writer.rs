@@ -1,6 +1,7 @@
 use crate::turtle::writer::cursor::TurtleCursor;
 use crate::turtle::writer::options::TurtleOptions;
-use crate::GraphWriterWithOptions;
+use objio::{impl_has_options, ObjectWriter};
+use rdftk_core::error::Error;
 use rdftk_core::model::graph::GraphRef;
 use std::cell::RefCell;
 use std::io::Write;
@@ -8,24 +9,23 @@ use std::ops::Deref;
 use std::rc::Rc;
 
 #[derive(Clone, Debug, Default)]
-pub struct TurtleWriter {}
+pub struct TurtleWriter {
+    options: TurtleOptions,
+}
 
-impl GraphWriterWithOptions for TurtleWriter {
-    type Options = TurtleOptions;
+impl_has_options!(TurtleWriter, TurtleOptions);
 
-    fn write_with_options<W>(
-        &self,
-        w: &mut W,
-        graph: &GraphRef,
-        options: &Self::Options,
-    ) -> rdftk_core::error::Result<()>
+impl ObjectWriter<GraphRef> for TurtleWriter {
+    type Error = Error;
+
+    fn write<W>(&self, w: &mut W, graph: &GraphRef) -> Result<(), Error>
     where
         W: Write,
     {
         let cursor = TurtleCursor::new(
             Rc::new(RefCell::from(w)),
             Rc::from(graph.deref().borrow()),
-            options.clone(),
+            self.options.clone(),
         );
 
         cursor.write()

@@ -5,12 +5,13 @@ Provides the `JsonReader` implementation of the `GraphReader` trait.
 
 */
 
+use crate::common::ReaderOptions;
 use crate::json::syntax::{
     BNODE_PREFIX, OBJ_KEY_DATATYPE, OBJ_KEY_LANG, OBJ_KEY_TYPE, OBJ_KEY_VALUE, OBJ_TYPE_BNODE,
     OBJ_TYPE_LITERAL, OBJ_TYPE_URI,
 };
-use crate::GraphReader;
-use rdftk_core::error::{ErrorKind, Result};
+use objio::{impl_has_options, HasOptions, ObjectReader};
+use rdftk_core::error::{read_write_error, read_write_error_with, Error};
 use rdftk_core::model::graph::{GraphFactoryRef, GraphRef};
 use rdftk_core::model::literal::{DataType, LanguageTag};
 use rdftk_core::model::statement::SubjectNodeRef;
@@ -27,8 +28,10 @@ use std::str::FromStr;
 ///
 /// An implementation of the GraphReader trait to read resources in the JSON representation.
 ///
-#[derive(Clone, Debug)]
-pub struct JsonReader {}
+#[derive(Debug, Default)]
+pub struct JsonReader {
+    options: ReaderOptions,
+}
 
 // ------------------------------------------------------------------------------------------------
 // Private Types
@@ -42,21 +45,18 @@ pub struct JsonReader {}
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl Default for JsonReader {
-    fn default() -> Self {
-        Self {}
-    }
-}
+impl_has_options!(JsonReader, ReaderOptions);
 
-impl GraphReader for JsonReader {
-    fn read<R>(&self, r: &mut R, factory: GraphFactoryRef) -> Result<GraphRef>
+impl ObjectReader<GraphRef> for JsonReader {
+    type Error = Error;
+
+    fn read<R>(&self, r: &mut R) -> Result<GraphRef, Self::Error>
     where
         R: Read,
     {
-        let value: Value = serde_json::from_reader(r).map_err(|e| {
-            rdftk_core::error::Error::with_chain(e, ErrorKind::ReadWrite(super::NAME.to_string()))
-        })?;
-        parse_graph(value, factory)
+        let value: Value =
+            serde_json::from_reader(r).map_err(|e| read_write_error_with(super::NAME, e))?;
+        parse_graph(value, self.options().factory().clone())
     }
 }
 
@@ -64,7 +64,7 @@ impl GraphReader for JsonReader {
 // Private Functions
 // ------------------------------------------------------------------------------------------------
 
-fn parse_graph(value: Value, factory: GraphFactoryRef) -> Result<GraphRef> {
+fn parse_graph(value: Value, factory: GraphFactoryRef) -> Result<GraphRef, Error> {
     if let Value::Object(json) = value {
         let graph = factory.graph();
         for (subject, predicate_objects) in json.iter() {
@@ -73,11 +73,15 @@ fn parse_graph(value: Value, factory: GraphFactoryRef) -> Result<GraphRef> {
         Ok(graph)
     } else {
         log::error!("parse_graph() - expecting Value::Object");
-        Err(ErrorKind::ReadWrite(super::NAME.to_string()).into())
+        read_write_error(super::NAME).into()
     }
 }
 
-fn parse_statements(subject: &str, predicate_objects: &Value, graph: &GraphRef) -> Result<()> {
+fn parse_statements(
+    subject: &str,
+    predicate_objects: &Value,
+    graph: &GraphRef,
+) -> Result<(), Error> {
     if let Value::Object(json) = predicate_objects {
         let subject = if subject.starts_with(BNODE_PREFIX) {
             graph
@@ -96,7 +100,7 @@ fn parse_statements(subject: &str, predicate_objects: &Value, graph: &GraphRef) 
         Ok(())
     } else {
         log::error!("parse_statements() - expecting Value::Object");
-        Err(ErrorKind::ReadWrite(super::NAME.to_string()).into())
+        read_write_error(super::NAME).into()
     }
 }
 
@@ -105,7 +109,7 @@ fn parse_predicates(
     predicate: &str,
     objects: &Value,
     graph: &GraphRef,
-) -> Result<()> {
+) -> Result<(), Error> {
     if let Value::Array(json) = objects {
         let predicate = IriRef::new(Iri::from_str(predicate)?);
         for object in json {
@@ -114,7 +118,7 @@ fn parse_predicates(
         Ok(())
     } else {
         log::error!("parse_predicates() - expecting Value::Array");
-        Err(ErrorKind::ReadWrite(super::NAME.to_string()).into())
+        read_write_error(super::NAME).into()
     }
 }
 
@@ -123,7 +127,7 @@ fn parse_object(
     predicate: &IriRef,
     object: &Value,
     graph: &GraphRef,
-) -> Result<()> {
+) -> Result<(), Error> {
     if let Value::Object(json) = object {
         match json.get(OBJ_KEY_TYPE) {
             Some(Value::String(s)) => {
@@ -135,17 +139,17 @@ fn parse_object(
                     parse_uri_object(subject, predicate, json, graph)
                 } else {
                     log::error!("parse_object() - unknown 'type' key value: {}", s);
-                    Err(ErrorKind::ReadWrite(super::NAME.to_string()).into())
+                    read_write_error(super::NAME).into()
                 }
             }
             _ => {
                 log::error!("parse_object() - no 'type' key in object");
-                Err(ErrorKind::ReadWrite(super::NAME.to_string()).into())
+                read_write_error(super::NAME).into()
             }
         }
     } else {
         log::error!("parse_object() - expecting Value::Object");
-        Err(ErrorKind::ReadWrite(super::NAME.to_string()).into())
+        read_write_error(super::NAME).into()
     }
 }
 
@@ -154,7 +158,7 @@ fn parse_literal_object(
     predicate: &IriRef,
     object: &Map<String, Value>,
     graph: &GraphRef,
-) -> Result<()> {
+) -> Result<(), Error> {
     let mut graph = graph.borrow_mut();
     let value = object.get(OBJ_KEY_VALUE);
     let language = object.get(OBJ_KEY_LANG);
@@ -173,7 +177,7 @@ fn parse_literal_object(
         }
         _ => {
             log::error!("parse_literal_object() - bad value/data type/language combination");
-            return Err(ErrorKind::ReadWrite(super::NAME.to_string()).into());
+            return read_write_error(super::NAME).into();
         }
     });
     let st = graph
@@ -188,7 +192,7 @@ fn parse_bnode_object(
     predicate: &IriRef,
     object: &Map<String, Value>,
     graph: &GraphRef,
-) -> Result<()> {
+) -> Result<(), Error> {
     let mut graph = graph.borrow_mut();
     if let Some(Value::String(s)) = object.get(OBJ_KEY_VALUE) {
         let object = graph.statement_factory().blank_object_named(&s[2..])?;
@@ -199,7 +203,7 @@ fn parse_bnode_object(
         Ok(())
     } else {
         log::error!("parse_bnode_object() - expecting Value::String");
-        Err(ErrorKind::ReadWrite(super::NAME.to_string()).into())
+        read_write_error(super::NAME).into()
     }
 }
 
@@ -208,7 +212,7 @@ fn parse_uri_object(
     predicate: &IriRef,
     object: &Map<String, Value>,
     graph: &GraphRef,
-) -> Result<()> {
+) -> Result<(), Error> {
     let mut graph = graph.borrow_mut();
     if let Some(Value::String(s)) = object.get(OBJ_KEY_VALUE) {
         let uri = IriRef::new(Iri::from_str(s)?);
@@ -220,7 +224,7 @@ fn parse_uri_object(
         Ok(())
     } else {
         log::error!("parse_uri_object() - expecting Value::String");
-        Err(ErrorKind::ReadWrite(super::NAME.to_string()).into())
+        read_write_error(super::NAME).into()
     }
 }
 

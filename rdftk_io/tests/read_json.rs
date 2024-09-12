@@ -1,6 +1,5 @@
-use rdftk_core::simple::graph_factory;
+use objio::ObjectReader;
 use rdftk_io::json::reader::JsonReader;
-use rdftk_io::GraphReader;
 
 #[test]
 fn read_example_01() {
@@ -14,7 +13,7 @@ fn read_example_01() {
     .as_bytes();
 
     let reader = JsonReader::default();
-    let result = reader.read(&mut json, graph_factory());
+    let result = reader.read(&mut json);
     assert!(result.is_ok());
     let graph = result.unwrap();
     println!("{:?}", graph);
@@ -36,7 +35,7 @@ fn read_example_02() {
     .as_bytes();
 
     let reader = JsonReader::default();
-    let result = reader.read(&mut json, graph_factory());
+    let result = reader.read(&mut json);
     assert!(result.is_ok());
     let graph = result.unwrap();
     println!("{:?}", graph);
@@ -56,7 +55,7 @@ fn read_example_03() {
         .as_bytes();
 
     let reader = JsonReader::default();
-    let result = reader.read(&mut json, graph_factory());
+    let result = reader.read(&mut json);
     assert!(result.is_ok());
     let graph = result.unwrap();
     println!("{:?}", graph);

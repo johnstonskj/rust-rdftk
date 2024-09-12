@@ -16,11 +16,12 @@ use crate::xml::syntax::{
     ATTRIBUTE_XML_BASE, ATTRIBUTE_XML_LANG, ELEMENT_DESCRIPTION, ELEMENT_RDF,
     PARSE_TYPE_COLLECTION, PARSE_TYPE_LITERAL, PARSE_TYPE_RESOURCE, XML_NAMESPACE,
 };
-use crate::GraphReader;
-use rdftk_core::error::{ErrorKind, Result};
+use objio::ObjectReader;
+use rdftk_core::error::{invalid_state_error, read_write_error_with, Error};
 use rdftk_core::model::graph::{GraphFactoryRef, GraphRef};
 use rdftk_core::model::literal::{DataType, LanguageTag};
 use rdftk_core::model::statement::SubjectNodeRef;
+use rdftk_core::simple::graph_factory;
 use rdftk_iri::{Iri, IriRef};
 use rdftk_names::rdf;
 use std::io::Read;
@@ -33,7 +34,7 @@ use xml::{EventReader, EventWriter};
 ///
 /// An implementation of the GraphReader trait to read resources in the XML representation.
 ///
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct XmlReader {}
 
 // ------------------------------------------------------------------------------------------------
@@ -79,19 +80,15 @@ struct Attributes<'a> {
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl Default for XmlReader {
-    fn default() -> Self {
-        Self {}
-    }
-}
+impl ObjectReader<GraphRef> for XmlReader {
+    type Error = Error;
 
-impl GraphReader for XmlReader {
-    fn read<R>(&self, r: &mut R, factory: GraphFactoryRef) -> Result<GraphRef>
+    fn read<R>(&self, r: &mut R) -> Result<GraphRef, Error>
     where
         R: Read,
     {
         let mut event_reader = EventReader::new(r);
-        parse_document(&mut event_reader, factory)
+        parse_document(&mut event_reader, graph_factory())
     }
 }
 
@@ -125,38 +122,24 @@ macro_rules! trace_event {
 
 macro_rules! error_event {
     (parse => $fn_name:expr, $error:expr) => {
-        let inner: rdftk_core::error::Error =
-            ErrorKind::Msg(format!("error parsing XML: {:?}", $error,)).into();
+        let inner: rdftk_core::error::Error = read_write_error_with(super::NAME, $error.clone());
         error_event!($fn_name, inner);
     };
-    //(unexpected => $fn_name:expr, $event:expr) => {
-    //    let inner: rdftk_core::error::Error =
-    //        ErrorKind::Msg(format!("unexpected XML Event: {:?}", $event,)).into();
-    //    error_event!(inner);
-    //};
     (state => $fn_name:expr, $msg:expr) => {
-        let inner: rdftk_core::error::Error =
-            ErrorKind::Msg(format!("invalid state: {}", $msg,)).into();
+        log::error!("Invalid state: {}", $msg,);
+        let inner: rdftk_core::error::Error = invalid_state_error();
         error_event!($fn_name, inner);
     };
-    //(unsupported => $fn_name:expr, $feature:expr) => {
-    //    let inner: rdftk_core::error::Error =
-    //        ErrorKind::Msg(format!("unsupported feature/capability: {}", $feature)).into();
-    //    error_event!($fn_name, inner);
-    //};
     ($fn_name:expr, $inner:expr) => {
         log::error!("XmlReader::{} {}", $fn_name, $inner);
-        return Err(rdftk_core::error::Error::with_chain(
-            $inner,
-            ErrorKind::ReadWrite(super::NAME.to_string()),
-        ));
+        return read_write_error_with(super::NAME, $inner).into();
     };
 }
 
 fn parse_document<R: Read>(
     event_reader: &mut EventReader<&mut R>,
     factory: GraphFactoryRef,
-) -> Result<GraphRef> {
+) -> Result<GraphRef, Error> {
     let mut graph = factory.graph();
     let rdf_element = ExpectedName::new(ELEMENT_RDF, rdf::namespace_str());
 
@@ -200,7 +183,7 @@ fn parse_subject_element<R: Read>(
     xml_base: &Option<IriRef>,
     _subject: Option<&SubjectNodeRef>,
     graph: &mut GraphRef,
-) -> Result<Option<SubjectNodeRef>> {
+) -> Result<Option<SubjectNodeRef>, Error> {
     let description_element = ExpectedName::new(ELEMENT_DESCRIPTION, rdf::namespace_str());
     let mut subject: Option<SubjectNodeRef> = None;
     loop {
@@ -286,7 +269,7 @@ fn parse_subject_element<R: Read>(
 }
 
 #[inline]
-fn name_to_iri(name: &OwnedName) -> Result<IriRef> {
+fn name_to_iri(name: &OwnedName) -> Result<IriRef, Error> {
     Ok(IriRef::new(Iri::from_str(&format!(
         "{}{}",
         name.namespace.as_ref().unwrap(),
@@ -295,7 +278,7 @@ fn name_to_iri(name: &OwnedName) -> Result<IriRef> {
 }
 
 #[inline]
-fn value_to_iri(name: &str) -> Result<IriRef> {
+fn value_to_iri(name: &str) -> Result<IriRef, Error> {
     Ok(IriRef::new(Iri::from_str(name)?))
 }
 
@@ -303,7 +286,7 @@ fn parse_predicate_attributes(
     attributes: &[&OwnedAttribute],
     subject: &SubjectNodeRef,
     graph: &mut GraphRef,
-) -> Result<()> {
+) -> Result<(), Error> {
     // SPEC: §2.5 Property Attributes
     // SPEC: §2.12 Omitting Nodes: Property Attributes on an empty Property Element
     for attribute in attributes {
@@ -332,7 +315,7 @@ fn parse_predicate_element<R: Read>(
     xml_base: &Option<IriRef>,
     subject: &SubjectNodeRef,
     graph: &mut GraphRef,
-) -> Result<()> {
+) -> Result<(), Error> {
     let mut no_child_elements = false;
     loop {
         let event = event_reader.next();
@@ -449,7 +432,7 @@ fn parse_object_element<R: Read>(
     event_reader: &mut EventReader<&mut R>,
     xml_base: &Option<IriRef>,
     graph: &mut GraphRef,
-) -> Result<Option<String>> {
+) -> Result<Option<String>, Error> {
     let mut content = String::new();
     let mut has_elements = false;
     let mut has_characters = false;
@@ -512,7 +495,9 @@ fn parse_object_element<R: Read>(
     }
 }
 
-fn parse_xml_literal_element<R: Read>(event_reader: &mut EventReader<&mut R>) -> Result<String> {
+fn parse_xml_literal_element<R: Read>(
+    event_reader: &mut EventReader<&mut R>,
+) -> Result<String, Error> {
     let mut content: Vec<u8> = Vec::new();
     let mut writer_config = xml::EmitterConfig::new();
     writer_config.write_document_declaration = false;
@@ -552,7 +537,7 @@ fn parse_xml_literal_element<R: Read>(event_reader: &mut EventReader<&mut R>) ->
     }
 }
 
-fn parse_attributes<'a>(attributes: &'a [OwnedAttribute]) -> Result<Attributes<'a>> {
+fn parse_attributes<'a>(attributes: &'a [OwnedAttribute]) -> Result<Attributes<'a>, Error> {
     let mut response = Attributes {
         subject_type: None,
         parse_type: None,

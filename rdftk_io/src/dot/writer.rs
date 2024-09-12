@@ -1,23 +1,5 @@
-/*!
-Provides the `DotWriter` implementation of the `GraphWriter` trait. This writer also as certain
-options that govern the output generated, these are set using the `DotOptions` structure which
-can be passed to `DotWriter::new`.
-
-```rust
-use rdftk_io::dot::writer::{DotOptions, DotWriter};
-use rdftk_io::write_graph_to_string;
-# use rdftk_core::model::graph::GraphRef;
-# fn make_graph() -> GraphRef { rdftk_core::simple::graph::graph_factory().graph() }
-
-let mut options = DotOptions::default();
-options.blank_labels = true;
-let writer = DotWriter::new(options);
-
-let result = write_graph_to_string(&writer, &make_graph());
-```
-*/
-
-use crate::GraphWriter;
+use objio::{impl_has_options, ObjectWriter};
+use rdftk_core::error::Error;
 use rdftk_core::model::graph::GraphRef;
 use rdftk_core::model::statement::{ObjectNodeRef, SubjectNodeRef};
 use std::cell::RefCell;
@@ -36,21 +18,21 @@ use std::io::Write;
 #[derive(Debug)]
 pub struct DotOptions {
     /// The dot shape used to render a blank node. Default is `circle`.
-    pub blank_shape: String,
+    blank_shape: String,
     /// The color name used to render a blank node. Default is `green`.
-    pub blank_color: String,
+    blank_color: String,
     /// Determines whether labels are included in blank node shapes. Default is `false`.
-    pub blank_labels: bool,
+    blank_labels: bool,
     /// The dot shape used to render an IRI node. Default is `ellipse`.
-    pub iri_shape: String,
+    iri_shape: String,
     /// The color name used to render an IRI node. Default is `blue`.
-    pub iri_color: String,
+    iri_color: String,
     /// The dot shape used to render a literal node. Default is `record`.
-    pub literal_shape: String,
+    literal_shape: String,
     /// The color name used to render a literal node. Default is `black`.
-    pub literal_color: String,
+    literal_color: String,
     /// The prefix string used to generate internal node identifiers. Default is `node_`.
-    pub node_prefix: String,
+    node_prefix: String,
 }
 
 ///
@@ -100,6 +82,184 @@ impl Default for DotOptions {
     }
 }
 
+impl DotOptions {
+    pub fn with_blank_shape<S>(self, s: S) -> Self
+    where
+        S: Into<String>,
+    {
+        Self {
+            blank_shape: s.into(),
+            ..self
+        }
+    }
+
+    pub fn set_blank_shape<S>(&mut self, s: S)
+    where
+        S: Into<String>,
+    {
+        self.blank_shape = s.into();
+    }
+
+    pub fn blank_shape(&self) -> &String {
+        &self.blank_shape
+    }
+
+    // --------------------------------------------------------------------------------------------
+
+    pub fn with_blank_color<S>(self, s: S) -> Self
+    where
+        S: Into<String>,
+    {
+        Self {
+            blank_color: s.into(),
+            ..self
+        }
+    }
+
+    pub fn set_blank_color<S>(&mut self, s: S)
+    where
+        S: Into<String>,
+    {
+        self.blank_color = s.into();
+    }
+
+    pub fn blank_color(&self) -> &String {
+        &self.blank_color
+    }
+
+    // --------------------------------------------------------------------------------------------
+
+    pub fn with_blank_labels(self, blank_labels: bool) -> Self {
+        Self {
+            blank_labels,
+            ..self
+        }
+    }
+
+    pub fn set_blank_labels(&mut self, blank_labels: bool) {
+        self.blank_labels = blank_labels;
+    }
+
+    pub fn blank_labels(&self) -> bool {
+        self.blank_labels
+    }
+
+    // --------------------------------------------------------------------------------------------
+
+    pub fn with_iri_shape<S>(self, iri_shape: S) -> Self
+    where
+        S: Into<String>,
+    {
+        Self {
+            iri_shape: iri_shape.into(),
+            ..self
+        }
+    }
+
+    pub fn set_iri_shape<S>(&mut self, iri_shape: S)
+    where
+        S: Into<String>,
+    {
+        self.iri_shape = iri_shape.into();
+    }
+
+    pub fn iri_shape(&self) -> &String {
+        &self.iri_shape
+    }
+
+    // --------------------------------------------------------------------------------------------
+
+    pub fn with_iri_color<S>(self, iri_color: S) -> Self
+    where
+        S: Into<String>,
+    {
+        Self {
+            iri_color: iri_color.into(),
+            ..self
+        }
+    }
+
+    pub fn set_iri_color<S>(&mut self, iri_color: S)
+    where
+        S: Into<String>,
+    {
+        self.iri_color = iri_color.into();
+    }
+
+    pub fn iri_color(&self) -> &String {
+        &self.iri_color
+    }
+
+    // --------------------------------------------------------------------------------------------
+
+    pub fn with_literal_shape<S>(self, literal_shape: S) -> Self
+    where
+        S: Into<String>,
+    {
+        Self {
+            literal_shape: literal_shape.into(),
+            ..self
+        }
+    }
+
+    pub fn set_literal_shape<S>(&mut self, literal_shape: S)
+    where
+        S: Into<String>,
+    {
+        self.literal_shape = literal_shape.into();
+    }
+
+    pub fn literal_shape(&self) -> &String {
+        &self.literal_shape
+    }
+
+    // --------------------------------------------------------------------------------------------
+
+    pub fn with_literal_color<S>(self, literal_color: S) -> Self
+    where
+        S: Into<String>,
+    {
+        Self {
+            literal_color: literal_color.into(),
+            ..self
+        }
+    }
+
+    pub fn set_literal_color<S>(&mut self, literal_color: S)
+    where
+        S: Into<String>,
+    {
+        self.literal_color = literal_color.into();
+    }
+
+    pub fn literal_color(&self) -> &String {
+        &self.literal_color
+    }
+
+    // --------------------------------------------------------------------------------------------
+
+    pub fn with_node_prefix<S>(self, node_prefix: S) -> Self
+    where
+        S: Into<String>,
+    {
+        Self {
+            node_prefix: node_prefix.into(),
+            ..self
+        }
+    }
+
+    pub fn set_node_prefix<S>(&mut self, node_prefix: S)
+    where
+        S: Into<String>,
+    {
+        self.node_prefix = node_prefix.into();
+    }
+
+    pub fn node_prefix(&self) -> &String {
+        &self.node_prefix
+    }
+}
+
 // ------------------------------------------------------------------------------------------------
 
 impl Default for DotWriter {
@@ -111,16 +271,20 @@ impl Default for DotWriter {
     }
 }
 
-impl GraphWriter for DotWriter {
-    fn write<W>(&self, w: &mut impl W, graph: &GraphRef) -> rdftk_core::error::Result<()>
+impl_has_options!(DotWriter, DotOptions);
+
+impl ObjectWriter<GraphRef> for DotWriter {
+    type Error = Error;
+
+    fn write<W>(&self, w: &mut W, object: &GraphRef) -> Result<(), Self::Error>
     where
         W: Write,
     {
-        writeln!(w, "digraph {{\n    rankdir=BT\n    charset=\"utf-8\";").map_err(io_error)?;
+        writeln!(w, "digraph {{\n    rankdir=BT\n    charset=\"utf-8\";")?;
 
-        writeln!(w).map_err(io_error)?;
+        writeln!(w)?;
 
-        let graph = graph.borrow();
+        let graph = object.borrow();
 
         let mappings = graph.prefix_mappings();
         for statement in graph.statements() {
@@ -134,11 +298,10 @@ impl GraphWriter for DotWriter {
                     None => statement.predicate().to_string(),
                     Some(qname) => qname.to_string(),
                 }
-            )
-            .map_err(io_error)?;
+            )?;
         }
 
-        writeln!(w).map_err(io_error)?;
+        writeln!(w)?;
 
         for node in self.nodes.borrow().values() {
             match node.kind {
@@ -153,8 +316,7 @@ impl GraphWriter for DotWriter {
                             node.id,
                             self.options.blank_shape,
                             self.options.blank_color
-                        )
-                        .map_err(io_error)?;
+                        )?;
                     } else {
                         writeln!(
                             w,
@@ -163,8 +325,7 @@ impl GraphWriter for DotWriter {
                             node.id,
                             self.options.blank_shape,
                             self.options.blank_color
-                        )
-                        .map_err(io_error)?;
+                        )?;
                     }
                 }
                 NodeKind::IRI => {
@@ -177,8 +338,7 @@ impl GraphWriter for DotWriter {
                         node.label,
                         self.options.iri_shape,
                         self.options.iri_color
-                    )
-                    .map_err(io_error)?;
+                    )?;
                 }
                 NodeKind::Literal => {
                     writeln!(
@@ -189,12 +349,11 @@ impl GraphWriter for DotWriter {
                         node.label,
                         self.options.literal_shape,
                         self.options.literal_color
-                    )
-                    .map_err(io_error)?;
+                    )?;
                 }
             }
         }
-        writeln!(w, "}}").map_err(io_error)?;
+        writeln!(w, "}}")?;
         Ok(())
     }
 }
@@ -223,7 +382,7 @@ impl DotWriter {
                     Node {
                         id: id.clone(),
                         kind: NodeKind::Blank,
-                        label: node.as_blank().unwrap().clone(),
+                        label: node.as_blank().unwrap().into(),
                     },
                 );
             } else if node.is_iri() {
@@ -252,7 +411,7 @@ impl DotWriter {
                     Node {
                         id: id.clone(),
                         kind: NodeKind::Blank,
-                        label: node.as_blank().unwrap().clone(),
+                        label: node.as_blank().unwrap().into(),
                     },
                 );
             } else if node.is_iri() {
@@ -277,13 +436,4 @@ impl DotWriter {
             id
         }
     }
-}
-
-// ------------------------------------------------------------------------------------------------
-// Private Functions
-// ------------------------------------------------------------------------------------------------
-
-fn io_error(e: std::io::Error) -> rdftk_core::error::Error {
-    use rdftk_core::error::ErrorKind;
-    rdftk_core::error::Error::with_chain(e, ErrorKind::ReadWrite(super::NAME.to_string()))
 }

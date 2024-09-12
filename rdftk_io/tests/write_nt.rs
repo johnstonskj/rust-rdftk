@@ -1,7 +1,7 @@
 #![cfg(feature = "nt")]
 
-use rdftk_io::nt::writer::NTripleWriter;
-use rdftk_io::write_graph_to_string;
+use rdftk_io::nt::NTripleWriter;
+use objio::ObjectWriter;
 
 mod common;
 
@@ -11,7 +11,7 @@ fn write_to_ntriples() {
 
     let writer = NTripleWriter::default();
 
-    let result = write_graph_to_string(&writer, &graph);
+    let result = writer.write_to_string(&graph);
     assert!(result.is_ok());
     let output = result.unwrap();
     println!("# format: N-Triples\n{}", output);

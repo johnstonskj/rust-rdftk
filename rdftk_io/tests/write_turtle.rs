@@ -1,7 +1,7 @@
 #![cfg(feature = "turtle")]
 
 use rdftk_io::turtle::writer::{TurtleOptions, TurtleWriter};
-use rdftk_io::{write_graph_to_string, write_graph_to_string_with_options};
+use objio::{HasOptions, ObjectWriter};
 use rdftk_iri::{Iri, IriRef};
 use std::str::FromStr;
 
@@ -13,7 +13,7 @@ fn write_to_turtle() {
 
     let writer = TurtleWriter::default();
 
-    let result = write_graph_to_string(&writer, &graph);
+    let result = writer.write_to_string(&graph);
     assert!(result.is_ok());
     let output = result.unwrap();
     println!("# format: turtle\n{}", output);
@@ -32,9 +32,9 @@ fn write_to_turtle_with_base() {
     let options = TurtleOptions::default().with_id_base(IriRef::from(
         Iri::from_str("http://en.wikipedia.org/wiki/").unwrap(),
     ));
-    let writer = TurtleWriter::default();
+    let writer = TurtleWriter::default().with_options(options);
 
-    let result = write_graph_to_string_with_options(&writer, &graph, &options);
+    let result = writer.write_to_string(&graph);
     assert!(result.is_ok());
     let output = result.unwrap();
     println!("# format: turtle\n{}", output);
@@ -57,9 +57,9 @@ fn write_to_turtle_with_options() {
         ))
         .with_sparql_style()
         .with_nested_blank_nodes();
-    let writer = TurtleWriter::default();
+    let writer = TurtleWriter::default().with_options(options);
 
-    let result = write_graph_to_string_with_options(&writer, &graph, &options);
+    let result = writer.write_to_string(&graph);
     assert!(result.is_ok());
     let output = result.unwrap();
     println!("# format: turtle\n{}", output);

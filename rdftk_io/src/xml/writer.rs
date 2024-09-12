@@ -1,34 +1,10 @@
-/*!
-Provides the type `XmlWriter` for writing in the [RDF 1.1 XML Syntax](https://www.w3.org/TR/rdf-syntax-grammar/)
-format.
-
-This writer has a number of options, it can be written in a plain, streaming, form or alternatively
-pretty-printed  for readability. It is also possible to pick one of the type styles described
-in the specification, "flat" or "striped".
-
-# Example
-
-```rust
-use rdftk_io::xml::writer::{XmlOptions, XmlWriter};
-use rdftk_io::write_graph_to_string;
-# let graph = rdftk_core::simple::graph::graph_factory().graph();
-
-let options: XmlOptions = XmlOptions::flat().pretty().clone();
-
-let writer = XmlWriter::new(options);
-
-println!("{}", write_graph_to_string(&writer, &graph).unwrap());
-```
-
-*/
-
 use super::syntax::{
     ATTRIBUTE_ABOUT, ATTRIBUTE_DATATYPE, ATTRIBUTE_NODE_ID, ATTRIBUTE_RESOURCE, DEFAULT_ENCODING,
     ELEMENT_DESCRIPTION, ELEMENT_RDF,
 };
 use crate::xml::syntax::ATTRIBUTE_XML_LANG_PREFIXED;
-use crate::GraphWriter;
-use rdftk_core::error::{ErrorKind, Result};
+use objio::{impl_has_options, ObjectWriter};
+use rdftk_core::error::{rdf_star_not_supported_error, read_write_error_with, Error};
 use rdftk_core::model::graph::{Graph, GraphRef};
 use rdftk_core::model::statement::SubjectNodeRef;
 use rdftk_iri::IriRef;
@@ -61,11 +37,11 @@ pub enum XmlStyle {
 #[derive(Clone, Debug)]
 pub struct XmlOptions {
     /// Determines the style of the generated XML. Default is `Flat`.
-    pub style: XmlStyle,
+    style: XmlStyle,
     /// Should the output be pretty-printed, including indentation. Default is `false`.
-    pub pretty: bool,
+    pretty_print: bool,
     /// The encoding to specify in the XML declaration. Default is "utf-8".
-    pub encoding: String,
+    encoding: String,
 }
 
 ///
@@ -94,7 +70,7 @@ impl Default for XmlOptions {
     fn default() -> Self {
         Self {
             style: XmlStyle::Flat,
-            pretty: false,
+            pretty_print: false,
             encoding: String::from(DEFAULT_ENCODING),
         }
     }
@@ -102,39 +78,46 @@ impl Default for XmlOptions {
 
 impl XmlOptions {
     /// Create an option instance with `XmlStyle::Flat`.
-    pub fn flat() -> Self {
+    pub fn flat(self) -> Self {
         Self {
             style: XmlStyle::Flat,
-            pretty: false,
-            encoding: String::from(DEFAULT_ENCODING),
+            ..self
         }
     }
 
     /// Create an option instance with `XmlStyle::Striped`.
-    pub fn striped() -> Self {
+    pub fn striped(self) -> Self {
         Self {
             style: XmlStyle::Striped,
-            pretty: false,
-            encoding: String::from(DEFAULT_ENCODING),
+            ..self
         }
     }
 
     /// Set the option to emit pretty-printed XML.
-    pub fn pretty(&mut self) -> &mut Self {
-        self.pretty = true;
-        self
+    pub fn pretty(self) -> Self {
+        Self {
+            pretty_print: true,
+            ..self
+        }
     }
 
     /// Set the option to emit plain, non-indented, XML.
-    pub fn plain(&mut self) -> &mut Self {
-        self.pretty = false;
-        self
+    pub fn plain(self) -> Self {
+        Self {
+            pretty_print: false,
+            ..self
+        }
     }
 
     /// Set the encoding string, this has no effect on the encoding being written.
-    pub fn encoding(&mut self, encoding: &str) -> &mut Self {
-        self.encoding = encoding.to_string();
-        self
+    pub fn with_encoding<S>(self, encoding: S) -> Self
+    where
+        S: Into<String>,
+    {
+        Self {
+            encoding: encoding.into(),
+            ..self
+        }
     }
 }
 
@@ -149,16 +132,20 @@ impl Default for XmlWriter {
     }
 }
 
-impl GraphWriter for XmlWriter {
-    fn write<W>(&self, w: &mut W, graph: &GraphRef) -> Result<()>
+impl_has_options!(XmlWriter, XmlOptions);
+
+impl ObjectWriter<GraphRef> for XmlWriter {
+    type Error = Error;
+
+    fn write<W>(&self, w: &mut W, graph: &GraphRef) -> Result<(), Self::Error>
     where
         W: Write,
     {
         let graph = graph.borrow();
 
         let config = EmitterConfig::new()
-            .perform_indent(self.options.pretty)
-            .normalize_empty_elements(self.options.pretty);
+            .perform_indent(self.options.pretty_print)
+            .normalize_empty_elements(self.options.pretty_print);
         let mut writer = config.create_writer(w);
 
         writer
@@ -247,7 +234,7 @@ impl XmlWriter {
         graph: &Ref<'_, dyn Graph>,
         subject: &SubjectNodeRef,
         flat: bool,
-    ) -> Result<()> {
+    ) -> Result<(), Error> {
         if let Some(blank) = subject.as_blank() {
             if flat {
                 writer
@@ -269,7 +256,7 @@ impl XmlWriter {
                 )
                 .map_err(xml_error)?;
         } else {
-            return Err(ErrorKind::Msg("RDF* not supported by XML writer".to_string()).into());
+            return rdf_star_not_supported_error(super::NAME).into();
         }
 
         for predicate in graph.predicates_for(subject) {
@@ -320,9 +307,7 @@ impl XmlWriter {
                         .write(XmlEvent::Characters(literal.lexical_form()))
                         .map_err(xml_error)?;
                 } else {
-                    return Err(
-                        ErrorKind::Msg("RDF* not supported by XML writer".to_string()).into(),
-                    );
+                    return rdf_star_not_supported_error(super::NAME).into();
                 }
                 writer
                     .write(XmlEvent::end_element().name(name.as_str()))
@@ -344,7 +329,7 @@ impl XmlWriter {
 
 #[inline]
 fn xml_error(e: xml::writer::Error) -> rdftk_core::error::Error {
-    rdftk_core::error::Error::with_chain(e, ErrorKind::ReadWrite(super::NAME.to_string()))
+    read_write_error_with(super::NAME, e)
 }
 
 fn split_uri(iri: &IriRef) -> (String, String) {

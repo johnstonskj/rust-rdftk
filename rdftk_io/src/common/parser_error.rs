@@ -1,6 +1,6 @@
 use pest::iterators::Pair;
 use pest::RuleType;
-use rdftk_core::error::{Error as CoreError, ErrorKind};
+use rdftk_core::error::{read_write_error_with, Error as CoreError};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
 
@@ -72,7 +72,7 @@ impl ParserErrorFactory {
         &self,
         e: ::pest::error::Error<R>,
     ) -> CoreError {
-        CoreError::with_chain(e, ErrorKind::ReadWrite(self.repr.to_string()))
+        read_write_error_with(self.repr, e)
     }
 }
 
@@ -112,7 +112,7 @@ impl std::error::Error for ParserError {}
 
 impl From<ParserError> for CoreError {
     fn from(e: ParserError) -> Self {
-        CoreError::with_chain(e.clone(), ErrorKind::ReadWrite(e.repr))
+        read_write_error_with(e.repr.clone(), e)
     }
 }
 

@@ -1,6 +1,23 @@
 /*!
 Provides for writing a `Graph` instance in the [GraphViz](https://graphviz.gitlab.io/) dot file
 format.
+
+
+# Example
+
+```rust
+use rdftk_io::{HasOptions, ObjectWriter};
+use rdftk_io::dot::writer::{DotOptions, DotWriter};
+# use rdftk_core::model::graph::GraphRef;
+# fn make_graph() -> GraphRef { rdftk_core::simple::graph::graph_factory().graph() }
+
+let mut options = DotOptions::default().with_blank_labels(true);
+
+let writer = DotWriter::default.with_options(options);
+
+let result = writer.write_graph_to_string(&make_graph());
+```
+
 */
 
 // ------------------------------------------------------------------------------------------------
@@ -20,4 +37,5 @@ pub const MIME_TYPE: &str = "text/vnd.graphviz";
 // Modules
 // ------------------------------------------------------------------------------------------------
 
-pub mod writer;
+mod writer;
+pub use writer::{DotOptions, DotWriter};

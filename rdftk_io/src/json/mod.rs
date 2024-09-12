@@ -40,4 +40,5 @@ mod syntax;
 
 pub mod reader;
 
-pub mod writer;
+mod writer;
+pub use writer::{JsonOptions, JsonWriter};

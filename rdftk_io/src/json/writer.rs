@@ -20,8 +20,8 @@ use crate::json::syntax::{
     OBJ_TYPE_URI,
 };
 use crate::json::NAME;
-use crate::GraphWriter;
-use rdftk_core::error::{Error, ErrorKind, Result};
+use objio::{impl_has_options, ObjectWriter};
+use rdftk_core::error::{rdf_star_not_supported_error, read_write_error_with, Error};
 use rdftk_core::model::graph::GraphRef;
 use serde_json::{Map, Value};
 use std::io::Write;
@@ -33,9 +33,14 @@ use std::io::Write;
 /// This struct implements the `GraphWriter` trait and will write out a serialized form of the
 /// entire graph.
 ///
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct JsonWriter {
-    pretty: bool,
+    options: JsonOptions,
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct JsonOptions {
+    pretty_print: bool,
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -50,18 +55,35 @@ pub struct JsonWriter {
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl Default for JsonWriter {
-    fn default() -> Self {
-        Self { pretty: false }
+impl JsonOptions {
+    pub fn with_pretty_print(self, pretty_print: bool) -> Self {
+        Self {
+            pretty_print,
+            ..self
+        }
+    }
+
+    pub fn set_pretty_print(&mut self, pretty_print: bool) {
+        self.pretty_print = pretty_print;
+    }
+
+    pub fn pretty_print(&self) -> bool {
+        self.pretty_print
     }
 }
 
-impl GraphWriter for JsonWriter {
-    fn write<W>(&self, w: &mut W, graph: &GraphRef) -> Result<()>
+// ------------------------------------------------------------------------------------------------
+
+impl_has_options!(JsonWriter, JsonOptions);
+
+impl ObjectWriter<GraphRef> for JsonWriter {
+    type Error = Error;
+
+    fn write<W>(&self, w: &mut W, object: &GraphRef) -> Result<(), Self::Error>
     where
         W: Write,
     {
-        let graph = graph.borrow();
+        let graph = object.borrow();
 
         let mut json_graph = Map::new();
         for subject in graph.subjects() {
@@ -111,7 +133,7 @@ impl GraphWriter for JsonWriter {
                             );
                         }
                     } else {
-                        return Err(ErrorKind::RdfStarNotSupported(NAME.to_string()).into());
+                        return rdf_star_not_supported_error(NAME).into();
                     }
                     objects.push(Value::Object(object_map));
                 }
@@ -119,7 +141,7 @@ impl GraphWriter for JsonWriter {
             }
             let _ = json_graph.insert(subject.to_string(), Value::Object(predicate_map));
         }
-        if self.pretty {
+        if self.options.pretty_print() {
             serde_json::to_writer_pretty(w, &Value::Object(json_graph)).map_err(json_error)?;
         } else {
             serde_json::to_writer(w, &Value::Object(json_graph)).map_err(json_error)?;
@@ -129,20 +151,13 @@ impl GraphWriter for JsonWriter {
     }
 }
 
-impl JsonWriter {
-    /// Construct a writer that will output a pretty-printed form.
-    pub fn pretty() -> Self {
-        Self { pretty: true }
-    }
-}
-
 // ------------------------------------------------------------------------------------------------
 // Private Functions
 // ------------------------------------------------------------------------------------------------
 
 fn json_error(e: serde_json::Error) -> Error {
     log::error!("Error parsing JSON source: {:?}", e);
-    Error::with_chain(e, ErrorKind::ReadWrite(NAME.to_string()))
+    read_write_error_with(NAME, e)
 }
 
 // ------------------------------------------------------------------------------------------------
