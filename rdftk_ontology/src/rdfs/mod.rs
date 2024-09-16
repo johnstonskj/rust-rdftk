@@ -55,9 +55,9 @@ pub struct Property {
 // ------------------------------------------------------------------------------------------------
 
 pub fn rdf_schema() -> Vocabulary {
-    let mut schema = Vocabulary::new(rdfs::namespace_iri().clone());
+    let mut schema = Vocabulary::new(rdfs::namespace().clone());
     let iri = IriRef::from(Iri::from_str("https://www.w3.org/TR/rdf-schema").unwrap());
-    schema.add_is_defined_by(iri.into());
+    schema.add_is_defined_by(iri);
     //    schema.add_comment("W3C Recommendation 25 February 2014".into());
 
     schema.add_class(Class::new(rdfs::resource().clone()));

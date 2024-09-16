@@ -1,6 +1,8 @@
 /*!
 Namespaces for SKOS, SKOS eXtension for Labels (SKOS-XL), and the ISO-25964 thesaurus vocabulary.
-*/
+ */
+
+use rdftk_names::namespace;
 
 namespace! {
     "skos",
@@ -43,6 +45,7 @@ namespace! {
 }
 
 pub mod xl {
+    use rdftk_names::namespace;
     namespace! {
         "skosxl",
         "http://www.w3.org/2008/05/skos-xl#",
@@ -57,6 +60,7 @@ pub mod xl {
 }
 
 pub mod iso {
+    use rdftk_names::namespace;
     namespace! {
         "isothes",
         "http://purl.org/iso25964/skos-thes#",
@@ -86,6 +90,7 @@ pub mod iso {
 
 // see https://www.w3.org/2003/06/sw-vocab-status/note.html
 pub mod term_status {
+    use rdftk_names::namespace;
     namespace! {
         "status",
         "http://www.w3.org/2003/06/sw-vocab-status/ns#",

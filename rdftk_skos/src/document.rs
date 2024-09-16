@@ -10,13 +10,13 @@ use crate::model::{
     LiteralProperty, Resource, Scheme, ToUri,
 };
 use crate::ns;
+use objio::ObjectWriter;
 use rdftk_core::model::graph::mapping::PrefixMappingRef;
 use rdftk_core::model::literal::LanguageTag;
 use rdftk_core::simple;
 use rdftk_io::turtle::writer::TurtleWriter;
-use rdftk_io::write_graph_to_string;
-use rdftk_iri::IRIRef;
-use somedoc::error::{Error, ErrorKind, ResultExt};
+use rdftk_iri::IriRef;
+use somedoc::error::Error;
 use somedoc::model::block::{
     Cell, Column, Formatted, HasBlockContent, HasLabel, Heading, HeadingLevel, Label as Anchor,
     List, Paragraph, Row, Table,
@@ -53,7 +53,7 @@ struct Context {
 pub fn make_document(
     scheme: &Scheme,
     language: Option<LanguageTag>,
-    default_namespace: Option<IRIRef>,
+    default_namespace: Option<IriRef>,
 ) -> Result<Document, Error> {
     let ns_mappings = standard_mappings();
     if let Some(default_namespace) = default_namespace {
@@ -152,8 +152,7 @@ pub fn make_document_with_mappings(
 
     let graph = to_rdf_graph_with_mappings(&scheme, context.ns_mappings, &simple::graph_factory());
     let writer = TurtleWriter::default();
-    let code = write_graph_to_string(&writer, &graph)
-        .chain_err(|| ErrorKind::Msg("Could not serialize graph".to_string()))?;
+    let code = writer.write_to_string(&graph)?;
 
     let _ = document.add_formatted(Formatted::from(code));
 
@@ -335,7 +334,7 @@ fn write_concept(document: &mut Document, concept: &Concept, context: &Context) 
 
 fn write_concept_relations(document: &mut Document, concept: &Concept, context: &Context) {
     let _ = document.add_heading(Heading::new("Related Concepts", level_to_heading(4)));
-    let mut table = Table::new(&[Column::from("Relationship"), Column::from("Concept IRI")]);
+    let mut table = Table::new(&[Column::from("Relationship"), Column::from("Concept Iri")]);
     for (relation, related) in concept.concepts() {
         let related = related.borrow();
         let label = related.get_preferred_label_for(&context.language);
@@ -446,7 +445,7 @@ fn write_collection(document: &mut Document, collection: &Collection, context: &
     write_collection_membership(document, collection.uri(), context);
 }
 
-fn write_collection_membership(document: &mut Document, member_uri: &IRIRef, context: &Context) {
+fn write_collection_membership(document: &mut Document, member_uri: &IriRef, context: &Context) {
     let in_collections: Vec<&Rc<RefCell<Collection>>> = context
         .collections
         .iter()

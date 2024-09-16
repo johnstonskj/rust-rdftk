@@ -18,7 +18,7 @@ use rdftk_core::model::literal::{LanguageTag, LiteralFactoryRef};
 use rdftk_core::model::statement::{
     ObjectNodeRef, StatementFactoryRef, StatementList, SubjectNodeRef,
 };
-use rdftk_iri::IRIRef;
+use rdftk_iri::IriRef;
 use rdftk_names::rdf;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -35,7 +35,7 @@ pub enum Member {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Collection {
-    uri: IRIRef,
+    uri: IriRef,
     ordered: bool,
     members: Vec<Member>,
     preferred_label: Option<String>,
@@ -48,7 +48,7 @@ pub struct Collection {
 // ------------------------------------------------------------------------------------------------
 
 impl Member {
-    fn uri(&self) -> IRIRef {
+    fn uri(&self) -> IriRef {
         match self {
             Member::Concept(member) => member.borrow().uri().clone(),
             Member::Collection(member) => member.borrow().uri().clone(),
@@ -81,7 +81,7 @@ impl Member {
 // ------------------------------------------------------------------------------------------------
 
 impl Resource for Collection {
-    fn uri(&self) -> &IRIRef {
+    fn uri(&self) -> &IriRef {
         &self.uri
     }
 }
@@ -197,7 +197,7 @@ impl ToStatements for Collection {
 }
 
 impl Collection {
-    pub(crate) fn new(uri: &IRIRef, ordered: bool) -> Self {
+    pub(crate) fn new(uri: &IriRef, ordered: bool) -> Self {
         Self {
             uri: uri.clone(),
             ordered,
@@ -208,7 +208,7 @@ impl Collection {
         }
     }
 
-    pub(crate) fn new_with_label(uri: &IRIRef, ordered: bool, text: &str, language: &str) -> Self {
+    pub(crate) fn new_with_label(uri: &IriRef, ordered: bool, text: &str, language: &str) -> Self {
         let mut collection = Self::new(uri, ordered);
         collection.add_label(Label::preferred(text, language));
         collection
@@ -221,7 +221,7 @@ impl Collection {
         self.members.push(Member::Collection(collection));
     }
 
-    pub fn sub_collection(&mut self, uri: &IRIRef, ordered: bool) -> Rc<RefCell<Collection>> {
+    pub fn sub_collection(&mut self, uri: &IriRef, ordered: bool) -> Rc<RefCell<Collection>> {
         let member = Rc::from(RefCell::from(Self::new(uri, ordered)));
         self.add_member_collection(member.clone());
         member
@@ -229,7 +229,7 @@ impl Collection {
 
     pub fn sub_collection_labeled(
         &mut self,
-        uri: &IRIRef,
+        uri: &IriRef,
         ordered: bool,
         label: &str,
         language: &str,
@@ -258,7 +258,7 @@ impl Collection {
         !self.members.is_empty()
     }
 
-    pub fn has_member(&self, uri: &IRIRef) -> bool {
+    pub fn has_member(&self, uri: &IriRef) -> bool {
         self.members.iter().any(|member| &member.uri() == uri)
     }
 
@@ -316,7 +316,7 @@ fn make_list_node(
 fn add_to_list_node(
     statements: &mut StatementList,
     current: &SubjectNodeRef,
-    member_uri: &IRIRef,
+    member_uri: &IriRef,
     factory: &StatementFactoryRef,
 ) {
     statements.push(

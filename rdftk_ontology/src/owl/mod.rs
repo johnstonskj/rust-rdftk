@@ -29,6 +29,7 @@ pub enum HeaderProperty {
     Imports(IriRef),
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub struct Ontology {
     uri: IriRef,
@@ -38,6 +39,7 @@ pub struct Ontology {
     properties: HashMap<IriRef, Property>,
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub struct Class {
     description: ClassDescription,
@@ -45,6 +47,7 @@ pub struct Class {
     deprecated: bool,
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub struct Property {
     deprecated: bool,

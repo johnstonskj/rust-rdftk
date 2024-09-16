@@ -18,7 +18,7 @@ use crate::model::{
 use crate::ns;
 use rdftk_core::model::literal::{LanguageTag, LiteralFactoryRef};
 use rdftk_core::model::statement::{ObjectNodeRef, StatementFactoryRef, StatementList};
-use rdftk_iri::IRIRef;
+use rdftk_iri::IriRef;
 use rdftk_names::rdf;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -29,10 +29,9 @@ use std::rc::Rc;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Scheme {
-    uri: IRIRef,
-    concepts: Vec<Rc<RefCell<Concept>>>,
-    collections: Vec<Rc<RefCell<Collection>>>,
-    preferred_label: Option<String>,
+    uri: IriRef,
+    concepts: Vec<Concept>,
+    collections: Vec<Collection>,
     labels: Vec<Label>,
     properties: Vec<LiteralProperty>,
 }
@@ -42,7 +41,7 @@ pub struct Scheme {
 // ------------------------------------------------------------------------------------------------
 
 impl Resource for Scheme {
-    fn uri(&self) -> &IRIRef {
+    fn uri(&self) -> &IriRef {
         &self.uri
     }
 }
@@ -162,7 +161,7 @@ impl ToStatements for Scheme {
 }
 
 impl Scheme {
-    pub fn new(uri: &IRIRef) -> Self {
+    pub fn new(uri: &IriRef) -> Self {
         Self {
             uri: uri.clone(),
             concepts: Default::default(),
@@ -173,7 +172,7 @@ impl Scheme {
         }
     }
 
-    pub fn new_with_label(uri: &IRIRef, text: &str, language: &str) -> Self {
+    pub fn new_with_label(uri: &IriRef, text: &str, language: &str) -> Self {
         let mut scheme = Self::new(uri);
         scheme.add_label(Label::preferred(text, language));
         scheme
@@ -181,7 +180,7 @@ impl Scheme {
 
     // --------------------------------------------------------------------------------------------
 
-    pub fn new_top_concept(&mut self, uri: &IRIRef) -> Rc<RefCell<Concept>> {
+    pub fn new_top_concept(&mut self, uri: &IriRef) -> Rc<RefCell<Concept>> {
         let concept = Rc::from(RefCell::from(Concept::new(uri)));
         self.add_top_concept(concept.clone());
         concept
@@ -189,7 +188,7 @@ impl Scheme {
 
     pub fn new_top_concept_with_label(
         &mut self,
-        uri: &IRIRef,
+        uri: &IriRef,
         text: &str,
         language: &str,
     ) -> Rc<RefCell<Concept>> {
@@ -225,7 +224,7 @@ impl Scheme {
 
     // --------------------------------------------------------------------------------------------
 
-    pub fn new_top_collection(&mut self, uri: &IRIRef, ordered: bool) -> Rc<RefCell<Collection>> {
+    pub fn new_top_collection(&mut self, uri: &IriRef, ordered: bool) -> Rc<RefCell<Collection>> {
         let collection = Rc::from(RefCell::from(Collection::new(uri, ordered)));
         self.add_top_collection(collection.clone());
         collection
@@ -233,7 +232,7 @@ impl Scheme {
 
     pub fn new_top_collection_with_label(
         &mut self,
-        uri: &IRIRef,
+        uri: &IriRef,
         ordered: bool,
         text: &str,
         language: &str,

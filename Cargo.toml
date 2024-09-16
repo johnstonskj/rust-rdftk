@@ -8,6 +8,6 @@ members = [
     "rdftk_iri",
     "rdftk_names",
     "rdftk_ontology",
-    "rdftk_query",
-    "rdftk_skos",
+#    "rdftk_query",
+#    "rdftk_skos",
 ]

@@ -6,10 +6,12 @@ that it's extensibility with OWL is limited.
 use crate::ns;
 use rdftk_core::model::graph::mapping::PrefixMappingRef;
 use rdftk_core::model::graph::{GraphFactoryRef, GraphRef};
+use rdftk_core::model::literal::{LanguageTag, LiteralFactoryRef};
 use rdftk_core::model::statement::{
     ObjectNodeRef, StatementFactoryRef, StatementList, StatementRef, SubjectNodeRef,
 };
-use rdftk_iri::IRIRef;
+use rdftk_core::simple::mapping::default_mappings;
+use rdftk_iri::IriRef;
 use rdftk_names::{dc, owl, rdf, xsd};
 
 // ------------------------------------------------------------------------------------------------
@@ -43,7 +45,7 @@ pub trait Labeled {
 pub trait Propertied {
     fn add_property(&mut self, property: LiteralProperty);
 
-    fn has_property(&self, predicate: &IRIRef) -> bool {
+    fn has_property(&self, predicate: &IriRef) -> bool {
         self.properties()
             .iter()
             .any(|property| property.predicate() == predicate)
@@ -75,7 +77,7 @@ pub trait Propertied {
 }
 
 pub trait Resource: Labeled + Propertied {
-    fn uri(&self) -> &IRIRef;
+    fn uri(&self) -> &IriRef;
 }
 
 pub trait ToStatements {
@@ -97,7 +99,7 @@ pub trait ToStatement {
 }
 
 pub trait ToUri {
-    fn to_uri(&self) -> IRIRef;
+    fn to_uri(&self) -> IriRef;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -106,7 +108,7 @@ pub trait ToUri {
 
 pub fn to_rdf_graph(
     scheme: &Scheme,
-    default_namespace: Option<IRIRef>,
+    default_namespace: Option<IriRef>,
     factory: &GraphFactoryRef,
 ) -> GraphRef {
     let ns_mappings = standard_mappings();
@@ -155,23 +157,29 @@ pub fn from_rdf_graph<'a>(graph: &GraphRef) -> Vec<Scheme> {
 }
 
 pub fn standard_mappings() -> PrefixMappingRef {
-    let mappings = empty_mappings();
+    let mappings = default_mappings();
     {
         let mut mut_mappings = mappings.borrow_mut();
-        let _ = mut_mappings.insert(ns::default_prefix(), ns::namespace_iri().clone());
-        let _ = mut_mappings.insert(ns::xl::default_prefix(), ns::xl::namespace_iri().clone());
-        let _ = mut_mappings.insert(ns::iso::default_prefix(), ns::iso::namespace_iri().clone());
+        let _ = mut_mappings.insert(ns::default_prefix().clone(), ns::namespace().clone());
         let _ = mut_mappings.insert(
-            ns::term_status::default_prefix(),
-            ns::term_status::namespace_iri().clone(),
+            ns::xl::default_prefix().clone(),
+            ns::xl::namespace().clone(),
         );
         let _ = mut_mappings.insert(
-            dc::terms::default_prefix(),
-            dc::terms::namespace_iri().clone(),
+            ns::iso::default_prefix().clone(),
+            ns::iso::namespace().clone(),
         );
-        let _ = mut_mappings.insert(rdf::default_prefix(), rdf::namespace_iri().clone());
-        let _ = mut_mappings.insert(owl::default_prefix(), owl::namespace_iri().clone());
-        let _ = mut_mappings.insert(xsd::default_prefix(), xsd::namespace_iri().clone());
+        let _ = mut_mappings.insert(
+            ns::term_status::default_prefix().clone(),
+            ns::term_status::namespace().clone(),
+        );
+        let _ = mut_mappings.insert(
+            dc::terms::default_prefix().clone(),
+            dc::terms::namespace().clone(),
+        );
+        let _ = mut_mappings.insert(rdf::default_prefix().clone(), rdf::namespace().clone());
+        let _ = mut_mappings.insert(owl::default_prefix().clone(), owl::namespace().clone());
+        let _ = mut_mappings.insert(xsd::default_prefix().clone(), xsd::namespace().clone());
     }
     mappings
 }
@@ -180,7 +188,7 @@ pub fn standard_mappings() -> PrefixMappingRef {
 // Private Functions
 // ------------------------------------------------------------------------------------------------
 
-fn object_eq_iri(object: &ObjectNodeRef, iri: &IRIRef) -> bool {
+fn object_eq_iri(object: &ObjectNodeRef, iri: &IriRef) -> bool {
     if let Some(lhs) = object.as_iri() {
         lhs == iri
     } else {
@@ -203,5 +211,3 @@ pub use collection::Collection;
 
 pub mod properties;
 pub use properties::{Label, LiteralProperty};
-use rdftk_core::model::literal::{LanguageTag, LiteralFactoryRef};
-use rdftk_core::simple::empty_mappings;

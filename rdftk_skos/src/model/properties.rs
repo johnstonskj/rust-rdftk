@@ -14,7 +14,7 @@ use crate::model::{Labeled, ToStatement, ToUri};
 use crate::ns;
 use rdftk_core::model::literal::{DataType, LanguageTag, LiteralFactoryRef, LiteralRef};
 use rdftk_core::model::statement::{StatementFactoryRef, StatementRef, SubjectNodeRef};
-use rdftk_iri::IRIRef;
+use rdftk_iri::IriRef;
 use rdftk_names::dc;
 use std::str::FromStr;
 
@@ -27,7 +27,7 @@ pub enum LabelKind {
     Preferred,
     Alternative,
     Hidden,
-    Other(IRIRef),
+    Other(IriRef),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -39,7 +39,7 @@ pub struct Label {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct LiteralProperty {
-    predicate: IRIRef,
+    predicate: IriRef,
     lexical_form: String,
     data_type: Option<DataType>,
     language: Option<LanguageTag>,
@@ -73,7 +73,7 @@ impl Default for LabelKind {
 }
 
 impl ToUri for LabelKind {
-    fn to_uri(&self) -> IRIRef {
+    fn to_uri(&self) -> IriRef {
         match self {
             Self::Preferred => ns::pref_label(),
             Self::Alternative => ns::alt_label(),
@@ -120,7 +120,7 @@ impl Label {
         Self::new(LabelKind::Hidden, text, language)
     }
 
-    pub fn other(kind: IRIRef, text: &str, language: &str) -> Self {
+    pub fn other(kind: IriRef, text: &str, language: &str) -> Self {
         Self::new(LabelKind::Other(kind), text, language)
     }
 
@@ -171,7 +171,7 @@ impl ToStatement for LiteralProperty {
 }
 
 impl LiteralProperty {
-    pub fn new(predicate: IRIRef, lexical_form: &str) -> Self {
+    pub fn new(predicate: IriRef, lexical_form: &str) -> Self {
         Self {
             predicate,
             lexical_form: lexical_form.to_string(),
@@ -180,7 +180,7 @@ impl LiteralProperty {
         }
     }
 
-    pub fn with_data_type(predicate: IRIRef, lexical_form: &str, data_type: DataType) -> Self {
+    pub fn with_data_type(predicate: IriRef, lexical_form: &str, data_type: DataType) -> Self {
         Self {
             predicate,
             lexical_form: lexical_form.to_string(),
@@ -189,7 +189,7 @@ impl LiteralProperty {
         }
     }
 
-    pub fn with_language(predicate: IRIRef, lexical_form: &str, language: LanguageTag) -> Self {
+    pub fn with_language(predicate: IriRef, lexical_form: &str, language: LanguageTag) -> Self {
         Self {
             predicate,
             lexical_form: lexical_form.to_string(),
@@ -322,7 +322,7 @@ impl LiteralProperty {
 
     // --------------------------------------------------------------------------------------------
 
-    pub fn predicate(&self) -> &IRIRef {
+    pub fn predicate(&self) -> &IriRef {
         &self.predicate
     }
 

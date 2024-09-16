@@ -20,8 +20,9 @@ default = ["documentation"]
 documentation = ["somedoc"]
 
 [dependencies]
-lazy_static = "1.4.0"
-paste = "1.0.2"
+lazy_static = "1.4"
+objio = "0.1"
+paste = "1.0"
 rdftk_io = { version = "0.3", path = "../rdftk_io" }
 rdftk_iri = { version = "0.2.1", path = "../rdftk_iri" }
 rdftk_core = { version = "0.4.1", path = "../rdftk_core" }

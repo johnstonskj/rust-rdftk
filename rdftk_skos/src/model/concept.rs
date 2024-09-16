@@ -16,7 +16,7 @@ use crate::model::{ToStatement, ToUri};
 use crate::ns;
 use rdftk_core::model::literal::{LanguageTag, LiteralFactoryRef};
 use rdftk_core::model::statement::{ObjectNodeRef, StatementFactoryRef, StatementList};
-use rdftk_iri::IRIRef;
+use rdftk_iri::IriRef;
 use rdftk_names::rdf;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -39,9 +39,9 @@ pub enum ConceptRelation {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Concept {
-    uri: IRIRef,
+    uri: IriRef,
     concepts: Vec<(ConceptRelation, Rc<RefCell<Concept>>)>,
-    external_relations: Vec<(IRIRef, IRIRef)>,
+    external_relations: Vec<(IriRef, IriRef)>,
     preferred_label: Option<String>,
     labels: Vec<Label>,
     properties: Vec<LiteralProperty>,
@@ -58,7 +58,7 @@ impl Default for ConceptRelation {
 }
 
 impl ToUri for ConceptRelation {
-    fn to_uri(&self) -> IRIRef {
+    fn to_uri(&self) -> IriRef {
         match self {
             Self::Narrower => ns::narrower(),
             Self::NarrowerPartitive => ns::iso::narrower_partitive(),
@@ -105,7 +105,7 @@ impl ConceptRelation {
 // ------------------------------------------------------------------------------------------------
 
 impl Resource for Concept {
-    fn uri(&self) -> &IRIRef {
+    fn uri(&self) -> &IriRef {
         &self.uri
     }
 }
@@ -203,7 +203,7 @@ impl ToStatements for Concept {
 }
 
 impl Concept {
-    pub(crate) fn new(uri: &IRIRef) -> Self {
+    pub(crate) fn new(uri: &IriRef) -> Self {
         Self {
             uri: uri.clone(),
             concepts: Default::default(),
@@ -214,7 +214,7 @@ impl Concept {
         }
     }
 
-    pub(crate) fn new_with_label(uri: &IRIRef, text: &str, language: &str) -> Self {
+    pub(crate) fn new_with_label(uri: &IriRef, text: &str, language: &str) -> Self {
         let mut concept = Self::new(uri);
         concept.add_label(Label::preferred(text, language));
         concept
@@ -230,7 +230,7 @@ impl Concept {
         self.concepts.push((relation, related));
     }
 
-    pub fn sub_concept(&mut self, uri: &IRIRef) -> Rc<RefCell<Self>> {
+    pub fn sub_concept(&mut self, uri: &IriRef) -> Rc<RefCell<Self>> {
         let new_concept = Rc::from(RefCell::from(Self::new(uri)));
         self.add_related_concept(ConceptRelation::Narrower, new_concept.clone());
         new_concept
@@ -238,7 +238,7 @@ impl Concept {
 
     pub fn sub_concept_with_label(
         &mut self,
-        uri: &IRIRef,
+        uri: &IriRef,
         text: &str,
         language: &str,
     ) -> Rc<RefCell<Self>> {
@@ -247,7 +247,7 @@ impl Concept {
         new_concept
     }
 
-    pub fn instance(&mut self, uri: &IRIRef) -> Rc<RefCell<Self>> {
+    pub fn instance(&mut self, uri: &IriRef) -> Rc<RefCell<Self>> {
         let new_concept = Rc::from(RefCell::from(Self::new(uri)));
         self.add_related_concept(ConceptRelation::NarrowerInstantial, new_concept.clone());
         new_concept
@@ -255,7 +255,7 @@ impl Concept {
 
     pub fn instance_with_label(
         &mut self,
-        uri: &IRIRef,
+        uri: &IriRef,
         text: &str,
         language: &str,
     ) -> Rc<RefCell<Self>> {
@@ -264,7 +264,7 @@ impl Concept {
         new_concept
     }
 
-    pub fn part(&mut self, uri: &IRIRef) -> Rc<RefCell<Self>> {
+    pub fn part(&mut self, uri: &IriRef) -> Rc<RefCell<Self>> {
         let new_concept = Rc::from(RefCell::from(Self::new(uri)));
         self.add_related_concept(ConceptRelation::NarrowerPartitive, new_concept.clone());
         new_concept
@@ -272,7 +272,7 @@ impl Concept {
 
     pub fn part_with_label(
         &mut self,
-        uri: &IRIRef,
+        uri: &IriRef,
         text: &str,
         language: &str,
     ) -> Rc<RefCell<Self>> {
@@ -281,7 +281,7 @@ impl Concept {
         new_concept
     }
 
-    pub fn related(&mut self, uri: &IRIRef) -> Rc<RefCell<Self>> {
+    pub fn related(&mut self, uri: &IriRef) -> Rc<RefCell<Self>> {
         let new_concept = Rc::from(RefCell::from(Self::new(uri)));
         self.add_related_concept(ConceptRelation::Related, new_concept.clone());
         new_concept
@@ -289,7 +289,7 @@ impl Concept {
 
     pub fn related_with_label(
         &mut self,
-        uri: &IRIRef,
+        uri: &IriRef,
         text: &str,
         language: &str,
     ) -> Rc<RefCell<Self>> {
@@ -335,11 +335,11 @@ impl Concept {
         !self.external_relations.is_empty()
     }
 
-    pub fn external_relations(&self) -> impl Iterator<Item = &(IRIRef, IRIRef)> {
+    pub fn external_relations(&self) -> impl Iterator<Item = &(IriRef, IriRef)> {
         self.external_relations.iter()
     }
 
-    pub fn add_external_relation(&mut self, relation: IRIRef, related: IRIRef) {
+    pub fn add_external_relation(&mut self, relation: IriRef, related: IriRef) {
         self.external_relations.push((relation, related));
     }
 }
