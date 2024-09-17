@@ -83,7 +83,7 @@ namespace! {
 /// pub fn default_prefix() -> &'static ::rdftk_iri::Name { todo!() }
 ///
 /// ///  Returns the Iri identifying this namespace.
-/// pub fn namespace() -> &'static ::rdftk_iri::IriRef { todo!() }
+/// pub fn namespace() -> &'static ::rdftk_iri::Iri { todo!() }
 ///
 /// /// Returns the Iri, as a string, identifying this namespace.
 /// pub fn namespace_str() -> &'static str { todo!() }
@@ -91,7 +91,7 @@ namespace! {
 /// // ***** For each namespace member: *****
 ///
 /// /// Returns the qualified Iri for the namespace member `Foo`.
-/// pub fn foo() -> &'static ::rdftk_iri::IriRef { todo!() }
+/// pub fn foo() -> &'static ::rdftk_iri::Iri { todo!() }
 ///
 /// /// Returns this member's name, as the string "Foo".
 /// pub fn foo_str() -> &'static str { todo!() }
@@ -112,33 +112,30 @@ macro_rules! namespace {
 
         ::lazy_static::lazy_static! {
             #[doc(hidden)]
-            static ref NS_IRI: ::rdftk_iri::IriRef = ::rdftk_iri::IriRef::from(
-                <::rdftk_iri::Iri as ::std::str::FromStr>::from_str(NAMESPACE).unwrap()
-            );
+            static ref NS_IRI: ::rdftk_iri::Iri =
+                <::rdftk_iri::Iri as ::std::str::FromStr>::from_str(NAMESPACE).unwrap();
 
             #[doc(hidden)]
             static ref NS_PREFIX: ::rdftk_iri::Name =
                 <::rdftk_iri::Name as ::std::str::FromStr>::from_str(PREFIX).unwrap();
 
             #[doc(hidden)]
-            static ref NS_CACHE: ::std::collections::HashMap<String, (::rdftk_iri::IriRef, &'static str)>
+            static ref NS_CACHE: ::std::collections::HashMap<String, (::rdftk_iri::Iri, &'static str)>
                 = make_cache();
         }
 
         #[doc(hidden)]
-        fn make_cache() -> ::std::collections::HashMap<String, (::rdftk_iri::IriRef, &'static str)> {
-            let mut cache: ::std::collections::HashMap<String, (::rdftk_iri::IriRef, &'static str)>
+        fn make_cache() -> ::std::collections::HashMap<String, (::rdftk_iri::Iri, &'static str)> {
+            let mut cache: ::std::collections::HashMap<String, (::rdftk_iri::Iri, &'static str)>
                 = Default::default();
             $(
                 let _ = cache.insert(
                     $name.to_string(),
                     (
-                        ::rdftk_iri::IriRef::new(
-                            <::rdftk_iri::Iri as ::rdftk_iri::IriExtra>::make_name(
+                        <::rdftk_iri::Iri as ::rdftk_iri::IriExtra>::make_name(
                                 &NS_IRI,
                                 <::rdftk_iri::Name as ::std::str::FromStr>::from_str($name).unwrap()
-                            ).unwrap()
-                        ),
+                            ).unwrap(),
                         concat!($prefix, ":", $name),
                     )
                 );
@@ -156,7 +153,7 @@ macro_rules! namespace {
 
         #[inline(always)]
         #[doc = "Returns the IRI identifying this namespace."]
-        pub fn namespace() -> &'static ::rdftk_iri::IriRef { &NS_IRI }
+        pub fn namespace() -> &'static ::rdftk_iri::Iri { &NS_IRI }
 
         $(
             $crate::nsname!($fn_name, $name);
@@ -184,7 +181,7 @@ macro_rules! nsname {
         ::paste::paste! {
             #[inline(always)]
             #[doc = "Returns the qualified IRI for the namespace member `" $name "`."]
-            pub fn $fn_name() -> &'static ::rdftk_iri::IriRef {
+            pub fn $fn_name() -> &'static ::rdftk_iri::Iri {
                 &NS_CACHE.get($name).unwrap().0
             }
 
@@ -230,7 +227,7 @@ mod tests {
     #![allow(unreachable_pub)]
 
     use super::*;
-    use rdftk_iri::{Iri, IriRef};
+    use rdftk_iri::Iri;
     use std::str::FromStr;
 
     namespace!("p", "heep://schema/com/p#", { foo, "Foo", bar, "Bar" } );
@@ -247,10 +244,7 @@ mod tests {
 
     #[test]
     fn test_expand_namespace_iri() {
-        assert_eq!(
-            namespace(),
-            &IriRef::new(Iri::from_str("heep://schema/com/p#").unwrap())
-        );
+        assert_eq!(namespace(), &Iri::from_str("heep://schema/com/p#").unwrap());
     }
 
     #[test]

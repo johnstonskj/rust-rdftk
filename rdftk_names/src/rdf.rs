@@ -2,7 +2,7 @@
 Functions that create IRIs for the [RDF](https://www.w3.org/TR/rdf11-concepts/) namespace.
  */
 
-use rdftk_iri::{Iri, IriRef};
+use rdftk_iri::Iri;
 use std::str::FromStr;
 
 namespace! {
@@ -37,10 +37,8 @@ namespace! {
 
 /// Create a numbered member in a container
 #[inline]
-pub fn member(index: usize) -> IriRef {
-    Iri::from_str(&format!("{}_{}", NAMESPACE, index))
-        .unwrap()
-        .into()
+pub fn member(index: usize) -> Iri {
+    Iri::from_str(&format!("{}_{}", NAMESPACE, index)).unwrap()
 }
 
 /// Create a numbered member in a container
