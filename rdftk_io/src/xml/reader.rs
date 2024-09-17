@@ -1,16 +1,3 @@
-/*!
-Provides the `XmlReader` implementation of the `GraphReader` trait.
-
-# Example
-
-*/
-
-// use ...
-
-// ------------------------------------------------------------------------------------------------
-// Public Types
-// ------------------------------------------------------------------------------------------------
-
 use crate::xml::syntax::{
     ATTRIBUTE_ABOUT, ATTRIBUTE_ID, ATTRIBUTE_NODE_ID, ATTRIBUTE_PARSE_TYPE, ATTRIBUTE_RESOURCE,
     ATTRIBUTE_XML_BASE, ATTRIBUTE_XML_LANG, ELEMENT_DESCRIPTION, ELEMENT_RDF,
@@ -31,6 +18,10 @@ use xml::attribute::OwnedAttribute;
 use xml::name::OwnedName;
 use xml::reader::XmlEvent;
 use xml::{EventReader, EventWriter};
+
+// ------------------------------------------------------------------------------------------------
+// Public Types
+// ------------------------------------------------------------------------------------------------
 
 ///
 /// An implementation of the GraphReader trait to read resources in the XML representation.

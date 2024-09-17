@@ -1,3 +1,5 @@
+#![cfg(feature = "nq")]
+
 use objio::ObjectReader;
 use rdftk_io::nq::NQuadReader;
 

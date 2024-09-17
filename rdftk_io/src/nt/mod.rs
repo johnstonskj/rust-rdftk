@@ -4,7 +4,7 @@ W3C [RDF 1.1 N-Triples](https://www.w3.org/TR/n-triples/), _a line-based syntax 
 format.
 
 
-# Writer Example
+# Example Writer
 
 ```rust
 use rdftk_io::nt::NTripleWriter;

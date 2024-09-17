@@ -1,14 +1,3 @@
-/*!
-One-line description.
-
-More detailed description, with
-
-# Example
-
-End of file during parsingSymbol’s value as variable is void: rustEnd of file during parsing
-
- */
-
 // use ...
 
 // ------------------------------------------------------------------------------------------------

@@ -1,12 +1,3 @@
-/*!
-One-line description.
-
-More detailed description, with
-
-# Example
-
-*/
-
 use crate::turtle::TurtleOptions;
 use objio::{impl_has_options, HasOptions, ObjectWriter};
 use rdftk_core::error::Error;

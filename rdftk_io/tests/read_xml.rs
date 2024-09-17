@@ -1,3 +1,5 @@
+#![cfg(feature = "xml")]
+
 use objio::ObjectReader;
 use rdftk_io::xml::XmlReader;
 

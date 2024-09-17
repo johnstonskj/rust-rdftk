@@ -1,3 +1,5 @@
+#![cfg(feature = "nt")]
+
 use objio::{ObjectReader, ObjectWriter};
 use rdftk_core::{error::Error, model::graph::GraphRef};
 use rdftk_io::nt::{NTripleReader, NTripleWriter};

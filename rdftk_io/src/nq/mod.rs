@@ -6,7 +6,7 @@ format.
 Provides the `NQuadDataSetWriter` implementation of the `DataSetWriter` trait and the
 `NQuadGraphWriter` implementation of the `GraphWriter` trait.
 
-# Example
+# Example Writer
 
 ```rust
 use rdftk_io::nq::NQuadWriter;

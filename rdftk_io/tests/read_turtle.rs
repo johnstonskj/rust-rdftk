@@ -1,3 +1,5 @@
+#![cfg(feature = "turtle")]
+
 use objio::ObjectReader;
 use rdftk_core::{error::Error, model::graph::GraphRef};
 use rdftk_io::turtle::TurtleReader;

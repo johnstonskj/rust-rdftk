@@ -1,10 +1,3 @@
-/*!
-Provides the `JsonReader` implementation of the `GraphReader` trait.
-
-# Example
-
-*/
-
 use crate::json::syntax::{
     BNODE_PREFIX, OBJ_KEY_DATATYPE, OBJ_KEY_LANG, OBJ_KEY_TYPE, OBJ_KEY_VALUE, OBJ_TYPE_BNODE,
     OBJ_TYPE_LITERAL, OBJ_TYPE_URI,

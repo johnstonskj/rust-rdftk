@@ -1,9 +1,5 @@
 /*!
-One-line description.
-
-More detailed description, with
-
-# Example
+Internal, common, code for reader and writer implementations.
 
 */
 
@@ -11,6 +7,14 @@ More detailed description, with
 // Modules
 // ------------------------------------------------------------------------------------------------
 
+#[cfg(feature = "nt")]
 pub(crate) mod indenter;
 
+#[cfg(any(
+    feature = "n3",
+    feature = "nq",
+    feature = "nt",
+    feature = "trig",
+    feature = "turtle"
+))]
 pub(crate) mod parser;

@@ -1,3 +1,5 @@
+#![cfg(feature = "json")]
+
 use objio::ObjectReader;
 use rdftk_io::json::JsonReader;
 

@@ -2,7 +2,7 @@
 Provides for writing out in the [RDF 1.1 XML Syntax](https://www.w3.org/TR/rdf-syntax-grammar/)
 format.
 
-# Writer Example
+# Example Writer
 
 This writer has a number of options, it can be written in a plain, streaming, form or alternatively
 pretty-printed  for readability. It is also possible to pick one of the type styles described

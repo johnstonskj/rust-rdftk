@@ -1,3 +1,5 @@
+#![cfg(feature = "nt")]
+
 use objio::ObjectReader;
 use rdftk_core::error::eprint_trace;
 use rdftk_core::model::graph::GraphRef;

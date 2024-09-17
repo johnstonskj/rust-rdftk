@@ -1,21 +1,3 @@
-/*!
-Provides the `JsonWriter` implementation of the `GraphWriter` trait.
-
-```rust
-use rdftk_io::json::{JsonWriter, JsonOptions};
-# use objio::{HasOptions, ObjectWriter};
-# use rdftk_core::model::graph::GraphRef;
-# fn make_graph() -> GraphRef { rdftk_core::simple::graph::graph_factory().graph() }
-
-let writer = JsonWriter::default()
-    .with_options(JsonOptions::default().with_pretty_print(true));
-
-let result = writer.write_to_string(&make_graph());
-```
-
-
-*/
-
 use crate::json::syntax::{
     OBJ_KEY_DATATYPE, OBJ_KEY_LANG, OBJ_KEY_TYPE, OBJ_KEY_VALUE, OBJ_TYPE_BNODE, OBJ_TYPE_LITERAL,
     OBJ_TYPE_URI,
