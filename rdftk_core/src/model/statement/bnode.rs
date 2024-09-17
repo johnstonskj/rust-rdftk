@@ -15,10 +15,10 @@ use unique_id::Generator;
 /// A String wrapper for blank nodes.
 ///
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct BlankNode(Name);
+pub struct BlankNode(String);
 
 ///
-/// A reference counted wrapper around a [`ObjectNode`] instance.
+/// A reference counted wrapper around a [`BlankNode`] instance.
 ///
 pub type BlankNodeRef = Rc<BlankNode>;
 
@@ -40,18 +40,6 @@ pub const BLANK_NODE_PREFIX: &str = "_:";
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl AsRef<Name> for BlankNode {
-    fn as_ref(&self) -> &Name {
-        &self.0
-    }
-}
-
-impl AsRef<str> for BlankNode {
-    fn as_ref(&self) -> &str {
-        self.0.as_ref()
-    }
-}
-
 impl Display for BlankNode {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
@@ -62,43 +50,41 @@ impl FromStr for BlankNode {
     type Err = crate::error::Error;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        Ok(Self(Name::from_str(s)?))
-    }
-}
-
-impl From<BlankNode> for Name {
-    fn from(v: BlankNode) -> Self {
-        v.0
+        if Self::is_valid_str(s) {
+            Ok(Self(s.into()))
+        } else {
+            Err(crate::error::Error::InvalidBlankNodeName { name: s.into() })
+        }
     }
 }
 
 impl From<BlankNode> for String {
     fn from(v: BlankNode) -> Self {
-        v.0.into()
+        v.0
     }
 }
 
-impl From<&BlankNode> for Name {
-    fn from(v: &BlankNode) -> Self {
-        v.0.clone()
+impl From<Name> for BlankNode {
+    fn from(v: Name) -> Self {
+        Self(v.into())
+    }
+}
+
+impl From<&Name> for BlankNode {
+    fn from(v: &Name) -> Self {
+        Self(v.into())
     }
 }
 
 impl From<&BlankNode> for String {
     fn from(v: &BlankNode) -> Self {
-        (&v.0).into()
+        v.0.clone()
     }
 }
 
-impl From<Name> for BlankNode {
-    fn from(value: Name) -> Self {
-        Self(value)
-    }
-}
-
-impl From<&Name> for BlankNode {
-    fn from(value: &Name) -> Self {
-        Self(value.clone())
+impl AsRef<str> for BlankNode {
+    fn as_ref(&self) -> &str {
+        self.0.as_str()
     }
 }
 
@@ -107,7 +93,7 @@ impl BlankNode {
     /// Construct a new blank node with a generated identifier.
     ///
     pub fn generate() -> Self {
-        Self(Name::new_unchecked(format!("B{}", IDGenerator.next_id())))
+        Self(format!("B{}", IDGenerator.next_id()))
     }
 
     ///
@@ -115,15 +101,12 @@ impl BlankNode {
     /// `false`. Note that this function will accept simple names, or those
     /// with the reserved prefix `"_:"`.
     ///
-    pub fn is_valid(s: &str) -> bool {
-        Name::is_valid_str(
-            if let Some(s) = s.strip_prefix(BLANK_NODE_PREFIX) {
-                s
-            } else {
-                s
-            },
-            Default::default(),
-        )
+    pub fn is_valid_str(s: &str) -> bool {
+        is_bnode_name(if let Some(s) = s.strip_prefix(BLANK_NODE_PREFIX) {
+            s
+        } else {
+            s
+        })
     }
 
     ///
@@ -131,6 +114,45 @@ impl BlankNode {
     /// namespace value `"_"`.
     ///
     pub fn to_qname(&self) -> QName {
-        QName::new_blank(self.0.clone()).unwrap()
+        QName::new_blank(Name::new_unchecked(&self.0)).unwrap()
     }
+}
+
+// ------------------------------------------------------------------------------------------------
+// Private Functions
+// ------------------------------------------------------------------------------------------------
+
+pub(crate) fn is_bnode_name_start_char(c: char) -> bool {
+    c == ':'
+        || c.is_ascii_digit()
+        || c.is_ascii_uppercase()
+        || c == '_'
+        || c.is_ascii_lowercase()
+        || ('\u{C0}'..='\u{D6}').contains(&c)
+        || ('\u{D8}'..='\u{F6}').contains(&c)
+        || ('\u{0F8}'..='\u{2FF}').contains(&c)
+        || ('\u{370}'..='\u{37D}').contains(&c)
+        || ('\u{037F}'..='\u{1FFF}').contains(&c)
+        || ('\u{200C}'..='\u{200D}').contains(&c)
+        || ('\u{2070}'..='\u{218F}').contains(&c)
+        || ('\u{2C00}'..='\u{2FEF}').contains(&c)
+        || ('\u{3001}'..='\u{D7FF}').contains(&c)
+        || ('\u{F900}'..='\u{FDCF}').contains(&c)
+        || ('\u{FDF0}'..='\u{FFFD}').contains(&c)
+        || ('\u{10000}'..='\u{EFFFF}').contains(&c)
+}
+
+pub(crate) fn is_bnode_name_char(c: char) -> bool {
+    is_bnode_name_start_char(c)
+        || c == '-'
+        || c == '.'
+        || c == '\u{B7}'
+        || ('\u{0300}'..='\u{036F}').contains(&c)
+        || ('\u{203F}'..='\u{2040}').contains(&c)
+}
+
+pub(crate) fn is_bnode_name(s: &str) -> bool {
+    !s.is_empty()
+        && s.starts_with(is_bnode_name_start_char)
+        && s[1..].chars().all(is_bnode_name_char)
 }

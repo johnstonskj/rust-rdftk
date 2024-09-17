@@ -9,11 +9,32 @@ use std::fmt::{Debug, Display};
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
+pub trait ErrorSource: std::error::Error {
+    fn as_error_source(&self) -> &(dyn std::error::Error + 'static);
+}
+
 ///
 /// The Error type for this crate.
 ///
 #[derive(Debug)]
 pub enum Error {
+    Tokenizer {
+        representation: String,
+        source: Box<dyn std::error::Error>,
+    },
+    ParserExpected {
+        rule_fn: String,
+        expecting: String,
+    },
+    ParserUnexpected {
+        rule_fn: String,
+        given: String,
+        expecting: Vec<String>,
+    },
+    ParserUnreachable {
+        rule_fn: String,
+        given: String,
+    },
     /// The String value provided is not a valid value for it's type.
     InvalidFromStr {
         value: String,
@@ -40,11 +61,7 @@ pub enum Error {
     AbsoluteIriExpected {
         uri: String,
     },
-    ///A failure occurred reading or writing a graph.
-    ReadWrite {
-        representation: String,
-        source: Option<Box<dyn std::error::Error>>,
-    },
+
     ///Some model element was in an invalid state for the requested operation.
     InvalidState,
     /// Statements as objects, from RDF*, are not supported by this representation.
@@ -165,35 +182,6 @@ where
 /// Create Error object.
 ///
 #[inline(always)]
-pub fn read_write_error<S>(representation: S) -> Error
-where
-    S: Into<String>,
-{
-    Error::ReadWrite {
-        representation: representation.into(),
-        source: None,
-    }
-}
-
-///
-/// Create Error object.
-///
-#[inline(always)]
-pub fn read_write_error_with<S, E>(representation: S, source: E) -> Error
-where
-    S: Into<String>,
-    E: std::error::Error + 'static,
-{
-    Error::ReadWrite {
-        representation: representation.into(),
-        source: Some(Box::new(source)),
-    }
-}
-
-///
-/// Create Error object.
-///
-#[inline(always)]
 pub fn invalid_state_error() -> Error {
     Error::InvalidState
 }
@@ -273,6 +261,10 @@ impl Display for Error {
             f,
             "{}",
             match self {
+                Error::Tokenizer { representation, source } => format!("The tokenizer for {representation} generated an error: {source}"),
+                Error::ParserExpected { rule_fn, expecting } => format!("Parser was expecting `{expecting}` in function `{rule_fn}`."),
+                Error::ParserUnexpected { rule_fn, given, expecting } => format!("Parser was not expecting `{given}` in function `{rule_fn}`; expecting {expecting:?}."),
+                Error::ParserUnreachable { rule_fn, given } => format!("Parser should not have reached `{given}` in function `{rule_fn}`."),
                 Error::InvalidFromStr { value, name } => format!(
                     "The String value `{value}` is not a valid value for it's type: '{name}'."
                 ),
@@ -287,11 +279,6 @@ impl Display for Error {
                 Error::InvalidMatch => "The match combination is not valid.".to_string(),
                 Error::AbsoluteIriExpected { uri } =>
                     format!("An Absolute IRI was expected at, not '{uri}'."),
-                Error::ReadWrite { representation, source } =>
-                    format!("A failure occurred reading or writing a graph, for representation: {representation:?}.{}", match source {
-                        Some(source) => format!("Source: {source}"),
-    None => String::default(),
-                    }),
                 Error::InvalidState =>
                     "Some model element was in an invalid state for the requested operation.".to_string(),
                 Error::RdfStarNotSupported { representation } => format!("Statements as objects, from RDF*, are not supported by the {representation:?} representation."),
@@ -311,10 +298,7 @@ impl Display for Error {
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            Self::ReadWrite {
-                representation: _,
-                source,
-            } => source.as_ref().map(|e| e.as_ref()),
+            //Self::Tokenizer { source } => Some(source),
             Self::Borrow(source) => Some(source),
             Self::Io(source) => Some(source),
             Self::Iri(source) => Some(source),

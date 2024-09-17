@@ -76,6 +76,18 @@ pub trait DataSetFactory: Debug + Provided {
         }
         data_set
     }
+
+    // --------------------------------------------------------------------------------------------
+    // Other Factories
+    // --------------------------------------------------------------------------------------------
+
+    ///
+    /// Return the factory that creates graphs managed by data set's of this kind.
+    ///
+    /// Note that this uses Arc as a reference as factories are explicitly intended for cross-thread
+    /// usage.
+    ///
+    fn graph_factory(&self) -> GraphFactoryRef;
 }
 
 ///
@@ -100,37 +112,44 @@ pub trait DataSet: Debug + Featured {
     ///
     fn len(&self) -> usize;
 
+    fn contains_graph(&self, name: &Option<GraphNameRef>) -> bool;
+
     ///
     /// Return `true` if this data set has a default graph, else `false`.
     ///
     fn has_default_graph(&self) -> bool {
-        self.default_graph().is_some()
+        self.contains_graph(&None)
+    }
+
+    ///
+    /// Return `true` if this data set has a graph with the provided name, else `false`.
+    ///
+    fn has_graph_named(&self, name: &GraphNameRef) -> bool {
+        self.contains_graph(&Some(name.clone()))
     }
 
     ///
     /// Return the default graph for this data set, if it exists.
     ///
-    fn default_graph(&self) -> Option<&NamedGraphRef>;
-
-    ///
-    /// Return `true` if this data set has a graph with the provided name, else `false`.
-    ///
-    fn has_graph_named(&self, name: &GraphNameRef) -> bool;
+    fn default_graph(&self) -> Option<&NamedGraphRef> {
+        self.graph(&None)
+    }
 
     ///
     /// Return the graph with the provided name from this data set, if it exists.
     ///
-    fn graph_named(&self, name: &GraphNameRef) -> Option<&NamedGraphRef>;
+    fn graph_named(&self, name: &GraphNameRef) -> Option<&NamedGraphRef> {
+        self.graph(&Some(name.clone()))
+    }
+
+    fn graph(&self, name: &Option<GraphNameRef>) -> Option<&NamedGraphRef>;
+
+    fn graph_mut(&mut self, name: &Option<GraphNameRef>) -> Option<&mut NamedGraphRef>;
 
     ///
     /// Return an iterator over all graphs.
     ///
     fn graphs(&self) -> Box<dyn Iterator<Item = &NamedGraphRef> + '_>;
-
-    ///
-    /// Return an iterator over graph names.
-    ///
-    fn graph_names(&self) -> Box<dyn Iterator<Item = &GraphNameRef> + '_>;
 
     ///
     /// Insert a new graph with it's associated name into the data set.
@@ -146,13 +165,7 @@ pub trait DataSet: Debug + Featured {
     /// Remove the graph with the provided name from this data set. This operation has no effect if
     /// no such graph is present.
     ///
-    fn remove(&mut self, named: &GraphNameRef);
-
-    ///
-    /// Remove the default graph from this data set. This operation has no effect if no default
-    /// graph is present.
-    ///
-    fn remove_default(&mut self);
+    fn remove(&mut self, named: &Option<GraphNameRef>);
 
     ///
     /// Remove all graphs from this data set.

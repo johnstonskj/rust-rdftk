@@ -1,5 +1,5 @@
 use crate::model::literal::LiteralRef;
-use crate::model::statement::{BlankNode, StatementRef, SubjectNode, BLANK_NODE_NAMESPACE};
+use crate::model::statement::{BlankNodeRef, StatementRef, SubjectNode, BLANK_NODE_NAMESPACE};
 use crate::model::Equiv;
 use rdftk_iri::IriRef;
 use std::fmt::{Display, Formatter};
@@ -88,8 +88,8 @@ impl Display for dyn ObjectNode {
     }
 }
 
-impl Equiv<BlankNode> for dyn ObjectNode {
-    fn eqv(&self, other: &BlankNode) -> bool {
+impl Equiv<BlankNodeRef> for dyn ObjectNode {
+    fn eqv(&self, other: &BlankNodeRef) -> bool {
         if let Some(value) = self.as_blank() {
             value == other
         } else {

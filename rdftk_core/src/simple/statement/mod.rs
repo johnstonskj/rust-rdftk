@@ -7,7 +7,7 @@ use crate::model::features::Featured;
 use crate::model::features::FEATURE_RDF_STAR;
 use crate::model::literal::{LiteralFactoryRef, LiteralRef};
 use crate::model::statement::{
-    BlankNode, ObjectNodeRef, Statement, StatementFactory, StatementFactoryRef, StatementRef,
+    BlankNodeRef, ObjectNodeRef, Statement, StatementFactory, StatementFactoryRef, StatementRef,
     SubjectNodeRef,
 };
 use crate::model::Provided;
@@ -107,7 +107,7 @@ impl StatementFactory for SimpleStatementFactory {
         )
     }
 
-    fn blank_subject(&self, node: BlankNode) -> SubjectNodeRef {
+    fn blank_subject(&self, node: BlankNodeRef) -> SubjectNodeRef {
         Rc::new(SimpleSubjectNode::from(node))
     }
 
@@ -121,7 +121,7 @@ impl StatementFactory for SimpleStatementFactory {
 
     fn object_as_subject(&self, obj: ObjectNodeRef) -> Option<SubjectNodeRef> {
         if let Some(blank) = obj.as_blank() {
-            return Some(self.blank_subject_named(blank.as_ref()).unwrap());
+            return Some(self.blank_subject(blank.clone()));
         }
         if let Some(iri) = obj.as_iri() {
             return Some(self.named_subject(iri.clone()));
@@ -132,7 +132,7 @@ impl StatementFactory for SimpleStatementFactory {
         None
     }
 
-    fn blank_object(&self, name: BlankNode) -> ObjectNodeRef {
+    fn blank_object(&self, name: BlankNodeRef) -> ObjectNodeRef {
         Rc::new(SimpleObjectNode::from(name))
     }
 
@@ -159,6 +159,10 @@ impl StatementFactory for SimpleStatementFactory {
             return self.statement_object(st.clone());
         }
         unreachable!()
+    }
+
+    fn literal_factory(&self) -> LiteralFactoryRef {
+        literal_factory()
     }
 }
 

@@ -1,12 +1,13 @@
 use crate::error::Result;
-use crate::model::literal::LiteralRef;
-use crate::model::statement::BlankNode;
-use crate::model::statement::{ObjectNodeRef, StatementRef, SubjectNodeRef};
+use crate::model::literal::{LiteralFactoryRef, LiteralRef};
+use crate::model::statement::{BlankNodeRef, ObjectNodeRef, StatementRef, SubjectNodeRef};
 use crate::model::Provided;
 use rdftk_iri::IriRef;
 use std::fmt::Debug;
 use std::str::FromStr;
 use std::sync::Arc;
+
+use super::BlankNode;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -57,19 +58,19 @@ pub trait StatementFactory: Debug + Provided {
     /// Construct a new subject node reference, as a blank node with a randomly assigned name.
     ///
     fn blank_subject_new(&self) -> SubjectNodeRef {
-        self.blank_subject(BlankNode::generate())
+        self.blank_subject(BlankNode::generate().into())
     }
 
     ///
     /// Construct a new subject node reference, from the provided node.
     ///
-    fn blank_subject(&self, name: BlankNode) -> SubjectNodeRef;
+    fn blank_subject(&self, name: BlankNodeRef) -> SubjectNodeRef;
 
     ///
     /// Construct a new subject node reference, as a blank node with the specified name.
     ///
     fn blank_subject_named(&self, name: &str) -> Result<SubjectNodeRef> {
-        Ok(self.blank_subject(BlankNode::from_str(name)?))
+        Ok(self.blank_subject(BlankNode::from_str(name)?.into()))
     }
 
     ///
@@ -96,19 +97,19 @@ pub trait StatementFactory: Debug + Provided {
     /// Construct a new object node reference, as a blank node with a randomly assigned name.
     ///
     fn blank_object_new(&self) -> ObjectNodeRef {
-        self.blank_object(BlankNode::generate())
+        self.blank_object(BlankNode::generate().into())
     }
 
     ///
     /// Construct a new object node reference, as a blank node with the specified name.
     ///
-    fn blank_object(&self, name: BlankNode) -> ObjectNodeRef;
+    fn blank_object(&self, name: BlankNodeRef) -> ObjectNodeRef;
 
     ///
     /// Construct a new object node reference, as a blank node with the specified name.
     ///
     fn blank_object_named(&self, name: &str) -> Result<ObjectNodeRef> {
-        Ok(self.blank_object(BlankNode::from_str(name)?))
+        Ok(self.blank_object(BlankNode::from_str(name)?.into()))
     }
 
     ///
@@ -131,6 +132,18 @@ pub trait StatementFactory: Debug + Provided {
     /// Return a new object node reference, which refers to this subject.
     ///
     fn subject_as_object(&self, st: SubjectNodeRef) -> ObjectNodeRef;
+
+    // --------------------------------------------------------------------------------------------
+    // Other Factories
+    // --------------------------------------------------------------------------------------------
+
+    ///
+    /// Return the factory that creates literals using the same provider as `self`.
+    ///
+    /// Note that this uses Arc as a reference as factories are explicitly intended for cross-thread
+    /// usage.
+    ///
+    fn literal_factory(&self) -> LiteralFactoryRef;
 }
 
 ///

@@ -7,7 +7,7 @@ and [Replacing Blank Nodes with IRIs](https://www.w3.org/TR/rdf11-concepts/#sect
 
 use crate::error::{invalid_state_error, Error};
 use crate::model::graph::{Graph, GraphRef};
-use crate::model::statement::{BlankNode, StatementRef};
+use crate::model::statement::{BlankNodeRef, StatementRef};
 use rdftk_iri::{genid, IriRef};
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -22,7 +22,7 @@ use std::rc::Rc;
 /// entirely by a well-known format.
 ///
 pub fn skolemize(graph: &impl Graph, base: &IriRef) -> Result<GraphRef, Error> {
-    let mut mapping: HashMap<BlankNode, IriRef> = Default::default();
+    let mut mapping: HashMap<BlankNodeRef, IriRef> = Default::default();
 
     let factory = graph.factory();
 

@@ -147,10 +147,8 @@ impl Equiv<String> for dyn Literal {
 // Modules
 // ------------------------------------------------------------------------------------------------
 
-#[doc(hidden)]
 mod data_type;
 pub use data_type::*;
 
-#[doc(hidden)]
 mod factory;
 pub use factory::*;

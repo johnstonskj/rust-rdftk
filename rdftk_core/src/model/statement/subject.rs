@@ -1,5 +1,4 @@
-use crate::model::statement::BlankNode;
-use crate::model::statement::{StatementRef, BLANK_NODE_NAMESPACE};
+use crate::model::statement::{BlankNodeRef, StatementRef, BLANK_NODE_NAMESPACE};
 use crate::model::{Equiv, Provided};
 use rdftk_iri::IriRef;
 use std::cmp::Ordering;
@@ -30,7 +29,7 @@ pub trait SubjectNode: Debug + Provided {
     ///
     /// Return a blank node string, if `self.is_blank()`, else `None`.
     ///
-    fn as_blank(&self) -> Option<&BlankNode>;
+    fn as_blank(&self) -> Option<&BlankNodeRef>;
 
     ///
     /// Return `true` if this subject is an Iri, else `false`.
@@ -110,8 +109,8 @@ impl Display for dyn SubjectNode {
     }
 }
 
-impl Equiv<BlankNode> for dyn SubjectNode {
-    fn eqv(&self, other: &BlankNode) -> bool {
+impl Equiv<BlankNodeRef> for dyn SubjectNode {
+    fn eqv(&self, other: &BlankNodeRef) -> bool {
         if let Some(value) = self.as_blank() {
             value == other
         } else {

@@ -5,7 +5,7 @@ derived from [RDF 1.1 TriG](https://www.w3.org/TR/trig/), _RDF Dataset Language_
 */
 
 use crate::model::graph::Graph;
-use crate::model::statement::{BlankNode, BlankNodeRef};
+use crate::model::statement::{BlankNode, BlankNodeRef, SubjectNodeRef};
 use rdftk_iri::{Iri, IriRef, Name as NodeName};
 use std::cell::RefCell;
 use std::fmt::{Display, Formatter};
@@ -136,6 +136,18 @@ impl From<IriRef> for GraphName {
 impl From<&IriRef> for GraphName {
     fn from(name: &IriRef) -> Self {
         GraphName(Name::Iri(name.clone()))
+    }
+}
+
+impl From<SubjectNodeRef> for GraphName {
+    fn from(value: SubjectNodeRef) -> Self {
+        if let Some(blank) = value.as_blank() {
+            GraphName(Name::BNode(blank.clone()))
+        } else if let Some(iri) = value.as_iri() {
+            GraphName(Name::Iri(iri.clone()))
+        } else {
+            unreachable!()
+        }
     }
 }
 

@@ -221,18 +221,14 @@ impl Hash for dyn Statement {
 // Modules
 // ------------------------------------------------------------------------------------------------
 
-#[doc(hidden)]
 mod bnode;
 pub use bnode::*;
 
-#[doc(hidden)]
 mod factory;
 pub use factory::*;
 
-#[doc(hidden)]
 mod subject;
 pub use subject::*;
 
-#[doc(hidden)]
 mod object;
 pub use object::*;

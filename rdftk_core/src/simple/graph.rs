@@ -107,6 +107,10 @@ impl GraphFactory for SimpleGraphFactory {
             prefix_mappings,
         )))
     }
+
+    fn statement_factory(&self) -> StatementFactoryRef {
+        statement_factory()
+    }
 }
 
 impl SimpleGraphFactory {
@@ -322,7 +326,3 @@ impl SimpleGraph {
         self
     }
 }
-
-// ------------------------------------------------------------------------------------------------
-// Private Functions
-// ------------------------------------------------------------------------------------------------

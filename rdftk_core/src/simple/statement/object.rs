@@ -1,5 +1,5 @@
 use crate::model::literal::LiteralRef;
-use crate::model::statement::{BlankNode, ObjectNode, StatementRef, SubjectNode};
+use crate::model::statement::{BlankNodeRef, ObjectNode, StatementRef, SubjectNode};
 use crate::model::Provided;
 use rdftk_iri::IriRef;
 
@@ -20,7 +20,7 @@ pub struct SimpleObjectNode(Object);
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Clone, Debug)]
 enum Object {
-    BNode(BlankNode),
+    BNode(BlankNodeRef),
     Iri(IriRef),
     Literal(LiteralRef),
     Star(StatementRef),
@@ -30,8 +30,8 @@ enum Object {
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl From<BlankNode> for SimpleObjectNode {
-    fn from(v: BlankNode) -> Self {
+impl From<BlankNodeRef> for SimpleObjectNode {
+    fn from(v: BlankNodeRef) -> Self {
         Self(Object::BNode(v))
     }
 }
@@ -65,7 +65,7 @@ impl SubjectNode for SimpleObjectNode {
         matches!(self.0, Object::BNode(_))
     }
 
-    fn as_blank(&self) -> Option<&BlankNode> {
+    fn as_blank(&self) -> Option<&BlankNodeRef> {
         match &self.0 {
             Object::BNode(s) => Some(s),
             _ => None,

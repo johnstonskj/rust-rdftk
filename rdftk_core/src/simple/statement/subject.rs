@@ -1,4 +1,4 @@
-use crate::model::statement::{BlankNode, StatementRef, SubjectNode};
+use crate::model::statement::{BlankNodeRef, StatementRef, SubjectNode};
 use crate::model::Provided;
 use rdftk_iri::IriRef;
 
@@ -19,7 +19,7 @@ pub struct SimpleSubjectNode(Subject);
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Clone, Debug)]
 enum Subject {
-    BNode(BlankNode),
+    BNode(BlankNodeRef),
     Iri(IriRef),
     Star(StatementRef),
 }
@@ -28,8 +28,8 @@ enum Subject {
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl From<BlankNode> for SimpleSubjectNode {
-    fn from(v: BlankNode) -> Self {
+impl From<BlankNodeRef> for SimpleSubjectNode {
+    fn from(v: BlankNodeRef) -> Self {
         Subject::BNode(v).into()
     }
 }
@@ -63,7 +63,7 @@ impl SubjectNode for SimpleSubjectNode {
         matches!(self.0, Subject::BNode(_))
     }
 
-    fn as_blank(&self) -> Option<&BlankNode> {
+    fn as_blank(&self) -> Option<&BlankNodeRef> {
         match &self.0 {
             Subject::BNode(s) => Some(s),
             _ => None,

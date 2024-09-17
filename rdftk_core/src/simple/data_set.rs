@@ -67,6 +67,10 @@ impl DataSetFactory for SimpleDataSetFactory {
             graphs: Default::default(),
         }))
     }
+
+    fn graph_factory(&self) -> GraphFactoryRef {
+        graph_factory()
+    }
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -86,30 +90,24 @@ impl DataSet for SimpleDataSet {
         self.graphs.len()
     }
 
-    fn default_graph(&self) -> Option<&NamedGraphRef> {
-        self.graphs.get(&None)
+    // --------------------------------------------------------------------------------------------
+    // Accessors
+    // --------------------------------------------------------------------------------------------
+
+    fn contains_graph(&self, name: &Option<GraphNameRef>) -> bool {
+        self.graphs.contains_key(name)
     }
 
-    fn has_graph_named(&self, name: &GraphNameRef) -> bool {
-        self.graphs.contains_key(&Some(name.clone()))
+    fn graph(&self, name: &Option<GraphNameRef>) -> Option<&NamedGraphRef> {
+        self.graphs.get(name)
     }
 
-    fn graph_named(&self, name: &GraphNameRef) -> Option<&NamedGraphRef> {
-        self.graphs.get(&Some(name.clone()))
+    fn graph_mut(&mut self, name: &Option<GraphNameRef>) -> Option<&mut NamedGraphRef> {
+        self.graphs.get_mut(name)
     }
 
     fn graphs(&self) -> Box<dyn Iterator<Item = &NamedGraphRef> + '_> {
         Box::from(self.graphs.values())
-    }
-
-    fn graph_names(&self) -> Box<dyn Iterator<Item = &GraphNameRef> + '_> {
-        Box::from(self.graphs.keys().filter_map(|name| {
-            if let Some(name) = name {
-                Some(name)
-            } else {
-                None
-            }
-        }))
     }
 
     // --------------------------------------------------------------------------------------------
@@ -125,17 +123,17 @@ impl DataSet for SimpleDataSet {
         graphs.into_iter().for_each(|g| self.insert(g))
     }
 
-    fn remove(&mut self, name: &GraphNameRef) {
-        let _ = self.graphs.remove(&Some(name.clone()));
-    }
-
-    fn remove_default(&mut self) {
-        let _ = self.graphs.remove(&None);
+    fn remove(&mut self, name: &Option<GraphNameRef>) {
+        let _ = self.graphs.remove(name);
     }
 
     fn clear(&mut self) {
         self.graphs.clear();
     }
+
+    // --------------------------------------------------------------------------------------------
+    // Factories
+    // --------------------------------------------------------------------------------------------
 
     fn factory(&self) -> DataSetFactoryRef {
         data_set_factory()

@@ -72,6 +72,18 @@ pub trait GraphFactory: Debug + Provided {
         statements: &[StatementRef],
         prefix_mappings: Option<PrefixMappingRef>,
     ) -> NamedGraphRef;
+
+    // --------------------------------------------------------------------------------------------
+    // Other Factories
+    // --------------------------------------------------------------------------------------------
+
+    ///
+    /// Return the factory that creates statements using the same provider as `self`.
+    ///
+    /// Note that this uses Arc as a reference as factories are explicitly intended for cross-thread
+    /// usage.
+    ///
+    fn statement_factory(&self) -> StatementFactoryRef;
 }
 
 ///
