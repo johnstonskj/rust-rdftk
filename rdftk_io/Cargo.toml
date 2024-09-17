@@ -26,13 +26,13 @@ turtle = ["pest", "pest_derive"]
 xml = ["xml-rs", "rdftk_names"]
 
 [dependencies]
+itertools = "0.13"
 lazy_static = "1.4"
-log = "0.4"
 objio = "0.1.1"
 rdftk_core = { version = "0.4.2", path = "../rdftk_core" }
 rdftk_iri = { version = "0.2.2", path = "../rdftk_iri" }
 regex = "1.5"
-itertools = "0.13"
+tracing = "0.1.40"
 
 # feature-dependencies
 pest = { version = "2.7", optional = true }
@@ -43,5 +43,6 @@ xml-rs = { version = "0.8", optional = true }
 
 [dev-dependencies]
 indoc = "2.0"
+log = "0.4.22"
 pretty_assertions = "1.4"
 pretty_env_logger = "0.5"

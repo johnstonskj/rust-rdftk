@@ -1,5 +1,5 @@
 use objio::ObjectReader;
-use rdftk_io::json::reader::JsonReader;
+use rdftk_io::json::JsonReader;
 
 #[test]
 fn read_example_01() {

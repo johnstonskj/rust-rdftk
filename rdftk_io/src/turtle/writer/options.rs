@@ -72,6 +72,13 @@ impl TurtleOptions {
         }
     }
 
+    pub fn without_nested_blank_nodes(self) -> Self {
+        Self {
+            nest_blank_nodes: false,
+            ..self
+        }
+    }
+
     pub fn id_base(&self) -> Option<&IriRef> {
         self.id_base.as_ref()
     }

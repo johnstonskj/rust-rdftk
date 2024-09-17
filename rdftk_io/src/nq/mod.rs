@@ -9,17 +9,17 @@ Provides the `NQuadDataSetWriter` implementation of the `DataSetWriter` trait an
 # Example
 
 ```rust
-use rdftk_io::nq::writer::NQuadDataSetWriter;
-use rdftk_io::write_data_set_to_string;
+use rdftk_io::nq::NQuadWriter;
+# use objio::ObjectWriter;
 # use std::cell::RefCell;
 # use std::rc::Rc;
 # use rdftk_core::model::data_set::DataSetRef;
 # use rdftk_core::simple::data_set::data_set_factory;
-# fn make_data_set() -> DataSetRef { data_set_factory().data_set(None) }
+# fn make_data_set() -> DataSetRef { data_set_factory().data_set() }
 
-let writer = NQuadDataSetWriter::default();
+let writer = NQuadWriter::default();
 
-let result = write_data_set_to_string(&writer, &make_data_set());
+let result = writer.write_to_string(&make_data_set());
 ```
 
 */
@@ -45,7 +45,7 @@ pub const FORMAT_IRI: &str = "http://www.w3.org/ns/formats/N-Quads";
 // ------------------------------------------------------------------------------------------------
 
 mod reader;
-pub use reader::NQuadReader;
+pub use reader::{NQuadReader, NQuadReaderOptions};
 
 mod writer;
 pub use writer::NQuadWriter;

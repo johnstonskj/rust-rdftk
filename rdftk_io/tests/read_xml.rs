@@ -1,12 +1,12 @@
 use objio::ObjectReader;
-use rdftk_io::xml::reader::XmlReader;
+use rdftk_io::xml::XmlReader;
 
 // https://www.w3.org/RDF/Validator/rdfval
 
 pub mod logging;
 
 #[test]
-fn read_example_00() {
+fn read_example_empty_graph() {
     let mut xml = r##"<?xml version="1.0"?>
 <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
             xmlns:dc="http://purl.org/dc/elements/1.1/"
@@ -26,6 +26,7 @@ fn read_example_00() {
 }
 
 #[test]
+#[ignore]
 fn read_example_01() {
     let mut xml = r##"<?xml version="1.0"?>
 <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"

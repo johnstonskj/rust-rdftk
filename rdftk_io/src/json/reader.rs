@@ -5,47 +5,45 @@ Provides the `JsonReader` implementation of the `GraphReader` trait.
 
 */
 
-use crate::common::ReaderOptions;
 use crate::json::syntax::{
     BNODE_PREFIX, OBJ_KEY_DATATYPE, OBJ_KEY_LANG, OBJ_KEY_TYPE, OBJ_KEY_VALUE, OBJ_TYPE_BNODE,
     OBJ_TYPE_LITERAL, OBJ_TYPE_URI,
 };
+use crate::make_factory_options;
 use objio::{impl_has_options, HasOptions, ObjectReader};
-use rdftk_core::error::{read_write_error, read_write_error_with, Error};
+use rdftk_core::error::Error;
 use rdftk_core::model::graph::{GraphFactoryRef, GraphRef};
 use rdftk_core::model::literal::{DataType, LanguageTag};
 use rdftk_core::model::statement::SubjectNodeRef;
+use rdftk_core::simple::graph_factory;
 use rdftk_core::simple::statement::statement_factory;
 use rdftk_iri::{Iri, IriRef};
 use serde_json::{Map, Value};
 use std::io::Read;
 use std::str::FromStr;
+use tracing::error;
+
+use super::NAME;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
+
+make_factory_options!(JsonReaderOptions, GraphFactoryRef, graph_factory);
 
 ///
 /// An implementation of the GraphReader trait to read resources in the JSON representation.
 ///
 #[derive(Debug, Default)]
 pub struct JsonReader {
-    options: ReaderOptions,
+    options: JsonReaderOptions,
 }
-
-// ------------------------------------------------------------------------------------------------
-// Private Types
-// ------------------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------------------
-// Public Functions
-// ------------------------------------------------------------------------------------------------
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl_has_options!(JsonReader, ReaderOptions);
+impl_has_options!(JsonReader, JsonReaderOptions);
 
 impl ObjectReader<GraphRef> for JsonReader {
     type Error = Error;
@@ -54,8 +52,7 @@ impl ObjectReader<GraphRef> for JsonReader {
     where
         R: Read,
     {
-        let value: Value =
-            serde_json::from_reader(r).map_err(|e| read_write_error_with(super::NAME, e))?;
+        let value: Value = serde_json::from_reader(r).map_err(json_error)?;
         parse_graph(value, self.options().factory().clone())
     }
 }
@@ -64,7 +61,35 @@ impl ObjectReader<GraphRef> for JsonReader {
 // Private Functions
 // ------------------------------------------------------------------------------------------------
 
+macro_rules! parse_rule {
+    ($rule_fn:literal entry) => {
+        const RULE_FN: &'static str = $rule_fn;
+        ::tracing::trace!("{}(...)", $rule_fn);
+    };
+}
+
+fn json_error(err: serde_json::Error) -> Error {
+    Error::Tokenizer {
+        representation: NAME.into(),
+        source: Box::new(err),
+    }
+}
+
+fn value_variant(value: &Value) -> String {
+    match value {
+        Value::Null => "Null",
+        Value::Bool(_) => "Bool",
+        Value::Number(_) => "Number",
+        Value::String(_) => "String",
+        Value::Array(_) => "Array",
+        Value::Object(_) => "Object",
+    }
+    .to_string()
+}
+
 fn parse_graph(value: Value, factory: GraphFactoryRef) -> Result<GraphRef, Error> {
+    parse_rule!("parse_graph" entry);
+
     if let Value::Object(json) = value {
         let graph = factory.graph();
         for (subject, predicate_objects) in json.iter() {
@@ -72,8 +97,12 @@ fn parse_graph(value: Value, factory: GraphFactoryRef) -> Result<GraphRef, Error
         }
         Ok(graph)
     } else {
-        log::error!("parse_graph() - expecting Value::Object");
-        read_write_error(super::NAME).into()
+        error!("rule {RULE_FN} expecting `Object` variant");
+        Err(Error::ParserUnexpected {
+            rule_fn: RULE_FN.into(),
+            given: value_variant(&value),
+            expecting: vec!["Object".into()],
+        })
     }
 }
 
@@ -82,6 +111,8 @@ fn parse_statements(
     predicate_objects: &Value,
     graph: &GraphRef,
 ) -> Result<(), Error> {
+    parse_rule!("parse_statements" entry);
+
     if let Value::Object(json) = predicate_objects {
         let subject = if let Some(subject) = subject.strip_prefix(BNODE_PREFIX) {
             graph
@@ -99,8 +130,12 @@ fn parse_statements(
         }
         Ok(())
     } else {
-        log::error!("parse_statements() - expecting Value::Object");
-        read_write_error(super::NAME).into()
+        error!("rule {RULE_FN} expecting `Object` variant");
+        Err(Error::ParserUnexpected {
+            rule_fn: "parse_statements".into(),
+            given: value_variant(predicate_objects),
+            expecting: vec!["Object".into()],
+        })
     }
 }
 
@@ -110,6 +145,8 @@ fn parse_predicates(
     objects: &Value,
     graph: &GraphRef,
 ) -> Result<(), Error> {
+    parse_rule!("parse_predicates" entry);
+
     if let Value::Array(json) = objects {
         let predicate = IriRef::new(Iri::from_str(predicate)?);
         for object in json {
@@ -117,8 +154,12 @@ fn parse_predicates(
         }
         Ok(())
     } else {
-        log::error!("parse_predicates() - expecting Value::Array");
-        read_write_error(super::NAME).into()
+        error!("rule {RULE_FN} expecting `Array` variant");
+        Err(Error::ParserUnexpected {
+            rule_fn: RULE_FN.into(),
+            given: value_variant(objects),
+            expecting: vec!["Array".into()],
+        })
     }
 }
 
@@ -128,6 +169,8 @@ fn parse_object(
     object: &Value,
     graph: &GraphRef,
 ) -> Result<(), Error> {
+    parse_rule!("parse_object" entry);
+
     if let Value::Object(json) = object {
         match json.get(OBJ_KEY_TYPE) {
             Some(Value::String(s)) => {
@@ -138,18 +181,36 @@ fn parse_object(
                 } else if s == OBJ_TYPE_URI {
                     parse_uri_object(subject, predicate, json, graph)
                 } else {
-                    log::error!("parse_object() - unknown 'type' key value: {}", s);
-                    read_write_error(super::NAME).into()
+                    error!("parse_object() - unknown 'type' key value: {}", s);
+                    Err(Error::ParserUnexpected {
+                        rule_fn: RULE_FN.into(),
+                        given: s.into(),
+                        expecting: vec![
+                            OBJ_TYPE_LITERAL.into(),
+                            OBJ_TYPE_BNODE.into(),
+                            OBJ_TYPE_URI.into(),
+                        ],
+                    })
                 }
             }
             _ => {
-                log::error!("parse_object() - no 'type' key in object");
-                read_write_error(super::NAME).into()
+                error!(
+                    "rule {RULE_FN} expecting object to have key {}",
+                    OBJ_KEY_TYPE
+                );
+                Err(Error::ParserExpected {
+                    rule_fn: RULE_FN.into(),
+                    expecting: OBJ_KEY_TYPE.into(),
+                })
             }
         }
     } else {
-        log::error!("parse_object() - expecting Value::Object");
-        read_write_error(super::NAME).into()
+        error!("rule {RULE_FN} expecting `Object` variant");
+        Err(Error::ParserUnexpected {
+            rule_fn: RULE_FN.into(),
+            given: value_variant(object),
+            expecting: vec!["Object".into()],
+        })
     }
 }
 
@@ -159,6 +220,8 @@ fn parse_literal_object(
     object: &Map<String, Value>,
     graph: &GraphRef,
 ) -> Result<(), Error> {
+    parse_rule!("parse_literal_object" entry);
+
     let mut graph = graph.borrow_mut();
     let value = object.get(OBJ_KEY_VALUE);
     let language = object.get(OBJ_KEY_LANG);
@@ -176,8 +239,11 @@ fn parse_literal_object(
                 .with_data_type(v, DataType::from(data_type))
         }
         _ => {
-            log::error!("parse_literal_object() - bad value/data type/language combination");
-            return read_write_error(super::NAME).into();
+            error!("parse_literal_object() - bad value/data type/language combination");
+            return Err(Error::ParserUnreachable {
+                rule_fn: RULE_FN.into(),
+                given: "bad value/data type/language combination".into(),
+            });
         }
     });
     let st = graph
@@ -193,6 +259,8 @@ fn parse_bnode_object(
     object: &Map<String, Value>,
     graph: &GraphRef,
 ) -> Result<(), Error> {
+    parse_rule!("parse_bnode_object" entry);
+
     let mut graph = graph.borrow_mut();
     if let Some(Value::String(s)) = object.get(OBJ_KEY_VALUE) {
         let object = graph.statement_factory().blank_object_named(&s[2..])?;
@@ -202,8 +270,14 @@ fn parse_bnode_object(
         graph.insert(st);
         Ok(())
     } else {
-        log::error!("parse_bnode_object() - expecting Value::String");
-        read_write_error(super::NAME).into()
+        error!(
+            "rule {RULE_FN} expecting object to have key {}",
+            OBJ_KEY_VALUE
+        );
+        Err(Error::ParserExpected {
+            rule_fn: RULE_FN.into(),
+            expecting: OBJ_KEY_VALUE.into(),
+        })
     }
 }
 
@@ -213,6 +287,8 @@ fn parse_uri_object(
     object: &Map<String, Value>,
     graph: &GraphRef,
 ) -> Result<(), Error> {
+    parse_rule!("parse_uri_object" entry);
+
     let mut graph = graph.borrow_mut();
     if let Some(Value::String(s)) = object.get(OBJ_KEY_VALUE) {
         let uri = IriRef::new(Iri::from_str(s)?);
@@ -223,11 +299,13 @@ fn parse_uri_object(
         graph.insert(st);
         Ok(())
     } else {
-        log::error!("parse_uri_object() - expecting Value::String");
-        read_write_error(super::NAME).into()
+        error!(
+            "rule {RULE_FN} expecting object to have key {}",
+            OBJ_KEY_VALUE
+        );
+        Err(Error::ParserExpected {
+            rule_fn: RULE_FN.into(),
+            expecting: OBJ_KEY_VALUE.into(),
+        })
     }
 }
-
-// ------------------------------------------------------------------------------------------------
-// Modules
-// ------------------------------------------------------------------------------------------------

@@ -17,7 +17,7 @@ use crate::xml::syntax::{
     PARSE_TYPE_COLLECTION, PARSE_TYPE_LITERAL, PARSE_TYPE_RESOURCE, XML_NAMESPACE,
 };
 use objio::ObjectReader;
-use rdftk_core::error::{invalid_state_error, read_write_error_with, Error};
+use rdftk_core::error::{invalid_state_error, Error};
 use rdftk_core::model::graph::{GraphFactoryRef, GraphRef};
 use rdftk_core::model::literal::{DataType, LanguageTag};
 use rdftk_core::model::statement::SubjectNodeRef;
@@ -26,6 +26,7 @@ use rdftk_iri::{Iri, IriRef};
 use rdftk_names::rdf;
 use std::io::Read;
 use std::str::FromStr;
+use tracing::{error, trace};
 use xml::attribute::OwnedAttribute;
 use xml::name::OwnedName;
 use xml::reader::XmlEvent;
@@ -73,10 +74,6 @@ struct Attributes<'a> {
 }
 
 // ------------------------------------------------------------------------------------------------
-// Public Functions
-// ------------------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
@@ -113,26 +110,33 @@ impl ExpectedName {
 
 macro_rules! trace_event {
     ($fn_name:expr => $event:expr) => {
-        log::trace!("XmlReader::{} event: {:?}", $fn_name, $event);
+        trace!("XmlReader::{} event: {:?}", $fn_name, $event);
     };
     ($fn_name:expr => ignore $event:expr) => {
-        log::trace!("XmlReader::{} ignoring event: {:?}", $fn_name, &$event);
+        trace!("XmlReader::{} ignoring event: {:?}", $fn_name, &$event);
     };
 }
 
 macro_rules! error_event {
     (parse => $fn_name:expr, $error:expr) => {
-        let inner: rdftk_core::error::Error = read_write_error_with(super::NAME, $error.clone());
+        let inner = Error::Tokenizer {
+            representation: super::NAME.into(),
+            source: Box::new($error.clone()),
+        };
         error_event!($fn_name, inner);
     };
     (state => $fn_name:expr, $msg:expr) => {
-        log::error!("Invalid state: {}", $msg,);
-        let inner: rdftk_core::error::Error = invalid_state_error();
+        error!("Invalid state: {}", $msg,);
+        let inner = invalid_state_error();
         error_event!($fn_name, inner);
     };
-    ($fn_name:expr, $inner:expr) => {
-        log::error!("XmlReader::{} {}", $fn_name, $inner);
-        return read_write_error_with(super::NAME, $inner).into();
+    ($fn_name:expr, $error:expr) => {
+        error!("XmlReader::{} {}", $fn_name, $error);
+        return Error::Tokenizer {
+            representation: super::NAME.into(),
+            source: Box::new($error),
+        }
+        .into();
     };
 }
 
@@ -290,7 +294,7 @@ fn parse_predicate_attributes(
     // SPEC: §2.5 Property Attributes
     // SPEC: §2.12 Omitting Nodes: Property Attributes on an empty Property Element
     for attribute in attributes {
-        log::trace!(
+        trace!(
             "XmlReader::parse_predicate_attributes attribute: {:?}",
             attribute
         );
@@ -582,11 +586,7 @@ fn parse_attributes(attributes: &[OwnedAttribute]) -> Result<Attributes<'_>, Err
         }
     }
 
-    log::trace!("parse_attributes -> {:?}", response);
+    trace!("parse_attributes -> {:?}", response);
 
     Ok(response)
 }
-
-// ------------------------------------------------------------------------------------------------
-// Modules
-// ------------------------------------------------------------------------------------------------

@@ -6,16 +6,16 @@ format.
 # Example
 
 ```rust
-use rdftk_io::{HasOptions, ObjectWriter};
-use rdftk_io::dot::writer::{DotOptions, DotWriter};
+use rdftk_io::dot::{DotOptions, DotWriter};
+# use objio::{HasOptions, ObjectWriter};
 # use rdftk_core::model::graph::GraphRef;
 # fn make_graph() -> GraphRef { rdftk_core::simple::graph::graph_factory().graph() }
 
 let mut options = DotOptions::default().with_blank_labels(true);
 
-let writer = DotWriter::default.with_options(options);
+let writer = DotWriter::default().with_options(options);
 
-let result = writer.write_graph_to_string(&make_graph());
+let result = writer.write_to_string(&make_graph());
 ```
 
 */

@@ -9,15 +9,15 @@ pretty-printed  for readability. It is also possible to pick one of the type sty
 in the specification, "flat" or "striped".
 
 ```rust
-use rdftk_io::xml::writer::{XmlOptions, XmlWriter};
-use rdftk_io::write_graph_to_string;
+use rdftk_io::xml::{XmlOptions, XmlWriter};
+# use objio::{HasOptions, ObjectWriter};
 # let graph = rdftk_core::simple::graph::graph_factory().graph();
 
-let options: XmlOptions = XmlOptions::flat().pretty().clone();
+let options: XmlOptions = XmlOptions::default().flat().pretty();
 
-let writer = XmlWriter::new(options);
+let writer = XmlWriter::default().with_options(options);
 
-println!("{}", write_graph_to_string(&writer, &graph).unwrap());
+println!("{}", writer.write_to_string(&graph).unwrap());
 ```
 
 */
@@ -41,8 +41,8 @@ pub const MIME_TYPE: &str = "application/rdf+xml";
 
 mod syntax;
 
-#[doc(hidden)]
-pub mod reader;
+mod reader;
+pub use reader::XmlReader;
 
 mod writer;
 pub use writer::{XmlOptions, XmlStyle, XmlWriter};

@@ -1,7 +1,7 @@
 #![cfg(feature = "turtle")]
 
 use objio::{HasOptions, ObjectWriter};
-use rdftk_io::turtle::writer::{TurtleOptions, TurtleWriter};
+use rdftk_io::turtle::{TurtleOptions, TurtleWriter};
 use rdftk_iri::{Iri, IriRef};
 use std::str::FromStr;
 
@@ -19,10 +19,12 @@ fn write_to_turtle() {
     println!("# format: turtle\n{}", output);
 
     assert!(output.contains("@prefix dc: <http://purl.org/dc/elements/1.1/> .\n"));
-    assert!(output.contains("<http://en.wikipedia.org/wiki/Tony_Benn> dc:"));
-    assert!(output.contains("dc:description [\n"));
+    assert!(output.contains("<http://en.wikipedia.org/wiki/Tony_Benn>"));
+    assert!(output.contains("  dc:description [\n"));
+    assert!(output.contains("    a         foaf:Person"));
     assert!(output.contains("    foaf:name \"Tony Benn\""));
-    assert!(output.contains("    rdf:type foaf:Person"));
+    assert!(output.contains("  ] ;\n"));
+    assert!(output.contains("  dc:publisher   \"Wikipedia\" .\n"));
 }
 
 #[test]
@@ -41,10 +43,12 @@ fn write_to_turtle_with_base() {
 
     assert!(output.starts_with("@base <http://en.wikipedia.org/wiki/> .\n"));
     assert!(output.contains("@prefix dc: <http://purl.org/dc/elements/1.1/> .\n"));
-    assert!(output.contains("<Tony_Benn> dc:"));
-    assert!(output.contains("dc:description [\n"));
+    assert!(output.contains("<Tony_Benn>"));
+    assert!(output.contains("  dc:description [\n"));
+    assert!(output.contains("    a         foaf:Person"));
     assert!(output.contains("    foaf:name \"Tony Benn\""));
-    assert!(output.contains("    rdf:type foaf:Person"));
+    assert!(output.contains("  ] ;\n"));
+    assert!(output.contains("  dc:publisher   \"Wikipedia\" .\n"));
 }
 
 #[test]
@@ -66,7 +70,10 @@ fn write_to_turtle_with_options() {
 
     assert!(output.starts_with("BASE <http://en.wikipedia.org/wiki/>\n"));
     assert!(output.contains("PREFIX dc: <http://purl.org/dc/elements/1.1/>\n"));
-    assert!(output.contains("<Tony_Benn> dc:"));
-    assert!(output.contains("dc:description _:B1"));
-    assert!(output.contains("\n_:B1"));
+    assert!(output.contains("<Tony_Benn>"));
+    assert!(output.contains("  dc:description [\n"));
+    assert!(output.contains("    a         foaf:Person"));
+    assert!(output.contains("    foaf:name \"Tony Benn\""));
+    assert!(output.contains("  ] ;\n"));
+    assert!(output.contains("  dc:publisher   \"Wikipedia\" .\n"));
 }

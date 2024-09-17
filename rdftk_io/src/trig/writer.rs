@@ -7,8 +7,8 @@ More detailed description, with
 
 */
 
-use crate::turtle::writer::TurtleOptions;
-use objio::{impl_has_options, ObjectWriter};
+use crate::turtle::TurtleOptions;
+use objio::{impl_has_options, HasOptions, ObjectWriter};
 use rdftk_core::error::Error;
 use rdftk_core::model::{data_set::DataSetRef, graph::NamedGraphRef};
 
@@ -17,23 +17,55 @@ use rdftk_core::model::{data_set::DataSetRef, graph::NamedGraphRef};
 // ------------------------------------------------------------------------------------------------
 
 #[derive(Debug, Default)]
-pub struct TrigWriter {
-    options: TurtleOptions,
+pub struct TrigWriterOptions {
+    turtle: TurtleOptions,
+    omit_graph_keyword: bool,
 }
 
-// ------------------------------------------------------------------------------------------------
-// Private Types
-// ------------------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------------------
-// Public Functions
-// ------------------------------------------------------------------------------------------------
+#[derive(Debug, Default)]
+pub struct TrigWriter {
+    options: TrigWriterOptions,
+}
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl_has_options!(TrigWriter, TurtleOptions);
+impl From<TurtleOptions> for TrigWriterOptions {
+    fn from(value: TurtleOptions) -> Self {
+        Self {
+            turtle: value,
+            ..Default::default()
+        }
+    }
+}
+
+impl AsRef<TurtleOptions> for TrigWriterOptions {
+    fn as_ref(&self) -> &TurtleOptions {
+        &self.turtle
+    }
+}
+
+impl TrigWriterOptions {
+    pub fn with_omit_graph_keyword(self, omit_graph_keyword: bool) -> Self {
+        Self {
+            omit_graph_keyword,
+            ..self
+        }
+    }
+
+    pub fn omit_graph_keyword(&self) -> bool {
+        self.omit_graph_keyword
+    }
+
+    pub fn set_omit_graph_keyword(&mut self, omit_graph_keyword: bool) {
+        self.omit_graph_keyword = omit_graph_keyword;
+    }
+}
+
+// ------------------------------------------------------------------------------------------------
+
+impl_has_options!(TrigWriter, TrigWriterOptions);
 
 impl ObjectWriter<DataSetRef> for TrigWriter {
     type Error = Error;
@@ -59,6 +91,9 @@ impl ObjectWriter<NamedGraphRef> for TrigWriter {
     {
         let graph = graph.borrow();
         if let Some(name) = graph.name() {
+            if !self.options().omit_graph_keyword() {
+                w.write_all(b"GRAPH ")?;
+            }
             w.write_all(name.to_string().as_bytes())?;
             w.write_all(b" ")?;
         }
@@ -70,11 +105,3 @@ impl ObjectWriter<NamedGraphRef> for TrigWriter {
         Ok(())
     }
 }
-
-// ------------------------------------------------------------------------------------------------
-// Private Functions
-// ------------------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------------------
-// Modules
-// ------------------------------------------------------------------------------------------------

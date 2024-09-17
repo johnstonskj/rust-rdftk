@@ -2,14 +2,15 @@
 Provides the `JsonWriter` implementation of the `GraphWriter` trait.
 
 ```rust
-use rdftk_io::json::writer::{JsonWriter};
-use rdftk_io::write_graph_to_string;
+use rdftk_io::json::{JsonWriter, JsonOptions};
+# use objio::{HasOptions, ObjectWriter};
 # use rdftk_core::model::graph::GraphRef;
 # fn make_graph() -> GraphRef { rdftk_core::simple::graph::graph_factory().graph() }
 
-let writer = JsonWriter::pretty();
+let writer = JsonWriter::default()
+    .with_options(JsonOptions::default().with_pretty_print(true));
 
-let result = write_graph_to_string(&writer, &make_graph());
+let result = writer.write_to_string(&make_graph());
 ```
 
 
@@ -21,10 +22,11 @@ use crate::json::syntax::{
 };
 use crate::json::NAME;
 use objio::{impl_has_options, ObjectWriter};
-use rdftk_core::error::{rdf_star_not_supported_error, read_write_error_with, Error};
+use rdftk_core::error::{rdf_star_not_supported_error, Error};
 use rdftk_core::model::graph::GraphRef;
 use serde_json::{Map, Value};
 use std::io::Write;
+use tracing::error;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -42,14 +44,6 @@ pub struct JsonWriter {
 pub struct JsonOptions {
     pretty_print: bool,
 }
-
-// ------------------------------------------------------------------------------------------------
-// Private Types
-// ------------------------------------------------------------------------------------------------
-
-// ------------------------------------------------------------------------------------------------
-// Public Functions
-// ------------------------------------------------------------------------------------------------
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
@@ -153,10 +147,9 @@ impl ObjectWriter<GraphRef> for JsonWriter {
 // ------------------------------------------------------------------------------------------------
 
 fn json_error(e: serde_json::Error) -> Error {
-    log::error!("Error parsing JSON source: {:?}", e);
-    read_write_error_with(NAME, e)
+    error!("Error generating JSON source: {:?}", e);
+    Error::Tokenizer {
+        representation: super::NAME.into(),
+        source: Box::new(e),
+    }
 }
-
-// ------------------------------------------------------------------------------------------------
-// Modules
-// ------------------------------------------------------------------------------------------------

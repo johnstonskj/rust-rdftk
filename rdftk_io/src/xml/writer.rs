@@ -4,7 +4,7 @@ use super::syntax::{
 };
 use crate::xml::syntax::ATTRIBUTE_XML_LANG_PREFIXED;
 use objio::{impl_has_options, ObjectWriter};
-use rdftk_core::error::{rdf_star_not_supported_error, read_write_error_with, Error};
+use rdftk_core::error::{rdf_star_not_supported_error, Error};
 use rdftk_core::model::graph::{Graph, GraphRef};
 use rdftk_core::model::statement::SubjectNodeRef;
 use rdftk_iri::IriRef;
@@ -240,7 +240,7 @@ impl XmlWriter {
                 writer
                     .write(
                         XmlEvent::start_element(RDF_DESCRIPTION.as_str())
-                            .attr(RDF_NODE_ID.as_str(), blank.as_ref()),
+                            .attr(RDF_NODE_ID.as_str(), blank.as_ref().as_ref()),
                     )
                     .map_err(xml_error)?;
             } else {
@@ -276,7 +276,7 @@ impl XmlWriter {
                     writer.write(element).map_err(xml_error)?;
                 } else if let Some(blank) = object.as_blank() {
                     if flat {
-                        element = element.attr(RDF_NODE_ID.as_str(), blank.as_ref());
+                        element = element.attr(RDF_NODE_ID.as_str(), blank.as_ref().as_ref());
                         writer.write(element).map_err(xml_error)?;
                     } else {
                         writer.write(element).map_err(xml_error)?;
@@ -328,8 +328,11 @@ impl XmlWriter {
 // ------------------------------------------------------------------------------------------------
 
 #[inline]
-fn xml_error(e: xml::writer::Error) -> rdftk_core::error::Error {
-    read_write_error_with(super::NAME, e)
+fn xml_error(e: xml::writer::Error) -> Error {
+    Error::Tokenizer {
+        representation: super::NAME.into(),
+        source: Box::new(e),
+    }
 }
 
 fn split_uri(iri: &IriRef) -> (String, String) {

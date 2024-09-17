@@ -373,7 +373,7 @@ impl DotWriter {
                     Node {
                         id: id.clone(),
                         kind: NodeKind::Blank,
-                        label: node.as_blank().unwrap().into(),
+                        label: node.as_blank().unwrap().as_ref().into(),
                     },
                 );
             } else if node.is_iri() {
@@ -402,7 +402,7 @@ impl DotWriter {
                     Node {
                         id: id.clone(),
                         kind: NodeKind::Blank,
-                        label: node.as_blank().unwrap().into(),
+                        label: node.as_blank().unwrap().as_ref().into(),
                     },
                 );
             } else if node.is_iri() {

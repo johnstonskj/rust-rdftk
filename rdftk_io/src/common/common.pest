@@ -1,11 +1,312 @@
+// ------------------------------------------------------------------------------------------------
+// N3
+// ------------------------------------------------------------------------------------------------
+
+n3Doc = {
+	SOI ~ (n3Statement ~ END_OF_STATEMENT | sparqlDirective)* ~ EOI
+}
+
+n3Statement = {
+	n3Directive | n3Triples
+}
+
+n3Directive = {
+	prefixID | base
+}
+
+sparqlDirective = {
+	sparqlBase
+	| sparqlPrefix
+}
+
+n3Triples = {
+	n3Subject ~ n3PredicateObjectList?
+}
+
+n3PredicateObjectList = {
+	n3Verb ~ n3ObjectList ~ (";" ~ (n3Verb ~ n3ObjectList)?)*
+}
+
+n3ObjectList = {
+	n3Object ~ ("," ~ n3Object)*
+}
+
+n3Verb = {
+	n3Predicate
+	| "a"
+	| "has" ~ expression
+	| "is" ~ expression ~ "of"
+	| "="
+	| "<="
+	| "=>"
+}
+
+n3Subject = {
+	expression
+}
+
+n3Predicate = {
+	expression | "<-" ~ expression
+}
+
+n3Object = {
+	expression
+}
+
+expression = {
+	path
+}
+
+path = {
+	pathItem ~ ("!" ~ path | "^" ~ path)?
+}
+
+pathItem = {
+	iri
+	| blankNode
+	| quickVar
+	| collection
+	| blankNodePropertyList
+	| turtleLiteral
+	| formula
+}
+
+formula = {
+	"{" ~ formulaContent? ~ "}"
+}
+
+formulaContent = {
+	n3Statement ~ ("." ~ formulaContent?)?
+	| (sparqlPrefix | sparqlBase) ~ formulaContent?
+}
+
+// only made this a parser rule for consistency
+// (all other path-items are also parser rules)
+quickVar  = {
+	QUICK_VAR_NAME
+}
+
+// ------------------------------------------------------------------------------------------------
+// TRiG
+// ------------------------------------------------------------------------------------------------
+
+trigDoc = {
+    SOI ~ (directive | block)* ~ EOI
+}
+
+block = _{
+    triplesOrGraph
+  | wrappedGraph
+  | triples2
+  | namedGraph
+}
+
+namedGraph = {
+    "GRAPH" ~ labelOrSubject ~ wrappedGraph
+}
+
+triplesOrGraph = {
+    labelOrSubject ~ (wrappedGraph | predicateObjectList ~ END_OF_STATEMENT)
+}
+
+triples2 = {
+    blankNodePropertyList ~ predicateObjectList? ~ END_OF_STATEMENT
+  | collection ~ predicateObjectList ~ END_OF_STATEMENT
+}
+
+wrappedGraph = {
+    "{" ~ triplesBlock? ~ "}"
+}
+
+triplesBlock = {
+    triples ~ (END_OF_STATEMENT ~ triplesBlock?)?
+}
+
+labelOrSubject = {
+    iri
+  | blankNode
+}
+
+// ------------------------------------------------------------------------------------------------
+// Turtle with RDF-*
+// ------------------------------------------------------------------------------------------------
+
+turtleStarDoc = {
+    SOI ~ statement* ~ EOI
+}
+
+statement = {
+    directive
+  | triples ~ END_OF_STATEMENT
+}
+
+directive = {
+    prefixID
+  | base
+  | sparqlPrefix
+  | sparqlBase
+}
+
+prefixID = {
+    "@prefix" ~ PNAME_NS ~ IRIREF ~ END_OF_STATEMENT
+}
+
+base = {
+    "@base" ~ IRIREF ~ END_OF_STATEMENT
+}
+
+sparqlBase = {
+    ^"BASE" ~ IRIREF
+}
+
+sparqlPrefix = {
+    ^"PREFIX" ~ PNAME_NS ~ IRIREF
+}
+
+triples = {
+    turtleSubject ~ predicateObjectList
+  | blankNodePropertyList ~ predicateObjectList?
+}
+
+predicateObjectList = {
+    verbObjectList ~ (";" ~ verbObjectList?)*
+}
+
+verbObjectList = {
+    verb ~ objectList
+}
+
+objectList = {
+    turtleObject ~ ("," ~ turtleObject)*
+}
+
+verb = {
+    turtlePredicate
+  | "a"
+}
+
+turtleSubject = {
+    iri
+  | blankNode
+  | collection
+  | tripleX
+}
+
+turtlePredicate = {
+    iri
+}
+
+turtleObject = {
+    iri
+  | blankNode
+  | turtleLiteral
+  | collection
+  | blankNodePropertyList
+  | tripleX
+}
+
+tripleX = {
+    "<<" ~ subjectX ~ turtlePredicate ~ objectX ~ ">>"
+}
+
+subjectX = {
+    iri
+  | blankNode
+  | tripleX
+}
+
+objectX = {
+    iri
+  | blankNode
+  | turtleLiteral
+  | tripleX
+}
+
+turtleLiteral = {
+    turtleRdfLiteral
+  | NumericLiteral
+  | BooleanLiteral
+}
+
+
+turtleRdfLiteral = {
+    turtleString ~ (LANGTAG | "^^" ~ iri)?
+}
+
+turtleString = {
+    STRING_LITERAL_LONG_SINGLE_QUOTE
+  | STRING_LITERAL_LONG_QUOTE
+  | STRING_LITERAL_QUOTE
+  | STRING_LITERAL_SINGLE_QUOTE
+}
+
+blankNodePropertyList = {
+    "[" ~ predicateObjectList ~ "]"
+}
+
+collection = {
+    "(" ~ turtleObject* ~ ")"
+}
+
+// ------------------------------------------------------------------------------------------------
+// NQuads
+// ------------------------------------------------------------------------------------------------
+
+nquadDoc = {
+    SOI ~ nquad* ~ EOI
+}
+
+// replace nquadGraphLabel with ntripleSubject
+nquad = {
+    ntripleSubject ~ ntriplePredicate ~ ntripleObject ~ ntripleSubject? ~ END_OF_STATEMENT
+}
+
+// ------------------------------------------------------------------------------------------------
+// NTriples
+// ------------------------------------------------------------------------------------------------
+
+ntripleDoc = {
+    SOI ~ ntriple* ~ EOI
+}
+
+ntriple = {
+    ntripleSubject ~ ntriplePredicate ~ ntripleObject ~ END_OF_STATEMENT
+}
+
+ntripleSubject = {
+    IRIREF
+  | blankNode
+}
+
+ntriplePredicate = {
+    IRIREF
+}
+
+ntripleObject = {
+    IRIREF
+  | blankNode
+  | ntripleLiteral
+}
+
+ntripleLiteral = {
+    ntripleRdfLiteral
+}
+
+ntripleRdfLiteral = {
+    ntripleString ~ (LANGTAG | "^^" ~ IRIREF)?
+}
+
+ntripleString = {
+    STRING_LITERAL_QUOTE
+}
 
 // ------------------------------------------------------------------------------------------------
 // IRIs
 // ------------------------------------------------------------------------------------------------
 
 iri = {
-	IRIREF
-	| prefixedName
+    IRIREF
+  | prefixedName
 }
 
 IRIREF = ${
@@ -18,42 +319,38 @@ IRIREF_INNER = @{
 
 IRIREF_CHAR = {
     /* #x00=NULL #01-#x1F=control codes #x20=space */
-    !(">" | '\u{0000}'..'\u{0020}' | "\"" | "{" | "}" | "|" | "^" | "`" | "\\") ~  ANY
-    | UCHAR
+    !(">" | '\u{0000}'..'\u{0020}' | "\"" | "{" | "}" | "|" | "^" | "`" | "\\") ~ ANY
+  | UCHAR
 }
 
 // ------------------------------------------------------------------------------------------------
 // Blank Nodes
 // ------------------------------------------------------------------------------------------------
 
-BlankNode = {
+blankNode = {
     BLANK_NODE_LABEL
-	| ANON
+  | ANON
 }
 
 BLANK_NODE_LABEL = @{
-	"_:" ~ (PN_CHARS_U | ASCII_DIGIT) ~ BLANK_NODE_LABEL_TAIL*
+    "_:" ~ (PN_CHARS_U | ASCII_DIGIT) ~ BLANK_NODE_LABEL_TAIL*
 }
 
 BLANK_NODE_LABEL_TAIL = {
-	PN_CHARS
-	| &("." ~ PN_CHARS) ~ "."
+    PN_CHARS
+  | &("." ~ PN_CHARS) ~ "."
 }
 
 ANON = {
-	"[" ~ "]"
+    "[" ~ "]"
 }
 
 // ------------------------------------------------------------------------------------------------
 // RDF (string-like) Literals
 // ------------------------------------------------------------------------------------------------
 
-rdfLiteral = {
-	String ~ (LANGTAG | "^^" ~ iri)?
-}
-
-LANGTAG = {
-	"@" ~ ASCII_ALPHA+ ~ ("-" ~ ASCII_ALPHANUMERIC+)*
+LANGTAG = @{
+    "@" ~ ASCII_ALPHA+ ~ ("-" ~ ASCII_ALPHANUMERIC+)*
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -61,30 +358,28 @@ LANGTAG = {
 // ------------------------------------------------------------------------------------------------
 
 NumericLiteral = {
-    SIGN? ~
-    ( DOUBLE
-	| DECIMAL
-	| INTEGER )
-}
-
-INTEGER = {
-	ASCII_DIGIT+
-}
-	
-DECIMAL = {
-	ASCII_DIGIT* ~ "." ~ ASCII_DIGIT+
-}
-	
-DOUBLE = {
-	(ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT* ~ EXPONENT | "." ~ ASCII_DIGIT+ ~EXPONENT | ASCII_DIGIT+ ~ EXPONENT)
+    Double | Decimal | Integer
 }
 
 SIGN = {
     ("+" | "-")
 }
 
+Integer = @{
+    SIGN? ~ ASCII_DIGIT+
+}
+
+Decimal = @{
+    SIGN? ~ ASCII_DIGIT* ~ "." ~ ASCII_DIGIT+
+}
+
+Double = @{
+      SIGN? ~ (ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT* ~ EXPONENT
+        | "." ~ ASCII_DIGIT+ ~ EXPONENT | ASCII_DIGIT+ ~ EXPONENT)
+}
+
 EXPONENT = {
-	^"e" ~ SIGN? ~ ASCII_DIGIT+
+    ^"e" ~ SIGN? ~ ASCII_DIGIT+
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -92,16 +387,22 @@ EXPONENT = {
 // ------------------------------------------------------------------------------------------------
 
 BooleanLiteral = {
-	"true"
-	| "false"
+    "true"
+  | "false"
 }
+
+// ------------------------------------------------------------------------------------------------
+// Special Punctuation
+// ------------------------------------------------------------------------------------------------
+
+END_OF_STATEMENT = { "." }
 
 // ------------------------------------------------------------------------------------------------
 // String Literals
 // ------------------------------------------------------------------------------------------------
 
 STRING_LITERAL_LONG_SINGLE_QUOTE = ${
-	"'''" ~ LONG_SINGLE_QUOTE_INNER ~ "'''"
+    "'''" ~ LONG_SINGLE_QUOTE_INNER ~ "'''"
 }
 
 LONG_SINGLE_QUOTE_INNER = @{
@@ -109,13 +410,13 @@ LONG_SINGLE_QUOTE_INNER = @{
 }
 
 LONG_SINGLE_QUOTE_CHAR = {
-    !("'''" | "\\" | "\r" | "\n" ) ~ ANY
-    | ECHAR
-    | UCHAR
+    !("'''" | "\\" | "\r" | "\n") ~ ANY
+  | ECHAR
+  | UCHAR
 }
 
 STRING_LITERAL_LONG_QUOTE = ${
-	"\"\"\"" ~ LONG_QUOTE_INNER ~ "\"\"\""
+    "\"\"\"" ~ LONG_QUOTE_INNER ~ "\"\"\""
 }
 
 LONG_QUOTE_INNER = @{
@@ -123,13 +424,13 @@ LONG_QUOTE_INNER = @{
 }
 
 LONG_QUOTE_CHAR = {
-    !("\"\"\"" | "\\" | "\r" | "\n" ) ~ ANY
-    | UCHAR
-    | ECHAR
+    !("\"\"\"" | "\\" | "\r" | "\n") ~ ANY
+  | UCHAR
+  | ECHAR
 }
-	
+
 STRING_LITERAL_QUOTE = ${
-	"\"" ~ QUOTE_INNER ~ "\""
+    "\"" ~ QUOTE_INNER ~ "\""
 }
 
 QUOTE_INNER = @{
@@ -137,13 +438,13 @@ QUOTE_INNER = @{
 }
 
 QUOTE_CHAR = {
-    !("\"" | "\\" | "\r" | "\n" ) ~ ANY
-    | UCHAR
-    | ECHAR
+    !("\"" | "\\" | "\r" | "\n") ~ ANY
+  | UCHAR
+  | ECHAR
 }
 
 STRING_LITERAL_SINGLE_QUOTE = ${
-	"'" ~ SINGLE_QUOTE_INNER ~ "'"
+    "'" ~ SINGLE_QUOTE_INNER ~ "'"
 }
 
 SINGLE_QUOTE_INNER = @{
@@ -151,17 +452,27 @@ SINGLE_QUOTE_INNER = @{
 }
 
 SINGLE_QUOTE_CHAR = {
-    !( "'" | "\\" | "\r" | "\n" ) ~ ANY
-    | ECHAR
-    | UCHAR
+    !("'" | "\\" | "\r" | "\n") ~ ANY
+  | ECHAR
+  | UCHAR
 }
 
 UCHAR = @{
-	"\\U" ~ ASCII_HEX_DIGIT{8} | "\\u" ~ ASCII_HEX_DIGIT{4}
+    "\\U" ~ ASCII_HEX_DIGIT{8}
+  | "\\u" ~ ASCII_HEX_DIGIT{4}
 }
-	
+
 ECHAR = @{
-	"\\" ~ ("t" | "b" | "n" | "r" | "f" | "\"" | "'" | "\\")
+    "\\" ~ ("t" | "b" | "n" | "r" | "f" | "\"" | "'" | "\\")
+}
+
+// ------------------------------------------------------------------------------------------------
+// Special Names
+// ------------------------------------------------------------------------------------------------
+
+// approximating "barename" with PN_CHARS - they seem similar enough
+QUICK_VAR_NAME = @{
+	"?" ~ PN_CHARS_U ~ PN_CHARS*
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -169,94 +480,97 @@ ECHAR = @{
 // ------------------------------------------------------------------------------------------------
 
 prefixedName = {
-	PNAME_LN
-	| PNAME_NS
+    PNAME_LN
+  | PNAME_NS
 }
 
 PNAME_NS = {
-	PN_PREFIX? ~ ":"
+    PN_PREFIX? ~ ":"
 }
 
 PNAME_LN = {
-	PNAME_NS ~ PN_LOCAL
+    PNAME_NS ~ PN_LOCAL
 }
 
 PN_CHARS_BASE = {
-	ASCII_ALPHA
-	| '\u{00C0}'..'\u{00D6}'
-	| '\u{00D8}'..'\u{00F6}'
-	| '\u{00F8}'..'\u{02FF}'
-	| '\u{0370}'..'\u{037D}'
-	| '\u{037F}'..'\u{1FFF}'
-	| '\u{200C}'..'\u{200D}'
-	| '\u{2070}'..'\u{218F}'
-	| '\u{2C00}'..'\u{2FEF}'
-	| '\u{3001}'..'\u{D7FF}'
-	| '\u{F900}'..'\u{FDCF}'
-	| '\u{FDF0}'..'\u{FFFD}'
-	| '\u{10000}'..'\u{EFFFF}'
+    ASCII_ALPHA
+  | '\u{00C0}'..'\u{00D6}'
+  | '\u{00D8}'..'\u{00F6}'
+  | '\u{00F8}'..'\u{02FF}'
+  | '\u{0370}'..'\u{037D}'
+  | '\u{037F}'..'\u{1FFF}'
+  | '\u{200C}'..'\u{200D}'
+  | '\u{2070}'..'\u{218F}'
+  | '\u{2C00}'..'\u{2FEF}'
+  | '\u{3001}'..'\u{D7FF}'
+  | '\u{F900}'..'\u{FDCF}'
+  | '\u{FDF0}'..'\u{FFFD}'
+  | '\u{10000}'..'\u{EFFFF}'
 }
 
 PN_CHARS_U = {
-	PN_CHARS_BASE
-	| "_"
+    PN_CHARS_BASE
+  | "_"
 }
-	
+
 PN_CHARS = {
-	PN_CHARS_U
-	| "-"
-	| ASCII_DIGIT
-	| '\u{00B7}'..'\u{00B7}'
-	| '\u{0300}'..'\u{036F}'
-	| '\u{203F}'..'\u{2040}'
+    PN_CHARS_U
+  | "-"
+  | ASCII_DIGIT
+  | '\u{00B7}'..'\u{00B7}'
+  | '\u{0300}'..'\u{036F}'
+  | '\u{203F}'..'\u{2040}'
 }
 
 PN_PREFIX = @{
-	PN_CHARS_BASE ~ PN_PREFIX_TAIL*
+    PN_CHARS_BASE ~ PN_PREFIX_TAIL*
 }
 
 PN_PREFIX_TAIL = {
-	PN_CHARS
-	| &("." ~ PN_CHARS) ~ "."
+    PN_CHARS
+  | &("." ~ PN_CHARS) ~ "."
 }
 
 PN_LOCAL = @{
-	(PN_CHARS_U  | ":" | ASCII_DIGIT | PLX) ~ PN_LOCAL_TAIL*
+    (PN_CHARS_U | ":" | ASCII_DIGIT | PLX) ~ PN_LOCAL_TAIL*
 }
 
 PN_LOCAL_TAIL = {
     PN_LOCAL_CHARS
-    | &("." ~ PN_LOCAL_CHARS) ~ "."
+  | &("." ~ PN_LOCAL_CHARS) ~ "."
 }
 
 PN_LOCAL_CHARS = {
-    PN_CHARS  | ":" | PLX
+    PN_CHARS
+  | ":"
+  | PLX
 }
-	
+
 PLX = {
-	PERCENT
-	| PN_LOCAL_ESC
+    PERCENT
+  | PN_LOCAL_ESC
 }
-	
+
 PERCENT = {
-	"%" ~ ASCII_HEX_DIGIT ~ ASCII_HEX_DIGIT
+    "%" ~ ASCII_HEX_DIGIT ~ ASCII_HEX_DIGIT
 }
 
 PN_LOCAL_ESC = {
-	"\\" ~ ("_" | "~" | "." | "-" | "!" | "$" | "&" | "'\''" | "(" | ")"
-	       | "*" | "+" | "," | ";" | "=" | "/" | "?" | "#" | "@" | "%")
+    "\\" ~ ("_" | "~" | "." | "-" | "!" | "$" | "&" | "'\''" | "(" | ")" | "*" | "+" | "," | ";" | "=" | "/" | "?" | "#" | "@" | "%")
 }
 
 // ------------------------------------------------------------------------------------------------
 // Implicit Whitespace
 // ------------------------------------------------------------------------------------------------
 
-newline    = _{ "\n" | "\r\n" }
+newline = _{ "\r" | "\n" }
 
 COMMENT = _{
-   "#" ~ (!newline ~ ANY)*
+    "#" ~ (!newline ~ ANY)*
 }
 
 WHITESPACE = _{
-	" " | "\t" | newline
+    " "
+  | "	"
+  | newline
 }

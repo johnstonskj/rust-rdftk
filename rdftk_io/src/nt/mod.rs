@@ -7,8 +7,8 @@ format.
 # Writer Example
 
 ```rust
-use rdftk_io::nt::writer::NTripleWriter;
-use rdftk_io::write_graph_to_string;
+use rdftk_io::nt::NTripleWriter;
+# use objio::ObjectWriter;
 # use rdftk_core::model::graph::GraphRef;
 # fn make_graph() -> GraphRef { rdftk_core::simple::graph::graph_factory().graph() }
 
@@ -37,7 +37,7 @@ pub const MIME_TYPE: &str = "application/n-triples";
 // ------------------------------------------------------------------------------------------------
 
 mod reader;
-pub use reader::NTripleReader;
+pub use reader::{NTripleReader, NTripleReaderOptions};
 
 mod writer;
 pub use writer::NTripleWriter;
