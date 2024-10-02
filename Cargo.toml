@@ -7,7 +7,7 @@ members = [
     "rdftk_io",
     "rdftk_iri",
     "rdftk_names",
-    "rdftk_ontology",
+#    "rdftk_ontology",
 #    "rdftk_query",
 #    "rdftk_skos",
 ]
