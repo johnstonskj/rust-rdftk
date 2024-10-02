@@ -52,6 +52,14 @@ pub fn make_statements() -> StatementList {
 
 ## Changes
 
+### Version 0.4.5
+
+* Refactor: Remove all `Ref` wrapper types.
+* Refactor: Make `SubjectNode` and `ObjectNode` into concrete enums.
+* Refactor: Remove `Equiv` trait and rely on `PartialEq` instead.
+* Refactor: Create new `Implementation` trait and `simple::Implementation` to hold
+  the set of factories.
+
 ### Version 0.4.4
 
 * Refactor: re-wrote `Error` type and removed `error_chain` dependency.
