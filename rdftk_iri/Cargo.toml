@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_iri"
-version = "0.2.3"
+version = "0.2.4"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2021"
 description = "This crate provides an implementation of the IRI and URI specifications."
