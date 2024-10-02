@@ -492,6 +492,11 @@ pub enum NameParser {
     ///
     #[default]
     Xml,
+    ///
+    /// Almost identical to the Xml parser, except that it allows ASCII digits as the first
+    /// character in a name.
+    ///
+    BlankNode,
 }
 
 ///
@@ -519,7 +524,7 @@ pub enum NameParseError {
 /// QNames are valid identifiers with an optional prefix identifier. e.g. "`xsd:integer`",
 /// "`rdfs:Class`", "`:subPropertyOf`".
 ///
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct QName {
     prefix: Option<Name>,
     name: Name,
@@ -688,6 +693,7 @@ impl Display for NameParser {
             "{}",
             match self {
                 Self::Xml => "XML 1.1",
+                Self::BlankNode => "RDF 1.1 BlankNode",
             }
         )
     }
@@ -702,7 +708,8 @@ impl NameParser {
         S: AsRef<str>,
     {
         match self {
-            NameParser::Xml => is_xml_name(s.as_ref()),
+            NameParser::Xml => is_xml_name(s.as_ref(), false),
+            NameParser::BlankNode => is_xml_name(s.as_ref(), true),
         }
     }
 
@@ -876,8 +883,27 @@ impl QName {
 // Private Functions
 // ------------------------------------------------------------------------------------------------
 
-pub(crate) fn is_xml_name_start_char(c: char) -> bool {
+fn is_xml_name(s: &str, allow_initial_digit: bool) -> bool {
+    !s.is_empty()
+        && s.starts_with(|c| is_xml_name_start_char(c, allow_initial_digit))
+        && s[1..]
+            .chars()
+            .all(|c| is_xml_name_char(c, allow_initial_digit))
+}
+
+fn is_xml_name_char(c: char, allow_initial_digit: bool) -> bool {
+    is_xml_name_start_char(c, allow_initial_digit)
+        || c == '-'
+        || c == '.'
+        || c.is_ascii_digit()
+        || c == '\u{B7}'
+        || ('\u{0300}'..='\u{036F}').contains(&c)
+        || ('\u{203F}'..='\u{2040}').contains(&c)
+}
+
+fn is_xml_name_start_char(c: char, allow_initial_digit: bool) -> bool {
     c == ':'
+        || (allow_initial_digit && c.is_ascii_digit())
         || c.is_ascii_uppercase()
         || c == '_'
         || c.is_ascii_lowercase()
@@ -893,18 +919,4 @@ pub(crate) fn is_xml_name_start_char(c: char) -> bool {
         || ('\u{F900}'..='\u{FDCF}').contains(&c)
         || ('\u{FDF0}'..='\u{FFFD}').contains(&c)
         || ('\u{10000}'..='\u{EFFFF}').contains(&c)
-}
-
-pub(crate) fn is_xml_name_char(c: char) -> bool {
-    is_xml_name_start_char(c)
-        || c == '-'
-        || c == '.'
-        || c.is_ascii_digit()
-        || c == '\u{B7}'
-        || ('\u{0300}'..='\u{036F}').contains(&c)
-        || ('\u{203F}'..='\u{2040}').contains(&c)
-}
-
-pub(crate) fn is_xml_name(s: &str) -> bool {
-    !s.is_empty() && s.starts_with(is_xml_name_start_char) && s[1..].chars().all(is_xml_name_char)
 }
