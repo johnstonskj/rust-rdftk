@@ -1,5 +1,4 @@
-use rdftk_core::model::qname::QName;
-use rdftk_iri::Name;
+use rdftk_iri::{Name, QName};
 use std::str::FromStr;
 
 #[test]

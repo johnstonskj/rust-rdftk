@@ -1,8 +1,5 @@
-use crate::model::qname::QName;
-use rdftk_iri::Name;
-use std::fmt::{Debug, Display, Formatter};
-use std::hash::Hash;
-use std::rc::Rc;
+use rdftk_iri::{Name, NameParser, QName};
+use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use unique_id::sequence::SequenceGenerator as IDGenerator;
 use unique_id::Generator;
@@ -16,11 +13,6 @@ use unique_id::Generator;
 ///
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BlankNode(String);
-
-///
-/// A reference counted wrapper around a [`BlankNode`] instance.
-///
-pub type BlankNodeRef = Rc<BlankNode>;
 
 // ------------------------------------------------------------------------------------------------
 // Public Values
@@ -50,7 +42,7 @@ impl FromStr for BlankNode {
     type Err = crate::error::Error;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        if Self::is_valid_str(s) {
+        if BlankNode::is_valid_str(s) {
             Ok(Self(s.into()))
         } else {
             Err(crate::error::Error::InvalidBlankNodeName { name: s.into() })
@@ -101,8 +93,12 @@ impl BlankNode {
     /// `false`. Note that this function will accept simple names, or those
     /// with the reserved prefix `"_:"`.
     ///
-    pub fn is_valid_str(s: &str) -> bool {
-        is_bnode_name(if let Some(s) = s.strip_prefix(BLANK_NODE_PREFIX) {
+    pub fn is_valid_str<S>(s: S) -> bool
+    where
+        S: AsRef<str>,
+    {
+        let s: &str = s.as_ref();
+        NameParser::BlankNode.is_valid_str(if let Some(s) = s.strip_prefix(BLANK_NODE_PREFIX) {
             s
         } else {
             s
@@ -116,43 +112,4 @@ impl BlankNode {
     pub fn to_qname(&self) -> QName {
         QName::new_blank(Name::new_unchecked(&self.0)).unwrap()
     }
-}
-
-// ------------------------------------------------------------------------------------------------
-// Private Functions
-// ------------------------------------------------------------------------------------------------
-
-pub(crate) fn is_bnode_name_start_char(c: char) -> bool {
-    c == ':'
-        || c.is_ascii_digit()
-        || c.is_ascii_uppercase()
-        || c == '_'
-        || c.is_ascii_lowercase()
-        || ('\u{C0}'..='\u{D6}').contains(&c)
-        || ('\u{D8}'..='\u{F6}').contains(&c)
-        || ('\u{0F8}'..='\u{2FF}').contains(&c)
-        || ('\u{370}'..='\u{37D}').contains(&c)
-        || ('\u{037F}'..='\u{1FFF}').contains(&c)
-        || ('\u{200C}'..='\u{200D}').contains(&c)
-        || ('\u{2070}'..='\u{218F}').contains(&c)
-        || ('\u{2C00}'..='\u{2FEF}').contains(&c)
-        || ('\u{3001}'..='\u{D7FF}').contains(&c)
-        || ('\u{F900}'..='\u{FDCF}').contains(&c)
-        || ('\u{FDF0}'..='\u{FFFD}').contains(&c)
-        || ('\u{10000}'..='\u{EFFFF}').contains(&c)
-}
-
-pub(crate) fn is_bnode_name_char(c: char) -> bool {
-    is_bnode_name_start_char(c)
-        || c == '-'
-        || c == '.'
-        || c == '\u{B7}'
-        || ('\u{0300}'..='\u{036F}').contains(&c)
-        || ('\u{203F}'..='\u{2040}').contains(&c)
-}
-
-pub(crate) fn is_bnode_name(s: &str) -> bool {
-    !s.is_empty()
-        && s.starts_with(is_bnode_name_start_char)
-        && s[1..].chars().all(is_bnode_name_char)
 }

@@ -6,13 +6,12 @@ Additional semantics taken from [RDF 1.1 TriG](https://www.w3.org/TR/trig/), _RD
 # Example
 
 ```rust
-use rdftk_core::model::data_set::{DataSet, DataSetRef};
-use rdftk_core::model::graph::NamedGraphRef;
-use rdftk_core::model::statement::StatementRef;
+use rdftk_core::model::data_set::DataSet;
+use rdftk_core::model::graph::Graph;
+use rdftk_core::model::statement::Statement;
 
-fn simple_dataset_writer(data_set: &DataSetRef)
+fn simple_dataset_writer(data_set: &impl DataSet)
 {
-    let data_set = data_set.borrow();
     if let Some(graph) = data_set.default_graph() {
         simple_graph_writer(graph);
     }
@@ -21,16 +20,15 @@ fn simple_dataset_writer(data_set: &DataSetRef)
     }
 }
 
-fn simple_graph_writer(graph: &NamedGraphRef)
+fn simple_graph_writer(graph: &impl Graph)
 {
-    let graph = graph.borrow();
     if graph.is_named() {
         println!("{} {{", graph.name().unwrap());
     } else {
         println!("{{");
     }
     for statement in graph.statements() {
-        println!("    {}", statement);
+        println!("    {:?}", statement);
     }
     println!("}}");
 }
@@ -39,61 +37,13 @@ fn simple_graph_writer(graph: &NamedGraphRef)
 */
 
 use crate::model::features::Featured;
-use crate::model::graph::named::GraphNameRef;
-use crate::model::graph::named::NamedGraphRef;
-use crate::model::graph::GraphFactoryRef;
+use crate::model::graph::{Graph, GraphName};
 use crate::model::Provided;
-use std::cell::RefCell;
 use std::fmt::Debug;
-use std::rc::Rc;
-use std::sync::Arc;
 
 // ------------------------------------------------------------------------------------------------
-// Public Types
+// Public Types ❱ Data Set
 // ------------------------------------------------------------------------------------------------
-
-///
-/// A data set factory provides an interface to create a new data set. This allows for
-/// implementations where underlying shared resources are required and so may be owned by the
-/// factory.
-///
-pub trait DataSetFactory: Debug + Provided {
-    ///
-    /// Create a new graph instance.
-    ///
-    fn data_set(&self) -> DataSetRef;
-
-    ///
-    ///  Create a new graph instance from the given statements and prefix mappings.
-    ///
-    fn data_set_from(&self, graphs: Vec<NamedGraphRef>) -> DataSetRef {
-        let data_set = self.data_set();
-        {
-            let mut data_set = data_set.borrow_mut();
-            for graph in graphs {
-                data_set.insert(graph);
-            }
-        }
-        data_set
-    }
-
-    // --------------------------------------------------------------------------------------------
-    // Other Factories
-    // --------------------------------------------------------------------------------------------
-
-    ///
-    /// Return the factory that creates graphs managed by data set's of this kind.
-    ///
-    /// Note that this uses Arc as a reference as factories are explicitly intended for cross-thread
-    /// usage.
-    ///
-    fn graph_factory(&self) -> GraphFactoryRef;
-}
-
-///
-/// The reference type for a graph factory returned by a graph.
-///
-pub type DataSetFactoryRef = Arc<dyn DataSetFactory>;
 
 ///
 /// A `DataSet` is a mapping from `GraphName` to `Graph`; this introduces the notion of a named graph
@@ -102,6 +52,8 @@ pub type DataSetFactoryRef = Arc<dyn DataSetFactory>;
 /// `MutableDataSet` trait for mutation.
 ///
 pub trait DataSet: Debug + Featured {
+    type Graph: Graph;
+
     ///
     /// Returns `true` if there are no graphs in this data set, else `false`.
     ///
@@ -112,7 +64,7 @@ pub trait DataSet: Debug + Featured {
     ///
     fn len(&self) -> usize;
 
-    fn contains_graph(&self, name: &Option<GraphNameRef>) -> bool;
+    fn contains_graph(&self, name: &Option<GraphName>) -> bool;
 
     ///
     /// Return `true` if this data set has a default graph, else `false`.
@@ -124,72 +76,80 @@ pub trait DataSet: Debug + Featured {
     ///
     /// Return `true` if this data set has a graph with the provided name, else `false`.
     ///
-    fn has_graph_named(&self, name: &GraphNameRef) -> bool {
+    fn has_graph_named(&self, name: &GraphName) -> bool {
         self.contains_graph(&Some(name.clone()))
     }
 
     ///
     /// Return the default graph for this data set, if it exists.
     ///
-    fn default_graph(&self) -> Option<&NamedGraphRef> {
+    fn default_graph(&self) -> Option<&Self::Graph> {
         self.graph(&None)
     }
 
     ///
     /// Return the graph with the provided name from this data set, if it exists.
     ///
-    fn graph_named(&self, name: &GraphNameRef) -> Option<&NamedGraphRef> {
+    fn graph_named(&self, name: &GraphName) -> Option<&Self::Graph> {
         self.graph(&Some(name.clone()))
     }
 
-    fn graph(&self, name: &Option<GraphNameRef>) -> Option<&NamedGraphRef>;
+    fn graph(&self, name: &Option<GraphName>) -> Option<&Self::Graph>;
 
-    fn graph_mut(&mut self, name: &Option<GraphNameRef>) -> Option<&mut NamedGraphRef>;
+    fn graph_mut(&mut self, name: &Option<GraphName>) -> Option<&mut Self::Graph>;
 
     ///
     /// Return an iterator over all graphs.
     ///
-    fn graphs(&self) -> Box<dyn Iterator<Item = &NamedGraphRef> + '_>;
+    fn graphs(&self) -> impl Iterator<Item = &Self::Graph>;
 
     ///
     /// Insert a new graph with it's associated name into the data set.
     ///
-    fn insert(&mut self, graph: NamedGraphRef);
+    fn insert(&mut self, graph: Self::Graph);
 
     ///
     /// Add all the graphs from the provided vector.
     ///
-    fn extend(&mut self, graphs: Vec<NamedGraphRef>);
+    fn extend(&mut self, graphs: Vec<Self::Graph>);
 
     ///
     /// Remove the graph with the provided name from this data set. This operation has no effect if
     /// no such graph is present.
     ///
-    fn remove(&mut self, named: &Option<GraphNameRef>);
+    fn remove(&mut self, named: &Option<GraphName>);
 
     ///
     /// Remove all graphs from this data set.
     ///
     fn clear(&mut self);
-
-    ///
-    /// Return the factory that creates data sets using the same provider as `self`.
-    ///
-    /// Note that this uses Arc as a reference as factories are explicitly intended for cross-thread
-    /// usage.
-    ///
-    fn factory(&self) -> DataSetFactoryRef;
-
-    ///
-    /// Return the factory that creates graphs managed by data set's of this kind.
-    ///
-    /// Note that this uses Arc as a reference as factories are explicitly intended for cross-thread
-    /// usage.
-    ///
-    fn graph_factory(&self) -> GraphFactoryRef;
 }
 
+// ------------------------------------------------------------------------------------------------
+// Public Types ❱ Factories
+// ------------------------------------------------------------------------------------------------
+
 ///
-/// The reference type for a graph data set.
+/// A data set factory provides an interface to create a new data set. This allows for
+/// implementations where underlying shared resources are required and so may be owned by the
+/// factory.
 ///
-pub type DataSetRef = Rc<RefCell<dyn DataSet>>;
+pub trait DataSetFactory: Debug + Provided {
+    type Graph: Graph;
+    type DataSet: DataSet<Graph = Self::Graph>;
+    ///
+    /// Create a new graph instance.
+    ///
+    fn data_set(&self) -> Self::DataSet;
+
+    ///
+    ///  Create a new graph instance from the given statements and prefix mappings.
+    ///
+    fn data_set_from(&self, graphs: Vec<Self::Graph>) -> Self::DataSet {
+        let mut data_set = self.data_set();
+        for graph in graphs {
+            data_set.insert(graph);
+        }
+        data_set
+    }
+}

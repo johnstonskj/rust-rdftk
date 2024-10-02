@@ -20,21 +20,29 @@ pub trait Provided {
     fn provider_id(&self) -> &'static str;
 }
 
-///
-/// Denotes equivalence between Self and some other type. Equivalence is a very specific,
-/// non-symmetric, non-transitive, directed type to type equality.
-///
-pub trait Equiv<T>
-where
-    T: Sized,
-{
-    /// Returns `true` if `other` is equivalent to `self`, else `false`.
-    fn eqv(&self, other: &T) -> bool;
+pub trait Implementation {
+    type Literal: literal::Literal;
+    type Statement: statement::Statement<Literal = Self::Literal>;
+    type Graph: graph::Graph<Literal = Self::Literal, Statement = Self::Statement>;
+    type DataSet: data_set::DataSet<Graph = Self::Graph>;
 
-    /// Returns `true` if `other` is **not** equivalent to `self`, else `false`.
-    fn not_eqv(&self, other: &T) -> bool {
-        !self.eqv(other)
-    }
+    fn data_set_factory(
+        &self,
+    ) -> &impl data_set::DataSetFactory<Graph = Self::Graph, DataSet = Self::DataSet>;
+
+    fn graph_factory(
+        &self,
+    ) -> &impl graph::GraphFactory<
+        Literal = Self::Literal,
+        Statement = Self::Statement,
+        Graph = Self::Graph,
+    >;
+
+    fn statement_factory(
+        &self,
+    ) -> &impl statement::StatementFactory<Literal = Self::Literal, Statement = Self::Statement>;
+
+    fn literal_factory(&self) -> &impl literal::LiteralFactory<Literal = Self::Literal>;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -64,7 +72,5 @@ pub mod features;
 pub mod graph;
 
 pub mod literal;
-
-pub mod qname;
 
 pub mod statement;

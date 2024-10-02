@@ -2,17 +2,13 @@
 Simple, in-memory implementation of the `DataSet` and `DataSetFactory` traits.
 */
 
-use crate::model::data_set::{DataSet, DataSetFactory, DataSetFactoryRef, DataSetRef};
+use super::graph::SimpleGraph;
+use crate::model::data_set::{DataSet, DataSetFactory};
 use crate::model::features::Featured;
-use crate::model::graph::{named::GraphNameRef, GraphFactoryRef, NamedGraphRef};
+use crate::model::graph::{Graph, GraphName};
 use crate::model::Provided;
-use crate::simple::graph_factory;
-use lazy_static::lazy_static;
-use rdftk_iri::IriRef;
-use std::cell::RefCell;
+use rdftk_iri::Iri;
 use std::collections::HashMap;
-use std::rc::Rc;
-use std::sync::Arc;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -23,33 +19,14 @@ use std::sync::Arc;
 ///
 #[derive(Clone, Debug)]
 pub struct SimpleDataSet {
-    graphs: HashMap<Option<GraphNameRef>, NamedGraphRef>,
+    graphs: HashMap<Option<GraphName>, SimpleGraph>,
 }
-
-// ------------------------------------------------------------------------------------------------
-// Public Functions
-// ------------------------------------------------------------------------------------------------
-
-///
-/// Retrieve the `DataSet` factory for `simple::SimpleDataSet` instances.
-///
-pub fn data_set_factory() -> DataSetFactoryRef {
-    FACTORY.clone()
-}
-
-// ------------------------------------------------------------------------------------------------
-// Private Types
-// ------------------------------------------------------------------------------------------------
 
 ///
 /// Simple, in-memory implementation of the `DataSetFactory` trait.
 ///
-#[derive(Clone, Debug)]
-struct SimpleDataSetFactory {}
-
-lazy_static! {
-    static ref FACTORY: Arc<SimpleDataSetFactory> = Arc::new(SimpleDataSetFactory {});
-}
+#[derive(Clone, Debug, Default)]
+pub struct SimpleDataSetFactory {}
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
@@ -62,26 +39,27 @@ impl Provided for SimpleDataSetFactory {
 }
 
 impl DataSetFactory for SimpleDataSetFactory {
-    fn data_set(&self) -> DataSetRef {
-        Rc::new(RefCell::new(SimpleDataSet {
-            graphs: Default::default(),
-        }))
-    }
+    type Graph = SimpleGraph;
+    type DataSet = SimpleDataSet;
 
-    fn graph_factory(&self) -> GraphFactoryRef {
-        graph_factory()
+    fn data_set(&self) -> Self::DataSet {
+        SimpleDataSet {
+            graphs: Default::default(),
+        }
     }
 }
 
 // ------------------------------------------------------------------------------------------------
 
 impl Featured for SimpleDataSet {
-    fn supports_feature(&self, _feature: &IriRef) -> bool {
+    fn supports_feature(&self, _feature: &Iri) -> bool {
         false
     }
 }
 
 impl DataSet for SimpleDataSet {
+    type Graph = SimpleGraph;
+
     fn is_empty(&self) -> bool {
         self.graphs.is_empty()
     }
@@ -94,19 +72,19 @@ impl DataSet for SimpleDataSet {
     // Accessors
     // --------------------------------------------------------------------------------------------
 
-    fn contains_graph(&self, name: &Option<GraphNameRef>) -> bool {
+    fn contains_graph(&self, name: &Option<GraphName>) -> bool {
         self.graphs.contains_key(name)
     }
 
-    fn graph(&self, name: &Option<GraphNameRef>) -> Option<&NamedGraphRef> {
+    fn graph(&self, name: &Option<GraphName>) -> Option<&Self::Graph> {
         self.graphs.get(name)
     }
 
-    fn graph_mut(&mut self, name: &Option<GraphNameRef>) -> Option<&mut NamedGraphRef> {
+    fn graph_mut(&mut self, name: &Option<GraphName>) -> Option<&mut Self::Graph> {
         self.graphs.get_mut(name)
     }
 
-    fn graphs(&self) -> Box<dyn Iterator<Item = &NamedGraphRef> + '_> {
+    fn graphs(&self) -> impl Iterator<Item = &Self::Graph> {
         Box::from(self.graphs.values())
     }
 
@@ -114,32 +92,20 @@ impl DataSet for SimpleDataSet {
     // Mutators
     // --------------------------------------------------------------------------------------------
 
-    fn insert(&mut self, graph: NamedGraphRef) {
-        let graph_name = graph.borrow().name().cloned();
+    fn insert(&mut self, graph: Self::Graph) {
+        let graph_name = graph.name().cloned();
         let _ = self.graphs.insert(graph_name, graph);
     }
 
-    fn extend(&mut self, graphs: Vec<NamedGraphRef>) {
+    fn extend(&mut self, graphs: Vec<Self::Graph>) {
         graphs.into_iter().for_each(|g| self.insert(g))
     }
 
-    fn remove(&mut self, name: &Option<GraphNameRef>) {
+    fn remove(&mut self, name: &Option<GraphName>) {
         let _ = self.graphs.remove(name);
     }
 
     fn clear(&mut self) {
         self.graphs.clear();
-    }
-
-    // --------------------------------------------------------------------------------------------
-    // Factories
-    // --------------------------------------------------------------------------------------------
-
-    fn factory(&self) -> DataSetFactoryRef {
-        data_set_factory()
-    }
-
-    fn graph_factory(&self) -> GraphFactoryRef {
-        graph_factory()
     }
 }

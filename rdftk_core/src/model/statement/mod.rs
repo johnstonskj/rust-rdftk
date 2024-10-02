@@ -14,23 +14,26 @@
 *
 *
 * ```rust
-* use rdftk_core::model::statement::{Statement, StatementList};
-* use rdftk_core::simple::statement::statement_factory;
-* use rdftk_core::simple::literal::literal_factory;
+* use rdftk_core::model::Implementation;
+* use rdftk_core::model::literal::LiteralFactory;
+* use rdftk_core::model::statement::{Statement, StatementFactory};
+* use rdftk_core::simple::Implementation as SimpleImplementation;
+* use rdftk_core::simple::statement::SimpleStatement;
 * use rdftk_iri::Iri;
 * use std::rc::Rc;
 * use std::str::FromStr;
 *
-* let factory = statement_factory();
-* let literals = literal_factory();
-* let mut statements: StatementList = Default::default();
+* let factories = SimpleImplementation::default();
+* let statement_factory = factories.statement_factory();
+* let literal_factory = factories.literal_factory();
+* let mut statements: Vec<SimpleStatement> = Default::default();
 *
-* statements.push(factory.statement(
-*     factory.named_subject(
+* statements.push(statement_factory.statement(
+*     statement_factory.named_subject(
 *         Iri::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap().into()
 *     ),
 *     Iri::from_str("http://purl.org/dc/elements/1.1/title").unwrap().into(),
-*     factory.literal_object(literals.string("Tony Benn")),
+*     statement_factory.literal_object(literal_factory.string("Tony Benn")),
 * ).unwrap());
 * ```
 *
@@ -41,71 +44,56 @@
 
 use crate::error::Result;
 use crate::model::features::Featured;
-use crate::model::literal::LiteralFactoryRef;
-use rdftk_iri::IriRef;
+use crate::model::literal::Literal;
+use crate::model::Provided;
+use rdftk_iri::Iri;
 use rdftk_names::rdf;
-use std::fmt::{Debug, Display, Formatter};
-use std::hash::{Hash, Hasher};
-use std::rc::Rc;
+use std::fmt::Debug;
+use std::str::FromStr;
+use std::sync::Arc;
 
 // ------------------------------------------------------------------------------------------------
-// Public Types
+// Public Types ❱ Graphs
 // ------------------------------------------------------------------------------------------------
 
 ///
 /// This trait models an RDF statement.
 ///
-pub trait Statement: Debug + Featured {
+pub trait Statement: Clone + Debug + Featured + Provided {
+    type Literal: Literal;
+
     ///
     /// Return the subject of this statement.
     ///
-    fn subject(&self) -> &SubjectNodeRef;
+    fn subject(&self) -> &SubjectNode<Self::Literal, Self>;
 
     ///
     /// Set the value of this statement's subject.
     ///
-    fn set_subject(&mut self, subject: SubjectNodeRef);
+    fn set_subject(&mut self, subject: SubjectNode<Self::Literal, Self>);
 
     ///
     /// Return the predicate of this statement.
     ///
-    fn predicate(&self) -> &IriRef;
+    fn predicate(&self) -> &Iri;
 
     ///
     /// Set the value of this statement's predicate.
     ///
-    fn set_predicate(&mut self, predicate: IriRef);
+    fn set_predicate(&mut self, predicate: Iri);
 
     ///
     /// Return the object of this statement.
     ///
-    fn object(&self) -> &ObjectNodeRef;
+    fn object(&self) -> &ObjectNode<Self::Literal, Self>;
 
     ///
     /// Set the value of this statement's object.
     ///
-    fn set_object(&mut self, object: ObjectNodeRef);
+    fn set_object(&mut self, object: ObjectNode<Self::Literal, Self>);
 
     // --------------------------------------------------------------------------------------------
-    // Factories
-    // --------------------------------------------------------------------------------------------
-
-    ///
-    /// Return the factory that creates statements using the same provider as `self`.
-    ///
-    /// Note that this uses Arc as a reference as factories are explicitly intended for cross-thread
-    /// usage.
-    ///
-    fn factory(&self) -> StatementFactoryRef;
-
-    ///
-    /// Return the factory that creates literals using the same provider as `self`.
-    ///
-    /// Note that this uses Arc as a reference as factories are explicitly intended for cross-thread
-    /// usage.
-    ///
-    fn literal_factory(&self) -> LiteralFactoryRef;
-
+    // Other
     // --------------------------------------------------------------------------------------------
 
     ///
@@ -115,106 +103,204 @@ pub trait Statement: Debug + Featured {
     fn is_nested(&self) -> bool {
         self.subject().is_statement() || self.object().is_statement()
     }
-}
-
-///
-/// A reference counted wrapper around a [`Statement`] instance.
-///
-pub type StatementRef = Rc<dyn Statement>;
-
-///
-/// A list of statements, this can be used to pass non-graph sets of statements.
-///
-pub type StatementList = Vec<StatementRef>;
-
-// ------------------------------------------------------------------------------------------------
-// Public Functions
-// ------------------------------------------------------------------------------------------------
-
-///
-/// Reify a single statement, returning the list of resulting statements.
-///
-pub fn reify_statement(
-    st: &StatementRef,
-    factory: &StatementFactoryRef,
-) -> Result<(SubjectNodeRef, Vec<StatementRef>)> {
-    let mut statements: Vec<StatementRef> = Default::default();
-    let new_subject = factory.blank_subject_new();
-    statements.push(factory.statement(
-        new_subject.clone(),
-        rdf::a_type().clone(),
-        factory.named_object(rdf::statement().clone()),
-    )?);
-    if st.subject().is_statement() {
-        let nested = reify_statement(st.subject().as_statement().unwrap(), factory)?;
-        statements.extend(nested.1);
-        statements.push(factory.statement(
+    ///
+    /// Reify a single statement, returning the list of resulting statements.
+    ///
+    #[allow(clippy::type_complexity)]
+    fn reify<F: StatementFactory<Literal = Self::Literal, Statement = Self>>(
+        &self,
+        statement_factory: &F,
+    ) -> Result<(SubjectNode<Self::Literal, Self>, Vec<Self>)>
+    where
+        Self: Sized,
+    {
+        let mut statements: Vec<Self> = Default::default();
+        let new_subject = statement_factory.blank_subject_new();
+        statements.push(statement_factory.statement(
             new_subject.clone(),
-            rdf::subject().clone(),
-            factory.subject_as_object(nested.0),
+            rdf::a_type().clone(),
+            statement_factory.named_object(rdf::statement().clone()),
         )?);
-    } else {
-        statements.push(factory.statement(
+        if let Some(statement) = self.subject().as_statement() {
+            let nested = statement.reify(statement_factory)?;
+            statements.extend(nested.1);
+            statements.push(statement_factory.statement(
+                new_subject.clone(),
+                rdf::subject().clone(),
+                statement_factory.subject_as_object(nested.0),
+            )?);
+        } else {
+            statements.push(statement_factory.statement(
+                new_subject.clone(),
+                rdf::subject().clone(),
+                statement_factory.subject_as_object(self.subject().clone()),
+            )?);
+        }
+        statements.push(statement_factory.statement(
             new_subject.clone(),
-            rdf::subject().clone(),
-            factory.subject_as_object(st.subject().clone()),
+            rdf::predicate().clone(),
+            statement_factory.named_object(self.predicate().clone()),
         )?);
+        if let Some(statement) = self.object().as_statement() {
+            let nested = statement.reify(statement_factory)?;
+            statements.extend(nested.1);
+            statements.push(statement_factory.statement(
+                new_subject.clone(),
+                rdf::object().clone(),
+                statement_factory.subject_as_object(nested.0),
+            )?);
+        } else {
+            statements.push(statement_factory.statement(
+                new_subject.clone(),
+                rdf::object().clone(),
+                self.object().clone(),
+            )?);
+        }
+        Ok((new_subject, statements))
     }
-    statements.push(factory.statement(
-        new_subject.clone(),
-        rdf::predicate().clone(),
-        factory.named_object(st.predicate().clone()),
-    )?);
-    if st.object().is_statement() {
-        let nested = reify_statement(st.object().as_statement().unwrap(), factory)?;
-        statements.extend(nested.1);
-        statements.push(factory.statement(
-            new_subject.clone(),
-            rdf::object().clone(),
-            factory.subject_as_object(nested.0),
-        )?);
-    } else {
-        statements.push(factory.statement(
-            new_subject.clone(),
-            rdf::object().clone(),
-            st.object().clone(),
-        )?);
-    }
-    Ok((new_subject, statements))
 }
 
 // ------------------------------------------------------------------------------------------------
-// Implementations
+// Public Types ❱ Factories
 // ------------------------------------------------------------------------------------------------
 
-impl PartialEq<dyn Statement> for dyn Statement {
-    fn eq(&self, other: &dyn Statement) -> bool {
-        self.subject() == other.subject()
-            && self.predicate() == other.predicate()
-            && self.object() == other.object()
-    }
-}
+///
+/// This trait provides a factory for construction of statements, and statement components.
+///
+pub trait StatementFactory: Debug + Provided {
+    type Literal: Literal;
+    type Statement: Statement<Literal = Self::Literal>;
 
-impl Eq for dyn Statement {}
+    // --------------------------------------------------------------------------------------------
+    // Whole statements
+    // --------------------------------------------------------------------------------------------
 
-impl Display for dyn Statement {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{} <{}> {}",
-            &self.subject().to_string(),
-            &self.predicate().to_string(),
-            &self.object().to_string(),
-        )
-    }
-}
+    ///
+    /// Construct a new statement reference from the provided subject, predicate, and object.
+    ///
+    fn statement(
+        &self,
+        subject: SubjectNode<Self::Literal, Self::Statement>,
+        predicate: Iri,
+        object: ObjectNode<Self::Literal, Self::Statement>,
+    ) -> Result<Self::Statement>;
 
-impl Hash for dyn Statement {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.subject().hash(state);
-        self.predicate().hash(state);
-        self.object().hash(state);
+    ///
+    /// Construct a new statement reference from the provided subject, predicate, and object.
+    ///
+    fn statement_with_predicate(
+        &self,
+        subject: Self::Statement,
+        predicate: Iri,
+        object: ObjectNode<Self::Literal, Self::Statement>,
+    ) -> Result<Self::Statement>;
+
+    ///
+    /// Construct a new statement reference from the provided subject, predicate, and object.
+    ///
+    fn statement_with_object(
+        &self,
+        subject: Self::Statement,
+        object: ObjectNode<Self::Literal, Self::Statement>,
+    ) -> Result<Self::Statement>;
+
+    // --------------------------------------------------------------------------------------------
+    // Subject nodes
+    // --------------------------------------------------------------------------------------------
+
+    ///
+    /// Construct a new subject node reference, as a blank node with a randomly assigned name.
+    ///
+    fn blank_subject_new(&self) -> SubjectNode<Self::Literal, Self::Statement> {
+        self.blank_subject(BlankNode::generate())
     }
+
+    ///
+    /// Construct a new subject node reference, from the provided node.
+    ///
+    fn blank_subject(&self, name: BlankNode) -> SubjectNode<Self::Literal, Self::Statement>;
+
+    ///
+    /// Construct a new subject node reference, as a blank node with the specified name.
+    ///
+    fn blank_subject_named(
+        &self,
+        name: &str,
+    ) -> Result<SubjectNode<Self::Literal, Self::Statement>> {
+        Ok(self.blank_subject(BlankNode::from_str(name)?))
+    }
+
+    ///
+    /// Construct a new subject node, with an Iri naming a resource.
+    ///
+    fn named_subject(&self, name: Iri) -> SubjectNode<Self::Literal, Self::Statement>;
+
+    ///
+    /// Construct a new subject node, where the subject **is an** existing statement. This is
+    /// an extension specified by [RDF-star](https://w3c.github.io/rdf-star/cg-spec/editors_draft.html).
+    ///
+    fn statement_subject(
+        &self,
+        st: Arc<Self::Statement>,
+    ) -> SubjectNode<Self::Literal, Self::Statement>;
+
+    ///
+    /// Return a new subject node reference, which refers to this object.
+    ///
+    fn object_as_subject(
+        &self,
+        obj: ObjectNode<Self::Literal, Self::Statement>,
+    ) -> Option<SubjectNode<Self::Literal, Self::Statement>>;
+
+    // --------------------------------------------------------------------------------------------
+    // Object nodes
+    // --------------------------------------------------------------------------------------------
+
+    ///
+    /// Construct a new object node reference, as a blank node with a randomly assigned name.
+    ///
+    fn blank_object_new(&self) -> ObjectNode<Self::Literal, Self::Statement> {
+        self.blank_object(BlankNode::generate())
+    }
+
+    ///
+    /// Construct a new object node reference, as a blank node with the specified name.
+    ///
+    fn blank_object(&self, name: BlankNode) -> ObjectNode<Self::Literal, Self::Statement>;
+
+    ///
+    /// Construct a new object node reference, as a blank node with the specified name.
+    ///
+    fn blank_object_named(&self, name: &str) -> Result<ObjectNode<Self::Literal, Self::Statement>> {
+        Ok(self.blank_object(BlankNode::from_str(name)?))
+    }
+
+    ///
+    /// Construct a new object node, with an Iri naming a resource.
+    ///
+    fn named_object(&self, name: Iri) -> ObjectNode<Self::Literal, Self::Statement>;
+
+    ///
+    /// Construct a new object node, with with a literal value.
+    ///
+    fn literal_object(&self, value: Self::Literal) -> ObjectNode<Self::Literal, Self::Statement>;
+
+    ///
+    /// Construct a new object node, where the subject **is an** existing statement. This is
+    /// an extension specified by [RDF-star](https://w3c.github.io/rdf-star/cg-spec/editors_draft.html).
+    ///
+    fn statement_object(
+        &self,
+        st: Arc<Self::Statement>,
+    ) -> ObjectNode<Self::Literal, Self::Statement>;
+
+    ///
+    /// Return a new object node reference, which refers to this subject.
+    ///
+    fn subject_as_object(
+        &self,
+        st: SubjectNode<Self::Literal, Self::Statement>,
+    ) -> ObjectNode<Self::Literal, Self::Statement>;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -223,9 +309,6 @@ impl Hash for dyn Statement {
 
 mod bnode;
 pub use bnode::*;
-
-mod factory;
-pub use factory::*;
 
 mod subject;
 pub use subject::*;

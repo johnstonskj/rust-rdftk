@@ -1,14 +1,14 @@
-use rdftk_core::model::literal::DataType;
-use rdftk_core::model::statement::reify_statement;
-use rdftk_core::simple::literal::literal_factory;
-use rdftk_core::simple::statement::statement_factory;
+use rdftk_core::model::literal::{DataType, LiteralFactory};
+use rdftk_core::model::statement::{Statement, StatementFactory};
+use rdftk_core::simple::literal::SimpleLiteralFactory;
+use rdftk_core::simple::statement::SimpleStatementFactory;
 use rdftk_iri::Iri;
 use rdftk_names::{rdf, rdfs};
 use std::str::FromStr;
 
 #[test]
 fn make_a_statement() {
-    let factory = statement_factory();
+    let factory = SimpleStatementFactory::default();
     let st = factory
         .statement(
             factory.blank_subject_named("B01").unwrap(),
@@ -21,7 +21,7 @@ fn make_a_statement() {
 
 #[test]
 fn reify_a_statement() {
-    let factory = statement_factory();
+    let factory = SimpleStatementFactory::default();
     let st = factory
         .statement(
             factory.blank_subject_named("B01").unwrap(),
@@ -29,13 +29,13 @@ fn reify_a_statement() {
             factory.named_object(rdfs::class().clone()),
         )
         .unwrap();
-    let sts = reify_statement(&st, &factory).unwrap();
+    let sts = st.reify(&factory).unwrap();
     assert_eq!(sts.1.len(), 4);
 }
 
 #[test]
 fn reify_nested_statement() {
-    let factory = statement_factory();
+    let factory = SimpleStatementFactory::default();
 
     let st = factory
         .statement(
@@ -47,14 +47,14 @@ fn reify_nested_statement() {
 
     let st = factory
         .statement(
-            factory.statement_subject(st),
+            factory.statement_subject(st.into()),
             rdf::a_type().clone(),
             factory.named_object(rdf::statement().clone()),
         )
         .unwrap();
 
     println!("{}", st);
-    let sts = reify_statement(&st, &factory).unwrap();
+    let sts = st.reify(&factory).unwrap();
     for st in &sts.1 {
         println!("{}", st);
     }
@@ -64,8 +64,8 @@ fn reify_nested_statement() {
 
 #[test]
 fn make_literal_statement() {
-    let factory = statement_factory();
-    let literals = literal_factory();
+    let factory = SimpleStatementFactory::default();
+    let literals = SimpleLiteralFactory::default();
     let st = factory
         .statement(
             factory.blank_subject_named("B01").unwrap(),
@@ -81,8 +81,8 @@ fn make_literal_statement() {
 
 #[test]
 fn make_typed_literal_statement() {
-    let factory = statement_factory();
-    let literals = literal_factory();
+    let factory = SimpleStatementFactory::default();
+    let literals = SimpleLiteralFactory::default();
     let st = factory
         .statement(
             factory.blank_subject_named("B01").unwrap(),
@@ -98,24 +98,22 @@ fn make_typed_literal_statement() {
 
 #[test]
 fn make_an_embedded_statement() {
-    let factory = statement_factory();
+    let factory = SimpleStatementFactory::default();
 
     //  <<...>> <http://example.org/p> <http://example.org/o>
     let about = factory
         .statement(
-            factory.named_subject(Iri::from_str("http://example.org/s").unwrap().into()),
-            Iri::from_str("http://example.org/p").unwrap().into(),
-            factory.named_object(Iri::from_str("http://example.org/o").unwrap().into()),
+            factory.named_subject(Iri::from_str("http://example.org/s").unwrap()),
+            Iri::from_str("http://example.org/p").unwrap(),
+            factory.named_object(Iri::from_str("http://example.org/o").unwrap()),
         )
         .unwrap();
 
     let st = factory
         .statement(
             factory.blank_subject_named("a").unwrap(),
-            Iri::from_str("http://example.org/v/occurenceOf")
-                .unwrap()
-                .into(),
-            factory.statement_object(about),
+            Iri::from_str("http://example.org/v/occurenceOf").unwrap(),
+            factory.statement_object(about.into()),
         )
         .unwrap();
 

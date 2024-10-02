@@ -26,17 +26,19 @@
 * # Example
 *
 * ```rust
+* use rdftk_core::model::literal::LiteralFactory;
 * use rdftk_core::model::statement::{
-*     ObjectNode, Statement, StatementList, SubjectNode,
+*     ObjectNode, Statement, SubjectNode, StatementFactory,
 * };
 * use rdftk_core::simple;
+* use rdftk_core::simple::statement::SimpleStatement;
 * use rdftk_iri::Iri;
 * use std::rc::Rc;
 * use std::str::FromStr;
 *
-* let mut statements: StatementList = Default::default();
-* let factory = simple::statement::statement_factory();
-* let literals = simple::literal::literal_factory();
+* let mut statements: Vec<SimpleStatement> = Default::default();
+* let factory = simple::statement::SimpleStatementFactory::default();
+* let literals = simple::literal::SimpleLiteralFactory::default();
 *
 * statements.push(factory.statement(
 *     factory.named_subject(

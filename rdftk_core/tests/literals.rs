@@ -1,9 +1,11 @@
-use rdftk_core::simple::literal::literal_factory;
+use rdftk_core::model::literal::Literal;
+use rdftk_core::model::literal::LiteralFactory;
+use rdftk_core::simple::literal::SimpleLiteralFactory;
 use std::time::Duration;
 
 #[test]
 fn untyped() {
-    let literals = literal_factory();
+    let literals = SimpleLiteralFactory::default();
     let value = literals.literal("a string");
     assert!(!value.has_data_type());
     assert!(!value.has_language());
@@ -13,7 +15,7 @@ fn untyped() {
 
 #[test]
 fn needs_escape() {
-    let literals = literal_factory();
+    let literals = SimpleLiteralFactory::default();
     let value = literals.literal(r#"\ta "string"#);
     assert!(!value.has_data_type());
     assert!(!value.has_language());
@@ -23,7 +25,7 @@ fn needs_escape() {
 
 #[test]
 fn string_with_language() {
-    let literals = literal_factory();
+    let literals = SimpleLiteralFactory::default();
     let value = literals.with_language_str("a string", "en-us").unwrap();
     assert!(!value.has_data_type());
     assert!(value.has_language());
@@ -33,7 +35,7 @@ fn string_with_language() {
 
 #[test]
 fn typed_as_string() {
-    let literals = literal_factory();
+    let literals = SimpleLiteralFactory::default();
     let value = literals.string("a string");
     assert!(value.has_data_type());
     assert!(!value.has_language());
@@ -46,7 +48,7 @@ fn typed_as_string() {
 
 #[test]
 fn typed_as_boolean() {
-    let literals = literal_factory();
+    let literals = SimpleLiteralFactory::default();
     let value = literals.boolean(true);
     assert!(value.has_data_type());
     assert!(!value.has_language());
@@ -59,7 +61,7 @@ fn typed_as_boolean() {
 
 #[test]
 fn typed_as_long() {
-    let literals = literal_factory();
+    let literals = SimpleLiteralFactory::default();
     let value = literals.long(1);
     assert!(value.has_data_type());
     assert!(!value.has_language());
@@ -72,7 +74,7 @@ fn typed_as_long() {
 
 #[test]
 fn typed_as_ulong() {
-    let literals = literal_factory();
+    let literals = SimpleLiteralFactory::default();
     let value = literals.unsigned_long(1);
     assert!(value.has_data_type());
     assert!(!value.has_language());
@@ -85,7 +87,7 @@ fn typed_as_ulong() {
 
 #[test]
 fn typed_as_duration() {
-    let literals = literal_factory();
+    let literals = SimpleLiteralFactory::default();
     let duration = Duration::from_secs(63542);
     let value = literals.duration(duration);
     println!("Duration Out: {}", value);
