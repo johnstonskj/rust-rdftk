@@ -1,9 +1,9 @@
-use rdftk_core::model::graph::{mapping::common_mappings, PrefixMapping};
+use rdftk_core::model::graph::PrefixMapping;
 use rdftk_iri::{Iri, Name, QName};
 use std::str::FromStr;
 
 fn make_mappings() -> PrefixMapping {
-    common_mappings().with_default(Iri::from_str("http://xmlns.com/foaf/0.1/").unwrap())
+    PrefixMapping::common().with_default(Iri::from_str("http://xmlns.com/foaf/0.1/").unwrap())
 }
 
 #[test]

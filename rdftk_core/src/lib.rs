@@ -26,27 +26,24 @@
 * # Example
 *
 * ```rust
-* use rdftk_core::model::literal::LiteralFactory;
+* use rdftk_core::model::data_set::DataSet;
+* use rdftk_core::model::graph::Graph;
+* use rdftk_core::model::literal::Literal;
 * use rdftk_core::model::statement::{
-*     ObjectNode, Statement, SubjectNode, StatementFactory,
+*     ObjectNode, Statement, SubjectNode,
 * };
-* use rdftk_core::simple;
-* use rdftk_core::simple::statement::SimpleStatement;
 * use rdftk_iri::Iri;
-* use std::rc::Rc;
 * use std::str::FromStr;
 *
-* let mut statements: Vec<SimpleStatement> = Default::default();
-* let factory = simple::statement::SimpleStatementFactory::default();
-* let literals = simple::literal::SimpleLiteralFactory::default();
+* let statement = Statement::new(
+*     Iri::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap(),
+*     Iri::from_str("http://purl.org/dc/elements/1.1/title").unwrap(),
+*     Literal::from("Tony Benn"),
+* );
 *
-* statements.push(factory.statement(
-*     factory.named_subject(
-*         Iri::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap().into()
-*     ),
-*     Iri::from_str("http://purl.org/dc/elements/1.1/title").unwrap().into(),
-*     factory.literal_object(literals.string("Tony Benn")),
-* ).unwrap());
+* let graph = Graph::from(statement);
+*
+* let data_set = DataSet::from(graph);
 * ```
 *
 */
@@ -98,5 +95,3 @@
 pub mod error;
 
 pub mod model;
-
-pub mod simple;

@@ -1,18 +1,19 @@
 /*!
-This module provides the trait [`Featured`] and the set of feature identifiers (IRIs)..
+This module provides the trait [`Featured`] and the set of feature identifiers (IRIs).
 
-More detailed description, with
+Most of the data model types implement `Featured` which may be used to determine specific
+capabilities provided by that type.
 
 # Example
 
 ```rust
 use rdftk_core::model::features::{Featured, FEATURE_GRAPH_DUPLICATES};
-use rdftk_core::model::graph::GraphFactory;
-use rdftk_core::simple::graph::SimpleGraphFactory;
+use rdftk_core::model::graph::Graph;
 
-let simple = SimpleGraphFactory::default();
-let graph = simple.graph();
+let graph = Graph::default();
+println!("Allows Duplicates: {}", graph.supports_feature(&FEATURE_GRAPH_DUPLICATES));
 
+let graph = Graph::unique();
 println!("Allows Duplicates: {}", graph.supports_feature(&FEATURE_GRAPH_DUPLICATES));
 ```
 
@@ -55,7 +56,7 @@ lazy_static! {
     // --------------------------------------------------------------------------------------------
 
     ///
-    /// Denotes that this graph allows names.
+    /// Denotes that this graph may be named.
     ///
     pub static ref FEATURE_GRAPH_ALLOWS_NAMED: Iri =
         Iri::from_str("http://rust-rdftk.dev/feature/graph/named").unwrap();

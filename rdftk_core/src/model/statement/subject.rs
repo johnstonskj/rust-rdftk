@@ -1,8 +1,8 @@
-use super::BLANK_NODE_NAMESPACE;
-use crate::model::literal::Literal;
-use crate::model::statement::{BlankNode, Statement};
-use rdftk_iri::Iri;
+use crate::model::features::{Featured, FEATURE_RDF_STAR};
+use crate::model::statement::{BlankNode, ObjectNode, Statement, BLANK_NODE_NAMESPACE};
+use rdftk_iri::{Iri, Name};
 use std::borrow::Borrow;
+use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
 use std::sync::Arc;
 
@@ -11,59 +11,79 @@ use std::sync::Arc;
 // ------------------------------------------------------------------------------------------------
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum SubjectNode<L, T>
-where
-    L: Literal,
-    T: Statement<Literal = L> + Clone,
-{
+pub enum SubjectNode {
     Blank(BlankNode),
     Resource(Iri),
-    Statement(Arc<T>),
+    Statement(Arc<Statement>),
 }
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl<L: Literal, T: Statement<Literal = L>> From<BlankNode> for SubjectNode<L, T> {
+impl From<BlankNode> for SubjectNode {
     fn from(v: BlankNode) -> Self {
         Self::Blank(v)
     }
 }
 
-impl<L: Literal, T: Statement<Literal = L>> From<&BlankNode> for SubjectNode<L, T> {
+impl From<&BlankNode> for SubjectNode {
     fn from(v: &BlankNode) -> Self {
         Self::Blank(v.clone())
     }
 }
 
-impl<L: Literal, T: Statement<Literal = L>> From<Iri> for SubjectNode<L, T> {
+impl From<Name> for SubjectNode {
+    fn from(v: Name) -> Self {
+        Self::Blank(v.into())
+    }
+}
+
+impl From<&Name> for SubjectNode {
+    fn from(v: &Name) -> Self {
+        Self::Blank(v.clone().into())
+    }
+}
+
+impl From<Iri> for SubjectNode {
     fn from(v: Iri) -> Self {
         Self::Resource(v)
     }
 }
 
-impl<L: Literal, T: Statement<Literal = L>> From<&Iri> for SubjectNode<L, T> {
+impl From<&Iri> for SubjectNode {
     fn from(v: &Iri) -> Self {
         Self::Resource(v.clone())
     }
 }
 
-impl<L: Literal, T: Statement<Literal = L>> From<Arc<T>> for SubjectNode<L, T> {
-    fn from(v: Arc<T>) -> Self {
+impl From<Statement> for SubjectNode {
+    fn from(v: Statement) -> Self {
+        Self::Statement(Arc::new(v))
+    }
+}
+
+impl From<&Statement> for SubjectNode {
+    fn from(v: &Statement) -> Self {
+        Self::Statement(Arc::new(v.clone()))
+    }
+}
+
+impl From<Arc<Statement>> for SubjectNode {
+    fn from(v: Arc<Statement>) -> Self {
         Self::Statement(v)
     }
 }
 
-impl<L: Literal, T: Statement<Literal = L>> From<T> for SubjectNode<L, T> {
-    fn from(v: T) -> Self {
-        Self::Statement(Arc::new(v))
+impl From<&Arc<Statement>> for SubjectNode {
+    fn from(v: &Arc<Statement>) -> Self {
+        Self::Statement(v.clone())
     }
 }
 
 // ------------------------------------------------------------------------------------------------
 
-impl<L: Literal, T: Statement<Literal = L> + Display> Display for SubjectNode<L, T> {
+impl Display for SubjectNode {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Blank(node) => write!(f, "{}:{}", BLANK_NODE_NAMESPACE, node),
@@ -75,7 +95,7 @@ impl<L: Literal, T: Statement<Literal = L> + Display> Display for SubjectNode<L,
 
 // ------------------------------------------------------------------------------------------------
 
-impl<L: Literal, T: Statement<Literal = L>> PartialEq<BlankNode> for SubjectNode<L, T> {
+impl PartialEq<BlankNode> for SubjectNode {
     fn eq(&self, other: &BlankNode) -> bool {
         match self {
             Self::Blank(value) => value == other,
@@ -84,7 +104,7 @@ impl<L: Literal, T: Statement<Literal = L>> PartialEq<BlankNode> for SubjectNode
     }
 }
 
-impl<L: Literal, T: Statement<Literal = L>> PartialEq<Iri> for SubjectNode<L, T> {
+impl PartialEq<Iri> for SubjectNode {
     fn eq(&self, other: &Iri) -> bool {
         match self {
             Self::Resource(value) => value == other,
@@ -93,19 +113,67 @@ impl<L: Literal, T: Statement<Literal = L>> PartialEq<Iri> for SubjectNode<L, T>
     }
 }
 
-impl<L: Literal, T: Statement<Literal = L> + PartialEq> PartialEq<T> for SubjectNode<L, T> {
-    fn eq(&self, other: &T) -> bool {
+impl PartialEq<Statement> for SubjectNode {
+    fn eq(&self, other: &Statement) -> bool {
         match self {
-            Self::Statement(value) => <Arc<T> as Borrow<T>>::borrow(value) == other.borrow(),
+            Self::Statement(value) => {
+                <Arc<Statement> as Borrow<Statement>>::borrow(value) == other.borrow()
+            }
+            _ => false,
+        }
+    }
+}
+
+impl PartialEq<Arc<Statement>> for SubjectNode {
+    fn eq(&self, other: &Arc<Statement>) -> bool {
+        match self {
+            Self::Statement(value) => value == other,
             _ => false,
         }
     }
 }
 
 // ------------------------------------------------------------------------------------------------
+
+impl PartialOrd for SubjectNode {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for SubjectNode {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match (self, other) {
+            (Self::Blank(lhs), Self::Blank(rhs)) => lhs.cmp(rhs),
+            (Self::Blank(_), Self::Resource(_)) => Ordering::Less,
+            (Self::Blank(_), Self::Statement(_)) => Ordering::Less,
+            (Self::Resource(_), Self::Blank(_)) => Ordering::Greater,
+            (Self::Resource(lhs), Self::Resource(rhs)) => lhs.cmp(rhs),
+            (Self::Resource(_), Self::Statement(_)) => Ordering::Less,
+            (Self::Statement(_), Self::Blank(_)) => Ordering::Greater,
+            (Self::Statement(_), Self::Resource(_)) => Ordering::Greater,
+            (Self::Statement(lhs), Self::Statement(rhs)) => lhs.cmp(rhs),
+        }
+    }
+}
+
 // ------------------------------------------------------------------------------------------------
 
-impl<L: Literal, T: Statement<Literal = L>> SubjectNode<L, T> {
+impl Featured for SubjectNode {
+    fn supports_feature(&self, feature: &Iri) -> bool {
+        *feature == *FEATURE_RDF_STAR
+    }
+}
+
+// ------------------------------------------------------------------------------------------------
+
+impl SubjectNode {
+    // --------------------------------------------------------------------------------------------
+    // Constructors
+    // --------------------------------------------------------------------------------------------
+    // --------------------------------------------------------------------------------------------
+    // Variants
+    // --------------------------------------------------------------------------------------------
     pub fn is_blank(&self) -> bool {
         matches!(self, Self::Blank(_))
     }
@@ -132,17 +200,21 @@ impl<L: Literal, T: Statement<Literal = L>> SubjectNode<L, T> {
         matches!(self, Self::Statement(_))
     }
 
-    pub fn as_statement(&self) -> Option<Arc<T>> {
+    pub fn as_statement(&self) -> Option<Arc<Statement>> {
         match &self {
             Self::Statement(st) => Some(st.clone()),
             _ => None,
         }
     }
+    // --------------------------------------------------------------------------------------------
+    // Conversion
+    // --------------------------------------------------------------------------------------------
 
-    pub fn provider_id(&self) -> Option<&'static str> {
+    pub fn to_object(&self) -> ObjectNode {
         match self {
-            Self::Statement(v) => Some(v.provider_id()),
-            _ => None,
+            SubjectNode::Blank(v) => v.clone().into(),
+            SubjectNode::Resource(v) => v.clone().into(),
+            SubjectNode::Statement(v) => v.clone().into(),
         }
     }
 }

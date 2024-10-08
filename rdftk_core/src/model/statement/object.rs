@@ -1,70 +1,103 @@
+use crate::model::features::{Featured, FEATURE_RDF_STAR};
 use crate::model::literal::Literal;
-use crate::model::statement::{BlankNode, Statement};
-use rdftk_iri::Iri;
+use crate::model::statement::{BlankNode, Statement, SubjectNode, BLANK_NODE_NAMESPACE};
+use rdftk_iri::{Iri, Name};
+use std::borrow::Borrow;
+use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
 use std::sync::Arc;
-
-use super::BLANK_NODE_NAMESPACE;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum ObjectNode<L, T>
-where
-    L: Literal,
-    T: Statement<Literal = L>,
-{
+pub enum ObjectNode {
     Blank(BlankNode),
     Resource(Iri),
-    Literal(L),
-    Statement(Arc<T>),
+    Literal(Literal),
+    Statement(Arc<Statement>),
 }
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl<L: Literal, T: Statement<Literal = L>> From<BlankNode> for ObjectNode<L, T> {
+impl From<BlankNode> for ObjectNode {
     fn from(v: BlankNode) -> Self {
         Self::Blank(v)
     }
 }
 
-impl<L: Literal, T: Statement<Literal = L>> From<&BlankNode> for ObjectNode<L, T> {
+impl From<&BlankNode> for ObjectNode {
     fn from(v: &BlankNode) -> Self {
         Self::Blank(v.clone())
     }
 }
 
-impl<L: Literal, T: Statement<Literal = L>> From<Iri> for ObjectNode<L, T> {
+impl From<Name> for ObjectNode {
+    fn from(v: Name) -> Self {
+        Self::Blank(v.into())
+    }
+}
+
+impl From<&Name> for ObjectNode {
+    fn from(v: &Name) -> Self {
+        Self::Blank(v.clone().into())
+    }
+}
+
+impl From<Iri> for ObjectNode {
     fn from(v: Iri) -> Self {
         Self::Resource(v)
     }
 }
 
-impl<L: Literal, T: Statement<Literal = L>> From<&Iri> for ObjectNode<L, T> {
+impl From<&Iri> for ObjectNode {
     fn from(v: &Iri) -> Self {
         Self::Resource(v.clone())
     }
 }
 
-impl<L: Literal, T: Statement<Literal = L>> From<L> for ObjectNode<L, T> {
-    fn from(v: L) -> Self {
+impl From<Literal> for ObjectNode {
+    fn from(v: Literal) -> Self {
         Self::Literal(v)
     }
 }
 
-impl<L: Literal, T: Statement<Literal = L>> From<Arc<T>> for ObjectNode<L, T> {
-    fn from(v: Arc<T>) -> Self {
+impl From<&Literal> for ObjectNode {
+    fn from(v: &Literal) -> Self {
+        Self::Literal(v.clone())
+    }
+}
+
+impl From<Statement> for ObjectNode {
+    fn from(v: Statement) -> Self {
+        Self::Statement(Arc::new(v))
+    }
+}
+
+impl From<&Statement> for ObjectNode {
+    fn from(v: &Statement) -> Self {
+        Self::Statement(Arc::new(v.clone()))
+    }
+}
+
+impl From<Arc<Statement>> for ObjectNode {
+    fn from(v: Arc<Statement>) -> Self {
         Self::Statement(v)
+    }
+}
+
+impl From<&Arc<Statement>> for ObjectNode {
+    fn from(v: &Arc<Statement>) -> Self {
+        Self::Statement(v.clone())
     }
 }
 
 // ------------------------------------------------------------------------------------------------
 
-impl<L: Literal + Display, T: Statement<Literal = L> + Display> Display for ObjectNode<L, T> {
+impl Display for ObjectNode {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Blank(node) => write!(f, "{}:{}", BLANK_NODE_NAMESPACE, node),
@@ -77,7 +110,7 @@ impl<L: Literal + Display, T: Statement<Literal = L> + Display> Display for Obje
 
 // ------------------------------------------------------------------------------------------------
 
-impl<L: Literal, T: Statement<Literal = L>> PartialEq<BlankNode> for ObjectNode<L, T> {
+impl PartialEq<BlankNode> for ObjectNode {
     fn eq(&self, other: &BlankNode) -> bool {
         match self {
             Self::Blank(value) => value == other,
@@ -86,7 +119,7 @@ impl<L: Literal, T: Statement<Literal = L>> PartialEq<BlankNode> for ObjectNode<
     }
 }
 
-impl<L: Literal, T: Statement<Literal = L>> PartialEq<Iri> for ObjectNode<L, T> {
+impl PartialEq<Iri> for ObjectNode {
     fn eq(&self, other: &Iri) -> bool {
         match self {
             Self::Resource(value) => value == other,
@@ -95,8 +128,8 @@ impl<L: Literal, T: Statement<Literal = L>> PartialEq<Iri> for ObjectNode<L, T> 
     }
 }
 
-impl<L: Literal + PartialEq, T: Statement<Literal = L>> PartialEq<L> for ObjectNode<L, T> {
-    fn eq(&self, other: &L) -> bool {
+impl PartialEq<Literal> for ObjectNode {
+    fn eq(&self, other: &Literal) -> bool {
         match self {
             Self::Literal(value) => value == other,
             _ => false,
@@ -104,22 +137,71 @@ impl<L: Literal + PartialEq, T: Statement<Literal = L>> PartialEq<L> for ObjectN
     }
 }
 
-//
-// This results in an error due to duplication with impl above, but not sure why.
-//
-//impl<L: Literal, T: Statement<Literal = L> + PartialEq> PartialEq<T> for ObjectNode<L, T> {
-//    fn eq(&self, other: &T) -> bool {
-//        match self {
-//            Self::Statement(value) => <Arc<T> as Borrow<T>>::borrow(value) == other.borrow(),
-//            _ => false,
-//        }
-//    }
-//}
+impl PartialEq<Statement> for ObjectNode {
+    fn eq(&self, other: &Statement) -> bool {
+        match self {
+            Self::Statement(value) => {
+                <Arc<Statement> as Borrow<Statement>>::borrow(value) == other.borrow()
+            }
+            _ => false,
+        }
+    }
+}
+
+impl PartialEq<Arc<Statement>> for ObjectNode {
+    fn eq(&self, other: &Arc<Statement>) -> bool {
+        match self {
+            Self::Statement(value) => value == other,
+            _ => false,
+        }
+    }
+}
 
 // ------------------------------------------------------------------------------------------------
+
+impl PartialOrd for ObjectNode {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for ObjectNode {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match (self, other) {
+            (Self::Blank(lhs), Self::Blank(rhs)) => lhs.cmp(rhs),
+            (Self::Blank(_), Self::Resource(_)) => Ordering::Less,
+            (Self::Blank(_), Self::Literal(_)) => Ordering::Less,
+            (Self::Blank(_), Self::Statement(_)) => Ordering::Less,
+            (Self::Resource(_), Self::Blank(_)) => Ordering::Greater,
+            (Self::Resource(lhs), Self::Resource(rhs)) => lhs.cmp(rhs),
+            (Self::Resource(_), Self::Literal(_)) => Ordering::Less,
+            (Self::Resource(_), Self::Statement(_)) => Ordering::Less,
+            (Self::Literal(_), Self::Blank(_)) => Ordering::Greater,
+            (Self::Literal(_), Self::Resource(_)) => Ordering::Greater,
+            (Self::Literal(lhs), Self::Literal(rhs)) => lhs.cmp(rhs),
+            (Self::Literal(_), Self::Statement(_)) => Ordering::Less,
+            (Self::Statement(_), Self::Blank(_)) => Ordering::Greater,
+            (Self::Statement(_), Self::Resource(_)) => Ordering::Greater,
+            (Self::Statement(_), Self::Literal(_)) => Ordering::Greater,
+            (Self::Statement(lhs), Self::Statement(rhs)) => lhs.cmp(rhs),
+        }
+    }
+}
+
 // ------------------------------------------------------------------------------------------------
 
-impl<L: Literal, T: Statement<Literal = L>> ObjectNode<L, T> {
+impl Featured for ObjectNode {
+    fn supports_feature(&self, feature: &Iri) -> bool {
+        *feature == *FEATURE_RDF_STAR
+    }
+}
+
+// ------------------------------------------------------------------------------------------------
+
+impl ObjectNode {
+    // --------------------------------------------------------------------------------------------
+    // Variants
+    // --------------------------------------------------------------------------------------------
     pub fn is_blank(&self) -> bool {
         matches!(self, Self::Blank(_))
     }
@@ -146,7 +228,7 @@ impl<L: Literal, T: Statement<Literal = L>> ObjectNode<L, T> {
         matches!(self, Self::Literal(_))
     }
 
-    pub fn as_literal(&self) -> Option<&L> {
+    pub fn as_literal(&self) -> Option<&Literal> {
         match &self {
             Self::Literal(v) => Some(v),
             _ => None,
@@ -157,18 +239,21 @@ impl<L: Literal, T: Statement<Literal = L>> ObjectNode<L, T> {
         matches!(self, Self::Statement(_))
     }
 
-    pub fn as_statement(&self) -> Option<Arc<T>> {
+    pub fn as_statement(&self) -> Option<Arc<Statement>> {
         match &self {
             Self::Statement(v) => Some(v.clone()),
             _ => None,
         }
     }
-
-    pub fn provider_id(&self) -> Option<&'static str> {
+    // --------------------------------------------------------------------------------------------
+    // Conversions
+    // --------------------------------------------------------------------------------------------
+    pub fn to_subject(&self) -> Option<SubjectNode> {
         match self {
-            Self::Literal(v) => Some(v.provider_id()),
-            Self::Statement(v) => Some(v.provider_id()),
-            _ => None,
+            ObjectNode::Blank(v) => Some(v.clone().into()),
+            ObjectNode::Resource(v) => Some(v.clone().into()),
+            ObjectNode::Statement(v) => Some(v.clone().into()),
+            ObjectNode::Literal(_) => None,
         }
     }
 }

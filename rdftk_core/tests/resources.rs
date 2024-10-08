@@ -1,4 +1,4 @@
-use rdftk_core::simple::{resource::Resource, statement::SimpleStatement};
+use rdftk_core::model::{resource::Resource, statement::Statement};
 use rdftk_iri::Iri;
 use std::str::FromStr;
 
@@ -13,7 +13,7 @@ fn contact(name: &str) -> Iri {
 #[test]
 fn wikipedia_example_01() {
     let resource =
-        Resource::named(Iri::from_str("http://www.w3.org/People/EM/contact#me").unwrap())
+        Resource::individual(Iri::from_str("http://www.w3.org/People/EM/contact#me").unwrap())
             .literal_str(contact("fullName"), "Eric Miller")
             .resource_named(
                 contact("mailbox"),
@@ -22,7 +22,7 @@ fn wikipedia_example_01() {
             .literal_str(contact("personalTitle"), "Dr.")
             .instance_of(contact("Person"))
             .to_owned();
-    let sts: Vec<SimpleStatement> = resource.into();
+    let sts: Vec<Statement> = resource.into();
     assert_eq!(sts.len(), 4);
     for st in sts {
         println!("{}", st);

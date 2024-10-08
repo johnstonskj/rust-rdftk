@@ -1,12 +1,10 @@
+use language_tags::LanguageTag;
 use rdftk_core::model::literal::Literal;
-use rdftk_core::model::literal::LiteralFactory;
-use rdftk_core::simple::literal::SimpleLiteralFactory;
 use std::time::Duration;
 
 #[test]
 fn untyped() {
-    let literals = SimpleLiteralFactory::default();
-    let value = literals.literal("a string");
+    let value = Literal::plain("a string");
     assert!(!value.has_data_type());
     assert!(!value.has_language());
     assert_eq!(value.lexical_form(), "a string");
@@ -15,8 +13,7 @@ fn untyped() {
 
 #[test]
 fn needs_escape() {
-    let literals = SimpleLiteralFactory::default();
-    let value = literals.literal(r#"\ta "string"#);
+    let value = Literal::plain(r#"\ta "string"#);
     assert!(!value.has_data_type());
     assert!(!value.has_language());
     assert_eq!(value.lexical_form(), "\\\\ta \\\"string");
@@ -25,8 +22,7 @@ fn needs_escape() {
 
 #[test]
 fn string_with_language() {
-    let literals = SimpleLiteralFactory::default();
-    let value = literals.with_language_str("a string", "en-us").unwrap();
+    let value = Literal::with_language("a string", LanguageTag::parse("en-us").unwrap());
     assert!(!value.has_data_type());
     assert!(value.has_language());
     assert_eq!(value.lexical_form(), "a string");
@@ -35,8 +31,7 @@ fn string_with_language() {
 
 #[test]
 fn typed_as_string() {
-    let literals = SimpleLiteralFactory::default();
-    let value = literals.string("a string");
+    let value = Literal::from("a string");
     assert!(value.has_data_type());
     assert!(!value.has_language());
     assert_eq!(value.lexical_form(), "a string");
@@ -48,8 +43,7 @@ fn typed_as_string() {
 
 #[test]
 fn typed_as_boolean() {
-    let literals = SimpleLiteralFactory::default();
-    let value = literals.boolean(true);
+    let value = Literal::from(true);
     assert!(value.has_data_type());
     assert!(!value.has_language());
     assert_eq!(value.lexical_form(), "true");
@@ -61,8 +55,7 @@ fn typed_as_boolean() {
 
 #[test]
 fn typed_as_long() {
-    let literals = SimpleLiteralFactory::default();
-    let value = literals.long(1);
+    let value = Literal::from(1_i64);
     assert!(value.has_data_type());
     assert!(!value.has_language());
     assert_eq!(value.lexical_form(), "1");
@@ -74,8 +67,7 @@ fn typed_as_long() {
 
 #[test]
 fn typed_as_ulong() {
-    let literals = SimpleLiteralFactory::default();
-    let value = literals.unsigned_long(1);
+    let value = Literal::from(1_u64);
     assert!(value.has_data_type());
     assert!(!value.has_language());
     assert_eq!(value.lexical_form(), "1");
@@ -87,9 +79,7 @@ fn typed_as_ulong() {
 
 #[test]
 fn typed_as_duration() {
-    let literals = SimpleLiteralFactory::default();
-    let duration = Duration::from_secs(63542);
-    let value = literals.duration(duration);
+    let value = Literal::from(Duration::from_secs(63542));
     println!("Duration Out: {}", value);
     assert!(value.has_data_type());
     assert!(!value.has_language());
@@ -98,4 +88,109 @@ fn typed_as_duration() {
         value.to_string(),
         "\"PT63542S\"^^<http://www.w3.org/2001/XMLSchema#duration>"
     );
+}
+
+#[test]
+fn test_no_datatype_is_less() {
+    let lhs = Literal::plain("value-1");
+    assert!(!lhs.has_data_type());
+    assert!(!lhs.has_language());
+    let rhs = Literal::from("value-1");
+    assert!(rhs.has_data_type());
+    assert!(!rhs.has_language());
+    assert!(lhs < rhs);
+    assert!(rhs > lhs);
+}
+
+#[test]
+fn test_plain_less() {
+    let lhs = Literal::plain("value-1");
+    assert!(!lhs.has_data_type());
+    assert!(!lhs.has_language());
+    let rhs = Literal::plain("value-2");
+    assert!(!rhs.has_data_type());
+    assert!(!rhs.has_language());
+    assert!(lhs < rhs);
+    assert!(rhs > lhs);
+}
+
+#[test]
+fn test_plain_equal() {
+    let lhs = Literal::plain("value-1");
+    assert!(!lhs.has_data_type());
+    assert!(!lhs.has_language());
+    let rhs = Literal::plain("value-1");
+    assert!(!rhs.has_data_type());
+    assert!(!rhs.has_language());
+    assert!(lhs == rhs);
+}
+
+#[test]
+fn test_typed_less() {
+    let lhs = Literal::from("value-1");
+    assert!(lhs.has_data_type());
+    assert!(!lhs.has_language());
+    let rhs = Literal::from("value-2");
+    assert!(rhs.has_data_type());
+    assert!(!rhs.has_language());
+    assert!(lhs < rhs);
+    assert!(rhs > lhs);
+}
+
+#[test]
+fn test_typed_equal() {
+    let lhs = Literal::from("value-1");
+    assert!(lhs.has_data_type());
+    assert!(!lhs.has_language());
+    let rhs = Literal::from("value-1");
+    assert!(rhs.has_data_type());
+    assert!(!rhs.has_language());
+    assert!(lhs == rhs);
+}
+
+#[test]
+fn test_no_language_is_less() {
+    let lhs = Literal::plain("value-1");
+    assert!(!lhs.has_data_type());
+    assert!(!lhs.has_language());
+    let rhs = Literal::with_language("value-1", LanguageTag::parse("en-US").unwrap());
+    assert!(!rhs.has_data_type());
+    assert!(rhs.has_language());
+    assert!(lhs < rhs);
+    assert!(rhs > lhs);
+}
+
+#[test]
+fn test_language_is_less() {
+    let lhs = Literal::with_language("value-1", LanguageTag::parse("en-GB").unwrap());
+    assert!(!lhs.has_data_type());
+    assert!(lhs.has_language());
+    let rhs = Literal::with_language("value-1", LanguageTag::parse("en-US").unwrap());
+    assert!(!rhs.has_data_type());
+    assert!(rhs.has_language());
+    assert!(lhs < rhs);
+    assert!(rhs > lhs);
+}
+
+#[test]
+fn test_with_language_is_less() {
+    let lhs = Literal::with_language("value-1", LanguageTag::parse("en-US").unwrap());
+    assert!(!lhs.has_data_type());
+    assert!(lhs.has_language());
+    let rhs = Literal::with_language("value-2", LanguageTag::parse("en-US").unwrap());
+    assert!(!rhs.has_data_type());
+    assert!(rhs.has_language());
+    assert!(lhs < rhs);
+    assert!(rhs > lhs);
+}
+
+#[test]
+fn test_with_language_equal() {
+    let lhs = Literal::with_language("value-1", LanguageTag::parse("en-US").unwrap());
+    assert!(!lhs.has_data_type());
+    assert!(lhs.has_language());
+    let rhs = Literal::with_language("value-1", LanguageTag::parse("en-US").unwrap());
+    assert!(!rhs.has_data_type());
+    assert!(rhs.has_language());
+    assert!(lhs == rhs);
 }

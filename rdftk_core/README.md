@@ -52,6 +52,17 @@ pub fn make_statements() -> StatementList {
 
 ## Changes
 
+### Version 0.5.0
+
+This is a radical refactor as the complexity of traits was adding more cost than
+value.
+
+* Removed all traits and moved implementations from the `simple` module into
+  `model`.
+* Removed all factory interfaces to simplify the user experience.
+* Added `From` and `PartialEq` implementations for the supported literal value
+  types.
+
 ### Version 0.4.5
 
 * Refactor: Remove all `Ref` wrapper types.

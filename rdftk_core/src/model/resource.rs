@@ -20,11 +20,9 @@
 * writing out or constructing a `Graph` instance.
 *
 * ```rust
-* use rdftk_core::model::Implementation;
-* use rdftk_core::model::literal::LiteralFactory;
-* use rdftk_core::simple::Implementation as SimpleImplementation;
-* use rdftk_core::simple::resource::Resource;
-* use rdftk_core::simple::statement::SimpleStatement;
+* use rdftk_core::model::literal::Literal;
+* use rdftk_core::model::resource::Resource;
+* use rdftk_core::model::statement::Statement;
 * use rdftk_iri::Iri;
 * use rdftk_names::{dc::elements as dc, foaf, rdf};
 * use std::str::FromStr;
@@ -37,23 +35,20 @@
 *     .unwrap()
 * }
 *
-* let implementation = SimpleImplementation::default();
-* let literal_factory = implementation.literal_factory();
-*
 * let resource =
-*     Resource::named(Iri::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap().into())
-*         .value_of(dc::publisher().clone(), literal_factory.literal("Wikipedia"))
-*         .value_of(dc::title().clone(), literal_factory.literal("Tony Benn"))
+*     Resource::individual(Iri::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap())
+*         .value_of(dc::publisher().clone(), Literal::plain("Wikipedia"))
+*         .value_of(dc::title().clone(), Literal::plain("Tony Benn"))
 *         .resource(
 *             dc::description().clone(),
-*             Resource::blank()
+*             Resource::anonymous()
 *                 .resource_named(rdf::a_type().clone(), foaf::person().clone())
-*                 .value_of(foaf::name().clone(), literal_factory.literal("Tony Benn"))
+*                 .value_of(foaf::name().clone(), Literal::plain("Tony Benn"))
 *                 .to_owned(),
 *         )
 *         .to_owned();
 *
-* let sts: Vec<SimpleStatement> = resource.into();
+* let sts: Vec<Statement> = resource.into();
 * assert_eq!(sts.len(), 5);
 *
 * for st in sts {
@@ -74,17 +69,16 @@
 *
 */
 
-use crate::error::{provider_mismatch_error, Result};
-use crate::model::literal::{DataType, LiteralFactory};
-use crate::model::statement::StatementFactory;
-use crate::model::Provided;
-use crate::simple::literal::{SimpleLiteral, SimpleLiteralFactory};
-use crate::simple::statement::{SimpleStatement, SimpleStatementFactory, SimpleSubjectNode};
+use crate::model::literal::{DataType, Literal};
+use crate::model::statement::BlankNode;
+use crate::model::statement::Statement;
 use language_tags::LanguageTag;
 use rdftk_iri::Iri;
 use rdftk_names::rdf;
 use std::collections::HashMap;
 use std::str::FromStr;
+
+use super::statement::{ObjectNode, SubjectNode};
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -95,10 +89,8 @@ use std::str::FromStr;
 ///
 #[derive(Clone, Debug)]
 pub struct Resource {
-    subject: SimpleSubjectNode,
-    statement_factory: SimpleStatementFactory,
-    literal_factory: SimpleLiteralFactory,
-    predicates: HashMap<Iri, Vec<ResourceObject>>,
+    subject: SubjectNode,
+    predicate_objects: HashMap<Iri, Vec<ResourceObject>>,
 }
 
 ///
@@ -118,8 +110,8 @@ pub struct Predicate {
 enum ResourceObject {
     Resource(Resource),
     Resources(Container<Resource>),
-    Literal(SimpleLiteral),
-    Literals(Container<SimpleLiteral>),
+    Literal(Literal),
+    Literals(Container<Literal>),
 }
 
 #[derive(Clone, Debug)]
@@ -137,160 +129,10 @@ struct Container<T> {
 }
 
 // ------------------------------------------------------------------------------------------------
-// Implementations
+// Implementations > Resource
 // ------------------------------------------------------------------------------------------------
 
-impl Predicate {
-    ///
-    /// Construct a new Predicate instance with the provided `Iri` name.
-    ///
-    pub fn new(name: Iri) -> Self {
-        Self {
-            name,
-            objects: Default::default(),
-        }
-    }
-
-    // --------------------------------------------------------------------------------------------
-
-    ///
-    /// Add a new property object, a literal value, to this predicate.
-    ///
-    pub fn property(&mut self, value: SimpleLiteral) -> &mut Self {
-        self.objects.push(ResourceObject::Literal(value));
-        self
-    }
-
-    // --------------------------------------------------------------------------------------------
-
-    ///
-    /// The value of this property object is a container denoting the provided values as alternatives.
-    ///
-    pub fn property_alternatives(&mut self, values: &[SimpleLiteral]) -> &mut Self {
-        self.objects.push(ResourceObject::Literals(Container {
-            kind: ContainerKind::Alt,
-            values: values.to_vec(),
-        }));
-        self
-    }
-
-    ///
-    /// The value of this property object is a container denoting the provided values as an
-    /// unordered bag.
-    ///
-    pub fn property_bag(&mut self, values: &[SimpleLiteral]) -> &mut Self {
-        self.objects.push(ResourceObject::Literals(Container {
-            kind: ContainerKind::Bag,
-            values: values.to_vec(),
-        }));
-        self
-    }
-
-    ///
-    /// The value of this property object is a container denoting the provided values as an ordered
-    /// sequence.
-    ///
-    pub fn property_sequence(&mut self, values: &[SimpleLiteral]) -> &mut Self {
-        self.objects.push(ResourceObject::Literals(Container {
-            kind: ContainerKind::Seq,
-            values: values.to_vec(),
-        }));
-        self
-    }
-
-    ///
-    /// The value of this property object is a container of the provided values with a specified
-    /// type.
-    ///
-    pub fn property_container(&mut self, values: &[SimpleLiteral], kind: Iri) -> &mut Self {
-        self.objects.push(ResourceObject::Literals(Container {
-            kind: ContainerKind::Other(kind),
-            values: values.to_vec(),
-        }));
-        self
-    }
-
-    // --------------------------------------------------------------------------------------------
-
-    ///
-    /// Add a new resource object, a blank node, to this predicate.
-    ///
-    pub fn resource_blank_named(&mut self, name: &str) -> &mut Self {
-        self.objects
-            .push(ResourceObject::Resource(Resource::blank_named(name)));
-        self
-    }
-
-    ///
-    /// Add a new resource object, an Iri, to this predicate.
-    ///
-    pub fn resource_named(&mut self, name: Iri) -> &mut Self {
-        self.objects
-            .push(ResourceObject::Resource(Resource::named(name)));
-        self
-    }
-
-    ///
-    /// Add a new resource object, another resource, to this predicate.
-    ///
-    pub fn resource(&mut self, resource: Resource) -> &mut Self {
-        self.objects.push(ResourceObject::Resource(resource));
-        self
-    }
-
-    // --------------------------------------------------------------------------------------------
-
-    ///
-    /// The value of this resource object is a container denoting the provided values as alternatives.
-    ///
-    pub fn resource_alternatives(&mut self, values: &[Resource]) -> &mut Self {
-        self.objects.push(ResourceObject::Resources(Container {
-            kind: ContainerKind::Alt,
-            values: values.to_vec(),
-        }));
-        self
-    }
-
-    ///
-    /// The value of this resource object is a container denoting the provided values as an
-    /// unordered bag.
-    ///
-    pub fn resource_bag(&mut self, values: &[Resource]) -> &mut Self {
-        self.objects.push(ResourceObject::Resources(Container {
-            kind: ContainerKind::Bag,
-            values: values.to_vec(),
-        }));
-        self
-    }
-
-    ///
-    /// The value of this resource object is a container denoting the provided values as an ordered
-    /// sequence.
-    ///
-    pub fn resource_sequence(&mut self, values: &[Resource]) -> &mut Self {
-        self.objects.push(ResourceObject::Resources(Container {
-            kind: ContainerKind::Seq,
-            values: values.to_vec(),
-        }));
-        self
-    }
-
-    ///
-    /// The value of this resource object is a container of the provided values with a specified
-    /// type.
-    ///
-    pub fn resource_container(&mut self, values: &[Resource], kind: Iri) -> &mut Self {
-        self.objects.push(ResourceObject::Resources(Container {
-            kind: ContainerKind::Other(kind),
-            values: values.to_vec(),
-        }));
-        self
-    }
-}
-
-// ------------------------------------------------------------------------------------------------
-
-impl From<Resource> for Vec<SimpleStatement> {
+impl From<Resource> for Vec<Statement> {
     fn from(resource: Resource) -> Self {
         let mut sts = Vec::default();
         flatten(&resource, &mut sts);
@@ -303,85 +145,32 @@ impl Resource {
     /// Construct a new `Resource` with the subject cloned from an existing
     /// [`SubjectNode`](../statement/struct.SubjectNode.html).
     ///
-    pub fn new(subject: SimpleSubjectNode) -> Self {
-        if let Some(subject_id) = subject.provider_id() {
-            if subject_id != crate::simple::PROVIDER_ID {
-                panic!("Invalid subject provider {subject_id}.")
-            }
-        }
+    pub fn new(subject: SubjectNode) -> Self {
         Self {
             subject,
-            statement_factory: Default::default(),
-            literal_factory: Default::default(),
-            predicates: Default::default(),
+            predicate_objects: Default::default(),
         }
-    }
-
-    ///
-    /// Construct a new `Resource` with the subject cloned from an existing
-    /// [`SubjectNode`](../statement/struct.SubjectNode.html).
-    ///
-    pub fn with_factories(
-        subject: SimpleSubjectNode,
-        statement_factory: SimpleStatementFactory,
-        literal_factory: SimpleLiteralFactory,
-    ) -> Result<Self> {
-        if statement_factory.provider_id() != literal_factory.provider_id() {
-            return provider_mismatch_error(
-                statement_factory.provider_id(),
-                literal_factory.provider_id(),
-            )
-            .into();
-        } else if let Some(subject_id) = subject.provider_id() {
-            if subject_id != crate::simple::PROVIDER_ID {
-                return provider_mismatch_error(subject_id, statement_factory.provider_id()).into();
-            }
-        }
-        Ok(Self {
-            subject,
-            statement_factory,
-            literal_factory,
-            predicates: Default::default(),
-        })
     }
 
     ///
     /// Construct a new `Resource` with a new blank node as the subject.
     ///
-    pub fn blank() -> Self {
-        let statement_factory = SimpleStatementFactory::default();
-        Self {
-            subject: statement_factory.blank_subject_new(),
-            statement_factory,
-            literal_factory: Default::default(),
-            predicates: Default::default(),
-        }
+    pub fn anonymous() -> Self {
+        Self::new(BlankNode::generate().into())
     }
 
     ///
     /// Construct a new `Resource` with a named blank node as the subject.
     ///
-    pub fn blank_named(name: &str) -> Self {
-        let statement_factory = SimpleStatementFactory::default();
-        Self {
-            subject: statement_factory.blank_subject_named(name).unwrap(),
-            statement_factory,
-            literal_factory: Default::default(),
-            predicates: Default::default(),
-        }
+    pub fn semi_anonymous(name: BlankNode) -> Self {
+        Self::new(name.into())
     }
 
     ///
     /// Construct a new `Resource` with the provided `Iri` as the subject.
     ///
-    pub fn named(name: Iri) -> Self {
-        let statement_factory = SimpleStatementFactory::default();
-        Self {
-            subject: statement_factory.named_subject(name),
-            statement_factory,
-            literal_factory: Default::default(),
-            predicates: Default::default(),
-        }
+    pub fn individual(name: Iri) -> Self {
+        Self::new(name.into())
     }
 
     // --------------------------------------------------------------------------------------------
@@ -400,7 +189,7 @@ impl Resource {
     ///
     #[inline]
     pub fn is_an_individual(&self) -> bool {
-        self.predicates.keys().any(|p| p == rdf::a_type())
+        self.predicate_objects.keys().any(|p| p == rdf::a_type())
     }
 
     // --------------------------------------------------------------------------------------------
@@ -420,21 +209,21 @@ impl Resource {
     ///
     /// Add a new property predicate with a literal value to this resource.
     ///
-    pub fn property(&mut self, predicate: Iri, value: SimpleLiteral) -> &mut Self {
+    pub fn property(&mut self, predicate: Iri, value: Literal) -> &mut Self {
         self.literal(predicate, value)
     }
 
     ///
     /// Add a new property predicate with a literal value to this resource.
     ///
-    pub fn value_of(&mut self, predicate: Iri, value: SimpleLiteral) -> &mut Self {
+    pub fn value_of(&mut self, predicate: Iri, value: Literal) -> &mut Self {
         self.literal(predicate, value)
     }
 
     ///
     /// Add a new property predicate with a literal value to this resource.
     ///
-    pub fn literal(&mut self, predicate: Iri, value: SimpleLiteral) -> &mut Self {
+    pub fn literal(&mut self, predicate: Iri, value: Literal) -> &mut Self {
         self.insert(predicate, ResourceObject::Literal(value))
     }
 
@@ -442,7 +231,7 @@ impl Resource {
     /// Add a new property predicate with a literal value to this resource.
     ///
     pub fn literal_str(&mut self, predicate: Iri, value: &str) -> &mut Self {
-        let value = self.literal_factory.literal(value);
+        let value = Literal::plain(value);
         self.insert(predicate, ResourceObject::Literal(value))
     }
 
@@ -455,7 +244,7 @@ impl Resource {
         value: &str,
         data_type: DataType,
     ) -> &mut Self {
-        let value = self.literal_factory.with_data_type(value, data_type);
+        let value = Literal::with_data_type(value, data_type);
         self.insert(predicate, ResourceObject::Literal(value))
     }
 
@@ -468,7 +257,7 @@ impl Resource {
         value: &str,
         language: LanguageTag,
     ) -> &mut Self {
-        let value = self.literal_factory.with_language(value, language);
+        let value = Literal::with_language(value, language);
         self.insert(predicate, ResourceObject::Literal(value))
     }
 
@@ -481,9 +270,7 @@ impl Resource {
         value: &str,
         language: &str,
     ) -> &mut Self {
-        let value = self
-            .literal_factory
-            .with_language(value, LanguageTag::from_str(language).unwrap());
+        let value = Literal::with_language(value, LanguageTag::from_str(language).unwrap());
         self.insert(predicate, ResourceObject::Literal(value))
     }
 
@@ -492,7 +279,7 @@ impl Resource {
     ///
     /// The value of this property predicate is a container denoting the provided values as alternatives.
     ///
-    pub fn property_alternatives(&mut self, predicate: Iri, values: &[SimpleLiteral]) -> &mut Self {
+    pub fn property_alternatives(&mut self, predicate: Iri, values: &[Literal]) -> &mut Self {
         self.insert(
             predicate,
             ResourceObject::Literals(Container {
@@ -506,7 +293,7 @@ impl Resource {
     /// The value of this property predicate is a container denoting the provided values as an
     /// unordered bag.
     ///
-    pub fn property_bag(&mut self, predicate: Iri, values: &[SimpleLiteral]) -> &mut Self {
+    pub fn property_bag(&mut self, predicate: Iri, values: &[Literal]) -> &mut Self {
         self.insert(
             predicate,
             ResourceObject::Literals(Container {
@@ -520,7 +307,7 @@ impl Resource {
     /// The value of this property predicate is a container denoting the provided values as an ordered
     /// sequence.
     ///
-    pub fn property_sequence(&mut self, predicate: Iri, values: &[SimpleLiteral]) -> &mut Self {
+    pub fn property_sequence(&mut self, predicate: Iri, values: &[Literal]) -> &mut Self {
         self.insert(
             predicate,
             ResourceObject::Literals(Container {
@@ -537,7 +324,7 @@ impl Resource {
     pub fn property_container(
         &mut self,
         predicate: Iri,
-        values: &[SimpleLiteral],
+        values: &[Literal],
         kind: Iri,
     ) -> &mut Self {
         self.insert(
@@ -554,10 +341,10 @@ impl Resource {
     ///
     /// Add a new resource predicate, a blank node, to this predicate.
     ///
-    pub fn resource_blank_named(&mut self, predicate: Iri, name: &str) -> &mut Self {
+    pub fn resource_blank_named(&mut self, predicate: Iri, name: &BlankNode) -> &mut Self {
         self.insert(
             predicate,
-            ResourceObject::Resource(Resource::blank_named(name)),
+            ResourceObject::Resource(Resource::semi_anonymous(name.clone())),
         )
     }
 
@@ -565,7 +352,10 @@ impl Resource {
     /// Add a new resource predicate, an Iri, to this predicate.
     ///
     pub fn resource_named(&mut self, predicate: Iri, name: Iri) -> &mut Self {
-        self.insert(predicate, ResourceObject::Resource(Resource::named(name)))
+        self.insert(
+            predicate,
+            ResourceObject::Resource(Resource::individual(name)),
+        )
     }
 
     ///
@@ -645,24 +435,26 @@ impl Resource {
     pub fn instance_of(&mut self, name: Iri) -> &mut Self {
         self.insert(
             rdf::a_type().clone(),
-            ResourceObject::Resource(Resource::named(name)),
+            ResourceObject::Resource(Resource::individual(name)),
         )
     }
 
     // --------------------------------------------------------------------------------------------
 
     fn insert(&mut self, predicate: Iri, object: ResourceObject) -> &mut Self {
-        if !self.predicates.contains_key(&predicate) {
+        if !self.predicate_objects.contains_key(&predicate) {
             let _ = self
-                .predicates
+                .predicate_objects
                 .insert(predicate.clone(), Default::default());
         }
-        let values = self.predicates.get_mut(&predicate).unwrap();
+        let values = self.predicate_objects.get_mut(&predicate).unwrap();
         values.push(object);
         self
     }
 }
 
+// ------------------------------------------------------------------------------------------------
+// Implementations > Resource Objects
 // ------------------------------------------------------------------------------------------------
 
 impl ResourceObject {
@@ -675,12 +467,166 @@ impl ResourceObject {
 }
 
 // ------------------------------------------------------------------------------------------------
+// Implementations > Predicate/Object Builder
+// ------------------------------------------------------------------------------------------------
+
+impl Predicate {
+    ///
+    /// Construct a new Predicate instance with the provided `Iri` name.
+    ///
+    pub fn new(name: Iri) -> Self {
+        Self {
+            name,
+            objects: Default::default(),
+        }
+    }
+
+    // --------------------------------------------------------------------------------------------
+
+    ///
+    /// Add a new property object, a literal value, to this predicate.
+    ///
+    pub fn property(&mut self, value: Literal) -> &mut Self {
+        self.objects.push(ResourceObject::Literal(value));
+        self
+    }
+
+    // --------------------------------------------------------------------------------------------
+
+    ///
+    /// The value of this property object is a container denoting the provided values as alternatives.
+    ///
+    pub fn property_alternatives(&mut self, values: &[Literal]) -> &mut Self {
+        self.objects.push(ResourceObject::Literals(Container {
+            kind: ContainerKind::Alt,
+            values: values.to_vec(),
+        }));
+        self
+    }
+
+    ///
+    /// The value of this property object is a container denoting the provided values as an
+    /// unordered bag.
+    ///
+    pub fn property_bag(&mut self, values: &[Literal]) -> &mut Self {
+        self.objects.push(ResourceObject::Literals(Container {
+            kind: ContainerKind::Bag,
+            values: values.to_vec(),
+        }));
+        self
+    }
+
+    ///
+    /// The value of this property object is a container denoting the provided values as an ordered
+    /// sequence.
+    ///
+    pub fn property_sequence(&mut self, values: &[Literal]) -> &mut Self {
+        self.objects.push(ResourceObject::Literals(Container {
+            kind: ContainerKind::Seq,
+            values: values.to_vec(),
+        }));
+        self
+    }
+
+    ///
+    /// The value of this property object is a container of the provided values with a specified
+    /// type.
+    ///
+    pub fn property_container(&mut self, values: &[Literal], kind: Iri) -> &mut Self {
+        self.objects.push(ResourceObject::Literals(Container {
+            kind: ContainerKind::Other(kind),
+            values: values.to_vec(),
+        }));
+        self
+    }
+
+    // --------------------------------------------------------------------------------------------
+
+    ///
+    /// Add a new resource object, a blank node, to this predicate.
+    ///
+    pub fn resource_blank_named(&mut self, name: &BlankNode) -> &mut Self {
+        self.objects
+            .push(ResourceObject::Resource(Resource::semi_anonymous(
+                name.clone(),
+            )));
+        self
+    }
+
+    ///
+    /// Add a new resource object, an Iri, to this predicate.
+    ///
+    pub fn resource_named(&mut self, name: Iri) -> &mut Self {
+        self.objects
+            .push(ResourceObject::Resource(Resource::individual(name)));
+        self
+    }
+
+    ///
+    /// Add a new resource object, another resource, to this predicate.
+    ///
+    pub fn resource(&mut self, resource: Resource) -> &mut Self {
+        self.objects.push(ResourceObject::Resource(resource));
+        self
+    }
+
+    // --------------------------------------------------------------------------------------------
+
+    ///
+    /// The value of this resource object is a container denoting the provided values as alternatives.
+    ///
+    pub fn resource_alternatives(&mut self, values: &[Resource]) -> &mut Self {
+        self.objects.push(ResourceObject::Resources(Container {
+            kind: ContainerKind::Alt,
+            values: values.to_vec(),
+        }));
+        self
+    }
+
+    ///
+    /// The value of this resource object is a container denoting the provided values as an
+    /// unordered bag.
+    ///
+    pub fn resource_bag(&mut self, values: &[Resource]) -> &mut Self {
+        self.objects.push(ResourceObject::Resources(Container {
+            kind: ContainerKind::Bag,
+            values: values.to_vec(),
+        }));
+        self
+    }
+
+    ///
+    /// The value of this resource object is a container denoting the provided values as an ordered
+    /// sequence.
+    ///
+    pub fn resource_sequence(&mut self, values: &[Resource]) -> &mut Self {
+        self.objects.push(ResourceObject::Resources(Container {
+            kind: ContainerKind::Seq,
+            values: values.to_vec(),
+        }));
+        self
+    }
+
+    ///
+    /// The value of this resource object is a container of the provided values with a specified
+    /// type.
+    ///
+    pub fn resource_container(&mut self, values: &[Resource], kind: Iri) -> &mut Self {
+        self.objects.push(ResourceObject::Resources(Container {
+            kind: ContainerKind::Other(kind),
+            values: values.to_vec(),
+        }));
+        self
+    }
+}
+
+// ------------------------------------------------------------------------------------------------
 // Private Functions
 // ------------------------------------------------------------------------------------------------
 
-fn flatten(resource: &Resource, sts: &mut Vec<SimpleStatement>) {
+fn flatten(resource: &Resource, sts: &mut Vec<Statement>) {
     let subject = &resource.subject;
-    for (predicate, objects) in &resource.predicates {
+    for (predicate, objects) in &resource.predicate_objects {
         for object in objects.iter() {
             if object.is_container() {
                 // <s> <p> {<kind>, [values]} becomes:
@@ -694,89 +640,58 @@ fn flatten(resource: &Resource, sts: &mut Vec<SimpleStatement>) {
                     ResourceObject::Literals(lc) => &lc.kind,
                     _ => unreachable!(),
                 };
-                let container = resource.statement_factory.blank_subject_new();
-                sts.push(
-                    resource
-                        .statement_factory
-                        .statement(
-                            subject.clone(),
-                            predicate.clone(),
-                            resource
-                                .statement_factory
-                                .subject_as_object(container.clone()),
-                        )
-                        .unwrap(),
-                );
-                sts.push(
-                    resource
-                        .statement_factory
-                        .statement(
-                            container.clone(),
-                            rdf::a_type().clone(),
-                            resource.statement_factory.named_object(match kind {
-                                ContainerKind::Alt => rdf::alt().clone(),
-                                ContainerKind::Bag => rdf::bag().clone(),
-                                ContainerKind::Seq => rdf::seq().clone(),
-                                ContainerKind::Other(iri) => iri.clone(),
-                            }),
-                        )
-                        .unwrap(),
-                );
+                let container = SubjectNode::from(BlankNode::generate());
+                sts.push(Statement::new(
+                    subject.clone(),
+                    predicate.clone(),
+                    container.to_object(),
+                ));
+                sts.push(Statement::new(
+                    container.clone(),
+                    rdf::a_type().clone(),
+                    ObjectNode::from(match kind {
+                        ContainerKind::Alt => rdf::alt().clone(),
+                        ContainerKind::Bag => rdf::bag().clone(),
+                        ContainerKind::Seq => rdf::seq().clone(),
+                        ContainerKind::Other(iri) => iri.clone(),
+                    }),
+                ));
 
                 match object {
                     ResourceObject::Resources(rc) => {
                         for (index, resource) in rc.values.iter().enumerate() {
                             flatten(resource, sts);
-                            sts.push(
-                                resource
-                                    .statement_factory
-                                    .statement(
-                                        container.clone(),
-                                        rdf::member(index),
-                                        resource
-                                            .statement_factory
-                                            .subject_as_object(resource.subject.clone()),
-                                    )
-                                    .unwrap(),
-                            );
+                            sts.push(Statement::new(
+                                container.clone(),
+                                rdf::member(index),
+                                resource.subject.to_object(),
+                            ));
                         }
                     }
                     ResourceObject::Literals(lc) => {
                         for (index, literal) in lc.values.iter().enumerate() {
-                            sts.push(
-                                resource
-                                    .statement_factory
-                                    .statement(
-                                        container.clone(),
-                                        rdf::member(index),
-                                        resource.statement_factory.literal_object(literal.clone()),
-                                    )
-                                    .unwrap(),
-                            );
+                            sts.push(Statement::new(
+                                container.clone(),
+                                rdf::member(index),
+                                literal,
+                            ));
                         }
                     }
                     _ => unreachable!(),
                 };
             } else {
-                let statement = resource
-                    .statement_factory
-                    .statement(
-                        subject.clone(),
-                        predicate.clone(),
-                        match object {
-                            ResourceObject::Resource(resource) => {
-                                flatten(resource, sts);
-                                resource
-                                    .statement_factory
-                                    .subject_as_object(resource.subject.clone())
-                            }
-                            ResourceObject::Literal(literal) => {
-                                resource.statement_factory.literal_object(literal.clone())
-                            }
-                            _ => unreachable!(),
-                        },
-                    )
-                    .unwrap();
+                let statement = Statement::new(
+                    subject.clone(),
+                    predicate.clone(),
+                    match object {
+                        ResourceObject::Resource(resource) => {
+                            flatten(resource, sts);
+                            subject.to_object()
+                        }
+                        ResourceObject::Literal(literal) => ObjectNode::from(literal.clone()),
+                        _ => unreachable!(),
+                    },
+                );
                 sts.push(statement);
             }
         }
