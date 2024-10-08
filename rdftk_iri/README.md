@@ -44,6 +44,10 @@ assert_eq!(
 
 ## Changes
 
+### Version 0.2.5
+
+* Feature: added `From<QName` and `From<&QName>` for `String`.
+
 ### Version 0.2.4
 
 * Refactor: move the `QName` type into this package from core.

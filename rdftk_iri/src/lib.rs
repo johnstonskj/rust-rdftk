@@ -815,6 +815,18 @@ impl FromStr for QName {
     }
 }
 
+impl From<QName> for String {
+    fn from(value: QName) -> Self {
+        value.to_string()
+    }
+}
+
+impl From<&QName> for String {
+    fn from(value: &QName) -> Self {
+        value.to_string()
+    }
+}
+
 const BLANK_NODE_NAMESPACE: &str = "_";
 
 impl QName {
