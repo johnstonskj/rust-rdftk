@@ -1,7 +1,7 @@
 use objio::{impl_has_options, ObjectWriter};
 use rdftk_core::error::Error;
-use rdftk_core::model::graph::GraphRef;
-use rdftk_core::model::statement::{ObjectNodeRef, SubjectNodeRef};
+use rdftk_core::model::graph::Graph;
+use rdftk_core::model::statement::{ObjectNode, SubjectNode};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io::Write;
@@ -264,18 +264,18 @@ impl DotOptions {
 
 impl_has_options!(DotWriter, DotOptions);
 
-impl ObjectWriter<GraphRef> for DotWriter {
+impl ObjectWriter<Graph> for DotWriter {
     type Error = Error;
 
-    fn write<W>(&self, w: &mut W, object: &GraphRef) -> Result<(), Self::Error>
+    fn write<W>(&self, w: &mut W, graph: &Graph) -> Result<(), Self::Error>
     where
         W: Write,
     {
         writeln!(w, "digraph {{\n    rankdir=BT\n    charset=\"utf-8\";")?;
 
-        writeln!(w)?;
+        // TODO: emit graph name
 
-        let graph = object.borrow();
+        writeln!(w)?;
 
         let mappings = graph.prefix_mappings();
         for statement in graph.statements() {
@@ -285,7 +285,7 @@ impl ObjectWriter<GraphRef> for DotWriter {
                 self.options.node_prefix,
                 self.subject_id(statement.subject()),
                 self.object_id(statement.object()),
-                match mappings.borrow().compress(statement.predicate()) {
+                match mappings.compress(statement.predicate()) {
                     None => statement.predicate().to_string(),
                     Some(qname) => qname.to_string(),
                 }
@@ -361,7 +361,7 @@ impl DotWriter {
         }
     }
 
-    fn subject_id(&self, node: &SubjectNodeRef) -> String {
+    fn subject_id(&self, node: &SubjectNode) -> String {
         let mut nodes = self.nodes.borrow_mut();
         if let Some(node) = nodes.get(&node.to_string()) {
             node.id.clone()
@@ -376,13 +376,13 @@ impl DotWriter {
                         label: node.as_blank().unwrap().as_ref().into(),
                     },
                 );
-            } else if node.is_iri() {
+            } else if node.is_resource() {
                 let _ = nodes.insert(
                     node.to_string(),
                     Node {
                         id: id.clone(),
                         kind: NodeKind::Iri,
-                        label: node.as_iri().unwrap().to_string(),
+                        label: node.as_resource().unwrap().to_string(),
                     },
                 );
             }
@@ -390,7 +390,7 @@ impl DotWriter {
         }
     }
 
-    fn object_id(&self, node: &ObjectNodeRef) -> String {
+    fn object_id(&self, node: &ObjectNode) -> String {
         let mut nodes = self.nodes.borrow_mut();
         if let Some(node) = nodes.get(&node.to_string()) {
             node.id.clone()
@@ -405,13 +405,13 @@ impl DotWriter {
                         label: node.as_blank().unwrap().as_ref().into(),
                     },
                 );
-            } else if node.is_iri() {
+            } else if node.is_resource() {
                 let _ = nodes.insert(
                     node.to_string(),
                     Node {
                         id: id.clone(),
                         kind: NodeKind::Iri,
-                        label: node.as_iri().unwrap().to_string(),
+                        label: node.as_resource().unwrap().to_string(),
                     },
                 );
             } else if node.is_literal() {

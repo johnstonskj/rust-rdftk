@@ -21,7 +21,7 @@ pub const MIME_TYPE: &str = "text/trig";
 // ------------------------------------------------------------------------------------------------
 
 mod reader;
-pub use reader::{TrigReader, TrigReaderOptions};
+pub use reader::TrigReader;
 
 mod writer;
 pub use writer::{TrigWriter, TrigWriterOptions};

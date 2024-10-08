@@ -1,6 +1,6 @@
 use objio::ObjectWriter;
 use rdftk_core::error::Error;
-use rdftk_core::model::graph::GraphRef;
+use rdftk_core::model::graph::Graph;
 use std::io::Write;
 
 // ------------------------------------------------------------------------------------------------
@@ -18,14 +18,13 @@ pub struct NTripleWriter {}
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl ObjectWriter<GraphRef> for NTripleWriter {
+impl ObjectWriter<Graph> for NTripleWriter {
     type Error = Error;
 
-    fn write<W>(&self, w: &mut W, object: &GraphRef) -> Result<(), Self::Error>
+    fn write<W>(&self, w: &mut W, graph: &Graph) -> Result<(), Self::Error>
     where
         W: Write,
     {
-        let graph = object.borrow();
         for subject in graph.subjects() {
             for predicate in graph.predicates_for(subject) {
                 for object in graph.objects_for(subject, predicate) {

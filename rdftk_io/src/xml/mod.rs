@@ -11,13 +11,14 @@ in the specification, "flat" or "striped".
 ```rust
 use rdftk_io::xml::{XmlOptions, XmlWriter};
 # use objio::{HasOptions, ObjectWriter};
-# let graph = rdftk_core::simple::graph::graph_factory().graph();
+# use  rdftk_core::model::graph::Graph;
+# fn make_graph() -> Graph { Graph::default() }
 
 let options: XmlOptions = XmlOptions::default().flat().pretty();
 
 let writer = XmlWriter::default().with_options(options);
 
-println!("{}", writer.write_to_string(&graph).unwrap());
+println!("{}", writer.write_to_string(&make_graph()).unwrap());
 ```
 
 */

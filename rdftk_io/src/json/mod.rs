@@ -7,8 +7,8 @@ W3C [RDF 1.1 JSON Alternate Serialization (RDF/JSON)](https://www.w3.org/TR/rdf-
 ```rust
 use rdftk_io::json::{JsonWriter, JsonOptions};
 # use objio::{HasOptions, ObjectWriter};
-# use rdftk_core::model::graph::GraphRef;
-# fn make_graph() -> GraphRef { rdftk_core::simple::graph::graph_factory().graph() }
+# use rdftk_core::model::graph::Graph;
+# fn make_graph() -> Graph { Graph::default() }
 
 let writer = JsonWriter::default()
     .with_options(JsonOptions::default().with_pretty_print(true));
@@ -38,7 +38,7 @@ pub const MIME_TYPE: &str = "application/rdf+json";
 mod syntax;
 
 mod reader;
-pub use reader::{JsonReader, JsonReaderOptions};
+pub use reader::JsonReader;
 
 mod writer;
 pub use writer::{JsonOptions, JsonWriter};

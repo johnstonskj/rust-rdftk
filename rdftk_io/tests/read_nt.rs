@@ -1,10 +1,10 @@
 #![cfg(feature = "nt")]
 
 use objio::{ObjectReader, ObjectWriter};
-use rdftk_core::{error::Error, model::graph::GraphRef};
+use rdftk_core::{error::Error, model::graph::Graph};
 use rdftk_io::nt::{NTripleReader, NTripleWriter};
 
-fn write_graph(graph: &GraphRef) {
+fn write_graph(graph: &Graph) {
     let writer = NTripleWriter::default();
     let _ = writer.write(&mut std::io::stdout(), graph);
 }
@@ -12,7 +12,7 @@ fn write_graph(graph: &GraphRef) {
 #[test]
 fn parse_simple() {
     let reader = NTripleReader::default();
-    let result: Result<GraphRef, Error> = reader.read_from_string(
+    let result: Result<Graph, Error> = reader.read_from_string(
             r###"
 <http://example.org/show/218> <http://www.w3.org/2000/01/rdf-schema#label> "That Seventies Show"^^<http://www.w3.org/2001/XMLSchema#string> . # literal with XML Schema string datatype
 <http://example.org/show/218> <http://www.w3.org/2000/01/rdf-schema#label> "That Seventies Show" . # same as above
@@ -37,7 +37,7 @@ fn parse_simple() {
 #[test]
 fn parse_simple_with_blanks() {
     let reader = NTripleReader::default();
-    let result: Result<GraphRef, Error> = reader.read_from_string(
+    let result: Result<Graph, Error> = reader.read_from_string(
             r###"
 <http://one.example/subject1> <http://one.example/predicate1> <http://one.example/object1> . # comments here
 # or on a line by themselves

@@ -25,6 +25,6 @@ pub const FORMAT_IRI: &str = "http://www.w3.org/ns/formats/N3";
 // ------------------------------------------------------------------------------------------------
 
 mod reader;
-pub use reader::{N3Reader, N3ReaderOptions};
+pub use reader::N3Reader;
 
 pub mod writer;

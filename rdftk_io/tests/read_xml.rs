@@ -24,7 +24,7 @@ fn read_example_empty_graph() {
     assert!(result.is_ok());
     let graph = result.unwrap();
     println!("{:?}", graph);
-    assert_eq!(graph.borrow().len(), 0);
+    assert_eq!(graph.len(), 0);
 }
 
 #[test]
@@ -55,8 +55,8 @@ fn read_example_01() {
     let result = reader.read(&mut xml);
     assert!(result.is_ok());
     let graph = result.unwrap();
-    for st in graph.borrow().statements() {
+    for st in graph.statements() {
         println!("{}", st);
     }
-    assert_eq!(graph.borrow().len(), 6);
+    assert_eq!(graph.len(), 6);
 }

@@ -9,15 +9,13 @@ An example, reading an existing NTriple file.
 
 ```rust
 use objio::{HasOptions, ObjectReader};
-use rdftk_io::nt::{NTripleReaderOptions, NTripleReader};
-use rdftk_core::simple::graph_factory;
+use rdftk_io::nt::NTripleReader;
 use std::fs::File;
 use std::path::PathBuf;
 
 let file_path = PathBuf::from("tests/w3c/nt/literal.nt");
 let mut file = File::open(file_path).unwrap();
-let reader = NTripleReader::default()
-    .with_options(NTripleReaderOptions::default().with_factory(graph_factory()));
+let reader = NTripleReader::default();
 let graph = reader.read(&mut file).unwrap();
 ```
 
@@ -25,14 +23,14 @@ let graph = reader.read(&mut file).unwrap();
 # Example Writer with Options
 
 ```rust
-use rdftk_io::turtle::{TurtleWriter, TurtleOptions};
-use rdftk_iri::{IriRef, Iri};
+use rdftk_io::turtle::{TurtleWriter, TurtleWriterOptions};
+use rdftk_iri::Iri;
 use std::str::FromStr;
 # use objio::{HasOptions, ObjectWriter};
-# use rdftk_core::model::graph::GraphRef;
-# fn make_graph() -> GraphRef { rdftk_core::simple::graph::graph_factory().graph() }
+# use rdftk_core::model::graph::Graph;
+# fn make_graph() -> Graph { Graph::default() }
 
-let mut options = TurtleOptions::default()
+let mut options = TurtleWriterOptions::default()
     .with_id_base(Iri::from_str("http://en.wikipedia.org/wiki/").unwrap().into())
     .with_sparql_style()
     .without_nested_blank_nodes();
@@ -63,7 +61,7 @@ pub const MIME_TYPE: &str = "text/turtle";
 // ------------------------------------------------------------------------------------------------
 
 mod reader;
-pub use reader::{TurtleReader, TurtleReaderOptions};
+pub use reader::TurtleReader;
 
 mod writer;
-pub use writer::{TurtleOptions, TurtleWriter};
+pub use writer::{TurtleWriter, TurtleWriterOptions};

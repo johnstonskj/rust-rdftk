@@ -1,14 +1,14 @@
 #![cfg(feature = "turtle")]
 
 use objio::ObjectReader;
-use rdftk_core::{error::Error, model::graph::GraphRef};
+use rdftk_core::{error::Error, model::graph::Graph};
 use rdftk_io::turtle::TurtleReader;
 
 #[test]
 #[ignore]
 fn parse_simple_turtle() {
     let reader = TurtleReader::default();
-    let result: Result<GraphRef, Error> = reader.read_from_string(
+    let result: Result<Graph, Error> = reader.read_from_string(
         r###"@base <http://example.org/> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .

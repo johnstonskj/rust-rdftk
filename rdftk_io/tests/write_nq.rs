@@ -1,8 +1,7 @@
 #![cfg(feature = "nq")]
 
 use objio::ObjectWriter;
-use rdftk_core::model::data_set::DataSetRef;
-use rdftk_core::simple::data_set::data_set_factory;
+use rdftk_core::model::data_set::DataSet;
 use rdftk_io::nq::NQuadWriter;
 
 mod common;
@@ -10,15 +9,11 @@ mod common;
 #[test]
 fn write_to_nquads() {
     let graph = common::tony_benn_named_graph(common::TonyBennType::OneType);
-    let data_set = data_set_factory().data_set();
-    {
-        let mut data_set = data_set.borrow_mut();
-        data_set.insert(graph);
-    }
+    let data_set = DataSet::from(graph);
 
     let writer = NQuadWriter::default();
 
-    let result = writer.write_to_string(&(data_set as DataSetRef));
+    let result = writer.write_to_string(&data_set);
     assert!(result.is_ok());
     let output = result.unwrap();
     println!("# format: N-Quads\n{}", output);

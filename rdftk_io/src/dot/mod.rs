@@ -8,8 +8,8 @@ format.
 ```rust
 use rdftk_io::dot::{DotOptions, DotWriter};
 # use objio::{HasOptions, ObjectWriter};
-# use rdftk_core::model::graph::GraphRef;
-# fn make_graph() -> GraphRef { rdftk_core::simple::graph::graph_factory().graph() }
+# use rdftk_core::model::graph::Graph;
+# fn make_graph() -> Graph { rdftk_core::model::graph::Graph::default() }
 
 let mut options = DotOptions::default().with_blank_labels(true);
 

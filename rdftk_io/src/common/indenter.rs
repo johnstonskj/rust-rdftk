@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::fmt::{Display, Formatter};
 
 // ------------------------------------------------------------------------------------------------
@@ -7,7 +8,7 @@ use std::fmt::{Display, Formatter};
 #[derive(Clone, Debug)]
 pub(crate) struct Indenter {
     width: usize,
-    depth: usize,
+    depth: RefCell<usize>,
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -16,56 +17,74 @@ pub(crate) struct Indenter {
 
 impl Default for Indenter {
     fn default() -> Self {
-        Self { width: 2, depth: 0 }
+        Self {
+            width: 2,
+            depth: RefCell::new(0),
+        }
     }
 }
 
 impl Display for Indenter {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:width$}", "", width = self.width * self.depth)
+        write!(
+            f,
+            "{:width$}",
+            "",
+            width = self.width * (*self.depth.borrow())
+        )
     }
 }
 
 impl Indenter {
-    pub(crate) fn with_width(self, width: usize) -> Self {
-        Self { width, ..self }
+    pub(crate) fn with_default_indent_width(self, width: usize) -> Self {
+        let mut self_mut = self;
+        self_mut.width = width;
+        self_mut
     }
 
-    pub(crate) fn with_depth(self, depth: usize) -> Self {
-        Self { depth, ..self }
+    #[allow(dead_code)]
+    pub(crate) fn with_initial_depth(self, depth: usize) -> Self {
+        let _ = self.depth.replace(depth);
+        self
     }
 
     pub(crate) fn depth(&self) -> usize {
-        self.depth
+        *self.depth.borrow()
     }
 
-    pub(crate) fn reset_depth(&mut self) {
-        self.depth = 0
+    #[allow(dead_code)]
+    pub(crate) fn default_width(&self) -> usize {
+        self.width
     }
 
-    pub(crate) fn indent(&self) -> Self {
-        self.indent_by(1)
+    pub(crate) fn reset_depth(&self) {
+        self.depth.replace(0);
     }
 
-    pub(crate) fn indent_by(&self, by: usize) -> Self {
-        Self {
-            width: self.width,
-            depth: self.depth + by,
-        }
+    pub(crate) fn indent(&self) {
+        self.indent_by(self.width);
     }
 
-    pub(crate) fn outdent(&self) -> Self {
-        self.outdent_by(1)
+    pub(crate) fn indent_by(&self, by: usize) {
+        self.depth.replace(self.depth() + by);
     }
 
-    pub(crate) fn outdent_by(&self, by: usize) -> Self {
-        Self {
-            width: self.width,
-            depth: self.depth - by,
-        }
+    #[allow(dead_code)]
+    pub(crate) fn indent_for<T: Into<usize>>(&self, for_: T) {
+        self.indent_by(for_.into())
     }
 
-    //pub(crate) fn one(&self) -> String {
-    //    format!("{:width$}", "", width = self.width)
-    //}
+    pub(crate) fn outdent(&self) {
+        self.indent_by(self.width);
+    }
+
+    #[allow(dead_code)]
+    pub(crate) fn outdent_by(&self, by: usize) {
+        self.depth.replace(self.depth() - by);
+    }
+
+    #[allow(dead_code)]
+    pub(crate) fn outdent_for<T: Into<usize>>(&self, for_: T) {
+        self.outdent_by(for_.into())
+    }
 }

@@ -46,6 +46,11 @@ let graph = reader.read(&mut file, graph_factory()).unwrap();
 
 ## Changes
 
+### Version 0.3.1
+
+* Feature: moved to new v0.5 core package.
+* Tests: all tests now passing.
+
 ### Version 0.3.0
 
 * Feature: moved to new `rdftk_core` package.

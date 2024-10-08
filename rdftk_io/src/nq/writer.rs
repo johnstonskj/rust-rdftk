@@ -1,7 +1,7 @@
 use objio::ObjectWriter;
 use rdftk_core::error::Error;
-use rdftk_core::model::data_set::DataSetRef;
-use rdftk_core::model::graph::named::NamedGraphRef;
+use rdftk_core::model::data_set::DataSet;
+use rdftk_core::model::graph::Graph;
 use std::io::Write;
 
 // ------------------------------------------------------------------------------------------------
@@ -18,14 +18,13 @@ pub struct NQuadWriter {}
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl ObjectWriter<DataSetRef> for NQuadWriter {
+impl ObjectWriter<DataSet> for NQuadWriter {
     type Error = Error;
 
-    fn write<W>(&self, w: &mut W, data_set: &DataSetRef) -> Result<(), Self::Error>
+    fn write<W>(&self, w: &mut W, data_set: &DataSet) -> Result<(), Self::Error>
     where
         W: Write,
     {
-        let data_set = data_set.borrow();
         for graph in data_set.graphs() {
             self.write(w, graph)?;
         }
@@ -33,14 +32,13 @@ impl ObjectWriter<DataSetRef> for NQuadWriter {
     }
 }
 
-impl ObjectWriter<NamedGraphRef> for NQuadWriter {
+impl ObjectWriter<Graph> for NQuadWriter {
     type Error = Error;
 
-    fn write<W>(&self, w: &mut W, graph: &NamedGraphRef) -> Result<(), Self::Error>
+    fn write<W>(&self, w: &mut W, graph: &Graph) -> Result<(), Self::Error>
     where
         W: Write,
     {
-        let graph = graph.borrow();
         let graph_name = graph.name();
         for subject in graph.subjects() {
             for predicate in graph.predicates_for(subject) {

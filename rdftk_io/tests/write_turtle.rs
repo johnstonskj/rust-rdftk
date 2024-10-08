@@ -1,8 +1,8 @@
 #![cfg(feature = "turtle")]
 
 use objio::{HasOptions, ObjectWriter};
-use rdftk_io::turtle::{TurtleOptions, TurtleWriter};
-use rdftk_iri::{Iri, IriRef};
+use rdftk_io::turtle::{TurtleWriter, TurtleWriterOptions};
+use rdftk_iri::Iri;
 use std::str::FromStr;
 
 mod common;
@@ -31,9 +31,8 @@ fn write_to_turtle() {
 fn write_to_turtle_with_base() {
     let graph = common::tony_benn_graph(Default::default());
 
-    let options = TurtleOptions::default().with_id_base(IriRef::from(
-        Iri::from_str("http://en.wikipedia.org/wiki/").unwrap(),
-    ));
+    let options = TurtleWriterOptions::default()
+        .with_id_base(Iri::from_str("http://en.wikipedia.org/wiki/").unwrap());
     let writer = TurtleWriter::default().with_options(options);
 
     let result = writer.write_to_string(&graph);
@@ -55,10 +54,8 @@ fn write_to_turtle_with_base() {
 fn write_to_turtle_with_options() {
     let graph = common::tony_benn_graph(Default::default());
 
-    let options = TurtleOptions::default()
-        .with_id_base(IriRef::from(
-            Iri::from_str("http://en.wikipedia.org/wiki/").unwrap(),
-        ))
+    let options = TurtleWriterOptions::default()
+        .with_id_base(Iri::from_str("http://en.wikipedia.org/wiki/").unwrap())
         .with_sparql_style()
         .with_nested_blank_nodes();
     let writer = TurtleWriter::default().with_options(options);

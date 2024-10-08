@@ -5,11 +5,10 @@ use super::syntax::{
 use crate::xml::syntax::ATTRIBUTE_XML_LANG_PREFIXED;
 use objio::{impl_has_options, ObjectWriter};
 use rdftk_core::error::{rdf_star_not_supported_error, Error};
-use rdftk_core::model::graph::{Graph, GraphRef};
-use rdftk_core::model::statement::SubjectNodeRef;
-use rdftk_iri::IriRef;
+use rdftk_core::model::graph::Graph;
+use rdftk_core::model::statement::SubjectNode;
+use rdftk_iri::Iri;
 use rdftk_names::{dc, foaf, geo, owl, rdf, rdfs, xsd};
-use std::cell::Ref;
 use std::collections::HashMap;
 use std::io::Write;
 use xml::common::XmlVersion;
@@ -134,15 +133,13 @@ impl Default for XmlWriter {
 
 impl_has_options!(XmlWriter, XmlOptions);
 
-impl ObjectWriter<GraphRef> for XmlWriter {
+impl ObjectWriter<Graph> for XmlWriter {
     type Error = Error;
 
-    fn write<W>(&self, w: &mut W, graph: &GraphRef) -> Result<(), Self::Error>
+    fn write<W>(&self, w: &mut W, graph: &Graph) -> Result<(), Self::Error>
     where
         W: Write,
     {
-        let graph = graph.borrow();
-
         let config = EmitterConfig::new()
             .perform_indent(self.options.pretty_print)
             .normalize_empty_elements(self.options.pretty_print);
@@ -166,11 +163,11 @@ impl ObjectWriter<GraphRef> for XmlWriter {
 
         if self.options.style == XmlStyle::Flat {
             for subject in graph.subjects() {
-                self.write_subject(&mut writer, &graph, subject, true)?;
+                self.write_subject(&mut writer, graph, subject, true)?;
             }
         } else {
-            for subject in graph.subjects().iter().filter(|s| s.is_iri()) {
-                self.write_subject(&mut writer, &graph, subject, false)?;
+            for subject in graph.subjects().iter().filter(|s| s.is_resource()) {
+                self.write_subject(&mut writer, graph, subject, false)?;
             }
         }
 
@@ -231,8 +228,8 @@ impl XmlWriter {
     fn write_subject<W: Write>(
         &self,
         writer: &mut EventWriter<W>,
-        graph: &Ref<'_, dyn Graph>,
-        subject: &SubjectNodeRef,
+        graph: &Graph,
+        subject: &SubjectNode,
         flat: bool,
     ) -> Result<(), Error> {
         if let Some(blank) = subject.as_blank() {
@@ -248,11 +245,11 @@ impl XmlWriter {
                     .write(XmlEvent::start_element(RDF_DESCRIPTION.as_str()))
                     .map_err(xml_error)?;
             }
-        } else if let Some(subject) = subject.as_iri() {
+        } else if let Some(subject) = subject.as_resource() {
             writer
                 .write(
                     XmlEvent::start_element(RDF_DESCRIPTION.as_str())
-                        .attr(RDF_ABOUT.as_str(), &subject.to_string()),
+                        .attr(RDF_ABOUT.as_str(), subject.as_ref()),
                 )
                 .map_err(xml_error)?;
         } else {
@@ -270,7 +267,7 @@ impl XmlWriter {
                     XmlEvent::start_element(name.as_str()).default_ns(&ns)
                 };
 
-                if let Some(iri) = object.as_iri() {
+                if let Some(iri) = object.as_resource() {
                     let iri = iri.to_string();
                     element = element.attr(RDF_RESOURCE.as_str(), &iri);
                     writer.write(element).map_err(xml_error)?;
@@ -280,12 +277,7 @@ impl XmlWriter {
                         writer.write(element).map_err(xml_error)?;
                     } else {
                         writer.write(element).map_err(xml_error)?;
-                        self.write_subject(
-                            writer,
-                            graph,
-                            &graph.statement_factory().blank_subject(blank.clone()),
-                            flat,
-                        )?;
+                        self.write_subject(writer, graph, &blank.clone().into(), flat)?;
                     }
                 } else if let Some(literal) = object.as_literal() {
                     let language = literal
@@ -335,7 +327,7 @@ fn xml_error(e: xml::writer::Error) -> Error {
     }
 }
 
-fn split_uri(iri: &IriRef) -> (String, String) {
+fn split_uri(iri: &Iri) -> (String, String) {
     let iri = iri.to_string();
     let index = iri
         .chars()

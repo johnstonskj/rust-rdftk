@@ -2,7 +2,7 @@
 
 use objio::ObjectReader;
 use rdftk_core::error::eprint_trace;
-use rdftk_core::model::graph::GraphRef;
+use rdftk_core::model::graph::Graph;
 use rdftk_io::nt::NTripleReader;
 use std::path::PathBuf;
 
@@ -32,7 +32,7 @@ macro_rules! negative_test {
     };
 }
 
-fn read_test_file(file_name: &str) -> Result<GraphRef, rdftk_core::error::Error> {
+fn read_test_file(file_name: &str) -> Result<Graph, rdftk_core::error::Error> {
     let file_path = PathBuf::from(format!("tests/w3c/nt/{}.nt", file_name));
     let reader = NTripleReader::default();
     reader.read_from_file(file_path)

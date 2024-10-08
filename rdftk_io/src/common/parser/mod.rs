@@ -3,8 +3,8 @@
 use pest::Parser as _;
 use pest_derive::Parser;
 use rdftk_core::error::Error;
-use rdftk_core::model::data_set::{DataSetFactoryRef, DataSetRef};
-use rdftk_core::model::graph::{GraphFactoryRef, GraphRef};
+use rdftk_core::model::data_set::DataSet;
+use rdftk_core::model::graph::Graph;
 use tracing::{span, Level};
 
 // ------------------------------------------------------------------------------------------------
@@ -66,7 +66,7 @@ macro_rules! pest_error {
 // Public Functions
 // ------------------------------------------------------------------------------------------------
 
-pub(crate) fn parse_ntriple_doc<S>(source: S, factory: GraphFactoryRef) -> Result<GraphRef, Error>
+pub(crate) fn parse_ntriple_doc<S>(source: S) -> Result<Graph, Error>
 where
     S: AsRef<str>,
 {
@@ -78,10 +78,10 @@ where
             source: Box::new(e),
         })?;
     let top_node = parsed.next().unwrap();
-    ntriples::parse_doc(top_node, factory)
+    ntriples::parse_doc(top_node)
 }
 
-pub(crate) fn parse_nquad_doc<S>(source: S, factory: DataSetFactoryRef) -> Result<DataSetRef, Error>
+pub(crate) fn parse_nquad_doc<S>(source: S) -> Result<DataSet, Error>
 where
     S: AsRef<str>,
 {
@@ -93,10 +93,10 @@ where
             source: Box::new(e),
         })?;
     let top_node = parsed.next().unwrap();
-    nquads::parse_doc(top_node, factory)
+    nquads::parse_doc(top_node)
 }
 
-pub(crate) fn parse_turtle_doc<S>(_source: S, _factory: GraphFactoryRef) -> Result<GraphRef, Error>
+pub(crate) fn parse_turtle_doc<S>(_source: S) -> Result<Graph, Error>
 where
     S: AsRef<str>,
 {
@@ -105,10 +105,7 @@ where
     todo!()
 }
 
-pub(crate) fn parse_trig_doc<S>(
-    _source: S,
-    _factory: DataSetFactoryRef,
-) -> Result<DataSetRef, Error>
+pub(crate) fn parse_trig_doc<S>(_source: S) -> Result<DataSet, Error>
 where
     S: AsRef<str>,
 {
@@ -117,7 +114,7 @@ where
     todo!()
 }
 
-pub(crate) fn parse_n3_doc<S>(_source: S, _factory: GraphFactoryRef) -> Result<GraphRef, Error>
+pub(crate) fn parse_n3_doc<S>(_source: S) -> Result<Graph, Error>
 where
     S: AsRef<str>,
 {

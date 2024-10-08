@@ -19,7 +19,7 @@ fn read_example_01() {
     assert!(result.is_ok());
     let graph = result.unwrap();
     println!("{:?}", graph);
-    assert_eq!(graph.borrow().len(), 1);
+    assert_eq!(graph.len(), 1);
 }
 
 #[test]
@@ -41,7 +41,7 @@ fn read_example_02() {
     assert!(result.is_ok());
     let graph = result.unwrap();
     println!("{:?}", graph);
-    assert_eq!(graph.borrow().len(), 2);
+    assert_eq!(graph.len(), 2);
 }
 
 #[test]
@@ -61,5 +61,5 @@ fn read_example_03() {
     assert!(result.is_ok());
     let graph = result.unwrap();
     println!("{:?}", graph);
-    assert_eq!(graph.borrow().len(), 2);
+    assert_eq!(graph.len(), 2);
 }

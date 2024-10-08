@@ -1,11 +1,9 @@
-use rdftk_core::model::graph::{named::GraphName, GraphRef};
-use rdftk_core::model::graph::{NamedGraphRef, PrefixMappingRef};
-use rdftk_core::model::statement::StatementList;
-use rdftk_core::simple::graph::graph_factory;
-use rdftk_core::simple::literal::literal_factory;
-use rdftk_core::simple::mapping::default_mappings;
-use rdftk_core::simple::statement::statement_factory;
-use rdftk_iri::{Iri, IriRef, Name};
+use rdftk_core::model::{
+    graph::{Graph, GraphName, PrefixMapping},
+    literal::Literal,
+    statement::{BlankNode, Statement},
+};
+use rdftk_iri::{Iri, Name};
 use std::str::FromStr;
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -18,103 +16,64 @@ pub enum TonyBennType {
 }
 
 #[allow(dead_code)]
-pub fn tony_benn_named_graph(graph_type: TonyBennType) -> NamedGraphRef {
+pub fn tony_benn_named_graph(graph_type: TonyBennType) -> Graph {
     let name = GraphName::from(Iri::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap());
     let (mappings, statements) = some_tony_benn_graph(graph_type);
-    graph_factory().named_graph_from(Some(name.into()), &statements, Some(mappings))
+    Graph::named(name)
+        .with_mappings(mappings)
+        .with_statements(statements)
 }
 
 #[allow(dead_code)]
-pub fn tony_benn_graph(graph_type: TonyBennType) -> GraphRef {
+pub fn tony_benn_graph(graph_type: TonyBennType) -> Graph {
     let (mappings, statements) = some_tony_benn_graph(graph_type);
-    graph_factory().graph_from(&statements, Some(mappings))
+    Graph::default()
+        .with_mappings(mappings)
+        .with_statements(statements)
 }
 
-fn some_tony_benn_graph(graph_type: TonyBennType) -> (PrefixMappingRef, StatementList) {
-    let mappings = default_mappings();
-    {
-        let mut mut_mappings = mappings.borrow_mut();
-        mut_mappings.insert_rdf();
-        mut_mappings.insert(
-            Name::new_unchecked("dc"),
-            IriRef::from(Iri::from_str("http://purl.org/dc/elements/1.1/").unwrap()),
+fn some_tony_benn_graph(graph_type: TonyBennType) -> (PrefixMapping, Vec<Statement>) {
+    let mut mappings = PrefixMapping::default()
+        .with_rdf()
+        .with_dc_elements()
+        .with_foaf();
+    if graph_type == TonyBennType::TwoTypes {
+        mappings.insert(
+            Name::new_unchecked("fibo-fnd-aap-ppl"),
+            Iri::from_str("https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/People/")
+                .unwrap(),
         );
-        mut_mappings.insert(
-            Name::new_unchecked("foaf"),
-            IriRef::from(Iri::from_str("http://xmlns.com/foaf/0.1/").unwrap()),
-        );
-        if graph_type == TonyBennType::TwoTypes {
-            mut_mappings.insert(
-                Name::new_unchecked("fibo-fnd-aap-ppl"),
-                IriRef::from(
-                    Iri::from_str(
-                        "https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/People/",
-                    )
-                    .unwrap(),
-                ),
-            );
-        }
     }
 
-    let st_factory = statement_factory();
-    let lit_factory = literal_factory();
+    let mut statements = Vec::default();
 
-    let mut statements: StatementList = Default::default();
+    let subject_iri = Iri::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap();
 
-    let subject_iri =
-        IriRef::from(Iri::from_str("http://en.wikipedia.org/wiki/Tony_Benn").unwrap());
-
-    statements.push(
-        st_factory
-            .statement(
-                st_factory.named_subject(subject_iri.clone()),
-                IriRef::from(Iri::from_str("http://purl.org/dc/elements/1.1/title").unwrap()),
-                st_factory.literal_object(lit_factory.literal("Tony Benn")),
-            )
-            .unwrap(),
-    );
-    statements.push(
-        st_factory
-            .statement(
-                st_factory.named_subject(subject_iri.clone()),
-                IriRef::from(Iri::from_str("http://purl.org/dc/elements/1.1/publisher").unwrap()),
-                st_factory.literal_object(lit_factory.literal("Wikipedia")),
-            )
-            .unwrap(),
-    );
-    statements.push(
-        st_factory
-            .statement(
-                st_factory.named_subject(subject_iri),
-                IriRef::from(Iri::from_str("http://purl.org/dc/elements/1.1/description").unwrap()),
-                st_factory.blank_object_named("B1").unwrap(),
-            )
-            .unwrap(),
-    );
-    statements.push(
-        st_factory
-            .statement(
-                st_factory.blank_subject_named("B1").unwrap(),
-                IriRef::from(Iri::from_str("http://xmlns.com/foaf/0.1/name").unwrap()),
-                st_factory.literal_object(lit_factory.literal("Tony Benn")),
-            )
-            .unwrap(),
-    );
-    statements.push(
-        st_factory
-            .statement(
-                st_factory.blank_subject_named("B1").unwrap(),
-                IriRef::from(
-                    Iri::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#type").unwrap(),
-                ),
-                st_factory.named_object(
-                    Iri::from_str("http://xmlns.com/foaf/0.1/Person")
-                        .unwrap()
-                        .into(),
-                ),
-            )
-            .unwrap(),
-    );
+    statements.push(Statement::new(
+        subject_iri.clone(),
+        Iri::from_str("http://purl.org/dc/elements/1.1/title").unwrap(),
+        Literal::plain("Tony Benn"),
+    ));
+    statements.push(Statement::new(
+        subject_iri.clone(),
+        Iri::from_str("http://purl.org/dc/elements/1.1/publisher").unwrap(),
+        Literal::plain("Wikipedia"),
+    ));
+    statements.push(Statement::new(
+        subject_iri,
+        Iri::from_str("http://purl.org/dc/elements/1.1/description").unwrap(),
+        BlankNode::from_str("B1").unwrap(),
+    ));
+    statements.push(Statement::new(
+        BlankNode::from_str("B1").unwrap(),
+        Iri::from_str("http://xmlns.com/foaf/0.1/name").unwrap(),
+        Literal::plain("Tony Benn"),
+    ));
+    statements.push(Statement::new(
+        BlankNode::from_str("B1").unwrap(),
+        Iri::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#type").unwrap(),
+        Iri::from_str("http://xmlns.com/foaf/0.1/Person").unwrap(),
+    ));
     (mappings, statements)
 }
 
@@ -137,26 +96,21 @@ fn some_tony_benn_graph(graph_type: TonyBennType) -> (PrefixMappingRef, Statemen
 ///                          <concept-share-issue-denomination-currency> .
 /// ```
 #[allow(dead_code)]
-pub fn use_cases_graph() -> GraphRef {
-    let mappings = default_mappings();
-    {
-        let mut mut_mappings = mappings.borrow_mut();
-        mut_mappings.insert_rdf();
-        mut_mappings.insert(
+pub fn use_cases_graph() -> Graph {
+    let mappings = PrefixMapping::default()
+        .with_rdf()
+        .with(
             Name::new_unchecked("use-case"),
-            IriRef::from(Iri::from_str("https://ekgf.org/ontology/use-case/").unwrap()),
-        );
-        mut_mappings.insert(
+            Iri::from_str("https://ekgf.org/ontology/use-case/").unwrap(),
+        )
+        .with(
             Name::new_unchecked("test"),
-            IriRef::from(Iri::from_str("https://whatever.org/ontology/test/").unwrap()),
+            Iri::from_str("https://whatever.org/ontology/test/").unwrap(),
         );
-    }
-    let st_factory = statement_factory();
 
-    let mut statements: StatementList = Default::default();
+    let mut statements = Vec::default();
 
-    let subject_iri =
-        IriRef::from(Iri::from_str("https://placeholder.kg/id/use-case-currencies").unwrap());
+    let subject_iri = Iri::from_str("https://placeholder.kg/id/use-case-currencies").unwrap();
 
     for concept_iri in [
         "functional-currency",
@@ -167,39 +121,24 @@ pub fn use_cases_graph() -> GraphRef {
         "functional-currency-label",
         "share-issue-denomination-currency",
     ]
-    .map(|c| {
-        IriRef::from(
-            Iri::from_str(format!("https://placeholder.kg/id/concept-{c}").as_str()).unwrap(),
-        )
-    }) {
-        statements.push(
-            st_factory
-                .statement(
-                    st_factory.named_subject(subject_iri.clone()),
-                    IriRef::from(
-                        Iri::from_str("https://ekgf.org/ontology/use-case/usesConcept").unwrap(),
-                    ),
-                    st_factory.named_object(concept_iri),
-                )
-                .unwrap(),
-        );
+    .map(|c| Iri::from_str(format!("https://placeholder.kg/id/concept-{c}").as_str()).unwrap())
+    {
+        statements.push(Statement::new(
+            subject_iri.clone(),
+            Iri::from_str("https://ekgf.org/ontology/use-case/usesConcept").unwrap(),
+            concept_iri,
+        ));
     }
 
-    statements.push(
-        st_factory
-            .statement(
-                st_factory.named_subject(subject_iri.clone()),
-                IriRef::from(
-                    Iri::from_str("https://whatever.org/ontology/test/predicate").unwrap(),
-                ),
-                st_factory.named_object(IriRef::from(
-                    Iri::from_str("https://whatever.org/ontology/test/whatever").unwrap(),
-                )),
-            )
-            .unwrap(),
-    );
+    statements.push(Statement::new(
+        subject_iri,
+        Iri::from_str("https://whatever.org/ontology/test/predicate").unwrap(),
+        Iri::from_str("https://whatever.org/ontology/test/whatever").unwrap(),
+    ));
 
-    graph_factory().graph_from(&statements, Some(mappings))
+    Graph::default()
+        .with_mappings(mappings)
+        .with_statements(statements)
 }
 
 ///
@@ -229,35 +168,28 @@ pub fn use_cases_graph() -> GraphRef {
 ///   ] .
 /// ```
 #[allow(dead_code)]
-pub fn many_blank_nodes_graph() -> GraphRef {
-    let mappings = default_mappings();
-    {
-        let mut mut_mappings = mappings.borrow_mut();
-        mut_mappings.insert_rdf();
-        mut_mappings.insert_rdfs();
-        mut_mappings.insert(
+pub fn many_blank_nodes_graph() -> Graph {
+    let mappings = PrefixMapping::default()
+        .with_rdf()
+        .with_rdfs()
+        .with(
             Name::new_unchecked("use-case"),
-            IriRef::from(Iri::from_str("https://ekgf.org/ontology/use-case/").unwrap()),
-        );
-        mut_mappings.insert(
+            Iri::from_str("https://ekgf.org/ontology/use-case/").unwrap(),
+        )
+        .with(
             Name::new_unchecked("concept"),
-            IriRef::from(Iri::from_str("https://ekgf.org/ontology/concept/").unwrap()),
-        );
-        mut_mappings.insert(
+            Iri::from_str("https://ekgf.org/ontology/concept/").unwrap(),
+        )
+        .with(
             Name::new_unchecked("graph"),
-            IriRef::from(Iri::from_str("https://yourcompany.com/graph/").unwrap()),
+            Iri::from_str("https://yourcompany.com/graph/").unwrap(),
         );
-    }
-    let st_factory = statement_factory();
-    let li_factory = literal_factory();
 
-    let mut statements: StatementList = Default::default();
+    let mut statements = Vec::default();
 
-    let subject_iri =
-        IriRef::from(Iri::from_str("https://yourcompany.com/id/use-case-currencies").unwrap());
+    let subject_iri = Iri::from_str("https://yourcompany.com/id/use-case-currencies").unwrap();
 
-    let concept_type_iri =
-        IriRef::from(Iri::from_str("https://ekgf.org/ontology/concept/Concept").unwrap());
+    let concept_type_iri = Iri::from_str("https://ekgf.org/ontology/concept/Concept").unwrap();
 
     for concept_label in [
         "Capital Raise Currency",
@@ -265,41 +197,25 @@ pub fn many_blank_nodes_graph() -> GraphRef {
         "Currency Search Text",
         "Currency Tag",
     ] {
-        let bn = st_factory.blank_object_new();
-        statements.push(
-            st_factory
-                .statement(
-                    st_factory.named_subject(subject_iri.clone()),
-                    IriRef::from(
-                        Iri::from_str("https://ekgf.org/ontology/use-case/usesConcept").unwrap(),
-                    ),
-                    bn.clone(),
-                )
-                .unwrap(),
-        );
-        statements.push(
-            st_factory
-                .statement(
-                    st_factory.object_as_subject(bn.clone()).unwrap(),
-                    IriRef::from(
-                        Iri::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#type").unwrap(),
-                    ),
-                    st_factory.named_object(concept_type_iri.clone()),
-                )
-                .unwrap(),
-        );
-        statements.push(
-            st_factory
-                .statement(
-                    st_factory.object_as_subject(bn.clone()).unwrap(),
-                    IriRef::from(
-                        Iri::from_str("http://www.w3.org/2000/01/rdf-schema#label").unwrap(),
-                    ),
-                    st_factory.literal_object(li_factory.literal(concept_label)),
-                )
-                .unwrap(),
-        );
+        let bn = BlankNode::generate();
+        statements.push(Statement::new(
+            subject_iri.clone(),
+            Iri::from_str("https://ekgf.org/ontology/use-case/usesConcept").unwrap(),
+            bn.clone(),
+        ));
+        statements.push(Statement::new(
+            bn.clone(),
+            Iri::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#type").unwrap(),
+            concept_type_iri.clone(),
+        ));
+        statements.push(Statement::new(
+            bn,
+            Iri::from_str("http://www.w3.org/2000/01/rdf-schema#label").unwrap(),
+            Literal::plain(concept_label),
+        ));
     }
 
-    graph_factory().graph_from(&statements, Some(mappings))
+    Graph::default()
+        .with_mappings(mappings)
+        .with_statements(statements)
 }

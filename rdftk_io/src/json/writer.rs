@@ -5,7 +5,7 @@ use crate::json::syntax::{
 use crate::json::NAME;
 use objio::{impl_has_options, ObjectWriter};
 use rdftk_core::error::{rdf_star_not_supported_error, Error};
-use rdftk_core::model::graph::GraphRef;
+use rdftk_core::model::graph::Graph;
 use serde_json::{Map, Value};
 use std::io::Write;
 use tracing::error;
@@ -49,15 +49,13 @@ impl JsonOptions {
 
 impl_has_options!(JsonWriter, JsonOptions);
 
-impl ObjectWriter<GraphRef> for JsonWriter {
+impl ObjectWriter<Graph> for JsonWriter {
     type Error = Error;
 
-    fn write<W>(&self, w: &mut W, object: &GraphRef) -> Result<(), Self::Error>
+    fn write<W>(&self, w: &mut W, graph: &Graph) -> Result<(), Self::Error>
     where
         W: Write,
     {
-        let graph = object.borrow();
-
         let mut json_graph = Map::new();
         for subject in graph.subjects() {
             let mut predicate_map = Map::new();
@@ -74,14 +72,14 @@ impl ObjectWriter<GraphRef> for JsonWriter {
                             OBJ_KEY_VALUE.to_string(),
                             Value::String(object.as_blank().unwrap().to_string()),
                         );
-                    } else if object.is_iri() {
+                    } else if object.is_resource() {
                         let _ = object_map.insert(
                             OBJ_KEY_TYPE.to_string(),
                             Value::String(OBJ_TYPE_URI.to_string()),
                         );
                         let _ = object_map.insert(
                             OBJ_KEY_VALUE.to_string(),
-                            Value::String(object.as_iri().unwrap().to_string()),
+                            Value::String(object.as_resource().unwrap().to_string()),
                         );
                     } else if object.is_literal() {
                         let literal = object.as_literal().unwrap();

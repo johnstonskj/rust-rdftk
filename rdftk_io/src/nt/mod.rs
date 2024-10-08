@@ -9,8 +9,8 @@ format.
 ```rust
 use rdftk_io::nt::NTripleWriter;
 # use objio::ObjectWriter;
-# use rdftk_core::model::graph::GraphRef;
-# fn make_graph() -> GraphRef { rdftk_core::simple::graph::graph_factory().graph() }
+# use rdftk_core::model::graph::Graph;
+# fn make_graph() -> Graph { Graph::default() }
 
 let writer = NTripleWriter::default();
 
@@ -37,7 +37,7 @@ pub const MIME_TYPE: &str = "application/n-triples";
 // ------------------------------------------------------------------------------------------------
 
 mod reader;
-pub use reader::{NTripleReader, NTripleReaderOptions};
+pub use reader::NTripleReader;
 
 mod writer;
 pub use writer::NTripleWriter;

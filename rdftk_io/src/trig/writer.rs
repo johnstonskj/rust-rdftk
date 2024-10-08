@@ -1,7 +1,8 @@
-use crate::turtle::TurtleOptions;
+use crate::turtle::TurtleWriterOptions;
 use objio::{impl_has_options, HasOptions, ObjectWriter};
 use rdftk_core::error::Error;
-use rdftk_core::model::{data_set::DataSetRef, graph::NamedGraphRef};
+use rdftk_core::model::data_set::DataSet;
+use rdftk_core::model::graph::Graph;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -9,7 +10,7 @@ use rdftk_core::model::{data_set::DataSetRef, graph::NamedGraphRef};
 
 #[derive(Debug, Default)]
 pub struct TrigWriterOptions {
-    turtle: TurtleOptions,
+    turtle: TurtleWriterOptions,
     omit_graph_keyword: bool,
 }
 
@@ -22,8 +23,8 @@ pub struct TrigWriter {
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl From<TurtleOptions> for TrigWriterOptions {
-    fn from(value: TurtleOptions) -> Self {
+impl From<TurtleWriterOptions> for TrigWriterOptions {
+    fn from(value: TurtleWriterOptions) -> Self {
         Self {
             turtle: value,
             ..Default::default()
@@ -31,8 +32,8 @@ impl From<TurtleOptions> for TrigWriterOptions {
     }
 }
 
-impl AsRef<TurtleOptions> for TrigWriterOptions {
-    fn as_ref(&self) -> &TurtleOptions {
+impl AsRef<TurtleWriterOptions> for TrigWriterOptions {
+    fn as_ref(&self) -> &TurtleWriterOptions {
         &self.turtle
     }
 }
@@ -58,14 +59,13 @@ impl TrigWriterOptions {
 
 impl_has_options!(TrigWriter, TrigWriterOptions);
 
-impl ObjectWriter<DataSetRef> for TrigWriter {
+impl ObjectWriter<DataSet> for TrigWriter {
     type Error = Error;
 
-    fn write<W>(&self, w: &mut W, data_set: &DataSetRef) -> Result<(), Self::Error>
+    fn write<W>(&self, w: &mut W, data_set: &DataSet) -> Result<(), Self::Error>
     where
         W: std::io::Write,
     {
-        let data_set = data_set.borrow();
         for graph in data_set.graphs() {
             self.write(w, graph)?;
         }
@@ -73,14 +73,13 @@ impl ObjectWriter<DataSetRef> for TrigWriter {
     }
 }
 
-impl ObjectWriter<NamedGraphRef> for TrigWriter {
+impl ObjectWriter<Graph> for TrigWriter {
     type Error = Error;
 
-    fn write<W>(&self, w: &mut W, graph: &NamedGraphRef) -> Result<(), Self::Error>
+    fn write<W>(&self, w: &mut W, graph: &Graph) -> Result<(), Self::Error>
     where
         W: std::io::prelude::Write,
     {
-        let graph = graph.borrow();
         if let Some(name) = graph.name() {
             if !self.options().omit_graph_keyword() {
                 w.write_all(b"GRAPH ")?;

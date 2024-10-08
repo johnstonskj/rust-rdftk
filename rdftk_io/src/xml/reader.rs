@@ -5,11 +5,10 @@ use crate::xml::syntax::{
 };
 use objio::ObjectReader;
 use rdftk_core::error::{invalid_state_error, Error};
-use rdftk_core::model::graph::{GraphFactoryRef, GraphRef};
-use rdftk_core::model::literal::{DataType, LanguageTag};
-use rdftk_core::model::statement::SubjectNodeRef;
-use rdftk_core::simple::graph_factory;
-use rdftk_iri::{Iri, IriRef};
+use rdftk_core::model::graph::Graph;
+use rdftk_core::model::literal::{DataType, LanguageTag, Literal};
+use rdftk_core::model::statement::{BlankNode, Statement, SubjectNode};
+use rdftk_iri::Iri;
 use rdftk_names::rdf;
 use std::io::Read;
 use std::str::FromStr;
@@ -42,7 +41,7 @@ struct ExpectedName {
 #[derive(Clone, Debug)]
 enum SubjectType {
     BlankNamed(String),
-    Resource(IriRef),
+    Resource(Iri),
     RelativeResource(String),
 }
 
@@ -57,10 +56,10 @@ enum ParseType {
 struct Attributes<'a> {
     subject_type: Option<SubjectType>,
     parse_type: Option<ParseType>,
-    uri_base: Option<IriRef>,
-    data_type: Option<IriRef>,
+    uri_base: Option<Iri>,
+    data_type: Option<Iri>,
     language: Option<LanguageTag>,
-    resource: Option<IriRef>,
+    resource: Option<Iri>,
     inner: Vec<&'a OwnedAttribute>,
 }
 
@@ -68,15 +67,15 @@ struct Attributes<'a> {
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl ObjectReader<GraphRef> for XmlReader {
+impl ObjectReader<Graph> for XmlReader {
     type Error = Error;
 
-    fn read<R>(&self, r: &mut R) -> Result<GraphRef, Error>
+    fn read<R>(&self, r: &mut R) -> Result<Graph, Error>
     where
         R: Read,
     {
         let mut event_reader = EventReader::new(r);
-        parse_document(&mut event_reader, graph_factory())
+        parse_document(&mut event_reader)
     }
 }
 
@@ -131,11 +130,8 @@ macro_rules! error_event {
     };
 }
 
-fn parse_document<R: Read>(
-    event_reader: &mut EventReader<&mut R>,
-    factory: GraphFactoryRef,
-) -> Result<GraphRef, Error> {
-    let mut graph = factory.graph();
+fn parse_document<R: Read>(event_reader: &mut EventReader<&mut R>) -> Result<Graph, Error> {
+    let mut graph = Graph::default();
     let rdf_element = ExpectedName::new(ELEMENT_RDF, rdf::namespace_str());
 
     loop {
@@ -175,12 +171,12 @@ fn parse_document<R: Read>(
 
 fn parse_subject_element<R: Read>(
     event_reader: &mut EventReader<&mut R>,
-    xml_base: &Option<IriRef>,
-    _subject: Option<&SubjectNodeRef>,
-    graph: &mut GraphRef,
-) -> Result<Option<SubjectNodeRef>, Error> {
+    xml_base: &Option<Iri>,
+    _subject: Option<&SubjectNode>,
+    graph: &mut Graph,
+) -> Result<Option<SubjectNode>, Error> {
     let description_element = ExpectedName::new(ELEMENT_DESCRIPTION, rdf::namespace_str());
-    let mut subject: Option<SubjectNodeRef> = None;
+    let mut subject: Option<SubjectNode> = None;
     loop {
         let event = event_reader.next();
         match &event {
@@ -191,48 +187,32 @@ fn parse_subject_element<R: Read>(
             }) => {
                 trace_event!("parse_subject_element" => event);
                 let attributes = parse_attributes(attributes)?;
-                let subject_node = match &attributes.subject_type {
+                let subject_node: SubjectNode = match &attributes.subject_type {
                     None => {
                         // SPEC: §2.1 Introduction
-                        graph.borrow().statement_factory().blank_subject_new()
+                        BlankNode::generate().into()
                     }
                     Some(SubjectType::Resource(subject)) => {
                         // SPEC: §2.2 Node Elements and Property Elements
-                        graph
-                            .borrow()
-                            .statement_factory()
-                            .named_subject(subject.clone())
+                        subject.clone().into()
                     }
                     Some(SubjectType::RelativeResource(subject)) => {
                         // SPEC: 2.14 Abbreviating URIs: rdf:ID and xml:base
                         let uri = format!("{}{}", xml_base.as_ref().unwrap(), subject);
-                        graph
-                            .borrow()
-                            .statement_factory()
-                            .named_subject(value_to_iri(&uri)?)
+                        value_to_iri(&uri)?.into()
                     }
                     Some(SubjectType::BlankNamed(subject)) => {
                         // SPEC: §2.10 Identifying Blank Nodes: rdf:nodeID
-                        graph
-                            .borrow()
-                            .statement_factory()
-                            .blank_subject_named(subject)
-                            .unwrap()
+                        BlankNode::from_str(subject)?.into()
                     }
                 };
                 if !description_element.matches(name) {
                     // SPEC: §2.13 Typed Node Elements
-                    let statement_factory = graph.borrow().statement_factory();
-                    let mut graph = graph.borrow_mut();
-                    graph.insert(
-                        statement_factory
-                            .statement(
-                                subject_node.clone(),
-                                rdf::a_type().clone(),
-                                statement_factory.named_object(name_to_iri(name)?),
-                            )
-                            .unwrap(),
-                    );
+                    graph.insert(Statement::new(
+                        subject_node.clone(),
+                        rdf::a_type().clone(),
+                        name_to_iri(name)?,
+                    ));
                 }
                 parse_predicate_attributes(&attributes.inner, &subject_node, graph)?;
                 parse_predicate_element(
@@ -264,23 +244,23 @@ fn parse_subject_element<R: Read>(
 }
 
 #[inline]
-fn name_to_iri(name: &OwnedName) -> Result<IriRef, Error> {
-    Ok(IriRef::new(Iri::from_str(&format!(
+fn name_to_iri(name: &OwnedName) -> Result<Iri, Error> {
+    Ok(Iri::from_str(&format!(
         "{}{}",
         name.namespace.as_ref().unwrap(),
         name.local_name
-    ))?))
+    ))?)
 }
 
 #[inline]
-fn value_to_iri(name: &str) -> Result<IriRef, Error> {
-    Ok(IriRef::new(Iri::from_str(name)?))
+fn value_to_iri(name: &str) -> Result<Iri, Error> {
+    Ok(Iri::from_str(name)?)
 }
 
 fn parse_predicate_attributes(
     attributes: &[&OwnedAttribute],
-    subject: &SubjectNodeRef,
-    graph: &mut GraphRef,
+    subject: &SubjectNode,
+    graph: &mut Graph,
 ) -> Result<(), Error> {
     // SPEC: §2.5 Property Attributes
     // SPEC: §2.12 Omitting Nodes: Property Attributes on an empty Property Element
@@ -289,27 +269,20 @@ fn parse_predicate_attributes(
             "XmlReader::parse_predicate_attributes attribute: {:?}",
             attribute
         );
-        let statement_factory = graph.borrow().statement_factory();
-        let literal_factory = graph.borrow().literal_factory();
-        let mut graph = graph.borrow_mut();
-        graph.insert(
-            statement_factory
-                .statement(
-                    subject.clone(),
-                    name_to_iri(&attribute.name)?,
-                    statement_factory.literal_object(literal_factory.literal(&attribute.value)),
-                )
-                .unwrap(),
-        );
+        graph.insert(Statement::new(
+            subject.clone(),
+            name_to_iri(&attribute.name)?,
+            Literal::plain(&attribute.value),
+        ));
     }
     Ok(())
 }
 
 fn parse_predicate_element<R: Read>(
     event_reader: &mut EventReader<&mut R>,
-    xml_base: &Option<IriRef>,
-    subject: &SubjectNodeRef,
-    graph: &mut GraphRef,
+    xml_base: &Option<Iri>,
+    subject: &SubjectNode,
+    graph: &mut Graph,
 ) -> Result<(), Error> {
     let mut no_child_elements = false;
     loop {
@@ -327,22 +300,14 @@ fn parse_predicate_element<R: Read>(
                 let attributes = parse_attributes(attributes)?;
                 if let Some(resource) = attributes.resource {
                     // SPEC: §2.4 Empty Property Elements
-                    let statement_factory = graph.borrow().statement_factory();
-                    let mut graph = graph.borrow_mut();
-                    graph.insert(
-                        statement_factory
-                            .statement(
-                                subject.clone(),
-                                name_to_iri(name)?,
-                                statement_factory.named_object(resource),
-                            )
-                            .unwrap(),
-                    );
+                    graph.insert(Statement::new(
+                        subject.clone(),
+                        name_to_iri(name)?,
+                        resource,
+                    ));
                     // set outer loop value
                     no_child_elements = true;
                 } else {
-                    let statement_factory = graph.borrow().statement_factory();
-                    let literal_factory = graph.borrow().literal_factory();
                     match attributes.parse_type {
                         None => {
                             if let Some(content) =
@@ -350,23 +315,18 @@ fn parse_predicate_element<R: Read>(
                             {
                                 let literal = if let Some(data_type) = attributes.data_type {
                                     // SPEC: §2.9 Typed Literals: rdf:datatype
-                                    literal_factory
-                                        .with_data_type(&content, DataType::from(data_type))
+                                    Literal::with_data_type(&content, DataType::from(data_type))
                                 } else if let Some(language) = attributes.language {
                                     // SPEC: §2.7 Languages: xml:lang
-                                    literal_factory.with_language(&content, language)
+                                    Literal::with_language(&content, language)
                                 } else {
-                                    literal_factory.literal(&content)
+                                    Literal::plain(&content)
                                 };
-                                graph.borrow_mut().insert(
-                                    statement_factory
-                                        .statement(
-                                            subject.clone(),
-                                            name_to_iri(name)?,
-                                            statement_factory.literal_object(literal),
-                                        )
-                                        .unwrap(),
-                                );
+                                graph.insert(Statement::new(
+                                    subject.clone(),
+                                    name_to_iri(name)?,
+                                    literal,
+                                ));
                             }
                         }
                         Some(ParseType::XmlLiteral) => {
@@ -374,22 +334,15 @@ fn parse_predicate_element<R: Read>(
                             let content = parse_xml_literal_element(event_reader)?
                                 .replace('<', "&lt;")
                                 .replace('>', "&gt;");
-                            graph.borrow_mut().insert(
-                                statement_factory
-                                    .statement(
-                                        subject.clone(),
-                                        name_to_iri(name)?,
-                                        statement_factory.literal_object(
-                                            literal_factory
-                                                .with_data_type(&content, DataType::XmlLiteral),
-                                        ),
-                                    )
-                                    .unwrap(),
-                            );
+                            graph.insert(Statement::new(
+                                subject.clone(),
+                                name_to_iri(name)?,
+                                Literal::with_data_type(&content, DataType::XmlLiteral),
+                            ));
                         }
                         Some(ParseType::Resource) => {
                             // SPEC: §2.11 Omitting Blank Nodes: rdf:parseType="Resource"
-                            let subject_node = statement_factory.blank_subject_new();
+                            let subject_node = BlankNode::generate().into();
                             //parse_predicate_attributes(&attributes.inner, &subject_node, graph)?;
                             let _subject = parse_subject_element(
                                 event_reader,
@@ -425,8 +378,8 @@ fn parse_predicate_element<R: Read>(
 
 fn parse_object_element<R: Read>(
     event_reader: &mut EventReader<&mut R>,
-    xml_base: &Option<IriRef>,
-    graph: &mut GraphRef,
+    xml_base: &Option<Iri>,
+    graph: &mut Graph,
 ) -> Result<Option<String>, Error> {
     let mut content = String::new();
     let mut has_elements = false;
@@ -446,7 +399,7 @@ fn parse_object_element<R: Read>(
                 // set outer loop value
                 has_elements = true;
                 let attributes = parse_attributes(attributes)?;
-                let subject_node = graph.borrow().statement_factory().blank_subject_new();
+                let subject_node = BlankNode::generate().into();
                 let _subject = parse_subject_element(
                     event_reader,
                     if attributes.uri_base.is_some() {

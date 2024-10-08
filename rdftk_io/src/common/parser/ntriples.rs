@@ -1,12 +1,10 @@
 use super::Rule;
 use pest::iterators::Pair;
 use rdftk_core::error::Error;
-use rdftk_core::model::graph::{GraphFactoryRef, GraphRef};
-use rdftk_core::model::literal::{DataType, LanguageTag, LiteralFactoryRef, LiteralRef};
-use rdftk_core::model::statement::{
-    ObjectNodeRef, StatementFactoryRef, StatementRef, SubjectNodeRef,
-};
-use rdftk_iri::{Iri, IriRef};
+use rdftk_core::model::graph::Graph;
+use rdftk_core::model::literal::{DataType, LanguageTag, Literal};
+use rdftk_core::model::statement::{BlankNode, ObjectNode, Statement, SubjectNode};
+use rdftk_iri::Iri;
 use regex::Regex;
 use std::str::FromStr;
 
@@ -14,24 +12,16 @@ use std::str::FromStr;
 // Public Functions
 // ------------------------------------------------------------------------------------------------
 
-pub(super) fn parse_doc(
-    input_pair: Pair<'_, Rule>,
-    factory: GraphFactoryRef,
-) -> Result<GraphRef, Error> {
+pub(super) fn parse_doc(input_pair: Pair<'_, Rule>) -> Result<Graph, Error> {
     parse_rule!("parse_doc" entry input_pair);
 
-    let graph = factory.graph();
+    let mut graph = Graph::default();
 
     if input_pair.as_rule() == Rule::ntripleDoc {
         for inner_pair in input_pair.into_inner() {
             match inner_pair.as_rule() {
                 Rule::ntriple => {
-                    let mut graph = graph.borrow_mut();
-                    let st = triple(
-                        inner_pair,
-                        &graph.statement_factory(),
-                        &graph.literal_factory(),
-                    )?;
+                    let st = triple(inner_pair)?;
                     graph.insert(st);
                 }
                 Rule::EOI => {
@@ -54,39 +44,32 @@ pub(super) fn parse_doc(
     unreachable!()
 }
 
-fn triple(
-    input_pair: Pair<'_, Rule>,
-    statements: &StatementFactoryRef,
-    literals: &LiteralFactoryRef,
-) -> Result<StatementRef, Error> {
+fn triple(input_pair: Pair<'_, Rule>) -> Result<Statement, Error> {
     parse_rule!("triple" entry input_pair);
 
     if input_pair.as_rule() == Rule::ntriple {
         let mut inner_pairs = input_pair.into_inner();
-        let subject = subject(inner_pairs.next().unwrap(), statements)?;
+        let subject = subject(inner_pairs.next().unwrap())?;
         let predicate = predicate(inner_pairs.next().unwrap())?;
-        let object = object(inner_pairs.next().unwrap(), statements, literals)?;
-        statements.statement(subject, predicate, object)
+        let object = object(inner_pairs.next().unwrap())?;
+        Ok(Statement::new(subject, predicate, object))
     } else {
         Err(pest_error!(unexpected RULE_FN, &input_pair, [Rule::ntriple]))
     }
 }
 
-pub(crate) fn subject(
-    input_pair: Pair<'_, Rule>,
-    factory: &StatementFactoryRef,
-) -> Result<SubjectNodeRef, Error> {
+pub(crate) fn subject(input_pair: Pair<'_, Rule>) -> Result<SubjectNode, Error> {
     parse_rule!("nt_subject" entry input_pair);
 
     if input_pair.as_rule() == Rule::ntripleSubject {
         let inner_pair = input_pair.into_inner().next().unwrap();
         match inner_pair.as_rule() {
-            Rule::IRIREF => Ok(factory.named_subject(iri_ref(inner_pair)?)),
+            Rule::IRIREF => Ok(iri_ref(inner_pair)?.into()),
             Rule::blankNode => {
                 let node = inner_pair.as_str().to_string();
                 // strip the leading '_:'
                 let node = &node[2..];
-                factory.blank_subject_named(node)
+                Ok(BlankNode::from_str(node)?.into())
             }
             _ => Err(pest_error!(
                 unexpected
@@ -100,7 +83,7 @@ pub(crate) fn subject(
     }
 }
 
-pub(crate) fn predicate(input_pair: Pair<'_, Rule>) -> Result<IriRef, Error> {
+pub(crate) fn predicate(input_pair: Pair<'_, Rule>) -> Result<Iri, Error> {
     parse_rule!("predicate" entry input_pair);
 
     if input_pair.as_rule() == Rule::ntriplePredicate {
@@ -115,26 +98,22 @@ pub(crate) fn predicate(input_pair: Pair<'_, Rule>) -> Result<IriRef, Error> {
     }
 }
 
-pub(crate) fn object(
-    input_pair: Pair<'_, Rule>,
-    factory: &StatementFactoryRef,
-    literals: &LiteralFactoryRef,
-) -> Result<ObjectNodeRef, Error> {
+pub(crate) fn object(input_pair: Pair<'_, Rule>) -> Result<ObjectNode, Error> {
     parse_rule!("object" entry input_pair);
 
     if input_pair.as_rule() == Rule::ntripleObject {
         let inner_pair = input_pair.into_inner().next().unwrap();
         match inner_pair.as_rule() {
-            Rule::IRIREF => Ok(factory.named_object(iri_ref(inner_pair)?)),
+            Rule::IRIREF => Ok(iri_ref(inner_pair)?.into()),
             Rule::blankNode => {
                 let node = inner_pair.as_str().to_string();
                 // strip the leading '_:'
                 let node = &node[2..];
-                Ok(factory.blank_object_named(node)?)
+                Ok(BlankNode::from_str(node)?.into())
             }
             Rule::ntripleLiteral => {
-                let literal = literal(inner_pair, literals)?;
-                Ok(factory.literal_object(literal))
+                let literal = literal(inner_pair)?;
+                Ok(literal.into())
             }
             _ => Err(pest_error!(
                  unexpected
@@ -148,21 +127,18 @@ pub(crate) fn object(
     }
 }
 
-fn literal(input_pair: Pair<'_, Rule>, literals: &LiteralFactoryRef) -> Result<LiteralRef, Error> {
+fn literal(input_pair: Pair<'_, Rule>) -> Result<Literal, Error> {
     parse_rule!("literal" entry input_pair);
 
     if input_pair.as_rule() == Rule::ntripleLiteral {
         let inner_pair = input_pair.into_inner().next().unwrap();
-        rdf_literal(inner_pair, literals)
+        rdf_literal(inner_pair)
     } else {
         Err(pest_error!(unexpected RULE_FN, &input_pair, [Rule::ntripleObject]))
     }
 }
 
-fn rdf_literal(
-    input_pair: Pair<'_, Rule>,
-    literals: &LiteralFactoryRef,
-) -> Result<LiteralRef, Error> {
+fn rdf_literal(input_pair: Pair<'_, Rule>) -> Result<Literal, Error> {
     parse_rule!("rdf_literal" entry input_pair);
 
     if input_pair.as_rule() == Rule::ntripleRdfLiteral {
@@ -173,11 +149,11 @@ fn rdf_literal(
             match other.as_rule() {
                 Rule::IRIREF => {
                     let data_type = DataType::Other(iri_ref(other)?);
-                    Ok(literals.with_data_type(&lexical_form, data_type))
+                    Ok(Literal::with_data_type(&lexical_form, data_type))
                 }
                 Rule::LANGTAG => {
                     let lang_tag = lang_tag(other)?;
-                    Ok(literals.with_language(&lexical_form, lang_tag))
+                    Ok(Literal::with_language(&lexical_form, lang_tag))
                 }
                 _ => Err(pest_error!(
                     unexpected
@@ -187,7 +163,7 @@ fn rdf_literal(
                 )),
             }
         } else {
-            Ok(literals.literal(&lexical_form))
+            Ok(Literal::plain(&lexical_form))
         }
     } else {
         Err(pest_error!(unexpected RULE_FN, &input_pair, [Rule::ntripleRdfLiteral]))
@@ -225,14 +201,14 @@ fn string(input_pair: Pair<'_, Rule>) -> Result<String, Error> {
     }
 }
 
-fn iri_ref(input_pair: Pair<'_, Rule>) -> Result<IriRef, Error> {
+fn iri_ref(input_pair: Pair<'_, Rule>) -> Result<Iri, Error> {
     parse_rule!("iri_ref" entry input_pair);
 
     if input_pair.as_rule() == Rule::IRIREF {
         let iri = input_pair.as_str().to_string();
         // strip the '<' and '>' characters.
         let iri_str = unescape_iri(&iri[1..iri.len() - 1]);
-        Ok(IriRef::new(Iri::from_str(&iri_str)?))
+        Ok(Iri::from_str(&iri_str)?)
     } else {
         Err(pest_error!(unexpected RULE_FN, &input_pair, [Rule::IRIREF]))
     }
@@ -247,7 +223,7 @@ fn lang_tag(input_pair: Pair<'_, Rule>) -> Result<LanguageTag, Error> {
         // strip the leading '@'
         let tag = &tag[1..];
         println!("**{tag}**");
-        Ok(LanguageTag::from_str(tag)?)
+        Ok(LanguageTag::parse(tag)?)
     } else {
         Err(pest_error!(unexpected RULE_FN, &input_pair, [Rule::LANGTAG]))
     }
