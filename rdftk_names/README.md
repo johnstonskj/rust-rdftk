@@ -74,11 +74,15 @@ namespace! {
 
 ## Changes
 
+### Version 0.2.3
+
+* Feature: added missing `date` and `hex_binary` names in `xsd` namespace.
+
 ### Version 0.2.2
 
-* Feat: rename `namespace_uri` to simply `namespace`.
-* Feat: new version of the iri package requires validation of names.
-* Feat: add new `$name _str` function for namespace members.
+* Feature: rename `namespace_uri` to simply `namespace`.
+* Feature: new version of the iri package requires validation of names.
+* Feature: add new `$name _str` function for namespace members.
 
 ### Version 0.2.1
 * Build: cargo audit/outdated/udeps

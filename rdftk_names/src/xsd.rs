@@ -8,6 +8,7 @@ namespace! {
     {
         any_uri, "anyURI",
         base64_binary, "base64Binary",
+        date, "date",
         date_time, "dateTime",
         date_time_stamp, "dateTimeStamp",
         day_time_duration, "dayTimeDuration",
@@ -19,6 +20,7 @@ namespace! {
         g_month_day, "gMonthDay",
         g_year, "gYear",
         g_year_month, "gYearMonth",
+        hex_binary, "hexBinary",
         id, "ID",
         id_ref, "IDREF",
         id_refs, "IDREFS",
