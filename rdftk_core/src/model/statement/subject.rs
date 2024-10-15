@@ -21,6 +21,12 @@ pub enum SubjectNode {
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
+impl From<&SubjectNode> for SubjectNode {
+    fn from(v: &SubjectNode) -> Self {
+        v.clone()
+    }
+}
+
 impl From<BlankNode> for SubjectNode {
     fn from(v: BlankNode) -> Self {
         Self::Blank(v)

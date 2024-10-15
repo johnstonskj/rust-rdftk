@@ -23,6 +23,12 @@ pub enum ObjectNode {
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
+impl From<&ObjectNode> for ObjectNode {
+    fn from(v: &ObjectNode) -> Self {
+        v.clone()
+    }
+}
+
 impl From<BlankNode> for ObjectNode {
     fn from(v: BlankNode) -> Self {
         Self::Blank(v)

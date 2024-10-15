@@ -376,6 +376,12 @@ impl From<Iri> for Literal {
     }
 }
 
+impl From<&Iri> for Literal {
+    fn from(v: &Iri) -> Self {
+        Self::from(v.clone())
+    }
+}
+
 impl PartialEq<Iri> for Literal {
     fn eq(&self, other: &Iri) -> bool {
         *self.lexical_form() == other.to_string() && self.data_type() == Some(&DataType::Iri)
@@ -470,6 +476,13 @@ impl From<rust_decimal::Decimal> for Literal {
 }
 
 #[cfg(feature = "decimal_types")]
+impl From<&rust_decimal::Decimal> for Literal {
+    fn from(v: &rust_decimal::Decimal) -> Self {
+        Self::from(*v)
+    }
+}
+
+#[cfg(feature = "decimal_types")]
 impl PartialEq<rust_decimal::Decimal> for Literal {
     fn eq(&self, other: &rust_decimal::Decimal) -> bool {
         *self.lexical_form() == other.to_string() && self.data_type() == Some(&DataType::Decimal)
@@ -511,10 +524,23 @@ impl From<Duration> for Literal {
     }
 }
 
+impl From<&Duration> for Literal {
+    fn from(v: &Duration) -> Self {
+        Self::from(*v)
+    }
+}
+
 #[cfg(feature = "chrono_types")]
 impl From<chrono::Duration> for Literal {
     fn from(v: chrono::Duration) -> Self {
         Self::with_data_type(v.to_string(), DataType::Duration)
+    }
+}
+
+#[cfg(feature = "chrono_types")]
+impl From<&chrono::Duration> for Literal {
+    fn from(v: &chrono::Duration) -> Self {
+        Self::from(*v)
     }
 }
 
@@ -555,6 +581,12 @@ impl PartialEq<f32> for Literal {
 impl From<QName> for Literal {
     fn from(v: QName) -> Self {
         Self::with_data_type(v, DataType::QName)
+    }
+}
+
+impl From<&QName> for Literal {
+    fn from(v: &QName) -> Self {
+        Self::from(v.clone())
     }
 }
 
@@ -753,6 +785,12 @@ impl PartialEq<LanguageTag> for Literal {
 impl From<Name> for Literal {
     fn from(v: Name) -> Self {
         Self::with_data_type(v, DataType::Name)
+    }
+}
+
+impl From<&Name> for Literal {
+    fn from(v: &Name) -> Self {
+        Self::from(v.clone())
     }
 }
 

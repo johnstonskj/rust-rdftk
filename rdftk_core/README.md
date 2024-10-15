@@ -52,6 +52,10 @@ pub fn make_statements() -> StatementList {
 
 ## Changes
 
+### Version 0.5.1
+
+* Feature: added more `From` implementations for statement nodes.
+
 ### Version 0.5.0
 
 This is a radical refactor as the complexity of traits was adding more cost than
