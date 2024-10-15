@@ -6,6 +6,8 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io::Write;
 
+use crate::GraphWriter;
+
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
@@ -348,6 +350,8 @@ impl ObjectWriter<Graph> for DotWriter {
         Ok(())
     }
 }
+
+impl GraphWriter for DotWriter {}
 
 impl DotWriter {
     ///

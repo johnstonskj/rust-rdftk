@@ -65,6 +65,18 @@ Each module will also provide public constants `NAME`, `FILE_EXTENSION`, and `MI
     dyn_drop,
 )]
 
+use objio::ObjectWriter;
+use rdftk_core::model::data_set::DataSet;
+use rdftk_core::model::graph::Graph;
+
+// ------------------------------------------------------------------------------------------------
+// Public Types
+// ------------------------------------------------------------------------------------------------
+
+pub trait GraphWriter: ObjectWriter<Graph, Error = rdftk_core::error::Error> {}
+
+pub trait DataSetWriter: ObjectWriter<DataSet, Error = rdftk_core::error::Error> {}
+
 // ------------------------------------------------------------------------------------------------
 // Modules
 // ------------------------------------------------------------------------------------------------

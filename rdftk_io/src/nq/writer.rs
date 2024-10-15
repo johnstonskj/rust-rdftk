@@ -4,6 +4,8 @@ use rdftk_core::model::data_set::DataSet;
 use rdftk_core::model::graph::Graph;
 use std::io::Write;
 
+use crate::GraphWriter;
+
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
@@ -54,3 +56,5 @@ impl ObjectWriter<Graph> for NQuadWriter {
         Ok(())
     }
 }
+
+impl GraphWriter for NQuadWriter {}

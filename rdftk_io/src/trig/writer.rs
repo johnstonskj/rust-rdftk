@@ -1,4 +1,5 @@
 use crate::turtle::TurtleWriterOptions;
+use crate::{DataSetWriter, GraphWriter};
 use objio::{impl_has_options, HasOptions, ObjectWriter};
 use rdftk_core::error::Error;
 use rdftk_core::model::data_set::DataSet;
@@ -73,6 +74,8 @@ impl ObjectWriter<DataSet> for TrigWriter {
     }
 }
 
+impl DataSetWriter for TrigWriter {}
+
 impl ObjectWriter<Graph> for TrigWriter {
     type Error = Error;
 
@@ -95,3 +98,5 @@ impl ObjectWriter<Graph> for TrigWriter {
         Ok(())
     }
 }
+
+impl GraphWriter for TrigWriter {}

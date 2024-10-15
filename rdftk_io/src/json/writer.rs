@@ -3,6 +3,7 @@ use crate::json::syntax::{
     OBJ_TYPE_URI,
 };
 use crate::json::NAME;
+use crate::GraphWriter;
 use objio::{impl_has_options, ObjectWriter};
 use rdftk_core::error::{rdf_star_not_supported_error, Error};
 use rdftk_core::model::graph::Graph;
@@ -121,6 +122,8 @@ impl ObjectWriter<Graph> for JsonWriter {
         Ok(())
     }
 }
+
+impl GraphWriter for JsonWriter {}
 
 // ------------------------------------------------------------------------------------------------
 // Private Functions

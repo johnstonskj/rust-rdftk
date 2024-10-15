@@ -1,4 +1,5 @@
 use crate::common::indenter::Indenter;
+use crate::GraphWriter;
 use itertools::Itertools;
 use objio::{impl_has_options, HasOptions, ObjectWriter};
 use rdftk_core::error::{Error, Result};
@@ -310,6 +311,8 @@ impl ObjectWriter<Graph> for TurtleWriter {
         self.write_blank_node_subjects(w, graph, flags)
     }
 }
+
+impl GraphWriter for TurtleWriter {}
 
 impl TurtleWriter {
     fn indent(&self) {

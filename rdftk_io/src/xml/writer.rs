@@ -3,6 +3,7 @@ use super::syntax::{
     ELEMENT_DESCRIPTION, ELEMENT_RDF,
 };
 use crate::xml::syntax::ATTRIBUTE_XML_LANG_PREFIXED;
+use crate::GraphWriter;
 use objio::{impl_has_options, ObjectWriter};
 use rdftk_core::error::{rdf_star_not_supported_error, Error};
 use rdftk_core::model::graph::Graph;
@@ -178,6 +179,8 @@ impl ObjectWriter<Graph> for XmlWriter {
         Ok(())
     }
 }
+
+impl GraphWriter for XmlWriter {}
 
 impl XmlWriter {
     /// Create a new writer with the specified options, over-writing the default.

@@ -3,6 +3,8 @@ use rdftk_core::error::Error;
 use rdftk_core::model::graph::Graph;
 use std::io::Write;
 
+use crate::GraphWriter;
+
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
@@ -35,3 +37,5 @@ impl ObjectWriter<Graph> for NTripleWriter {
         Ok(())
     }
 }
+
+impl GraphWriter for NTripleWriter {}
