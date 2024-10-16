@@ -21,7 +21,7 @@ use crate::model::features::{Featured, FEATURE_GRAPH_DUPLICATES, FEATURE_RDF_STA
 use crate::model::statement::{BlankNode, ObjectNode, Statement, SubjectNode};
 use bimap::BiHashMap;
 use rdftk_iri::{Iri, IriExtra, Name, QName};
-use rdftk_names::{dc, foaf, owl, rdf, rdfs, xsd};
+use rdftk_names::{dc, foaf, owl, rdf, rdfs, skos, xsd};
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
@@ -216,7 +216,13 @@ impl PrefixMapping {
     // --------------------------------------------------------------------------------------------
 
     pub fn common() -> Self {
-        Self::default().with_owl().with_rdf().with_rdfs().with_xsd()
+        Self::default()
+            .with_dc_elements()
+            .with_owl()
+            .with_rdf()
+            .with_rdfs()
+            .with_skos()
+            .with_xsd()
     }
 
     ///
@@ -312,6 +318,18 @@ impl PrefixMapping {
     {
         let mut mut_self = self;
         mut_self.insert_xsd();
+        mut_self
+    }
+
+    ///
+    /// Include the common "skos"  mapping.
+    ///
+    pub fn with_skos(self) -> Self
+    where
+        Self: Sized,
+    {
+        let mut mut_self = self;
+        mut_self.insert_skos();
         mut_self
     }
 
@@ -419,6 +437,24 @@ impl PrefixMapping {
         self.insert(
             dc::terms::default_prefix().clone(),
             dc::terms::namespace().clone(),
+        );
+    }
+
+    pub fn insert_skos(&mut self) {
+        self.insert(skos::default_prefix().clone(), skos::namespace().clone());
+    }
+
+    pub fn insert_skos_xl(&mut self) {
+        self.insert(
+            skos::xl::default_prefix().clone(),
+            skos::xl::namespace().clone(),
+        );
+    }
+
+    pub fn insert_skos_iso(&mut self) {
+        self.insert(
+            skos::iso::default_prefix().clone(),
+            skos::iso::namespace().clone(),
         );
     }
 

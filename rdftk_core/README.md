@@ -52,6 +52,10 @@ pub fn make_statements() -> StatementList {
 
 ## Changes
 
+### Version 0.5.3
+
+* Feature: add SKOS to PrefixMapping commons.
+
 ### Version 0.5.2
 
 * Fix: bug in `hex_encode` for binary literals.
