@@ -95,10 +95,43 @@ pub mod term_status {
             term_status, "term_status"
         }
     }
+
+    ///
+    /// This term is marked as old-fashioned; although used, it is not considered typical of current
+    /// best practice and alternative expressions may be preferable.
+    ///
     pub const STATUS_ARCHAIC: &str = "archaic";
+
+    ///
+    /// This term is marked as deprecated; although it may still be in use, it is not considered typical
+    /// of current best practice and alternative expressions may be preferable.
+    ///
     pub const STATUS_DEPRECATED: &str = "deprecated";
+
+    ///
+    /// The meaning, deployment practices, documentation (or important associated software/services)
+    /// associated with this term are new and therefore liable to change arbitrarily at some point
+    /// in the future. They may not, but stability is not guaranteed.
+    ///
     pub const STATUS_PROPOSED: &str = "proposed";
+
+    ///
+    /// The term is relatively stable, and its documentation and meaning are not expected to change
+    /// substantially.
+    ///
     pub const STATUS_STABLE: &str = "stable";
+
+    ///
+    /// The meaning, deployment practices, documentation and general understanding of this term are
+    /// approaching some stability, but changes are still possible due to implementation experience
+    /// or other unanticipated factors.
+    ///
     pub const STATUS_TESTING: &str = "testing";
+
+    ///
+    /// The meaning, deployment practices, documentation (or important associated software/services)
+    /// associated with this term are liable to change arbitrarily at some point in the future. They
+    /// may not, but stability is not guaranteed. Use with caution.
+    ///
     pub const STATUS_UNSTABLE: &str = "unstable";
 }

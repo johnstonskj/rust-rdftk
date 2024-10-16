@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_names"
-version = "0.2.4"
+version = "0.2.5"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2021"
 description = "This crate provides a set of modules that contain the `IRI`s and `QName` strings for commonly used vocabularies. It also provides macro support for defining new namespaces in the same style as this library."

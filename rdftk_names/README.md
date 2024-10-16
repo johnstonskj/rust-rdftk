@@ -76,6 +76,10 @@ namespace! {
 
 ### Version 0.2.4
 
+* Fix: add comments to `skos` module members to remove build warnings.
+
+### Version 0.2.4
+
 * Feature: add `skos` namespaces.
 
 ### Version 0.2.3
