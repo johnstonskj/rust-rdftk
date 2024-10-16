@@ -47,6 +47,12 @@ let graph = reader.read(&mut file, graph_factory()).unwrap();
 
 ## Changes
 
+### Version 0.3.3
+
+* Feature: better `Literal` handling in Turtle;
+  * write only the lexical form for numeric and boolean literals,
+  * write prefixed-names instead of full IRI where possible.
+
 ### Version 0.3.2
 
 * Feature: added `GraphWriter` and `DataSetWriter` traits so that clients need not

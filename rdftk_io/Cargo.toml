@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_io"
-version = "0.3.2"
+version = "0.3.3"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2021"
 description = "This crate provides traits for reading and writing Statements and Graphs as well as implementations of these for common representations."
@@ -29,7 +29,7 @@ xml = ["xml-rs", "rdftk_names"]
 itertools = "0.13"
 lazy_static = "1.4"
 objio = "0.1.1"
-rdftk_core = { version = "0.5.0", path = "../rdftk_core" }
+rdftk_core = { version = "0.5.4", path = "../rdftk_core" }
 rdftk_iri = { version = "0.2.5", path = "../rdftk_iri" }
 regex = "1.5"
 tracing = "0.1.40"

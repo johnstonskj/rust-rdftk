@@ -4,6 +4,7 @@ use itertools::Itertools;
 use objio::{impl_has_options, HasOptions, ObjectWriter};
 use rdftk_core::error::{Error, Result};
 use rdftk_core::model::graph::Graph;
+use rdftk_core::model::literal::DataType;
 use rdftk_core::model::statement::{ObjectNode, SubjectNode};
 use rdftk_iri::Iri;
 use std::cell::RefCell;
@@ -463,7 +464,7 @@ impl TurtleWriter {
         } else if object.is_resource() {
             self.write_iri(w, graph, object.as_resource().unwrap())?;
         } else {
-            self.write_literal(w, object)?;
+            self.write_literal(w, graph, object)?;
         }
         Ok(())
     }
@@ -560,13 +561,46 @@ impl TurtleWriter {
         Ok(())
     }
 
-    fn write_literal<W: Write>(&self, w: &mut W, literal: &ObjectNode) -> Result<()> {
-        // TODO: compress data type Iris
+    fn write_literal<W: Write>(
+        &self,
+        w: &mut W,
+        graph: &Graph,
+        literal: &ObjectNode,
+    ) -> Result<()> {
         Ok(if let Some(literal) = literal.as_literal() {
-            write!(w, "{}", literal)
+            match literal.data_type() {
+                Some(DataType::Iri) => {
+                    let iri = Iri::parse(literal.lexical_form())?;
+                    self.write_iri(w, graph, &iri)?
+                }
+                Some(DataType::Boolean)
+                | Some(DataType::Long)
+                | Some(DataType::Int)
+                | Some(DataType::Short)
+                | Some(DataType::Byte)
+                | Some(DataType::UnsignedLong)
+                | Some(DataType::UnsignedInt)
+                | Some(DataType::UnsignedShort)
+                | Some(DataType::UnsignedByte)
+                | Some(DataType::Float)
+                | Some(DataType::Double)
+                | Some(DataType::Decimal) => write!(w, "{}", literal.lexical_form())?,
+                _ => {
+                    write!(w, "{:?}", literal.lexical_form())?;
+                    match (literal.data_type(), literal.language()) {
+                        (Some(data_type), None) => {
+                            write!(w, "^^")?;
+                            let iri = data_type.as_iri();
+                            self.write_iri(w, graph, iri)?;
+                        }
+                        (None, Some(language)) => write!(w, "@{}", language)?,
+                        _ => (),
+                    }
+                }
+            }
         } else {
-            write!(w, "ERROR: this is not a literal: {:?}", literal)
-        }?)
+            panic!("ERROR: this is not a literal: {:?}", literal)
+        })
     }
 
     fn write_predicate<W: Write>(
