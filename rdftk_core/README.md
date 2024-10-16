@@ -52,6 +52,10 @@ pub fn make_statements() -> StatementList {
 
 ## Changes
 
+### Version 0.5.2
+
+* Fix: bug in `hex_encode` for binary literals.
+
 ### Version 0.5.1
 
 * Feature: added more `From` implementations for statement nodes.

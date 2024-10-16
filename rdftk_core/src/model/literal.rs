@@ -1014,12 +1014,16 @@ where
 }
 
 fn hex_encode(value: &[u8]) -> String {
-    let mut buffer = String::with_capacity(value.len() * 3);
-    let last = value.len() - 1;
-    value.iter().enumerate().for_each(|(i, b)| {
-        buffer.push_str(&format!("{:02X}{}", b, if i == last { "" } else { " " }))
-    });
-    buffer
+    if !value.is_empty() {
+        let mut buffer = String::with_capacity(value.len() * 3);
+        let last = value.len() - 1;
+        value.iter().enumerate().for_each(|(i, b)| {
+            buffer.push_str(&format!("{:02X}{}", b, if i == last { "" } else { " " }))
+        });
+        buffer
+    } else {
+        String::default()
+    }
 }
 
 fn hex_decode<S>(value: S) -> Result<Vec<u8>, Error>

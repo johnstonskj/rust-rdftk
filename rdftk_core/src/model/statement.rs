@@ -117,6 +117,14 @@ impl Statement {
         }
     }
 
+    pub fn rdf_type<S, O>(subject: S, object: O) -> Self
+    where
+        S: Into<SubjectNode>,
+        O: Into<ObjectNode>,
+    {
+        Self::new(subject, rdf::a_type().clone(), object)
+    }
+
     // --------------------------------------------------------------------------------------------
     // Components
     // --------------------------------------------------------------------------------------------
