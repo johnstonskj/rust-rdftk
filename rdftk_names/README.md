@@ -74,6 +74,10 @@ namespace! {
 
 ## Changes
 
+### Version 0.2.4
+
+* Feature: add `skos` namespaces.
+
 ### Version 0.2.3
 
 * Feature: added missing `date` and `hex_binary` names in `xsd` namespace.
