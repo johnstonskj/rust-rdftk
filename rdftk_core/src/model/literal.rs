@@ -825,9 +825,19 @@ impl Eq for Literal {}
 impl Display for Literal {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self.data_type() {
-            //            Some(DataType::String) => write!(f, "\"{}\"", self.lexical_form()),
             Some(DataType::Iri) => write!(f, "<{}>", self.lexical_form()),
-            //            Some(DataType::Boolean) => write!(f, "{}", self.lexical_form()),
+            Some(DataType::Boolean)
+            | Some(DataType::Long)
+            | Some(DataType::Int)
+            | Some(DataType::Short)
+            | Some(DataType::Byte)
+            | Some(DataType::UnsignedLong)
+            | Some(DataType::UnsignedInt)
+            | Some(DataType::UnsignedShort)
+            | Some(DataType::UnsignedByte)
+            | Some(DataType::Float)
+            | Some(DataType::Double)
+            | Some(DataType::Decimal) => write!(f, "{}", self.lexical_form()),
             _ => {
                 write!(
                     f,
