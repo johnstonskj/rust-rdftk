@@ -52,7 +52,11 @@ pub fn make_statements() -> StatementList {
 
 ## Changes
 
-### Version 0.5.3
+### Version 0.5.5
+
+* Fix: remove spaces from `xsd:hexBinary` string.
+
+### Version 0.5.4
 
 * Feature: better implementation of `Display` for `Literal`.
 

@@ -1025,11 +1025,10 @@ where
 
 fn hex_encode(value: &[u8]) -> String {
     if !value.is_empty() {
-        let mut buffer = String::with_capacity(value.len() * 3);
-        let last = value.len() - 1;
-        value.iter().enumerate().for_each(|(i, b)| {
-            buffer.push_str(&format!("{:02X}{}", b, if i == last { "" } else { " " }))
-        });
+        let mut buffer = String::with_capacity(value.len() * 2);
+        value
+            .iter()
+            .for_each(|b| buffer.push_str(&format!("{:02X}", b)));
         buffer
     } else {
         String::default()
