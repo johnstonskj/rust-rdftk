@@ -14,6 +14,7 @@ use std::sync::Arc;
 pub enum SubjectNode {
     Blank(BlankNode),
     Resource(Iri),
+    // TODO: add version of ObjectNode::Collection
     Statement(Arc<Statement>),
 }
 

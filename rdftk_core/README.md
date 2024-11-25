@@ -52,6 +52,20 @@ pub fn make_statements() -> StatementList {
 
 ## Changes
 
+### Version 0.5.6
+
+Feature: this release adds the variant `Collection` to `ObjectNode` as well as a
+corresponding `Collection` type. This models the RDF 1.1 collection concept as per
+RDF 1.1 Semantics [D.3 RDF collections](https://www.w3.org/TR/rdf11-mt/#rdf-collections). Currently collections are not supported
+for subject nodes.
+
+* A Collection is a wrapper around a vector of object nodes.
+  * Collections are immutable.
+  * Collections may contain object nodes that are themselves collections.
+  * Collections have a `reify` method to convert to a set of collection triples.
+* A new feature has been added `FEATURE_STMT_OBJECT_COLLECTIONS` that is now
+  supported by both `ObjectNode` and `Statement`.
+
 ### Version 0.5.5
 
 * Fix: remove spaces from `xsd:hexBinary` string.

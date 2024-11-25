@@ -10,7 +10,7 @@ fn make_mappings() -> PrefixMapping {
 fn test_construct_mappings() {
     let mappings = make_mappings();
 
-    assert_eq!(mappings.len(), 5);
+    assert_eq!(mappings.len(), 7); // 6 common + default
 
     assert!(mappings.get_default_namespace().is_some());
 

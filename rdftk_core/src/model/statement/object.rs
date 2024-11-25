@@ -1,6 +1,8 @@
-use crate::model::features::{Featured, FEATURE_RDF_STAR};
+use crate::model::features::{Featured, FEATURE_RDF_STAR, FEATURE_STMT_OBJECT_COLLECTIONS};
 use crate::model::literal::Literal;
-use crate::model::statement::{BlankNode, Statement, SubjectNode, BLANK_NODE_NAMESPACE};
+use crate::model::statement::{
+    BlankNode, Collection, Statement, SubjectNode, BLANK_NODE_NAMESPACE,
+};
 use rdftk_iri::{Iri, Name};
 use std::borrow::Borrow;
 use std::cmp::Ordering;
@@ -16,6 +18,7 @@ pub enum ObjectNode {
     Blank(BlankNode),
     Resource(Iri),
     Literal(Literal),
+    Collection(Collection),
     Statement(Arc<Statement>),
 }
 
@@ -77,6 +80,18 @@ impl From<&Literal> for ObjectNode {
     }
 }
 
+impl From<Collection> for ObjectNode {
+    fn from(v: Collection) -> Self {
+        Self::Collection(v)
+    }
+}
+
+impl From<&Collection> for ObjectNode {
+    fn from(v: &Collection) -> Self {
+        Self::Collection(v.clone())
+    }
+}
+
 impl From<Statement> for ObjectNode {
     fn from(v: Statement) -> Self {
         Self::Statement(Arc::new(v))
@@ -109,6 +124,7 @@ impl Display for ObjectNode {
             Self::Blank(node) => write!(f, "{}:{}", BLANK_NODE_NAMESPACE, node),
             Self::Resource(iri) => write!(f, "<{}>", iri),
             Self::Literal(lit) => write!(f, "{}", lit),
+            Self::Collection(col) => write!(f, "{}", col),
             Self::Statement(st) => write!(f, "<< {} >>", st),
         }
     }
@@ -138,6 +154,15 @@ impl PartialEq<Literal> for ObjectNode {
     fn eq(&self, other: &Literal) -> bool {
         match self {
             Self::Literal(value) => value == other,
+            _ => false,
+        }
+    }
+}
+
+impl PartialEq<Collection> for ObjectNode {
+    fn eq(&self, other: &Collection) -> bool {
+        match self {
+            Self::Collection(value) => value == other,
             _ => false,
         }
     }
@@ -177,18 +202,31 @@ impl Ord for ObjectNode {
             (Self::Blank(lhs), Self::Blank(rhs)) => lhs.cmp(rhs),
             (Self::Blank(_), Self::Resource(_)) => Ordering::Less,
             (Self::Blank(_), Self::Literal(_)) => Ordering::Less,
+            (Self::Blank(_), Self::Collection(_)) => Ordering::Less,
             (Self::Blank(_), Self::Statement(_)) => Ordering::Less,
+            // --------------------------------------------------------
             (Self::Resource(_), Self::Blank(_)) => Ordering::Greater,
             (Self::Resource(lhs), Self::Resource(rhs)) => lhs.cmp(rhs),
             (Self::Resource(_), Self::Literal(_)) => Ordering::Less,
+            (Self::Resource(_), Self::Collection(_)) => Ordering::Less,
             (Self::Resource(_), Self::Statement(_)) => Ordering::Less,
+            // --------------------------------------------------------
             (Self::Literal(_), Self::Blank(_)) => Ordering::Greater,
             (Self::Literal(_), Self::Resource(_)) => Ordering::Greater,
             (Self::Literal(lhs), Self::Literal(rhs)) => lhs.cmp(rhs),
+            (Self::Literal(_), Self::Collection(_)) => Ordering::Less,
             (Self::Literal(_), Self::Statement(_)) => Ordering::Less,
+            // --------------------------------------------------------
+            (Self::Collection(_), Self::Blank(_)) => Ordering::Greater,
+            (Self::Collection(_), Self::Resource(_)) => Ordering::Greater,
+            (Self::Collection(_), Self::Literal(_)) => Ordering::Greater,
+            (Self::Collection(lhs), Self::Collection(rhs)) => lhs.cmp(rhs),
+            (Self::Collection(_), Self::Statement(_)) => Ordering::Less,
+            // --------------------------------------------------------
             (Self::Statement(_), Self::Blank(_)) => Ordering::Greater,
             (Self::Statement(_), Self::Resource(_)) => Ordering::Greater,
             (Self::Statement(_), Self::Literal(_)) => Ordering::Greater,
+            (Self::Statement(_), Self::Collection(_)) => Ordering::Greater,
             (Self::Statement(lhs), Self::Statement(rhs)) => lhs.cmp(rhs),
         }
     }
@@ -198,7 +236,7 @@ impl Ord for ObjectNode {
 
 impl Featured for ObjectNode {
     fn supports_feature(&self, feature: &Iri) -> bool {
-        *feature == *FEATURE_RDF_STAR
+        *feature == *FEATURE_RDF_STAR || *feature == *FEATURE_STMT_OBJECT_COLLECTIONS
     }
 }
 
@@ -241,6 +279,17 @@ impl ObjectNode {
         }
     }
 
+    pub fn is_collection(&self) -> bool {
+        matches!(self, Self::Collection(_))
+    }
+
+    pub fn as_collection(&self) -> Option<&Collection> {
+        match &self {
+            Self::Collection(v) => Some(v),
+            _ => None,
+        }
+    }
+
     pub fn is_statement(&self) -> bool {
         matches!(self, Self::Statement(_))
     }
@@ -260,6 +309,7 @@ impl ObjectNode {
             ObjectNode::Resource(v) => Some(v.clone().into()),
             ObjectNode::Statement(v) => Some(v.clone().into()),
             ObjectNode::Literal(_) => None,
+            ObjectNode::Collection(_) => None,
         }
     }
 }

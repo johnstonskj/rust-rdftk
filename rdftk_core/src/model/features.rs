@@ -56,6 +56,18 @@ lazy_static! {
     // --------------------------------------------------------------------------------------------
 
     ///
+    /// Denotes that statements may include collections within subject nodes.
+    ///
+    pub static ref FEATURE_STMT_SUBJECT_COLLECTIONS: Iri =
+        Iri::from_str("http://rust-rdftk.dev/feature/statements/subject_collections").unwrap();
+
+    ///
+    /// Denotes that statements may include collections within object nodes.
+    ///
+    pub static ref FEATURE_STMT_OBJECT_COLLECTIONS: Iri =
+        Iri::from_str("http://rust-rdftk.dev/feature/statements/object_collections").unwrap();
+
+    ///
     /// Denotes that this graph may be named.
     ///
     pub static ref FEATURE_GRAPH_ALLOWS_NAMED: Iri =

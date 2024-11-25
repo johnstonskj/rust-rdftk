@@ -96,7 +96,7 @@ impl Ord for Statement {
 
 impl Featured for Statement {
     fn supports_feature(&self, feature: &Iri) -> bool {
-        *feature == *FEATURE_RDF_STAR
+        *feature == *FEATURE_RDF_STAR || *feature == *FEATURE_STMT_OBJECT_COLLECTIONS
     }
 }
 
@@ -223,6 +223,7 @@ impl Statement {
                 nested.0.to_object(),
             ));
         } else {
+            // TODO: check for ObjectNode::Collection
             statements.push(Self::new(
                 new_subject.clone(),
                 rdf::object().clone(),
@@ -240,8 +241,13 @@ impl Statement {
 mod bnode;
 pub use bnode::*;
 
+mod collection;
+pub use collection::*;
+
 mod subject;
 pub use subject::*;
 
 mod object;
 pub use object::*;
+
+use super::features::FEATURE_STMT_OBJECT_COLLECTIONS;

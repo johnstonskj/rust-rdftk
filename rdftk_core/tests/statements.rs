@@ -67,7 +67,7 @@ fn make_typed_literal_statement() {
     );
     assert_eq!(
         st.to_string(),
-        "_:B01 <http://www.w3.org/2000/01/rdf-schema#label> \"2020\"^^<http://www.w3.org/2001/XMLSchema#int>"
+        "_:B01 <http://www.w3.org/2000/01/rdf-schema#label> 2020"
     );
 }
 

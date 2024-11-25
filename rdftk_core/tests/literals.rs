@@ -47,8 +47,9 @@ fn typed_as_boolean() {
     assert!(value.has_data_type());
     assert!(!value.has_language());
     assert_eq!(value.lexical_form(), "true");
+    assert_eq!(value.to_string(), "true");
     assert_eq!(
-        value.to_string(),
+        &format!("{:#}", value),
         "\"true\"^^<http://www.w3.org/2001/XMLSchema#boolean>"
     );
 }
@@ -59,8 +60,9 @@ fn typed_as_long() {
     assert!(value.has_data_type());
     assert!(!value.has_language());
     assert_eq!(value.lexical_form(), "1");
+    assert_eq!(value.to_string(), "1");
     assert_eq!(
-        value.to_string(),
+        &format!("{:#}", value),
         "\"1\"^^<http://www.w3.org/2001/XMLSchema#long>"
     );
 }
@@ -71,8 +73,9 @@ fn typed_as_ulong() {
     assert!(value.has_data_type());
     assert!(!value.has_language());
     assert_eq!(value.lexical_form(), "1");
+    assert_eq!(value.to_string(), "1");
     assert_eq!(
-        value.to_string(),
+        &format!("{:#}", value),
         "\"1\"^^<http://www.w3.org/2001/XMLSchema#unsignedLong>"
     );
 }
