@@ -813,6 +813,13 @@ impl Graph {
         self.statements.insert(statement);
     }
 
+    pub fn extend<I>(&mut self, iter: I)
+    where
+        I: IntoIterator<Item = Statement>,
+    {
+        self.statements.extend(iter)
+    }
+
     ///
     /// Merge another graph into this one. Note that the graphs are required to have the same
     /// implementation type based in the type qualifiers for `StatementIter`.
@@ -888,9 +895,8 @@ impl Graph {
     }
 
     ///
-    /// Replace all blank nodes with new, unique Iris. This creates a new graph and leaves the initial
-    /// graph unchanged. The base Iri is used to create identifiers, it's path will be replaced
-    /// entirely by a well-known format.
+    /// Return a new graph replacing all blank nodes with new, unique Iris. The base Iri is used to
+    /// create identifiers, it's path will be replaced entirely by a well-known format.
     ///
     /// For example, given the following input graph with blank nodes:
     ///
@@ -920,7 +926,8 @@ impl Graph {
     ///   <https://example.org/v/lastName>
     ///   "Name" .
     /// ```
-    pub fn skolemize(self, base: &Iri) -> Result<Self, Error> {
+    ///
+    pub fn skolemize(&self, base: &Iri) -> Result<Self, Error> {
         let mut mapping: HashMap<BlankNode, Iri> = Default::default();
 
         let mut new_graph = Self::default();
@@ -944,6 +951,48 @@ impl Graph {
                 new_statement.set_object(object);
             }
             new_graph.insert(new_statement);
+        }
+
+        Ok(new_graph)
+    }
+
+    ///
+    /// Return a new graph with certain features flattened to simplify the graph to a strict triple
+    /// structure. For example:
+    ///
+    /// 1. RDF* statements in subject and object nodes are reified into the graph.
+    /// 2. RDF collection objects in object nodes are reified into the graph.
+    ///
+    pub fn simplify(&self) -> Result<Self, Error> {
+        let mut new_graph = Self::default();
+        for statement in self.statements() {
+            if let Some(subject_statement) = statement.subject().as_statement() {
+                let (subject, statements) = subject_statement.reify()?;
+                new_graph.insert(Statement::new(
+                    subject,
+                    statement.predicate().clone(),
+                    statement.object().clone(),
+                ));
+                new_graph.extend(statements);
+            } else if let Some(object_statement) = statement.object().as_statement() {
+                let (subject, statements) = object_statement.reify()?;
+                new_graph.insert(Statement::new(
+                    statement.subject().clone(),
+                    statement.predicate().clone(),
+                    subject.to_object(),
+                ));
+                new_graph.extend(statements);
+            } else if let Some(object_collection) = statement.object().as_collection() {
+                let (subject, statements) = object_collection.reify()?;
+                new_graph.insert(Statement::new(
+                    statement.subject().clone(),
+                    statement.predicate().clone(),
+                    subject.to_object(),
+                ));
+                new_graph.extend(statements);
+            } else {
+                new_graph.insert(statement.clone());
+            }
         }
 
         Ok(new_graph)
@@ -982,6 +1031,16 @@ impl Statements {
                 vs.push(st);
                 true
             }
+        }
+    }
+
+    fn extend<I>(&mut self, iter: I)
+    where
+        I: IntoIterator<Item = Statement>,
+    {
+        match self {
+            Self::Unique(vs) => vs.extend(iter),
+            Self::NonUnique(vs) => vs.extend(iter),
         }
     }
 

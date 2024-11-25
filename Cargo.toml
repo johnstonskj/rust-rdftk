@@ -2,7 +2,7 @@
 
 resolver = "2"
 
-members = [
+members = [ "rdftk_cli",
     "rdftk_core",
     "rdftk_io",
     "rdftk_iri",

@@ -27,9 +27,10 @@ impl ObjectWriter<Graph> for NTripleWriter {
     where
         W: Write,
     {
-        for subject in graph.subjects() {
-            for predicate in graph.predicates_for(subject) {
-                for object in graph.objects_for(subject, predicate) {
+        let simple_graph = graph.simplify()?;
+        for subject in simple_graph.subjects() {
+            for predicate in simple_graph.predicates_for(subject) {
+                for object in simple_graph.objects_for(subject, predicate) {
                     writeln!(w, "{} <{}> {} .", subject, predicate, object)?;
                 }
             }

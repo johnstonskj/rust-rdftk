@@ -28,6 +28,7 @@ pub struct TurtleWriterOptions {
     convert_to_id_base: Option<Iri>,
     convert_base: Vec<(Iri, Iri)>,
     indent_width: usize,
+    predicate_padding: bool,
 }
 
 ///
@@ -103,6 +104,39 @@ struct WriterContext {
     blanks_written: Vec<SubjectNode>,
 }
 
+const DECL_BASE_TTL: &str = "@base";
+const DECL_BASE_SPARQL: &str = "BASE";
+const DECL_PREFIX_TTL: &str = "@prefix";
+const DECL_PREFIX_SPARQL: &str = "PREFIX";
+
+const NAME_SEPARATOR: &str = ":";
+
+const IRI_START: &str = "<";
+const IRI_END: &str = ">";
+
+const BLANK_NODE_PREFIX: &str = "_";
+const BLANK_NODE_START: &str = "[";
+const BLANK_NODE_END: &str = "]";
+
+const COLLECTION_START: &str = "(";
+const COLLECTION_END: &str = ")";
+
+const LANGUAGE_PREFIX: &str = "@";
+
+const DATATYPE_PREFIX: &str = "^^";
+
+const PREDICATE_SEPARATOR: &str = " ;";
+
+const OBJECT_SEPARATOR: &str = ",";
+
+const SPACE_SEPARATOR: &str = " ";
+
+const END_OF_STATEMENT: &str = " .";
+
+const END_OF_LINE: &str = "\n";
+
+const RDF_TYPE_A: &str = "a";
+
 // ------------------------------------------------------------------------------------------------
 // Implementations > Options
 // ------------------------------------------------------------------------------------------------
@@ -118,6 +152,7 @@ impl Default for TurtleWriterOptions {
             convert_to_id_base: None,
             convert_base: Vec::new(),
             indent_width: 2,
+            predicate_padding: false,
         }
     }
 }
@@ -161,6 +196,13 @@ impl TurtleWriterOptions {
     pub fn with_indent_width(self, indent_width: usize) -> Self {
         Self {
             indent_width,
+            ..self
+        }
+    }
+
+    pub fn with_predicate_padding(self, predicate_padding: bool) -> Self {
+        Self {
+            predicate_padding,
             ..self
         }
     }
@@ -271,6 +313,14 @@ impl TurtleWriterOptions {
         assert!(indent_width > 0);
         self.indent_width = indent_width;
     }
+
+    pub fn predicate_padding(&self) -> bool {
+        self.predicate_padding
+    }
+
+    pub fn set_predicate_padding(&mut self, predicate_padding: bool) {
+        self.predicate_padding = predicate_padding;
+    }
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -278,6 +328,14 @@ impl TurtleWriterOptions {
 // ------------------------------------------------------------------------------------------------
 
 impl_has_options!(TurtleWriter, TurtleWriterOptions);
+
+impl TurtleWriter {
+    pub fn with_options(self, options: TurtleWriterOptions) -> Self {
+        let mut self_mut = self;
+        self_mut.set_options(options);
+        self_mut
+    }
+}
 
 impl ObjectWriter<Graph> for TurtleWriter {
     type Error = Error;
@@ -328,9 +386,11 @@ impl TurtleWriter {
 
     fn new_line<W: Write>(&self, w: &mut W, flags: WriterStatusFlags) -> Result<()> {
         if flags.is_being_sorted {
-            Ok(write!(w, " ")?)
+            Ok(write!(w, "{SPACE_SEPARATOR}")?)
         } else {
-            Ok(write!(w, "\n{}", self.context.borrow().indenter)?)
+            let context = self.context.borrow();
+            write!(w, "{END_OF_LINE}{}", context.indenter)?;
+            Ok(())
         }
     }
 
@@ -363,11 +423,17 @@ impl TurtleWriter {
     /// style (as '@base ..') or SPARQL style (as 'BASE ...')
     fn write_base_iri<W: Write>(&self, w: &mut W) -> Result<()> {
         if let Some(base) = &self.options.id_base() {
-            if self.options.use_sparql_style() && !self.options.use_intellij_style() {
-                writeln!(w, "BASE <{}>", base.to_string().as_str())?;
-            } else {
-                writeln!(w, "@base <{}> .", base.to_string().as_str())?;
-            }
+            let (decl, eos) =
+                if self.options.use_sparql_style() && !self.options.use_intellij_style() {
+                    (DECL_BASE_SPARQL, "")
+                } else {
+                    (DECL_BASE_TTL, END_OF_STATEMENT)
+                };
+            writeln!(
+                w,
+                "{decl} {IRI_START}{}{IRI_END}{eos}",
+                base.to_string().as_str()
+            )?;
         }
         if !self.options.use_intellij_style() {
             writeln!(w)?;
@@ -382,8 +448,8 @@ impl TurtleWriter {
         for (prefix, namespace) in mappings.mappings().sorted() {
             let prefix = prefix.as_ref().map(|n| n.as_ref()).unwrap_or("");
             let mut namespace_str = namespace.to_string();
-            // If we have any base Iri conversions to do for any of the namespaces, then do
-            // it now:
+            // If we have any base Iri conversions to do for any of the
+            // namespaces, then do it now:
             for (from_base, to_base) in self.options.convert_base().iter() {
                 let from_base_str = from_base.to_string();
                 if namespace_str.starts_with(from_base_str.as_str()) {
@@ -395,11 +461,16 @@ impl TurtleWriter {
                     break;
                 }
             }
-            if self.options.use_sparql_style() && !self.options.use_intellij_style() {
-                writeln!(w, "PREFIX {prefix}: <{namespace_str}>")?;
-            } else {
-                writeln!(w, "@prefix {prefix}: <{namespace_str}> .")?;
-            }
+            let (decl, eos) =
+                if self.options.use_sparql_style() && !self.options.use_intellij_style() {
+                    (DECL_PREFIX_SPARQL, "")
+                } else {
+                    (DECL_PREFIX_TTL, END_OF_STATEMENT)
+                };
+            writeln!(
+                w,
+                "{decl} {prefix}{NAME_SEPARATOR} {IRI_START}{namespace_str}{IRI_END}{eos}"
+            )?;
         }
         Ok(writeln!(w)?)
     }
@@ -427,6 +498,7 @@ impl TurtleWriter {
     //    Ok(())
     //}
 
+    /// Calculate the longest predicate name and use as the width of the current indentation.
     fn max_len_predicates(&self, graph: &Graph, predicates: &[&Iri]) -> Result<usize> {
         let all_predicates_as_strings = predicates
             .iter()
@@ -448,6 +520,7 @@ impl TurtleWriter {
         Ok(String::from_utf8(buffer)?)
     }
 
+    /// Emit an object node's content.
     fn write_object_content<W: Write>(
         &self,
         w: &mut W,
@@ -459,16 +532,23 @@ impl TurtleWriter {
             if self.options.nest_blank_nodes() {
                 self.write_nested_blank_node(w, graph, object, flags)?;
             } else {
-                write!(w, "_:{}", object.as_blank().unwrap())?;
+                write!(
+                    w,
+                    "{BLANK_NODE_PREFIX}{NAME_SEPARATOR}{}",
+                    object.as_blank().unwrap()
+                )?;
             }
         } else if object.is_resource() {
             self.write_iri(w, graph, object.as_resource().unwrap())?;
         } else {
             self.write_literal(w, graph, object)?;
         }
+        // TODO: statement?
+        // TODO: container?
         Ok(())
     }
 
+    /// write a single IRI, either as an IRI (within '<' and '>') or QName.
     #[inline(always)]
     fn write_iri<W: Write>(&self, w: &mut W, graph: &Graph, iri: &Iri) -> Result<()> {
         Ok(write!(w, "{}", self.compress_iri(graph, iri)?)?)
@@ -484,12 +564,18 @@ impl TurtleWriter {
             if let Some(ref convert_to_id_base) = self.options.convert_to_id_base() {
                 let target_id_base = convert_to_id_base.to_string();
                 if iri_str.starts_with(target_id_base.as_str()) {
-                    return Ok(format!("<{}>", &iri_str[target_id_base.len()..]));
+                    return Ok(format!(
+                        "{IRI_START}{}{IRI_END}",
+                        &iri_str[target_id_base.len()..]
+                    ));
                 }
             }
             let id_base_str = id_base.to_string();
             if iri_str.starts_with(id_base_str.as_str()) {
-                return Ok(format!("<{}>", &iri_str[id_base_str.len()..]));
+                return Ok(format!(
+                    "{IRI_START}{}{IRI_END}",
+                    &iri_str[id_base_str.len()..]
+                ));
             }
         }
         for (from_base, to_base) in self.options.convert_base().iter() {
@@ -504,7 +590,7 @@ impl TurtleWriter {
         }
         let iri = Iri::from_str(iri_str.as_str())?;
         Ok(match graph.prefix_mappings().compress(&iri) {
-            None => format!("<{iri}>"),
+            None => format!("{IRI_START}{iri}{IRI_END}"),
             Some(_qname) => format!("{_qname}"),
         })
     }
@@ -547,16 +633,22 @@ impl TurtleWriter {
         subject: &SubjectNode,
         flags: WriterStatusFlags,
     ) -> Result<()> {
-        let depth = self.context.borrow().indenter.depth();
-        if subject.is_blank() && depth == 0 {
-            if flags.is_being_sorted {
-                write!(w, " _:{}", subject.as_blank().unwrap())?;
+        let at_start_of_line = self.context.borrow().indenter.is_not_indented();
+        if subject.is_blank() && at_start_of_line {
+            let initial = if flags.is_being_sorted {
+                SPACE_SEPARATOR
             } else {
-                write!(w, "\n_:{}", subject.as_blank().unwrap())?;
-            }
+                END_OF_LINE
+            };
+            write!(
+                w,
+                "{initial}{BLANK_NODE_PREFIX}{NAME_SEPARATOR}{}",
+                subject.as_blank().unwrap()
+            )?;
         } else if subject.is_resource() {
             self.write_iri(w, graph, subject.as_resource().unwrap())?;
         }
+        // TODO: Statement?
         self.indent();
         Ok(())
     }
@@ -589,11 +681,11 @@ impl TurtleWriter {
                     write!(w, "{:?}", literal.lexical_form())?;
                     match (literal.data_type(), literal.language()) {
                         (Some(data_type), None) => {
-                            write!(w, "^^")?;
+                            write!(w, "{DATATYPE_PREFIX}")?;
                             let iri = data_type.as_iri();
                             self.write_iri(w, graph, iri)?;
                         }
-                        (None, Some(language)) => write!(w, "@{}", language)?,
+                        (None, Some(language)) => write!(w, "{LANGUAGE_PREFIX}{}", language)?,
                         _ => (),
                     }
                 }
@@ -613,20 +705,36 @@ impl TurtleWriter {
         flags: WriterStatusFlags,
     ) -> Result<()> {
         // Special treatment for `rdf:type`; show it in turtle as just "a"
-        //
         if group == PredicateGroupOrdering::Type {
             return if self.options.place_type_on_subject_line() {
-                Ok(write!(w, " a ")?)
+                Ok(write!(w, " {RDF_TYPE_A} ")?)
             } else {
                 self.new_line(w, flags)?;
-                Ok(write!(w, "{:<max_len$}", "a")?)
+                self.write_padded(w, "{RDF_TYPE_A}", max_len)
             };
         }
         // Otherwise, go to the next line and write it as a normal predicate-Iri
-        //
         self.new_line(w, flags)?;
         let pred = self.compress_iri(graph, predicate)?;
-        Ok(write!(w, "{:<max_len$}", pred.as_str())?)
+        self.write_padded(w, pred.as_str(), max_len)
+    }
+
+    #[inline(always)]
+    fn write_padded<W: Write>(&self, w: &mut W, value: &str, max_len: usize) -> Result<()> {
+        Ok(if max_len == 0 {
+            write!(w, "{}{}", value, SPACE_SEPARATOR)
+        } else {
+            write!(w, "{:<max_len$}", value)
+        }?)
+    }
+
+    #[inline(always)]
+    fn write_padding<W: Write>(&self, w: &mut W, max_len: usize) -> Result<()> {
+        Ok(if max_len == 0 {
+            write!(w, " ")
+        } else {
+            write!(w, "{:max_len$}", SPACE_SEPARATOR)
+        }?)
     }
 
     fn write_object<W: Write>(
@@ -642,18 +750,21 @@ impl TurtleWriter {
             if flags.is_last_of_subject {
                 self.outdent();
             }
-            let depth = self.context.borrow().indenter.depth();
-            if depth == 0 {
-                write!(w, " .")?;
+            if self.context.borrow().indenter.is_not_indented() {
+                write!(w, "{END_OF_STATEMENT}")?;
                 self.new_line(w, flags)?;
             } else if !flags.is_last_of_subject {
-                write!(w, " ;")?;
+                write!(w, "{PREDICATE_SEPARATOR}")?;
             }
         } else {
-            write!(w, ",")?;
+            write!(w, "{OBJECT_SEPARATOR}")?;
             if !flags.is_next_object_blank {
+                self.indent();
                 self.new_line(w, flags)?;
-                write!(w, "{:max_len$}", " ")?;
+                if max_len > 0 {
+                    self.write_padding(w, max_len)?;
+                }
+                self.outdent();
             }
         }
         Ok(())
@@ -716,10 +827,12 @@ impl TurtleWriter {
         let all_predicates = Vec::from_iter(graph.predicates_for(subject));
         let mut count = 0;
         let total_number = all_predicates.len();
-        let max_len = 1 + self.max_len_predicates(graph, &all_predicates)?;
+        let max_len = if self.options.predicate_padding {
+            0
+        } else {
+            1 + self.max_len_predicates(graph, &all_predicates)?
+        };
 
-        // let max_len = all_predicates.iter().(|)
-        //     .fold(std::u16::MIN, |a,b| a.max(b.borrow().));
         for (group, ref mut preds) in PredicateGroupOrdering::group_predicates(&all_predicates) {
             preds.sort_by_cached_key(|iri| self.compress_iri(graph, iri).unwrap());
             for predicate in preds {
@@ -731,7 +844,6 @@ impl TurtleWriter {
                 self.write_predicate_object(w, graph, group, subject, predicate, max_len, flags)?;
             }
         }
-        writeln!(w, " .")?;
 
         Ok(())
     }
@@ -744,12 +856,14 @@ impl TurtleWriter {
         object: &ObjectNode,
         flags: WriterStatusFlags,
     ) -> Result<()> {
-        write!(w, "[")?;
+        write!(w, "{BLANK_NODE_START}")?;
+        self.indent();
         let inner_subject = object.to_subject().unwrap();
         self.write_sub_graph(w, graph, &inner_subject, flags)?;
         self.wrote_blank(&inner_subject);
         self.new_line(w, flags)?;
-        write!(w, "]")?;
+        self.outdent();
+        write!(w, "{BLANK_NODE_END}")?;
         Ok(())
     }
 }

@@ -7,8 +7,9 @@ use std::fmt::{Display, Formatter};
 
 #[derive(Clone, Debug)]
 pub(crate) struct Indenter {
-    width: usize,
-    depth: RefCell<usize>,
+    offset_in_chars: usize,
+    indent_width: usize,
+    current_indentation: RefCell<usize>,
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -18,55 +19,71 @@ pub(crate) struct Indenter {
 impl Default for Indenter {
     fn default() -> Self {
         Self {
-            width: 2,
-            depth: RefCell::new(0),
+            offset_in_chars: 0,
+            indent_width: 2,
+            current_indentation: RefCell::new(0),
         }
     }
 }
 
 impl Display for Indenter {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{:width$}",
-            "",
-            width = self.width * (*self.depth.borrow())
-        )
+        write!(f, "{:width$}", "", width = self.current_indentation())
     }
 }
 
 impl Indenter {
-    pub(crate) fn with_default_indent_width(self, width: usize) -> Self {
+    /// Set the default width, in characters, of each indent/outdent action.
+    pub(crate) fn with_default_indent_width(self, width_in_chars: usize) -> Self {
         let mut self_mut = self;
-        self_mut.width = width;
+        self_mut.indent_width = width_in_chars;
         self_mut
     }
 
+    /// Set an offset, in characters, for indentation to start at.
     #[allow(dead_code)]
-    pub(crate) fn with_initial_depth(self, depth: usize) -> Self {
-        let _ = self.depth.replace(depth);
-        self
+    pub(crate) fn with_initial_offset(self, offset_in_chars: usize) -> Self {
+        let _ = self.current_indentation.replace(offset_in_chars);
+        let mut self_mut = self;
+        self_mut.offset_in_chars = offset_in_chars;
+        self_mut
     }
 
-    pub(crate) fn depth(&self) -> usize {
-        *self.depth.borrow()
+    /// Return the current number of characters of indentation.
+    pub(crate) fn current_indentation(&self) -> usize {
+        *self.current_indentation.borrow()
     }
 
+    /// Return the number of characters of initial offset.
+    #[allow(dead_code)]
+    pub(crate) fn initial_offset(&self) -> usize {
+        self.offset_in_chars
+    }
+
+    pub(crate) fn is_not_indented(&self) -> bool {
+        *self.current_indentation.borrow() == self.offset_in_chars
+    }
+
+    /// Return the width, in chars, for each indent/outdent action.
     #[allow(dead_code)]
     pub(crate) fn default_width(&self) -> usize {
-        self.width
+        self.indent_width
     }
 
+    /// Reset the current indentation to the value of the initial offset (0 by default).
     pub(crate) fn reset_depth(&self) {
-        self.depth.replace(0);
+        self.current_indentation.replace(self.offset_in_chars);
     }
 
+    /// Indent, adding `indent_width` in chars to the `current_indentation` value.
     pub(crate) fn indent(&self) {
-        self.indent_by(self.width);
+        self.indent_by(self.indent_width);
     }
 
-    pub(crate) fn indent_by(&self, by: usize) {
-        self.depth.replace(self.depth() + by);
+    /// Indent, adding `by_chars` to the `current_indentation` value.
+    pub(crate) fn indent_by(&self, by_chars: usize) {
+        self.current_indentation
+            .replace(self.current_indentation() + by_chars);
     }
 
     #[allow(dead_code)]
@@ -74,13 +91,16 @@ impl Indenter {
         self.indent_by(for_.into())
     }
 
+    /// Outdent, subtracting `indent_width` in chars from the `current_indentation` value.
     pub(crate) fn outdent(&self) {
-        self.indent_by(self.width);
+        self.outdent_by(self.indent_width);
     }
 
+    /// Outdent, subtracting `by_chars` from the `current_indentation` value.
     #[allow(dead_code)]
-    pub(crate) fn outdent_by(&self, by: usize) {
-        self.depth.replace(self.depth() - by);
+    pub(crate) fn outdent_by(&self, by_chars: usize) {
+        self.current_indentation
+            .replace(self.current_indentation() - by_chars);
     }
 
     #[allow(dead_code)]

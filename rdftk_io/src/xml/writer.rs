@@ -1,3 +1,4 @@
+use objio::HasOptions;
 use super::syntax::{
     ATTRIBUTE_ABOUT, ATTRIBUTE_DATATYPE, ATTRIBUTE_NODE_ID, ATTRIBUTE_RESOURCE, DEFAULT_ENCODING,
     ELEMENT_DESCRIPTION, ELEMENT_RDF,
@@ -134,6 +135,14 @@ impl Default for XmlWriter {
 
 impl_has_options!(XmlWriter, XmlOptions);
 
+impl XmlWriter {
+    pub fn with_options(self, options: XmlOptions) -> Self {
+        let mut self_mut = self;
+        self_mut.set_options(options);
+        self_mut
+    }
+}
+
 impl ObjectWriter<Graph> for XmlWriter {
     type Error = Error;
 
@@ -162,13 +171,15 @@ impl ObjectWriter<Graph> for XmlWriter {
             )
             .map_err(xml_error)?;
 
+        let graph = graph.simplify()?;
+
         if self.options.style == XmlStyle::Flat {
             for subject in graph.subjects() {
-                self.write_subject(&mut writer, graph, subject, true)?;
+                self.write_subject(&mut writer, &graph, subject, true)?;
             }
         } else {
             for subject in graph.subjects().iter().filter(|s| s.is_resource()) {
-                self.write_subject(&mut writer, graph, subject, false)?;
+                self.write_subject(&mut writer, &graph, subject, false)?;
             }
         }
 
@@ -183,14 +194,6 @@ impl ObjectWriter<Graph> for XmlWriter {
 impl GraphWriter for XmlWriter {}
 
 impl XmlWriter {
-    /// Create a new writer with the specified options, over-writing the default.
-    pub fn new(options: XmlOptions) -> Self {
-        Self {
-            mappings: Self::default_mappings(),
-            options,
-        }
-    }
-
     fn default_mappings() -> HashMap<String, String> {
         let mappings: HashMap<String, String> = [
             (

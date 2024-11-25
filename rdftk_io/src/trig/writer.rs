@@ -60,6 +60,14 @@ impl TrigWriterOptions {
 
 impl_has_options!(TrigWriter, TrigWriterOptions);
 
+impl TrigWriter {
+    pub fn with_options(self, options: TrigWriterOptions) -> Self {
+        let mut self_mut = self;
+        self_mut.set_options(options);
+        self_mut
+    }
+}
+
 impl ObjectWriter<DataSet> for TrigWriter {
     type Error = Error;
 

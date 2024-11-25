@@ -29,7 +29,7 @@ xml = ["xml-rs", "rdftk_names"]
 itertools = "0.13"
 lazy_static = "1.4"
 objio = "0.1.1"
-rdftk_core = { version = "0.5.4", path = "../rdftk_core" }
+rdftk_core = { version = "0.5.6", path = "../rdftk_core" }
 rdftk_iri = { version = "0.2.5", path = "../rdftk_iri" }
 regex = "1.5"
 tracing = "0.1.40"
@@ -37,7 +37,7 @@ tracing = "0.1.40"
 # feature-dependencies
 pest = { version = "2.7", optional = true }
 pest_derive = { version = "2.7", optional = true }
-rdftk_names = { version = "0.2.3", path = "../rdftk_names", optional = true }
+rdftk_names = { version = "0.2.5", path = "../rdftk_names", optional = true }
 serde_json = { version = "1.0", optional = true }
 xml-rs = { version = "0.8", optional = true }
 

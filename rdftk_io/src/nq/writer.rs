@@ -41,10 +41,11 @@ impl ObjectWriter<Graph> for NQuadWriter {
     where
         W: Write,
     {
-        let graph_name = graph.name();
-        for subject in graph.subjects() {
-            for predicate in graph.predicates_for(subject) {
-                for object in graph.objects_for(subject, predicate) {
+        let simple_graph = graph.simplify()?;
+        let graph_name = simple_graph.name();
+        for subject in simple_graph.subjects() {
+            for predicate in simple_graph.predicates_for(subject) {
+                for object in simple_graph.objects_for(subject, predicate) {
                     if let Some(graph_name) = graph_name {
                         writeln!(w, "{} <{}> {} {} .", subject, predicate, object, graph_name)?;
                     } else {

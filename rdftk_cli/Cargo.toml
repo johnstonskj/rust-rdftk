@@ -1,0 +1,30 @@
+[package]
+name = "rdftk_cli"
+version = "0.1.0"
+authors = ["Simon Johnston <johnstonskj@gmail.com>"]
+edition = "2021"
+description = "TBD."
+documentation = "https://docs.rs/rdftk_core/"
+repository = "https://github.com/johnstonskj/rust-rdftk.git"
+license = "MIT"
+readme = "README.md"
+publish = true
+
+[[bin]]
+name = "rdftk"
+path = "src/main.rs"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+all-features = true
+
+[dependencies]
+clap = { version = "4.5", features = ["derive", "env", "wrap_help"] }
+clio = { version = "0.3.5", features = ["clap-parse"] }
+human-panic = "2.0.2"
+objio = "0.1.2"
+rdftk_core = { version = "0.5.5", features = ["binary_types", "chrono_types", "decimal_types", "n3_formulae", "rdf_star"], path = "../rdftk_core" }
+rdftk_io = { version = "0.3.3", path = "../rdftk_io" }
+rdftk_iri = { version = "0.2.5", path = "../rdftk_iri" }
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }

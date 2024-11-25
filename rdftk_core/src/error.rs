@@ -153,6 +153,10 @@ pub enum Error {
     ///
     #[cfg(feature = "binary_types")]
     Base64Decoder(::base64::DecodeError),
+    ///
+    /// An unknown error occurred.
+    ///
+    Unknown(String),
 }
 
 ///
@@ -290,6 +294,22 @@ where
     }
 }
 
+#[inline(always)]
+pub fn unknown_error<E>(source: E) -> Error
+where
+    E: ::std::error::Error,
+{
+    Error::Unknown(source.to_string())
+}
+
+#[inline(always)]
+pub fn unknown_error_from<S>(message: S) -> Error
+where
+    S: Into<String>,
+{
+    Error::Unknown(message.into())
+}
+
 // ------------------------------------------------------------------------------------------------
 
 ///
@@ -360,6 +380,7 @@ impl Display for Error {
                 Self::Utf8(source) => format!("An error occurred parsing a UTF-8 string; source: {source}"),
                 #[cfg(feature = "binary_types")]
                 Self::Base64Decoder(source) => format!("An error occurred parsing a base64 encoded string; source: {source}"),
+                Self::Unknown(source) => format!("Unknown error: {source}"),
             }
         )
     }
@@ -421,6 +442,12 @@ impl From<::std::string::FromUtf8Error> for Error {
 impl From<::base64::DecodeError> for Error {
     fn from(source: ::base64::DecodeError) -> Self {
         Self::Base64Decoder(source)
+    }
+}
+
+impl From<String> for Error {
+    fn from(source: String) -> Self {
+        Self::Unknown(source)
     }
 }
 

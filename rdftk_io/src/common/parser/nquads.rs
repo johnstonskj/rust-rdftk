@@ -43,7 +43,7 @@ pub(super) fn parse_doc(input_pair: Pair<'_, Rule>) -> Result<DataSet, Error> {
 // Private Functions
 // ------------------------------------------------------------------------------------------------
 
-fn subject_to_name(subject: SubjectNode) -> GraphName {
+fn subject_to_graph_name(subject: SubjectNode) -> GraphName {
     subject.into()
 }
 
@@ -57,7 +57,7 @@ fn nquad(input_pair: Pair<'_, Rule>, data_set: &mut DataSet) -> Result<(), Error
         let object: ObjectNode = nt_object(inner_pairs.next().unwrap())?;
         let statement: Statement = Statement::new(subject, predicate, object);
         let graph: &mut Graph = if let Some(new_inner_pair) = inner_pairs.next() {
-            let graph_name = subject_to_name(nt_subject(new_inner_pair)?);
+            let graph_name = subject_to_graph_name(nt_subject(new_inner_pair)?);
             if let Some(graph) = data_set.graph_mut(&Some(graph_name.clone())) {
                 graph
             } else {

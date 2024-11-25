@@ -5,7 +5,7 @@ use rdftk_core::model::statement::{ObjectNode, SubjectNode};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io::Write;
-
+use objio::HasOptions;
 use crate::GraphWriter;
 
 // ------------------------------------------------------------------------------------------------
@@ -265,6 +265,14 @@ impl DotOptions {
 // ------------------------------------------------------------------------------------------------
 
 impl_has_options!(DotWriter, DotOptions);
+
+impl DotWriter {
+    pub fn with_options(self, options: DotOptions) -> Self {
+        let mut self_mut = self;
+        self_mut.set_options(options);
+        self_mut
+    }
+}
 
 impl ObjectWriter<Graph> for DotWriter {
     type Error = Error;

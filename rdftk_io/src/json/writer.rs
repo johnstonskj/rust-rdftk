@@ -4,7 +4,7 @@ use crate::json::syntax::{
 };
 use crate::json::NAME;
 use crate::GraphWriter;
-use objio::{impl_has_options, ObjectWriter};
+use objio::{impl_has_options, HasOptions, ObjectWriter};
 use rdftk_core::error::{rdf_star_not_supported_error, Error};
 use rdftk_core::model::graph::Graph;
 use serde_json::{Map, Value};
@@ -50,6 +50,14 @@ impl JsonOptions {
 
 impl_has_options!(JsonWriter, JsonOptions);
 
+impl JsonWriter {
+    pub fn with_options(self, options: JsonOptions) -> Self {
+        let mut self_mut = self;
+        self_mut.set_options(options);
+        self_mut
+    }
+}
+
 impl ObjectWriter<Graph> for JsonWriter {
     type Error = Error;
 
@@ -57,6 +65,7 @@ impl ObjectWriter<Graph> for JsonWriter {
     where
         W: Write,
     {
+        let graph = graph.simplify()?;
         let mut json_graph = Map::new();
         for subject in graph.subjects() {
             let mut predicate_map = Map::new();
