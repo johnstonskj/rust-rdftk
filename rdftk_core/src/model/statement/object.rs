@@ -121,11 +121,17 @@ impl From<&Arc<Statement>> for ObjectNode {
 impl Display for ObjectNode {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Blank(node) => write!(f, "{}:{}", BLANK_NODE_NAMESPACE, node),
-            Self::Resource(iri) => write!(f, "<{}>", iri),
-            Self::Literal(lit) => write!(f, "{}", lit),
-            Self::Collection(col) => write!(f, "{}", col),
-            Self::Statement(st) => write!(f, "<< {} >>", st),
+            Self::Blank(node) => write!(f, "{BLANK_NODE_NAMESPACE}:{node}"),
+            Self::Resource(iri) => write!(f, "<{iri}>"),
+            Self::Literal(lit) => {
+                if f.alternate() {
+                    write!(f, "{lit:#}")
+                } else {
+                    write!(f, "{lit}")
+                }
+            }
+            Self::Collection(col) => write!(f, "{col}"),
+            Self::Statement(st) => write!(f, "<< {st} >>"),
         }
     }
 }

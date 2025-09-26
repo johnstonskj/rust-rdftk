@@ -513,6 +513,10 @@ pub enum NameParseError {
     /// particular parser generating the error is included.
     ///
     InvalidCharacter(NameParser),
+    ///
+    /// The parser encountered more `':'` separator characters than expected. A `Name` must have
+    /// none whereas a `QName` may have zero or one only.
+    ///
     TooManySeparators,
 }
 
@@ -740,11 +744,11 @@ impl Display for NameParseError {
             f,
             "{}",
             match self {
-                Self::EmptyString => "An empty string is not a valid `Name`.".into(),
+                Self::EmptyString => "An empty string is not a valid `Name` or `QName`.".into(),
                 Self::InvalidCharacter(rule) => format!(
-                    "An invalid character (according to {rule}) is present in the `Name` string."
+                    "An invalid character (according to {rule}) is present in the `Name` or `QName` string."
                 ),
-                Self::TooManySeparators => "Too many `:` characters in the `Name` string.".into(),
+                Self::TooManySeparators => "Too many `:` separator characters in the `Name` or `QName` string.".into(),
             }
         )
     }

@@ -1,6 +1,6 @@
 #![cfg(feature = "json")]
 
-use objio::{HasOptions, ObjectWriter};
+use objio::ObjectWriter;
 use rdftk_io::json::{JsonOptions, JsonWriter};
 
 mod common;

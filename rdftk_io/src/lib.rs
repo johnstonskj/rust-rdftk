@@ -72,7 +72,7 @@ use rdftk_core::model::graph::Graph;
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
-pub use objio::ObjectWriter;
+pub use objio::{HasOptions, ObjectWriter};
 
 pub trait GraphWriter: ObjectWriter<Graph, Error = rdftk_core::error::Error> {}
 

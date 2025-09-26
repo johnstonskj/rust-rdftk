@@ -1,10 +1,10 @@
-use objio::HasOptions;
 use super::syntax::{
     ATTRIBUTE_ABOUT, ATTRIBUTE_DATATYPE, ATTRIBUTE_NODE_ID, ATTRIBUTE_RESOURCE, DEFAULT_ENCODING,
     ELEMENT_DESCRIPTION, ELEMENT_RDF,
 };
 use crate::xml::syntax::ATTRIBUTE_XML_LANG_PREFIXED;
 use crate::GraphWriter;
+use objio::HasOptions;
 use objio::{impl_has_options, ObjectWriter};
 use rdftk_core::error::{rdf_star_not_supported_error, Error};
 use rdftk_core::model::graph::Graph;

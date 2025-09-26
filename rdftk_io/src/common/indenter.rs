@@ -32,6 +32,9 @@ impl Display for Indenter {
     }
 }
 
+const OUTDENT_ERR_MSG: &str =
+    "Cannot outdent text, already at column 0! Most likely an unbalanced call.";
+
 impl Indenter {
     /// Set the default width, in characters, of each indent/outdent action.
     pub(crate) fn with_default_indent_width(self, width_in_chars: usize) -> Self {
@@ -93,18 +96,27 @@ impl Indenter {
 
     /// Outdent, subtracting `indent_width` in chars from the `current_indentation` value.
     pub(crate) fn outdent(&self) {
+        if *self.current_indentation.borrow() == 0 {
+            panic!("{OUTDENT_ERR_MSG}");
+        }
         self.outdent_by(self.indent_width);
     }
 
     /// Outdent, subtracting `by_chars` from the `current_indentation` value.
     #[allow(dead_code)]
     pub(crate) fn outdent_by(&self, by_chars: usize) {
+        if *self.current_indentation.borrow() == 0 {
+            panic!("{OUTDENT_ERR_MSG}");
+        }
         self.current_indentation
             .replace(self.current_indentation() - by_chars);
     }
 
     #[allow(dead_code)]
     pub(crate) fn outdent_for<T: Into<usize>>(&self, for_: T) {
+        if *self.current_indentation.borrow() == 0 {
+            panic!("{OUTDENT_ERR_MSG}");
+        }
         self.outdent_by(for_.into())
     }
 }

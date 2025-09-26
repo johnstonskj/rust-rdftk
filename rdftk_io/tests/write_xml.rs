@@ -1,6 +1,6 @@
 #![cfg(feature = "xml")]
 
-use objio::{HasOptions, ObjectWriter};
+use objio::ObjectWriter;
 use rdftk_io::xml::{XmlOptions, XmlWriter};
 
 mod common;

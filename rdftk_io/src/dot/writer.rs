@@ -1,3 +1,5 @@
+use crate::GraphWriter;
+use objio::HasOptions;
 use objio::{impl_has_options, ObjectWriter};
 use rdftk_core::error::Error;
 use rdftk_core::model::graph::Graph;
@@ -5,8 +7,6 @@ use rdftk_core::model::statement::{ObjectNode, SubjectNode};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io::Write;
-use objio::HasOptions;
-use crate::GraphWriter;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types

@@ -1,6 +1,6 @@
 #![cfg(feature = "turtle")]
 
-use objio::{HasOptions, ObjectWriter};
+use objio::ObjectWriter;
 use rdftk_io::turtle::{TurtleWriter, TurtleWriterOptions};
 use rdftk_iri::Iri;
 use std::str::FromStr;

@@ -40,4 +40,4 @@ mod reader;
 pub use reader::NTripleReader;
 
 mod writer;
-pub use writer::NTripleWriter;
+pub use writer::{NTripleWriter, NTripleWriterOptions};

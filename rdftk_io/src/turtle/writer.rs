@@ -1,15 +1,24 @@
-use crate::common::indenter::Indenter;
-use crate::GraphWriter;
+use crate::{common::indenter::Indenter, GraphWriter};
 use itertools::Itertools;
 use objio::{impl_has_options, HasOptions, ObjectWriter};
-use rdftk_core::error::{Error, Result};
-use rdftk_core::model::graph::Graph;
-use rdftk_core::model::literal::DataType;
-use rdftk_core::model::statement::{ObjectNode, SubjectNode};
+use rdftk_core::{
+    error::{Error, Result},
+    model::{
+        graph::Graph,
+        literal::{DataType, Literal},
+        statement::{Collection, ObjectNode, Statement, SubjectNode},
+    },
+};
 use rdftk_iri::Iri;
-use std::cell::RefCell;
-use std::io::Write;
-use std::str::FromStr;
+use rdftk_names::{dc::elements, foaf, owl, rdf, rdfs, skos};
+use std::{
+    cell::RefCell,
+    collections::{BTreeMap, HashSet},
+    io::Write,
+    str::FromStr,
+    sync::LazyLock,
+};
+use tracing::trace;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -22,6 +31,9 @@ use std::str::FromStr;
 pub struct TurtleWriterOptions {
     id_base: Option<Iri>,
     nest_blank_nodes: bool,
+    outdent_blank_node_end: bool,
+    outdent_collection_end: bool,
+    use_rdf_type_a: bool,
     use_sparql_style: bool,
     use_intellij_style: bool,
     place_type_on_subject_line: bool,
@@ -98,43 +110,28 @@ enum PredicateGroupOrdering {
 #[derive(Clone, Debug, Default)]
 struct WriterContext {
     indenter: Indenter,
-    // TODO: make these BlankNode vectors
-    // TODO: make these references?
-    blanks_to_write: Vec<SubjectNode>,
-    blanks_written: Vec<SubjectNode>,
+    blanks_to_write: HashSet<SubjectNode>,
 }
 
 const DECL_BASE_TTL: &str = "@base";
 const DECL_BASE_SPARQL: &str = "BASE";
 const DECL_PREFIX_TTL: &str = "@prefix";
 const DECL_PREFIX_SPARQL: &str = "PREFIX";
-
 const NAME_SEPARATOR: &str = ":";
-
 const IRI_START: &str = "<";
 const IRI_END: &str = ">";
-
 const BLANK_NODE_PREFIX: &str = "_";
 const BLANK_NODE_START: &str = "[";
 const BLANK_NODE_END: &str = "]";
-
 const COLLECTION_START: &str = "(";
 const COLLECTION_END: &str = ")";
-
 const LANGUAGE_PREFIX: &str = "@";
-
 const DATATYPE_PREFIX: &str = "^^";
-
 const PREDICATE_SEPARATOR: &str = " ;";
-
 const OBJECT_SEPARATOR: &str = ",";
-
 const SPACE_SEPARATOR: &str = " ";
-
 const END_OF_STATEMENT: &str = " .";
-
 const END_OF_LINE: &str = "\n";
-
 const RDF_TYPE_A: &str = "a";
 
 // ------------------------------------------------------------------------------------------------
@@ -146,12 +143,15 @@ impl Default for TurtleWriterOptions {
         Self {
             id_base: None,
             nest_blank_nodes: true,
+            outdent_blank_node_end: false,
+            outdent_collection_end: false,
+            use_rdf_type_a: false,
             use_sparql_style: false,
             use_intellij_style: false,
             place_type_on_subject_line: false,
             convert_to_id_base: None,
             convert_base: Vec::new(),
-            indent_width: 2,
+            indent_width: 4,
             predicate_padding: false,
         }
     }
@@ -344,47 +344,54 @@ impl ObjectWriter<Graph> for TurtleWriter {
     where
         W: Write,
     {
-        {
-            let mut context_mut = self.context.borrow_mut();
-            context_mut.indenter =
-                Indenter::default().with_default_indent_width(self.options.indent_width());
-            context_mut.blanks_to_write = graph
-                .blank_node_subjects()
-                .iter()
-                .map(|s| {
-                    let x = *s;
-                    x.clone()
-                })
-                .collect();
-            context_mut.blanks_written = Default::default();
-        }
+        let (nested, plain): (Vec<_>, Vec<_>) =
+            graph.statements().partition(|stmt| stmt.is_nested());
 
-        self.write_base_iri(w)?;
-        self.write_prefixes(w, graph)?;
-        let flags = WriterStatusFlags::default();
-        self.write_normal_subjects(w, graph, flags)?;
-        // The given cursor object collects all the blank-node objects that have not
-        // been written to the turtle file yet but have been referred to during
-        // the call to `write_normal_subjects` above. Now process those
-        // unwritten blank nodes and add them to the end of the file.
-        self.write_blank_node_subjects(w, graph, flags)
+        let mut reified_statements: Vec<Statement> = nested
+            .into_iter()
+            .map(|stmt| {
+                let (subject, mut new) = stmt.reify().unwrap();
+                new.push(Statement::new(
+                    stmt.subject(),
+                    stmt.predicate().clone(),
+                    subject.to_object(),
+                ));
+                new
+            })
+            .flatten()
+            .collect();
+        plain
+            .into_iter()
+            .for_each(|s| reified_statements.push(s.clone()));
+
+        let mut denested_graph = Graph::from(reified_statements);
+        denested_graph.set_prefix_mappings(graph.prefix_mappings().clone());
+        self.write_turtle_doc(w, &denested_graph)
     }
 }
 
 impl GraphWriter for TurtleWriter {}
 
 impl TurtleWriter {
+    // ---------------------------------------------------------------------------------------------
+    // Formatting
+    // ---------------------------------------------------------------------------------------------
+
+    #[inline(always)]
     fn indent(&self) {
         let context = self.context.borrow();
         context.indenter.indent();
     }
 
+    #[inline(always)]
     fn outdent(&self) {
         let context = self.context.borrow();
         context.indenter.outdent();
     }
 
+    #[inline(always)]
     fn new_line<W: Write>(&self, w: &mut W, flags: WriterStatusFlags) -> Result<()> {
+        trace!(name: "new_line", ?flags);
         if flags.is_being_sorted {
             Ok(write!(w, "{SPACE_SEPARATOR}")?)
         } else {
@@ -394,23 +401,38 @@ impl TurtleWriter {
         }
     }
 
-    fn wrote_blank(&self, blank: &SubjectNode) {
-        assert!(blank.is_blank());
-        self.context.borrow_mut().blanks_written.push(blank.clone());
+    #[inline(always)]
+    fn write_padded<W: Write>(&self, w: &mut W, value: &str, max_len: usize) -> Result<()> {
+        trace!(name: "write_padded", value, max_len);
+        Ok(if max_len == 0 {
+            write!(w, "{}{}", value, SPACE_SEPARATOR)
+        } else {
+            write!(w, "{:<max_len$}", value)
+        }?)
     }
 
-    //fn blanks_not_written(&self) -> HashSet<SubjectNode> {
-    //    let context = self.context.borrow();
-    //    let blanks_written = &context.blanks_written;
-    //    context
-    //        .blanks_to_write
-    //        .iter()
-    //        .filter(|subject| !blanks_written.contains(subject))
-    //        .cloned()
-    //        .collect()
-    //}
+    #[inline(always)]
+    fn write_padding<W: Write>(&self, w: &mut W, max_len: usize) -> Result<()> {
+        trace!(name: "write_padding", max_len);
+        Ok(if max_len == 0 {
+            write!(w, " ")
+        } else {
+            write!(w, "{:max_len$}", SPACE_SEPARATOR)
+        }?)
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // State Management
+    // ---------------------------------------------------------------------------------------------
+
+    fn written_blank_subject(&self, blank: &SubjectNode) {
+        trace!(name: "written_blank_subject", ?blank);
+        assert!(blank.is_blank());
+        self.context.borrow_mut().blanks_to_write.remove(blank);
+    }
 
     fn sorted_subjects(&self, graph: &Graph) -> Vec<SubjectNode> {
+        trace!("sorted_subjects");
         graph
             .node_subjects()
             .into_iter()
@@ -419,9 +441,75 @@ impl TurtleWriter {
             .collect::<Vec<SubjectNode>>()
     }
 
-    /// Write out the graph base Iri in either turtle
-    /// style (as '@base ..') or SPARQL style (as 'BASE ...')
+    /// Calculate the longest predicate name and use as the width of the current indentation.
+    fn max_len_predicates(&self, graph: &Graph, predicates: &[&Iri]) -> Result<usize> {
+        trace!("max_len_predicates");
+        let all_predicates_as_strings = predicates
+            .iter()
+            .map(|iri| self.compress_iri(graph, iri))
+            .collect::<Result<Vec<String>>>()?
+            .iter()
+            .fold(0, |a, b| a.max(b.len()));
+        Ok(all_predicates_as_strings)
+    }
+
+    fn object_sort_key(&self, graph: &Graph, object: &ObjectNode) -> Result<String> {
+        trace!("object_sort_key");
+        let mut buffer = Vec::<u8>::new();
+        let new_writer = Self::default().with_options(self.options.clone());
+        let flags = WriterStatusFlags {
+            is_being_sorted: true,
+            ..Default::default()
+        };
+        new_writer.write_object(&mut buffer, graph, object, flags)?;
+        Ok(String::from_utf8(buffer)?)
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Grammar
+    // ---------------------------------------------------------------------------------------------
+
+    ///
+    /// ```text
+    /// [1]  turtleDoc  ::= statement*
+    /// [2]  statement  ::= directive | triples '.'
+    /// [3]  directive  ::= prefixID | base | sparqlPrefix | sparqlBase
+    ///```
+    ///
+    fn write_turtle_doc<W: Write>(&self, w: &mut W, graph: &Graph) -> Result<()> {
+        trace!("write_turtle_doc");
+        {
+            let mut context_mut = self.context.borrow_mut();
+            context_mut.indenter =
+                Indenter::default().with_default_indent_width(self.options.indent_width());
+            context_mut.blanks_to_write = graph
+                .blank_node_subjects()
+                .iter()
+                .map(|s| {
+                    let s = *s;
+                    s.clone()
+                })
+                .collect();
+        }
+
+        // [3] directives
+        self.write_base_iri(w)?;
+        self.write_prefixes(w, graph)?;
+
+        // [2] ... triples
+        let flags = WriterStatusFlags::default();
+        self.write_triples(w, graph, flags)?;
+        Ok(())
+    }
+
+    ///
+    /// ```text
+    /// [5]   base        ::= '@base' IRIREF '.'
+    /// [5s]  sparqlBase  ::= "BASE" IRIREF
+    /// ```
+    ///
     fn write_base_iri<W: Write>(&self, w: &mut W) -> Result<()> {
+        trace!("write_base_iri");
         if let Some(base) = &self.options.id_base() {
             let (decl, eos) =
                 if self.options.use_sparql_style() && !self.options.use_intellij_style() {
@@ -434,123 +522,205 @@ impl TurtleWriter {
                 "{decl} {IRI_START}{}{IRI_END}{eos}",
                 base.to_string().as_str()
             )?;
+            if !self.options.use_intellij_style() {
+                writeln!(w)?;
+            }
         }
-        if !self.options.use_intellij_style() {
+        Ok(())
+    }
+
+    ///
+    /// ```text
+    /// [4]   prefixID      ::= '@prefix' PNAME_NS IRIREF '.'
+    /// [6s]  sparqlPrefix  ::= "PREFIX" PNAME_NS IRIREF
+    /// ```
+    ///
+    fn write_prefixes<W: Write>(&self, w: &mut W, graph: &Graph) -> Result<()> {
+        trace!("write_prefixes");
+        let mappings = graph.prefix_mappings();
+        if !mappings.is_empty() {
+            for (prefix, namespace) in mappings.mappings().sorted() {
+                let prefix = prefix.as_ref().map(|n| n.as_ref()).unwrap_or("");
+                let mut namespace_str = namespace.to_string();
+                // If we have any base Iri conversions to do for any of the
+                // namespaces, then do it now:
+                for (from_base, to_base) in self.options.convert_base().iter() {
+                    let from_base_str = from_base.to_string();
+                    if namespace_str.starts_with(from_base_str.as_str()) {
+                        namespace_str = format!(
+                            "{}{}",
+                            to_base.to_string().as_str(),
+                            &namespace_str[from_base_str.len()..]
+                        );
+                        break;
+                    }
+                }
+                trace!("write_prefixes {prefix}: {IRI_START}{namespace_str}{IRI_END}");
+                let (decl, eos) =
+                    if self.options.use_sparql_style() && !self.options.use_intellij_style() {
+                        (DECL_PREFIX_SPARQL, "")
+                    } else {
+                        (DECL_PREFIX_TTL, END_OF_STATEMENT)
+                    };
+                writeln!(
+                    w,
+                    "{decl} {prefix}{NAME_SEPARATOR} {IRI_START}{namespace_str}{IRI_END}{eos}"
+                )?;
+            }
             writeln!(w)?;
         }
         Ok(())
     }
 
-    /// Write all prefix mappings, sort them by prefix to avoid
-    /// random order and unnecessary changes in git
-    fn write_prefixes<W: Write>(&self, w: &mut W, graph: &Graph) -> Result<()> {
-        let mappings = graph.prefix_mappings();
-        for (prefix, namespace) in mappings.mappings().sorted() {
-            let prefix = prefix.as_ref().map(|n| n.as_ref()).unwrap_or("");
-            let mut namespace_str = namespace.to_string();
-            // If we have any base Iri conversions to do for any of the
-            // namespaces, then do it now:
-            for (from_base, to_base) in self.options.convert_base().iter() {
-                let from_base_str = from_base.to_string();
-                if namespace_str.starts_with(from_base_str.as_str()) {
-                    namespace_str = format!(
-                        "{}{}",
-                        to_base.to_string().as_str(),
-                        &namespace_str[from_base_str.len()..]
-                    );
-                    break;
-                }
-            }
-            let (decl, eos) =
-                if self.options.use_sparql_style() && !self.options.use_intellij_style() {
-                    (DECL_PREFIX_SPARQL, "")
-                } else {
-                    (DECL_PREFIX_TTL, END_OF_STATEMENT)
-                };
-            writeln!(
-                w,
-                "{decl} {prefix}{NAME_SEPARATOR} {IRI_START}{namespace_str}{IRI_END}{eos}"
-            )?;
-        }
-        Ok(writeln!(w)?)
-    }
-
-    //fn with_unwritten_blank_node_subjects<W, F>(
-    //    &self,
-    //    w: &mut W,
-    //    graph: &Graph,
-    //    flags: WriterStatusFlags,
-    //    f: F,
-    //) -> rdftk_core::error::Result<()>
-    //where
-    //    F: Fn(
-    //        &Self,
-    //        &mut W,
-    //        &Graph,
-    //        SubjectNode,
-    //        WriterStatusFlags,
-    //    ) -> rdftk_core::error::Result<()>,
-    //{
-    //    for subject in self.blanks_not_written().into_iter() {
-    //        self.context.borrow_mut().indenter.reset_depth();
-    //        f(self, w, graph, subject.clone(), flags)?;
-    //    }
-    //    Ok(())
-    //}
-
-    /// Calculate the longest predicate name and use as the width of the current indentation.
-    fn max_len_predicates(&self, graph: &Graph, predicates: &[&Iri]) -> Result<usize> {
-        let all_predicates_as_strings = predicates
-            .iter()
-            .map(|iri| self.compress_iri(graph, iri))
-            .collect::<Result<Vec<String>>>()?
-            .iter()
-            .fold(0, |a, b| a.max(b.len()));
-        Ok(all_predicates_as_strings)
-    }
-
-    fn object_sort_key(&self, graph: &Graph, object: &ObjectNode) -> Result<String> {
-        let mut buffer = Vec::<u8>::new();
-        let new_writer = Self::default().with_options(self.options.clone());
-        let flags = WriterStatusFlags {
-            is_being_sorted: true,
-            ..Default::default()
-        };
-        new_writer.write_object_content(&mut buffer, graph, object, flags)?;
-        Ok(String::from_utf8(buffer)?)
-    }
-
-    /// Emit an object node's content.
-    fn write_object_content<W: Write>(
+    ///
+    /// ```text
+    /// [6]   triples  ::= subject predicateObjectList
+    ///                  | blankNodePropertyList predicateObjectList?
+    /// ```
+    ///
+    fn write_triples<W: Write>(
         &self,
         w: &mut W,
         graph: &Graph,
-        object: &ObjectNode,
         flags: WriterStatusFlags,
     ) -> Result<()> {
-        if object.is_blank() {
-            if self.options.nest_blank_nodes() {
-                self.write_nested_blank_node(w, graph, object, flags)?;
-            } else {
-                write!(
-                    w,
-                    "{BLANK_NODE_PREFIX}{NAME_SEPARATOR}{}",
-                    object.as_blank().unwrap()
-                )?;
-            }
-        } else if object.is_resource() {
-            self.write_iri(w, graph, object.as_resource().unwrap())?;
-        } else {
-            self.write_literal(w, graph, object)?;
+        trace!(name: "write_triples", ?flags);
+        for subject in self.sorted_subjects(graph) {
+            self.write_subject(w, graph, &subject, flags)?;
+            self.write_predicate_object_list(w, graph, &subject, flags)?;
+            writeln!(w)?;
         }
-        // TODO: statement?
-        // TODO: container?
+
+        // The given cursor object collects all the blank-node objects that have not
+        // been written to the turtle file yet but have been referred to during
+        // the call to `write_normal_subjects` above. Now process those
+        // unwritten blank nodes and add them to the end of the file.
+        let context = self.context.borrow();
+        for subject in context.blanks_to_write.iter() {
+            context.indenter.reset_depth();
+            self.write_subject(w, graph, subject, flags)?;
+            self.write_predicate_object_list(w, graph, subject, flags)?;
+            writeln!(w)?;
+        }
         Ok(())
     }
 
-    /// write a single IRI, either as an IRI (within '<' and '>') or QName.
+    ///
+    /// ```text
+    /// [10]  subject  ::= iri | BlankNode | collection
+    /// ```
+    ///
+    fn write_subject<W: Write>(
+        &self,
+        w: &mut W,
+        graph: &Graph,
+        subject: &SubjectNode,
+        flags: WriterStatusFlags,
+    ) -> Result<()> {
+        trace!(name: "write_subject", ?subject, ?flags);
+        let at_start_of_line = self.context.borrow().indenter.is_not_indented();
+        match (subject, at_start_of_line) {
+            (SubjectNode::Blank(blank), true) => {
+                let initial = if flags.is_being_sorted {
+                    SPACE_SEPARATOR
+                } else {
+                    END_OF_LINE
+                };
+                write!(w, "{initial}{BLANK_NODE_PREFIX}{NAME_SEPARATOR}{blank}")?;
+            }
+            (SubjectNode::Resource(_), _) => {
+                self.write_iri(w, graph, subject.as_resource().unwrap())?;
+            }
+            (SubjectNode::Statement(_), _) => {
+                unreachable!("RDF-* Statements are not supported in Turtle representation")
+            }
+            _ => {}
+        }
+        self.indent();
+        Ok(())
+    }
+
+    ///
+    /// ```text
+    /// [7]  predicateObjectList  ::= verb objectList (';' (verb objectList)?)*
+    /// ```
+    ///
+    fn write_predicate_object_list<W: Write>(
+        &self,
+        w: &mut W,
+        graph: &Graph,
+        subject: &SubjectNode,
+        flags: WriterStatusFlags,
+    ) -> Result<()> {
+        trace!(name: "write_predicate_object_list", ?subject, ?flags);
+        let all_predicates = Vec::from_iter(graph.predicates_for(subject));
+        let mut count = 0;
+        let total_number = all_predicates.len();
+        let max_len = if self.options.predicate_padding {
+            0
+        } else {
+            1 + self.max_len_predicates(graph, &all_predicates)?
+        };
+
+        for (group, ref mut preds) in PredicateGroupOrdering::group_predicates(&all_predicates) {
+            preds.sort_by_cached_key(|iri| self.compress_iri(graph, iri).unwrap());
+            for predicate in preds {
+                count += 1;
+                let flags = WriterStatusFlags {
+                    is_last_of_subject: count == total_number,
+                    ..flags
+                };
+                self.write_predicate_object(w, graph, group, subject, predicate, max_len, flags)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    ///
+    /// ```text
+    /// [9]  verb  ::= predicate | 'a'
+    /// ```
+    ///
+    fn write_verb<W: Write>(
+        &self,
+        w: &mut W,
+        graph: &Graph,
+        group: PredicateGroupOrdering,
+        predicate: &Iri,
+        max_len: usize,
+        flags: WriterStatusFlags,
+    ) -> Result<()> {
+        trace!(name: "write_verb", ?predicate, ?group, max_len, ?flags);
+        // Special treatment for `rdf:type`; show it in turtle as just "a"
+        if group == PredicateGroupOrdering::Type {
+            let type_verb = if self.options.use_rdf_type_a {
+                RDF_TYPE_A.to_string()
+            } else {
+                self.compress_iri(graph, rdf::a_type())?
+            };
+            return if self.options.place_type_on_subject_line() {
+                Ok(write!(w, " {type_verb} ")?)
+            } else {
+                self.new_line(w, flags)?;
+                self.write_padded(w, &type_verb, max_len)
+            };
+        }
+        // Otherwise, go to the next line and write it as a normal predicate-Iri
+        self.new_line(w, flags)?;
+        let pred = self.compress_iri(graph, predicate)?;
+        self.write_padded(w, pred.as_str(), max_len)
+    }
+
+    ///
+    /// ```text
+    /// [135s]  iri           ::= IRIREF | PrefixedName
+    /// [136s]  PrefixedName  ::= PNAME_LN | PNAME_NS
+    /// ```
+    ///
     #[inline(always)]
     fn write_iri<W: Write>(&self, w: &mut W, graph: &Graph, iri: &Iri) -> Result<()> {
+        trace!(name: "write_iri", ?iri);
         Ok(write!(w, "{}", self.compress_iri(graph, iri)?)?)
     }
 
@@ -559,6 +729,7 @@ impl TurtleWriter {
     /// equals the given (optional) `convert_to_base` Iri then write it to
     /// Turtle as if it's an Iri with the default base.
     fn compress_iri(&self, graph: &Graph, iri: &Iri) -> Result<String> {
+        trace!(name: "compress_iri", ?iri);
         let mut iri_str = iri.to_string();
         if let Some(id_base) = &self.options.id_base() {
             if let Some(ref convert_to_id_base) = self.options.convert_to_id_base() {
@@ -595,149 +766,52 @@ impl TurtleWriter {
         })
     }
 
-    /// Write statements, start with those where subject is an Iri,
-    /// sort them by URL so that we keep a consistent result avoiding git-diff
-    /// to flag certain lines as changed.
-    fn write_normal_subjects<W: Write>(
-        &self,
-        w: &mut W,
-        graph: &Graph,
-        flags: WriterStatusFlags,
-    ) -> Result<()> {
-        for subject in self.sorted_subjects(graph) {
-            self.write_sub_graph(w, graph, &subject, flags)?;
-            writeln!(w)?;
-        }
-        Ok(())
-    }
-
-    /// Write statements where subject is a blank node
-    fn write_blank_node_subjects<W: Write>(
-        &self,
-        w: &mut W,
-        graph: &Graph,
-        flags: WriterStatusFlags,
-    ) -> Result<()> {
-        let context = self.context.borrow();
-        for subject in context.blanks_to_write.iter() {
-            context.indenter.reset_depth();
-            self.write_sub_graph(w, graph, subject, flags)?;
-        }
-        Ok(())
-    }
-
-    fn write_subject<W: Write>(
-        &self,
-        w: &mut W,
-        graph: &Graph,
-        subject: &SubjectNode,
-        flags: WriterStatusFlags,
-    ) -> Result<()> {
-        let at_start_of_line = self.context.borrow().indenter.is_not_indented();
-        if subject.is_blank() && at_start_of_line {
-            let initial = if flags.is_being_sorted {
-                SPACE_SEPARATOR
-            } else {
-                END_OF_LINE
-            };
-            write!(
-                w,
-                "{initial}{BLANK_NODE_PREFIX}{NAME_SEPARATOR}{}",
-                subject.as_blank().unwrap()
-            )?;
-        } else if subject.is_resource() {
-            self.write_iri(w, graph, subject.as_resource().unwrap())?;
-        }
-        // TODO: Statement?
-        self.indent();
-        Ok(())
-    }
-
-    fn write_literal<W: Write>(
-        &self,
-        w: &mut W,
-        graph: &Graph,
-        literal: &ObjectNode,
-    ) -> Result<()> {
-        Ok(if let Some(literal) = literal.as_literal() {
-            match literal.data_type() {
-                Some(DataType::Iri) => {
-                    let iri = Iri::parse(literal.lexical_form())?;
-                    self.write_iri(w, graph, &iri)?
-                }
-                Some(DataType::Boolean)
-                | Some(DataType::Long)
-                | Some(DataType::Int)
-                | Some(DataType::Short)
-                | Some(DataType::Byte)
-                | Some(DataType::UnsignedLong)
-                | Some(DataType::UnsignedInt)
-                | Some(DataType::UnsignedShort)
-                | Some(DataType::UnsignedByte)
-                | Some(DataType::Float)
-                | Some(DataType::Double)
-                | Some(DataType::Decimal) => write!(w, "{}", literal.lexical_form())?,
-                _ => {
-                    write!(w, "{:?}", literal.lexical_form())?;
-                    match (literal.data_type(), literal.language()) {
-                        (Some(data_type), None) => {
-                            write!(w, "{DATATYPE_PREFIX}")?;
-                            let iri = data_type.as_iri();
-                            self.write_iri(w, graph, iri)?;
-                        }
-                        (None, Some(language)) => write!(w, "{LANGUAGE_PREFIX}{}", language)?,
-                        _ => (),
+    ///
+    /// ```text
+    /// [13]    literal         ::= RDFLiteral | NumericLiteral | BooleanLiteral
+    /// [16]    NumericLiteral  ::= INTEGER | DECIMAL | DOUBLE
+    /// [128s]  RDFLiteral      ::= String (LANGTAG | '^^' iri)?
+    /// [133s]  BooleanLiteral  ::= 'true' | 'false'
+    /// [17]    String          ::= STRING_LITERAL_QUOTE | STRING_LITERAL_SINGLE_QUOTE
+    ///                           | STRING_LITERAL_LONG_SINGLE_QUOTE
+    ///                           | STRING_LITERAL_LONG_QUOTE
+    /// ```
+    //
+    fn write_literal<W: Write>(&self, w: &mut W, graph: &Graph, literal: &Literal) -> Result<()> {
+        trace!(name: "write_literal", ?literal);
+        Ok(match literal.data_type() {
+            Some(DataType::Iri) => {
+                let iri = Iri::parse(literal.lexical_form())?;
+                self.write_iri(w, graph, &iri)?
+            }
+            Some(DataType::Boolean)
+            | Some(DataType::Long)
+            | Some(DataType::Int)
+            | Some(DataType::Short)
+            | Some(DataType::Byte)
+            | Some(DataType::UnsignedLong)
+            | Some(DataType::UnsignedInt)
+            | Some(DataType::UnsignedShort)
+            | Some(DataType::UnsignedByte)
+            | Some(DataType::Float)
+            | Some(DataType::Double)
+            | Some(DataType::Decimal) => write!(w, "{}", literal.lexical_form())?,
+            _ => {
+                write!(w, "{:?}", literal.lexical_form())?;
+                match (literal.data_type(), literal.language()) {
+                    (Some(data_type), None) => {
+                        write!(w, "{DATATYPE_PREFIX}")?;
+                        let iri = data_type.as_iri();
+                        self.write_iri(w, graph, iri)?;
                     }
+                    (None, Some(language)) => write!(w, "{LANGUAGE_PREFIX}{}", language)?,
+                    _ => (),
                 }
             }
-        } else {
-            panic!("ERROR: this is not a literal: {:?}", literal)
         })
     }
 
-    fn write_predicate<W: Write>(
-        &self,
-        w: &mut W,
-        graph: &Graph,
-        group: PredicateGroupOrdering,
-        predicate: &Iri,
-        max_len: usize,
-        flags: WriterStatusFlags,
-    ) -> Result<()> {
-        // Special treatment for `rdf:type`; show it in turtle as just "a"
-        if group == PredicateGroupOrdering::Type {
-            return if self.options.place_type_on_subject_line() {
-                Ok(write!(w, " {RDF_TYPE_A} ")?)
-            } else {
-                self.new_line(w, flags)?;
-                self.write_padded(w, "{RDF_TYPE_A}", max_len)
-            };
-        }
-        // Otherwise, go to the next line and write it as a normal predicate-Iri
-        self.new_line(w, flags)?;
-        let pred = self.compress_iri(graph, predicate)?;
-        self.write_padded(w, pred.as_str(), max_len)
-    }
-
-    #[inline(always)]
-    fn write_padded<W: Write>(&self, w: &mut W, value: &str, max_len: usize) -> Result<()> {
-        Ok(if max_len == 0 {
-            write!(w, "{}{}", value, SPACE_SEPARATOR)
-        } else {
-            write!(w, "{:<max_len$}", value)
-        }?)
-    }
-
-    #[inline(always)]
-    fn write_padding<W: Write>(&self, w: &mut W, max_len: usize) -> Result<()> {
-        Ok(if max_len == 0 {
-            write!(w, " ")
-        } else {
-            write!(w, "{:max_len$}", SPACE_SEPARATOR)
-        }?)
-    }
-
-    fn write_object<W: Write>(
+    fn write_predicate_object_object<W: Write>(
         &self,
         w: &mut W,
         graph: &Graph,
@@ -745,7 +819,8 @@ impl TurtleWriter {
         max_len: usize,
         flags: WriterStatusFlags,
     ) -> Result<()> {
-        self.write_object_content(w, graph, object, flags)?;
+        trace!(name: "write_predicate_object_object", ?object, max_len, ?flags);
+        self.write_object(w, graph, object, flags)?;
         if flags.is_last_of_predicate {
             if flags.is_last_of_subject {
                 self.outdent();
@@ -770,6 +845,88 @@ impl TurtleWriter {
         Ok(())
     }
 
+    ///
+    /// ```text
+    /// [12]  object  ::= iri | BlankNode | collection | blankNodePropertyList | literal
+    /// ````
+    ///
+    fn write_object<W: Write>(
+        &self,
+        w: &mut W,
+        graph: &Graph,
+        object: &ObjectNode,
+        flags: WriterStatusFlags,
+    ) -> Result<()> {
+        trace!(name: "write_object", ?object, ?flags);
+        match &object {
+            ObjectNode::Blank(blank) => {
+                if self.options.nest_blank_nodes()
+                    && graph.contains_subject(&object.to_subject().unwrap())
+                {
+                    self.write_blank_node_property_list(w, graph, object, flags)?;
+                } else if self.options.nest_blank_nodes()
+                    && !graph.contains_subject(&object.to_subject().unwrap())
+                {
+                    write!(w, "{BLANK_NODE_START}{BLANK_NODE_END}")?;
+                    self.written_blank_subject(&object.to_subject().unwrap());
+                } else {
+                    write!(w, "{BLANK_NODE_PREFIX}{NAME_SEPARATOR}{blank}",)?;
+                }
+            }
+            ObjectNode::Resource(iri) => {
+                self.write_iri(w, graph, iri)?;
+            }
+            ObjectNode::Literal(value) => {
+                self.write_literal(w, graph, value)?;
+            }
+            ObjectNode::Collection(lst) => {
+                self.write_collection(w, graph, lst, flags)?;
+            }
+            ObjectNode::Statement(_) => {
+                unreachable!("RDF-* Statements are not supported in Turtle representation")
+            }
+        }
+        Ok(())
+    }
+
+    ///
+    /// ```text
+    /// [15]  collection  ::=	'(' object* ')'
+    /// ```
+    ///
+    #[inline(always)]
+    fn write_collection<W: Write>(
+        &self,
+        w: &mut W,
+        graph: &Graph,
+        collection: &Collection,
+        flags: WriterStatusFlags,
+    ) -> Result<()> {
+        trace!(name: "write_collection", ?collection, ?flags);
+        if !collection.is_empty() {
+            self.indent();
+            write!(w, "{COLLECTION_START}")?;
+            self.new_line(w, flags)?;
+            for (idx, object) in collection.iter().enumerate() {
+                self.write_object(w, graph, object, flags)?;
+                if idx < collection.len() - 1 {
+                    write!(w, "{OBJECT_SEPARATOR}{SPACE_SEPARATOR}")?;
+                }
+            }
+            if self.options.outdent_collection_end {
+                self.outdent();
+            }
+            self.new_line(w, flags)?;
+            write!(w, "{COLLECTION_END}")?;
+            if !self.options.outdent_collection_end {
+                self.outdent();
+            }
+        } else {
+            write!(w, "{COLLECTION_START}{COLLECTION_END}")?;
+        }
+        Ok(())
+    }
+
     #[allow(clippy::too_many_arguments)]
     fn write_predicate_object<W: Write>(
         &self,
@@ -781,8 +938,12 @@ impl TurtleWriter {
         max_len: usize,
         flags: WriterStatusFlags,
     ) -> Result<()> {
+        trace!(
+            name: "write_predicate_object",
+            ?subject, ?predicate, ?group, max_len, ?flags
+        );
         // First, write the predicate
-        self.write_predicate(w, graph, group, predicate, max_len, flags)?;
+        self.write_verb(w, graph, group, predicate, max_len, flags)?;
 
         // Then, write the object(s) for that predicate (in sorted predictable order)
         let mut objects = graph
@@ -801,69 +962,30 @@ impl TurtleWriter {
                 is_last_of_predicate: next_object.is_none(),
                 ..flags
             };
-            self.write_object(w, graph, object, max_len, flags)?;
+            self.write_predicate_object_object(w, graph, object, max_len, flags)?;
         }
         Ok(())
     }
-
-    fn write_sub_graph<W: Write>(
-        &self,
-        w: &mut W,
-        graph: &Graph,
-        subject: &SubjectNode,
-        flags: WriterStatusFlags,
-    ) -> rdftk_core::error::Result<()> {
-        self.write_subject(w, graph, subject, flags)?;
-        self.write_predicates_of_subject(w, graph, subject, flags)
-    }
-
-    fn write_predicates_of_subject<W: Write>(
-        &self,
-        w: &mut W,
-        graph: &Graph,
-        subject: &SubjectNode,
-        flags: WriterStatusFlags,
-    ) -> Result<()> {
-        let all_predicates = Vec::from_iter(graph.predicates_for(subject));
-        let mut count = 0;
-        let total_number = all_predicates.len();
-        let max_len = if self.options.predicate_padding {
-            0
-        } else {
-            1 + self.max_len_predicates(graph, &all_predicates)?
-        };
-
-        for (group, ref mut preds) in PredicateGroupOrdering::group_predicates(&all_predicates) {
-            preds.sort_by_cached_key(|iri| self.compress_iri(graph, iri).unwrap());
-            for predicate in preds {
-                count += 1;
-                let flags = WriterStatusFlags {
-                    is_last_of_subject: count == total_number,
-                    ..flags
-                };
-                self.write_predicate_object(w, graph, group, subject, predicate, max_len, flags)?;
-            }
-        }
-
-        Ok(())
-    }
-
-    /// Deal with a nested blank node.
-    fn write_nested_blank_node<W: Write>(
+    ///
+    /// ```text
+    /// [14]  blankNodePropertyList  ::= '[' predicateObjectList ']'
+    /// ```
+    ///
+    fn write_blank_node_property_list<W: Write>(
         &self,
         w: &mut W,
         graph: &Graph,
         object: &ObjectNode,
         flags: WriterStatusFlags,
     ) -> Result<()> {
-        write!(w, "{BLANK_NODE_START}")?;
+        trace!(name: "write_blank_node_property_list", ?object, ?flags);
         self.indent();
+        write!(w, "{BLANK_NODE_START}")?;
         let inner_subject = object.to_subject().unwrap();
-        self.write_sub_graph(w, graph, &inner_subject, flags)?;
-        self.wrote_blank(&inner_subject);
+        self.write_predicate_object_list(w, graph, &inner_subject, flags)?;
         self.new_line(w, flags)?;
-        self.outdent();
         write!(w, "{BLANK_NODE_END}")?;
+        self.written_blank_subject(&inner_subject);
         Ok(())
     }
 }
@@ -871,6 +993,9 @@ impl TurtleWriter {
 // ------------------------------------------------------------------------------------------------
 // Implementations > Ordering
 // ------------------------------------------------------------------------------------------------
+
+static PREDICATE_GROUP_MAP: LazyLock<BTreeMap<Iri, PredicateGroupOrdering>> =
+    LazyLock::new(PredicateGroupOrdering::new_mapping);
 
 impl PredicateGroupOrdering {
     fn group_predicates<'a>(predicates: &[&'a Iri]) -> Vec<(PredicateGroupOrdering, Vec<&'a Iri>)> {
@@ -885,15 +1010,33 @@ impl PredicateGroupOrdering {
     }
 
     fn group_predicate(predicate: &&&Iri) -> PredicateGroupOrdering {
-        match predicate.to_string().as_str() {
-            "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" => PredicateGroupOrdering::Type,
-            "http://www.w3.org/2000/01/rdf-schema#label" => PredicateGroupOrdering::Label,
-            "http://xmlns.com/foaf/0.1/name" => PredicateGroupOrdering::Label,
-            "http://purl.org/dc/elements/1.1/title" => PredicateGroupOrdering::Label,
-            "http://www.w3.org/2000/01/rdf-schema#comment" => PredicateGroupOrdering::Comment,
-            "http://purl.org/dc/elements/1.1/description" => PredicateGroupOrdering::Comment,
-            _ => PredicateGroupOrdering::Other,
-        }
+        PREDICATE_GROUP_MAP
+            .get(predicate)
+            .map(|v| *v)
+            .unwrap_or_else(|| PredicateGroupOrdering::Other)
+    }
+
+    fn new_mapping() -> BTreeMap<Iri, Self> {
+        vec![
+            (rdf::a_type().clone(), Self::Type),
+            (rdfs::subclass_of().clone(), Self::Type),
+            (rdfs::subproperty_of().clone(), Self::Type),
+            (owl::equivalent_class().clone(), Self::Type),
+            (rdfs::label().clone(), Self::Label),
+            (skos::pref_label().clone(), Self::Label),
+            (skos::alt_label().clone(), Self::Label),
+            (skos::hidden_label().clone(), Self::Label),
+            (foaf::name().clone(), Self::Label),
+            (elements::title().clone(), Self::Label),
+            (rdfs::comment().clone(), Self::Comment),
+            (elements::description().clone(), Self::Comment),
+            (skos::definition().clone(), Self::Comment),
+            (skos::note().clone(), Self::Comment),
+            (skos::scope_note().clone(), Self::Comment),
+            (skos::editorial_note().clone(), Self::Comment),
+        ]
+        .into_iter()
+        .collect()
     }
 }
 
@@ -903,8 +1046,14 @@ impl PredicateGroupOrdering {
 
 #[cfg(test)]
 mod tests {
-    use super::PredicateGroupOrdering;
     use super::PredicateGroupOrdering::*;
+    use super::{PredicateGroupOrdering, TurtleWriter};
+    use objio::ObjectWriter;
+    use rdftk_core::model::graph::Graph;
+    use rdftk_core::model::literal::Literal;
+    use rdftk_core::model::statement::{BlankNode, Collection, ObjectNode, Statement};
+    use rdftk_names::rdfs;
+    use std::str::FromStr;
 
     #[test]
     fn test_order() {
@@ -912,5 +1061,35 @@ mod tests {
         v.sort();
         let sorted = format!("{:?}", v);
         assert_eq!(sorted, "[Type, Label, Comment, Other]");
+    }
+
+    #[test]
+    fn test_blank_collection_object() {
+        let list: Vec<ObjectNode> = vec![
+            BlankNode::from_str("aa").unwrap().into(),
+            BlankNode::from_str("bb").unwrap().into(),
+            BlankNode::from_str("cc").unwrap().into(),
+        ];
+        let collection: Collection = list.into();
+        let statement = Statement::new(BlankNode::generate(), rdfs::label().clone(), collection);
+        let graph = Graph::from(vec![statement]);
+
+        let writer = TurtleWriter::default();
+        writer.write(&mut std::io::stdout(), &graph).unwrap();
+    }
+
+    #[test]
+    fn test_literal_collection_object() {
+        let list: Vec<ObjectNode> = vec![
+            Literal::plain("aa").into(),
+            Literal::plain("bb").into(),
+            Literal::plain("cc").into(),
+        ];
+        let collection: Collection = list.into();
+        let statement = Statement::new(BlankNode::generate(), rdfs::label().clone(), collection);
+        let graph = Graph::from(vec![statement]);
+
+        let writer = TurtleWriter::default();
+        writer.write(&mut std::io::stdout(), &graph).unwrap();
     }
 }
