@@ -21,7 +21,7 @@ fn write_to_turtle() {
     assert!(output.contains("@prefix dc: <http://purl.org/dc/elements/1.1/> .\n"));
     assert!(output.contains("<http://en.wikipedia.org/wiki/Tony_Benn>"));
     assert!(output.contains("  dc:description [\n"));
-    assert!(output.contains("    a         foaf:Person"));
+    assert!(output.contains("    rdf:type  foaf:Person"));
     assert!(output.contains("    foaf:name \"Tony Benn\""));
     assert!(output.contains("  ] ;\n"));
     assert!(output.contains("  dc:publisher   \"Wikipedia\" .\n"));
@@ -44,7 +44,7 @@ fn write_to_turtle_with_base() {
     assert!(output.contains("@prefix dc: <http://purl.org/dc/elements/1.1/> .\n"));
     assert!(output.contains("<Tony_Benn>"));
     assert!(output.contains("  dc:description [\n"));
-    assert!(output.contains("    a         foaf:Person"));
+    assert!(output.contains("    rdf:type  foaf:Person"));
     assert!(output.contains("    foaf:name \"Tony Benn\""));
     assert!(output.contains("  ] ;\n"));
     assert!(output.contains("  dc:publisher   \"Wikipedia\" .\n"));
@@ -69,7 +69,7 @@ fn write_to_turtle_with_options() {
     assert!(output.contains("PREFIX dc: <http://purl.org/dc/elements/1.1/>\n"));
     assert!(output.contains("<Tony_Benn>"));
     assert!(output.contains("  dc:description [\n"));
-    assert!(output.contains("    a         foaf:Person"));
+    assert!(output.contains("    rdf:type  foaf:Person"));
     assert!(output.contains("    foaf:name \"Tony Benn\""));
     assert!(output.contains("  ] ;\n"));
     assert!(output.contains("  dc:publisher   \"Wikipedia\" .\n"));

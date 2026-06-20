@@ -1,9 +1,12 @@
 use rdftk_core::model::{
-    graph::{Graph, GraphName, PrefixMapping},
+    graph::{Graph, GraphName},
     literal::Literal,
     statement::{BlankNode, Statement},
 };
-use rdftk_iri::{Iri, Name};
+use rdftk_iri::{
+    Iri, IriPrefixMap, Name, VOCABULARY_DC_ELEMENTS, VOCABULARY_FOAF, VOCABULARY_RDF,
+    VOCABULARY_RDF_SCHEMA,
+};
 use std::str::FromStr;
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -32,11 +35,11 @@ pub fn tony_benn_graph(graph_type: TonyBennType) -> Graph {
         .with_statements(statements)
 }
 
-fn some_tony_benn_graph(graph_type: TonyBennType) -> (PrefixMapping, Vec<Statement>) {
-    let mut mappings = PrefixMapping::default()
-        .with_rdf()
-        .with_dc_elements()
-        .with_foaf();
+fn some_tony_benn_graph(graph_type: TonyBennType) -> (IriPrefixMap, Vec<Statement>) {
+    let mut mappings = IriPrefixMap::default()
+        .with_vocabulary(&VOCABULARY_RDF)
+        .with_vocabulary(&VOCABULARY_DC_ELEMENTS)
+        .with_vocabulary(&VOCABULARY_FOAF);
     if graph_type == TonyBennType::TwoTypes {
         mappings.insert(
             Name::new_unchecked("fibo-fnd-aap-ppl"),
@@ -97,8 +100,8 @@ fn some_tony_benn_graph(graph_type: TonyBennType) -> (PrefixMapping, Vec<Stateme
 /// ```
 #[allow(dead_code)]
 pub fn use_cases_graph() -> Graph {
-    let mappings = PrefixMapping::default()
-        .with_rdf()
+    let mappings = IriPrefixMap::default()
+        .with_vocabulary(&VOCABULARY_RDF)
         .with(
             Name::new_unchecked("use-case"),
             Iri::from_str("https://ekgf.org/ontology/use-case/").unwrap(),
@@ -169,9 +172,9 @@ pub fn use_cases_graph() -> Graph {
 /// ```
 #[allow(dead_code)]
 pub fn many_blank_nodes_graph() -> Graph {
-    let mappings = PrefixMapping::default()
-        .with_rdf()
-        .with_rdfs()
+    let mappings = IriPrefixMap::default()
+        .with_vocabulary(&VOCABULARY_RDF)
+        .with_vocabulary(&VOCABULARY_RDF_SCHEMA)
         .with(
             Name::new_unchecked("use-case"),
             Iri::from_str("https://ekgf.org/ontology/use-case/").unwrap(),

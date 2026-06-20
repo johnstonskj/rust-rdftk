@@ -11,12 +11,14 @@ fn write_to_nquads() {
     let graph = common::tony_benn_named_graph(common::TonyBennType::OneType);
     let data_set = DataSet::from(graph);
 
+    println!("# input: DataSet {data_set:#?}");
+
     let writer = NQuadWriter::default();
 
     let result = writer.write_to_string(&data_set);
     assert!(result.is_ok());
     let output = result.unwrap();
-    println!("# format: N-Quads\n{}", output);
+    println!("# output: N-Quads\n{}", output);
 
     assert!(output.contains("<http://en.wikipedia.org/wiki/Tony_Benn> <http://purl.org/dc/elements/1.1/title> \"Tony Benn\" <http://en.wikipedia.org/wiki/Tony_Benn> .\n"));
     assert!(output.contains("<http://en.wikipedia.org/wiki/Tony_Benn> <http://purl.org/dc/elements/1.1/publisher> \"Wikipedia\" <http://en.wikipedia.org/wiki/Tony_Benn> .\n"));

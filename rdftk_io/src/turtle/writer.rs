@@ -425,12 +425,6 @@ impl TurtleWriter {
     // State Management
     // ---------------------------------------------------------------------------------------------
 
-    fn written_blank_subject(&self, blank: &SubjectNode) {
-        trace!(name: "written_blank_subject", ?blank);
-        assert!(blank.is_blank());
-        self.context.borrow_mut().blanks_to_write.remove(blank);
-    }
-
     fn sorted_subjects(&self, graph: &Graph) -> Vec<SubjectNode> {
         trace!("sorted_subjects");
         graph
@@ -482,6 +476,7 @@ impl TurtleWriter {
             let mut context_mut = self.context.borrow_mut();
             context_mut.indenter =
                 Indenter::default().with_default_indent_width(self.options.indent_width());
+            // Initialize with all the blank nodes in the graph
             context_mut.blanks_to_write = graph
                 .blank_node_subjects()
                 .iter()
@@ -596,6 +591,7 @@ impl TurtleWriter {
         // the call to `write_normal_subjects` above. Now process those
         // unwritten blank nodes and add them to the end of the file.
         let context = self.context.borrow();
+        // Iterate over all blank nodes
         for subject in context.blanks_to_write.iter() {
             context.indenter.reset_depth();
             self.write_subject(w, graph, subject, flags)?;
@@ -868,7 +864,6 @@ impl TurtleWriter {
                     && !graph.contains_subject(&object.to_subject().unwrap())
                 {
                     write!(w, "{BLANK_NODE_START}{BLANK_NODE_END}")?;
-                    self.written_blank_subject(&object.to_subject().unwrap());
                 } else {
                     write!(w, "{BLANK_NODE_PREFIX}{NAME_SEPARATOR}{blank}",)?;
                 }
@@ -985,7 +980,6 @@ impl TurtleWriter {
         self.write_predicate_object_list(w, graph, &inner_subject, flags)?;
         self.new_line(w, flags)?;
         write!(w, "{BLANK_NODE_END}")?;
-        self.written_blank_subject(&inner_subject);
         Ok(())
     }
 }
