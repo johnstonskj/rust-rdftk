@@ -1,16 +1,16 @@
 use rdftk_core::model::{
-    graph::{Graph, PrefixMapping},
+    graph::Graph,
     literal::Literal,
     statement::{BlankNode, Statement, SubjectNode},
 };
-use rdftk_iri::Iri;
+use rdftk_iri::{Iri, IriPrefixMap, VOCABULARY_DC_TERMS, VOCABULARY_FOAF, VOCABULARY_RDF};
 use std::str::FromStr;
 
 pub fn tony_benn_graph() -> Graph {
-    let mappings = PrefixMapping::default()
-        .with_rdf()
-        .with_dc_terms()
-        .with_foaf();
+    let mappings = IriPrefixMap::default()
+        .with_vocabulary(&VOCABULARY_RDF)
+        .with_vocabulary(&VOCABULARY_DC_TERMS)
+        .with_vocabulary(&VOCABULARY_FOAF);
 
     let mut graph = Graph::default();
 

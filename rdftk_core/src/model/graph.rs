@@ -19,9 +19,7 @@ fn simple_graph_writer(graph: &Graph)
 use crate::error::Error;
 use crate::model::features::{Featured, FEATURE_GRAPH_DUPLICATES, FEATURE_RDF_STAR};
 use crate::model::statement::{BlankNode, ObjectNode, Statement, SubjectNode};
-use bimap::BiHashMap;
-use rdftk_iri::{Iri, IriExtra, Name, QName};
-use rdftk_names::{dc, foaf, owl, rdf, rdfs, skos, xsd};
+use rdftk_iri::{Iri, IriExtra, IriPrefixMap, Name};
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
@@ -45,17 +43,6 @@ pub enum GraphName {
 // ------------------------------------------------------------------------------------------------
 
 ///
-/// Implementation of a mapping from a prefix `Name` to an `Iri`. Prefix mappings are commonly used
-/// in the serialization of graphs.
-///
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct PrefixMapping {
-    map: BiHashMap<Option<Name>, Iri>,
-}
-
-// ------------------------------------------------------------------------------------------------
-
-///
 /// A graph is an unordered list of statements and may include duplicates.
 /// Note that this trait represents an immutable graph, a type should also implement the
 /// `MutableGraph` trait for mutation.
@@ -64,7 +51,7 @@ pub struct PrefixMapping {
 pub struct Graph {
     name: Option<GraphName>,
     statements: Statements,
-    mappings: PrefixMapping,
+    mappings: IriPrefixMap,
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -207,308 +194,6 @@ impl GraphName {
 }
 
 // ------------------------------------------------------------------------------------------------
-// Implementations ❱ Prefix Mappings
-// ------------------------------------------------------------------------------------------------
-
-impl PrefixMapping {
-    // --------------------------------------------------------------------------------------------
-    // Constructors
-    // --------------------------------------------------------------------------------------------
-
-    pub fn common() -> Self {
-        Self::default()
-            .with_dc_elements()
-            .with_owl()
-            .with_rdf()
-            .with_rdfs()
-            .with_skos()
-            .with_xsd()
-    }
-
-    ///
-    /// Construct a new mapping instance with the provided default namespace.
-    ///
-    pub fn with_default(self, iri: Iri) -> Self
-    where
-        Self: Sized,
-    {
-        let mut mut_self = self;
-        mut_self.set_default_namespace(iri);
-        mut_self
-    }
-
-    ///
-    /// Include the common "dc::terms" mapping.
-    ///
-    pub fn with_dc_terms(self) -> Self
-    where
-        Self: Sized,
-    {
-        let mut mut_self = self;
-        mut_self.insert_dc_terms();
-        mut_self
-    }
-
-    ///
-    /// Include the common "dc::elements" mapping.
-    ///
-    pub fn with_dc_elements(self) -> Self
-    where
-        Self: Sized,
-    {
-        let mut mut_self = self;
-        mut_self.insert_dc_elements();
-        mut_self
-    }
-
-    ///
-    /// Include the common "foaf" mapping.
-    ///
-    pub fn with_foaf(self) -> Self
-    where
-        Self: Sized,
-    {
-        let mut mut_self = self;
-        mut_self.insert_foaf();
-        mut_self
-    }
-
-    ///
-    /// Include the common "owl" mapping.
-    ///
-    pub fn with_owl(self) -> Self
-    where
-        Self: Sized,
-    {
-        let mut mut_self = self;
-        mut_self.insert_owl();
-        mut_self
-    }
-
-    ///
-    /// Include the common "rdf" mapping.
-    ///
-    pub fn with_rdf(self) -> Self
-    where
-        Self: Sized,
-    {
-        let mut mut_self = self;
-        mut_self.insert_rdf();
-        mut_self
-    }
-
-    ///
-    /// Include the common "rdfs" mapping.
-    ///
-    pub fn with_rdfs(self) -> Self
-    where
-        Self: Sized,
-    {
-        let mut mut_self = self;
-        mut_self.insert_rdfs();
-        mut_self
-    }
-
-    ///
-    /// Include the common "xsd" (XML Schema Data types) mapping.
-    ///
-    pub fn with_xsd(self) -> Self
-    where
-        Self: Sized,
-    {
-        let mut mut_self = self;
-        mut_self.insert_xsd();
-        mut_self
-    }
-
-    ///
-    /// Include the common "skos"  mapping.
-    ///
-    pub fn with_skos(self) -> Self
-    where
-        Self: Sized,
-    {
-        let mut mut_self = self;
-        mut_self.insert_skos();
-        mut_self
-    }
-
-    pub fn with(self, prefix: Name, iri: Iri) -> Self
-    where
-        Self: Sized,
-    {
-        let mut mut_self = self;
-        mut_self.insert(prefix, iri);
-        mut_self
-    }
-
-    // --------------------------------------------------------------------------------------------
-    // Collection methods
-    // --------------------------------------------------------------------------------------------
-
-    ///
-    /// Returns `true` if there are no mappings in this instance, else `false`.
-    ///
-    pub fn is_empty(&self) -> bool {
-        self.map.is_empty()
-    }
-
-    ///
-    /// Return the number of mappings in this instance.
-    ///
-    pub fn len(&self) -> usize {
-        self.map.len()
-    }
-
-    ///
-    /// Get the default namespace mapping, if present.
-    ///
-    pub fn get_default_namespace(&self) -> Option<&Iri> {
-        self.map.get_by_left(&None)
-    }
-
-    ///
-    /// Set the default namespace mapping.
-    ///
-    pub fn set_default_namespace(&mut self, iri: Iri) {
-        let _ = self.map.insert(None, iri);
-    }
-
-    pub fn remove_default_namespace(&mut self) {
-        let _ = self.map.remove_by_left(&None);
-    }
-
-    ///
-    /// Get the namespace Iri associated with this provided prefix, if present.
-    ///
-    pub fn get_namespace(&self, prefix: &Name) -> Option<&Iri> {
-        self.map.get_by_left(&Some(prefix.clone()))
-    }
-
-    ///
-    /// Get the prefix associated with this provided namespace URI, if present.
-    ///
-    pub fn get_prefix(&self, namespace: &Iri) -> Option<&Option<Name>> {
-        self.map.get_by_right(namespace)
-    }
-
-    ///
-    /// Return an iterator over the contained mappings.
-    ///
-    pub fn mappings<'a>(&'a self) -> Box<dyn Iterator<Item = (&'a Option<Name>, &'a Iri)> + 'a> {
-        Box::new(self.map.iter())
-    }
-
-    ///
-    /// Insert a mapping from the prefix string to the namespace Iri.
-    ///
-    pub fn insert(&mut self, prefix: Name, iri: Iri) {
-        let _ = self.map.insert(Some(prefix), iri);
-    }
-
-    pub fn insert_owl(&mut self) {
-        self.insert(owl::default_prefix().clone(), owl::namespace().clone());
-    }
-
-    pub fn insert_rdf(&mut self) {
-        self.insert(rdf::default_prefix().clone(), rdf::namespace().clone());
-    }
-
-    pub fn insert_rdfs(&mut self) {
-        self.insert(rdfs::default_prefix().clone(), rdfs::namespace().clone());
-    }
-
-    pub fn insert_xsd(&mut self) {
-        self.insert(xsd::default_prefix().clone(), xsd::namespace().clone());
-    }
-
-    pub fn insert_foaf(&mut self) {
-        self.insert(foaf::default_prefix().clone(), foaf::namespace().clone());
-    }
-
-    pub fn insert_dc_elements(&mut self) {
-        self.insert(
-            dc::elements::default_prefix().clone(),
-            dc::elements::namespace().clone(),
-        );
-    }
-
-    pub fn insert_dc_terms(&mut self) {
-        self.insert(
-            dc::terms::default_prefix().clone(),
-            dc::terms::namespace().clone(),
-        );
-    }
-
-    pub fn insert_skos(&mut self) {
-        self.insert(skos::default_prefix().clone(), skos::namespace().clone());
-    }
-
-    pub fn insert_skos_xl(&mut self) {
-        self.insert(
-            skos::xl::default_prefix().clone(),
-            skos::xl::namespace().clone(),
-        );
-    }
-
-    pub fn insert_skos_iso(&mut self) {
-        self.insert(
-            skos::iso::default_prefix().clone(),
-            skos::iso::namespace().clone(),
-        );
-    }
-
-    ///
-    /// Remove a mapping for the provided prefix. This operation has no effect if no mapping is present.
-    ///
-    pub fn remove(&mut self, prefix: &Name) {
-        let _ = self.map.remove_by_left(&Some(prefix.clone()));
-    }
-
-    ///
-    /// Remove all mappings from this instance.
-    ///
-    pub fn clear(&mut self) {
-        self.map.clear();
-    }
-
-    // --------------------------------------------------------------------------------------------
-    // QName Mapping
-    // --------------------------------------------------------------------------------------------
-
-    ///
-    /// Expand a qname into an Iri, if possible.
-    ///
-    pub fn expand(&self, qname: &QName) -> Option<Iri> {
-        let prefix = if let Some(prefix) = qname.prefix() {
-            self.get_namespace(prefix)
-        } else {
-            self.get_default_namespace()
-        };
-        match prefix {
-            None => None,
-            Some(namespace) => namespace.make_name(qname.name().clone()),
-        }
-    }
-
-    ///
-    /// Compress an Iri into a qname, if possible.
-    ///
-    pub fn compress(&self, iri: &Iri) -> Option<QName> {
-        let (iri, name) = if let Some((iri, name)) = iri.split() {
-            (iri, name)
-        } else {
-            return None;
-        };
-        match self.get_prefix(&iri) {
-            None => None,
-            Some(None) => Some(QName::new_unqualified(name).unwrap()),
-            Some(Some(prefix)) => Some(QName::new(prefix.clone(), name).unwrap()),
-        }
-    }
-}
-
-// ------------------------------------------------------------------------------------------------
 // Implementations ❱ Graphs
 // ------------------------------------------------------------------------------------------------
 
@@ -572,8 +257,9 @@ impl Graph {
         }
     }
 
-    pub fn with_mappings(self, mappings: PrefixMapping) -> Self {
-        Self { mappings, ..self }
+    pub fn with_mappings(mut self, mappings: IriPrefixMap) -> Self {
+        self.mappings = mappings;
+        self
     }
 
     pub fn with_statements(self, statements: Vec<Statement>) -> Self {
@@ -791,14 +477,14 @@ impl Graph {
     ///
     /// Returns the set of prefix mappings held by the graph.
     ///
-    pub fn prefix_mappings(&self) -> &PrefixMapping {
+    pub fn prefix_mappings(&self) -> &IriPrefixMap {
         &self.mappings
     }
 
     ///
     /// Set the prefix mappings held by the graph.
     ///
-    pub fn set_prefix_mappings(&mut self, mappings: PrefixMapping) {
+    pub fn set_prefix_mappings(&mut self, mappings: IriPrefixMap) {
         self.mappings = mappings;
     }
 
@@ -965,6 +651,9 @@ impl Graph {
     ///
     pub fn simplify(&self) -> Result<Self, Error> {
         let mut new_graph = Self::default();
+        if let Some(name) = self.name() {
+            new_graph.set_name(name.clone());
+        }
         for statement in self.statements() {
             if let Some(subject_statement) = statement.subject().as_statement() {
                 let (subject, statements) = subject_statement.reify()?;
