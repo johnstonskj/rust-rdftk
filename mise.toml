@@ -1,3 +1,26 @@
 [tools]
 rust = "latest"
-taplo = "latest"
+"cargo:cargo-tarpaulin" = "latest"
+
+# Coverage for the `rdftk_iri` crate, enforcing the 80% line-coverage gate.
+#
+# tarpaulin can't currently build the workspace's no-std-feature variants in
+# one shot, so we restrict the report to the `rdftk_iri` source tree and only
+# enable the std + serde feature set (the crate's defaults).
+[tasks.coverage-iri]
+description = "Run tarpaulin coverage for rdftk_iri (fails under 80%)"
+run = """
+cargo tarpaulin \
+  -p rdftk_iri \
+  --no-default-features --features std,serde \
+  --skip-clean \
+  --fail-under 80 \
+  --exclude-files 'rdftk_core/*' \
+  --exclude-files 'rdftk_io/*' \
+  --exclude-files 'rdftk_names/*' \
+  --exclude-files 'rdftk_ontology/*' \
+  --exclude-files 'rdftk_query/*' \
+  --exclude-files 'rdftk_skos/*' \
+  --exclude-files 'rdftk_cli/*' \
+  --out Stdout
+"""
