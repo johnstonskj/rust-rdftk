@@ -428,7 +428,7 @@ impl LocalName {
     }
 
     ///
-    /// Returns the `namespace`` part of this `LocalName`, if present.
+    /// Returns the `namespace` part of this `LocalName`, if present.
     ///
     pub fn namespace(&self) -> &Namespace {
         &self.namespace
