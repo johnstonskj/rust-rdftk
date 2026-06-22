@@ -27,8 +27,11 @@ use serde::{Deserialize, Serialize};
 ///
 #[derive(Clone, Debug, PartialEq, Eq, EnumIs, EnumTryAs)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[allow(missing_docs)] // EnumIs/EnumTryAs generate undocumented methods.
 pub enum IriRef {
+    /// A full IRI of the form `<...>`.
     Iri(Iri),
+    /// A prefixed name of the form `prefix:local`.
     PrefixedName(PrefixedName),
 }
 
@@ -47,6 +50,19 @@ pub type Iri = url::Url;
 pub trait IriExtra {
     ///
     /// Returns a copy of the current IRI with the path component replaced by `path`.
+    ///
+    /// Example
+    ///
+    /// ```
+    /// use rdftk_iri::{Iri, IriExtra};
+    /// use std::str::FromStr;
+    ///
+    /// let iri = Iri::from_str("https://example.org/old").unwrap();
+    /// assert_eq!(
+    ///     iri.with_new_path("/new").to_string(),
+    ///     "https://example.org/new",
+    /// );
+    /// ```
     ///
     fn with_new_path<S>(&self, path: S) -> Self
     where
@@ -77,11 +93,8 @@ pub trait IriExtra {
         S: AsRef<str>;
 
     ///
-    /// Returns a copy of the current IRI with the fragment component replaced by an empty string.
-    ///
-
-    ///
-    /// Returns a copy of the current IRI with the fragment component removed.
+    /// Returns a copy of the current IRI with the fragment component replaced
+    /// by an empty string, so the IRI ends with `#`.
     ///
     /// Example
     ///
@@ -218,7 +231,7 @@ pub trait IriExtra {
     ///     None,
     /// );
     /// ```
-    ///39M
+    ///
     fn namespace(&self) -> Option<Self>
     where
         Self: Sized,
@@ -249,7 +262,7 @@ pub trait IriExtra {
     ///
     /// let ns_name = Iri::from_str("https://example.org").unwrap();
     /// assert_eq!(
-    ///     ns_name.namespace(),
+    ///     ns_name.name(),
     ///     None,
     /// );
     /// ```

@@ -155,14 +155,17 @@
 //! use rdftk_iri::{LocalName, Name, Namespace};
 //! use std::str::FromStr;
 //!
-//! let prefixed: LocalName = "prefix:name".parse().expect("parse error");
-//! let un_prefixed: LocalName = ":name".parse().expect("parse error");
-//!
-//! let prefixed: LocalName = LocalName::new(
+//! let parsed_prefixed: LocalName = "prefix:name".parse().expect("parse error");
+//! let constructed_prefixed: LocalName = LocalName::new(
 //!     Namespace::new_unchecked("prefix"),
 //!     Name::new_unchecked("name"),
 //! );
-//! let un_prefixed: LocalName = LocalName::new_in_default(Name::new_unchecked("name"));
+//! assert_eq!(parsed_prefixed, constructed_prefixed);
+//!
+//! let parsed_default: LocalName = ":name".parse().expect("parse error");
+//! let constructed_default: LocalName =
+//!     LocalName::new_in_default(Name::new_unchecked("name"));
+//! assert_eq!(parsed_default, constructed_default);
 //!
 //! assert!(LocalName::from_str("").is_err());
 //! assert!(LocalName::from_str("hello world").is_err());

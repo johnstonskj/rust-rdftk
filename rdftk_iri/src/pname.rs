@@ -19,7 +19,16 @@ use serde::{Deserialize, Serialize};
 ///
 /// ## Examples
 ///
-/// TBD
+/// ```rust
+/// use rdftk_iri::{LocalName, Namespace, PrefixedName};
+/// use std::str::FromStr;
+///
+/// let just_ns = PrefixedName::Namespace(Namespace::from_str("rdf:").unwrap());
+/// assert_eq!(just_ns.to_string(), "rdf:");
+///
+/// let qualified = PrefixedName::Local(LocalName::from_str("rdf:type").unwrap());
+/// assert_eq!(qualified.to_string(), "rdf:type");
+/// ```
 ///
 /// ## Specification
 ///
@@ -30,8 +39,11 @@ use serde::{Deserialize, Serialize};
 ///
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, EnumIs, EnumTryAs)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+#[allow(missing_docs)] // EnumIs/EnumTryAs generate undocumented methods.
 pub enum PrefixedName {
+    /// A bare namespace reference (`PNAME_NS`), e.g. `rdf:`.
     Namespace(Namespace),
+    /// A namespace-qualified local name (`PNAME_LN`), e.g. `rdf:type`.
     Local(LocalName),
 }
 
@@ -79,7 +91,11 @@ pub enum PrefixedName {
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct Namespace(String);
 
+/// The character used to separate a [`Namespace`] prefix from a [`Name`] in a
+/// [`LocalName`].
 pub const NAMESPACE_SEPARATOR_CHAR: char = ':';
+
+/// The canonical string form of the default (unprefixed) namespace.
 pub const NAMESPACE_DEFAULT_STRING: &str = ":";
 
 ///
@@ -234,6 +250,16 @@ impl From<&Namespace> for String {
 }
 
 impl Namespace {
+    ///
+    /// Construct a `Namespace` from a bare prefix string by appending the
+    /// `':'` separator and validating the result.
+    ///
+    /// ```rust
+    /// use rdftk_iri::Namespace;
+    /// let ns = Namespace::new_named("rdf").unwrap();
+    /// assert_eq!(ns.to_string(), "rdf:");
+    /// ```
+    ///
     pub fn new_named<S>(s: S) -> Result<Self, NameParseError>
     where
         S: AsRef<str>,
@@ -241,12 +267,16 @@ impl Namespace {
         Self::from_str(&format!("{}{NAMESPACE_SEPARATOR_CHAR}", s.as_ref()))
     }
 
+    ///
+    /// Construct the *default* (unprefixed) namespace, which serialises as `":"`.
+    ///
     pub fn new_default() -> Self {
         Self(NAMESPACE_DEFAULT_STRING.to_string())
     }
 
     ///
-    /// Returns a new `NamespaceName` instance from the string `s` **without** any validation.
+    /// Returns a new `Namespace` instance from the string `s` **without** any
+    /// grammar validation. The trailing `':'` is added if not already present.
     ///
     pub fn new_unchecked<S>(s: S) -> Self
     where
@@ -260,15 +290,32 @@ impl Namespace {
         }
     }
 
+    ///
+    /// Returns `true` if this is the default (unprefixed) namespace, i.e. `":"`.
+    ///
     pub fn is_default(&self) -> bool {
         self.0 == NAMESPACE_DEFAULT_STRING
     }
 
+    ///
+    /// Returns the prefix portion of this namespace without the trailing `':'`,
+    /// or `None` if this is the default namespace.
+    ///
+    /// ```rust
+    /// use rdftk_iri::Namespace;
+    /// use std::str::FromStr;
+    /// assert_eq!(Namespace::from_str("rdf:").unwrap().name_string(), Some("rdf"));
+    /// assert_eq!(Namespace::new_default().name_string(), None);
+    /// ```
+    ///
     pub fn name_string(&self) -> Option<&str> {
         let name = self.0.strip_suffix(NAMESPACE_SEPARATOR_CHAR).unwrap();
         if name.is_empty() { None } else { Some(name) }
     }
 
+    ///
+    /// Combine this namespace with `name` to produce a [`LocalName`].
+    ///
     pub fn qualify(&self, name: &Name) -> LocalName {
         LocalName::new(self.clone(), name.clone())
     }
@@ -334,7 +381,8 @@ impl From<&Name> for String {
 
 impl Name {
     ///
-    /// Returns a new `NamespaceName` instance from the string `s` **without** any validation.
+    /// Returns a new `Name` instance from the string `s` **without** any
+    /// grammar validation.
     ///
     pub fn new_unchecked<S>(s: S) -> Self
     where
@@ -344,7 +392,7 @@ impl Name {
     }
 
     ///
-    /// Returns `true` if the string in `s` is a valid `PNAME_NS`.
+    /// Returns `true` if the string in `s` is a valid `PN_LOCAL`.
     ///
     pub fn is_valid_str<S>(s: S) -> bool
     where
@@ -353,6 +401,9 @@ impl Name {
         Self::from_str(s.as_ref()).is_ok()
     }
 
+    ///
+    /// Combine this `Name` with `in_namespace` to produce a [`LocalName`].
+    ///
     pub fn qualify(&self, in_namespace: &Namespace) -> LocalName {
         LocalName::new(in_namespace.clone(), self.clone())
     }
@@ -399,13 +450,18 @@ impl From<&LocalName> for String {
 
 impl LocalName {
     ///
-    /// Construct a new qualified `LocalName`: "`{prefix}:{name}`". This will return an error if either
-    /// the prefix or name is empty or is an invalid `LocalName` part.
+    /// Construct a new qualified `LocalName` from a pre-validated [`Namespace`]
+    /// and [`Name`]. Because the parts are already validated, this constructor
+    /// is infallible.
     ///
     pub fn new(namespace: Namespace, name: Name) -> Self {
         Self { namespace, name }
     }
 
+    ///
+    /// Construct a `LocalName` in the default namespace (i.e. one whose
+    /// serialised form starts with `':'`).
+    ///
     pub fn new_in_default(name: Name) -> Self {
         Self {
             namespace: Namespace::new_default(),
@@ -428,12 +484,16 @@ impl LocalName {
     }
 
     ///
-    /// Returns the `namespace` part of this `LocalName`, if present.
+    /// Returns the `namespace` part of this `LocalName`.
     ///
     pub fn namespace(&self) -> &Namespace {
         &self.namespace
     }
 
+    ///
+    /// Returns `true` if this `LocalName`'s namespace is the default (`":"`)
+    /// namespace.
+    ///
     pub fn is_namespace_default(&self) -> bool {
         self.namespace.is_default()
     }
@@ -446,7 +506,15 @@ impl LocalName {
     }
 
     ///
-    /// Format this `LocalName` as a Curie string.
+    /// Format this `LocalName` as a [CURIE](https://www.w3.org/TR/curie/)
+    /// string, i.e. wrapped in square brackets.
+    ///
+    /// ```rust
+    /// use rdftk_iri::LocalName;
+    /// use std::str::FromStr;
+    /// let name = LocalName::from_str("rdf:type").unwrap();
+    /// assert_eq!(name.as_curie(), "[rdf:type]");
+    /// ```
     ///
     pub fn as_curie(&self) -> String {
         format!("[{}{}]", self.namespace, self.name)
@@ -459,8 +527,8 @@ impl LocalName {
 
 fn is_pn_chars_base(c: char) -> bool {
     match c {
-        'A'..'Z'
-        | 'a'..'z'
+        'A'..='Z'
+        | 'a'..='z'
         | '\u{00C0}'..='\u{00D6}'
         | '\u{00D8}'..='\u{00F6}'
         | '\u{00F8}'..='\u{02FF}'

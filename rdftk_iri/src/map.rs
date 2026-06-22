@@ -22,8 +22,22 @@ use serde::{Deserialize, Serialize};
 // ------------------------------------------------------------------------------------------------
 
 ///
-/// Implementation of a mapping from a prefix `Name` to an `Iri`. Prefix mappings are commonly used
-/// in the serialization of graphs.
+/// Implementation of a mapping from a prefix `Namespace` to an `Iri`. Prefix
+/// mappings are commonly used in the serialization of RDF graphs.
+///
+/// ## Example
+///
+/// ```rust
+/// use rdftk_iri::{Iri, IriPrefixMap, LocalName};
+/// use std::str::FromStr;
+///
+/// let map = IriPrefixMap::common();
+/// let qname = LocalName::from_str("rdf:type").unwrap();
+/// assert_eq!(
+///     map.expand(&qname),
+///     Some(Iri::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#type").unwrap()),
+/// );
+/// ```
 ///
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
@@ -178,6 +192,9 @@ impl IriPrefixMap {
         let _ = self.map.insert(prefix, iri);
     }
 
+    ///
+    /// Insert a mapping for the prefix and IRI defined by `vocabulary`.
+    ///
     pub fn insert_vocabulary(&mut self, vocabulary: &Vocabulary) {
         self.insert(vocabulary.prefix_as_namespace(), vocabulary.iri_as_iri());
     }

@@ -21,6 +21,18 @@ use serde::{Deserialize, Serialize};
 /// [`Vocabulary::prefix_as_namespace`] and [`Vocabulary::iri_as_iri`] will convert directly
 /// to appropriate types for use in the [`IriPrefixMap`](../map/struct.IriPrefixMap.html) structure.
 ///
+/// ## Example
+///
+/// ```rust
+/// use rdftk_iri::{IriPrefixMap, vocab::Vocabulary};
+///
+/// pub const MY_NS: Vocabulary = Vocabulary::new("ex", "https://example.org/ns#")
+///     .with_description("An example vocabulary.");
+///
+/// let map = IriPrefixMap::default().with_vocabulary(&MY_NS);
+/// assert_eq!(map.len(), 1);
+/// ```
+///
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct Vocabulary {
@@ -208,15 +220,14 @@ pub const VOCABULARY_RDF_SCHEMA: Vocabulary =
         .with_description("RDF Schema provides a data-modelling vocabulary for RDF data; it is an extension of the basic RDF vocabulary. See [w3.org](https://www.w3.org/TR/rdf11-schema/).");
 
 ///
-/// SKOS is an area of work developing specifications and standards to support the use of knowledge
-/// organization systems (KOS) such as thesauri, classification schemes, subject heading lists and
-/// taxonomies within the framework of the Semantic Web.
+/// Semantically-Interlinked Online Communities (SIOC) is an ontology for
+/// describing the information in online communities (forums, blogs, wikis, …).
 ///
 /// ## Details
 ///
-/// * **prefix** -- "skos"
-/// * **IRI** -- `<http://www.w3.org/2004/02/skos/core#>`
-/// * **See Also** -- [SKOS Simple Knowledge Organization System - Home Page](https://www.w3.org/2004/02/skos/)
+/// * **prefix** -- "sioc"
+/// * **IRI** -- `<http://rdfs.org/sioc/ns#>`
+/// * **See Also** -- [SIOC on the Semantic Web Wiki](https://www.w3.org/wiki/SIOC)
 ///
 pub const VOCABULARY_SIOC: Vocabulary = Vocabulary::new("sioc", "http://rdfs.org/sioc/ns#")
     .with_description("See <https://www.w3.org/wiki/SIOC>");
@@ -305,7 +316,7 @@ pub const VOCABULARY_XML: Vocabulary =
     Vocabulary::new("xml", "http://www.w3.org/XML/1998/namespace#");
 
 ///
-/// XML Schema's datatypes, used exten
+/// XML Schema's datatypes, used extensively throughout RDF for typed literals.
 ///
 /// ## Details
 ///
