@@ -32,7 +32,7 @@ base64 = { version = "0.22", optional = true }
 chrono = { version = "0.4", optional = true }
 language-tags = "0.3.2"
 lazy_static = "1.5"
-rdftk_iri = { version = "0.2.5", path = "../rdftk_iri" }
+rdftk_iri = { version = "0.3.0", path = "../rdftk_iri" }
 rdftk_names = { version = "0.2.5", path = "../rdftk_names" }
 rust_decimal = { version = "1.36", optional = true }
 unique_id = "0.1"

@@ -30,7 +30,7 @@ itertools = "0.13"
 lazy_static = "1.4"
 objio = "0.1.1"
 rdftk_core = { version = "0.5.7", path = "../rdftk_core" }
-rdftk_iri = { version = "0.2.6", path = "../rdftk_iri" }
+rdftk_iri = { version = "0.3.0", path = "../rdftk_iri" }
 rdftk_names = { version = "0.2.5", path = "../rdftk_names" }
 regex = "1.5"
 tracing = "0.1.40"
