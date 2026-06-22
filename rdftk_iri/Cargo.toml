@@ -33,5 +33,8 @@ thiserror = { version = "2.0", default-features = false }
 url = { version = "2.5", default-features = false }
 uuid = { version = "1.23", default-features = false, features = ["v4"] }
 
+[dev-dependencies]
+proptest = "1"
+
 [lints]
 workspace = true

@@ -13,19 +13,16 @@ members = [
 ]
 
 [workspace.lints.rust]
-exported_private_dependencies = "deny"
+absolute_paths_not_starting_with_crate = "warn"
 anonymous_parameters = "deny"
 bare_trait_objects = "deny"
 deref_nullptr = "deny"
 drop_bounds = "deny"
 dyn_drop = "deny"
-ellipsis_inclusive_range_patterns = "deny"
-unsafe_code = "forbid"
-unsafe_op_in_unsafe_fn = "forbid"
-
-absolute_paths_not_starting_with_crate = "warn"
 elided_lifetimes_in_paths = "warn"
+ellipsis_inclusive_range_patterns = "deny"
 explicit_outlives_requirements = "warn"
+exported_private_dependencies = "deny"
 future_incompatible = { level = "warn", priority = -1 }
 macro_use_extern_crate = "warn"
 missing_debug_implementations = "warn"
@@ -40,12 +37,17 @@ trivial_casts = "warn"
 trivial_numeric_casts = "warn"
 unexpected_cfgs = "warn"
 unreachable_pub = "warn"
+unsafe_code = "forbid"
+unsafe_op_in_unsafe_fn = "forbid"
 unused = { level = "warn", priority = -1 }
 
 [workspace.lints.rustdoc]
 all = "warn"
-missing_crate_level_docs = "warn"
+bare_urls = "warn"
 broken_intra_doc_links = "warn"
+invalid_codeblock_attributes = "warn"
+missing_crate_level_docs = "warn"
+private_intra_doc_links = "warn"
 
 [workspace.lints.clippy]
 all = "warn"
