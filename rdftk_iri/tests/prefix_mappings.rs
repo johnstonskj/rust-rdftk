@@ -1,4 +1,4 @@
-use rdftk_iri::{Iri, IriPrefixMap, Name, QName};
+use rdftk_iri::{Iri, IriPrefixMap, LocalName, Name, Namespace};
 use std::str::FromStr;
 
 fn make_mappings() -> IriPrefixMap {
@@ -15,22 +15,22 @@ fn test_construct_mappings() {
 
     assert!(
         mappings
-            .get_namespace(&Name::new_unchecked("owl"))
+            .get_namespace(&Namespace::new_unchecked("owl"))
             .is_some()
     );
     assert!(
         mappings
-            .get_namespace(&Name::new_unchecked("xsd"))
+            .get_namespace(&Namespace::new_unchecked("xsd"))
             .is_some()
     );
     assert!(
         mappings
-            .get_namespace(&Name::new_unchecked("rdf"))
+            .get_namespace(&Namespace::new_unchecked("rdf"))
             .is_some()
     );
     assert!(
         mappings
-            .get_namespace(&Name::new_unchecked("rdfs"))
+            .get_namespace(&Namespace::new_unchecked("rdfs"))
             .is_some()
     );
 }
@@ -40,32 +40,32 @@ fn test_mapping_expand() {
     let mut mappings = make_mappings();
 
     mappings.insert(
-        Name::new_unchecked("foo"),
+        Namespace::new_unchecked("foo:"),
         Iri::from_str("http://example.com/schema/foo/1.0/").unwrap(),
     );
 
     assert_eq!(
-        mappings.expand(&QName::new_unchecked(
-            Some(Name::new_unchecked("rdf")),
+        mappings.expand(&LocalName::new_unchecked(
+            Namespace::new_unchecked("rdf:"),
             Name::new_unchecked("Bag")
         )),
         Some(Iri::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#Bag").unwrap())
     );
     assert_eq!(
-        mappings.expand(&QName::new_unchecked(None, Name::new_unchecked("knows"))),
+        mappings.expand(&&LocalName::new_in_default(Name::new_unchecked("knows"))),
         Some(Iri::from_str("http://xmlns.com/foaf/0.1/knows").unwrap())
     );
     assert_eq!(
-        mappings.expand(&QName::new_unchecked(
-            Some(Name::new_unchecked("foo")),
+        mappings.expand(&LocalName::new_unchecked(
+            Namespace::new_unchecked("foo:"),
             Name::new_unchecked("Bar")
         )),
         Some(Iri::from_str("http://example.com/schema/foo/1.0/Bar").unwrap())
     );
 
     assert_eq!(
-        mappings.expand(&QName::new_unchecked(
-            Some(Name::new_unchecked("rdfx")),
+        mappings.expand(&LocalName::new_unchecked(
+            Namespace::new_unchecked("rdfx:"),
             Name::new_unchecked("Bag")
         )),
         None
@@ -79,14 +79,14 @@ fn test_mapping_compress() {
     assert_eq!(
         mappings
             .compress(&Iri::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#Bag").unwrap()),
-        Some(QName::new_unchecked(
-            Some(Name::new_unchecked("rdf")),
+        Some(LocalName::new_unchecked(
+            Namespace::new_unchecked("rdf:"),
             Name::new_unchecked("Bag")
         ))
     );
     assert_eq!(
         mappings.compress(&Iri::from_str("http://xmlns.com/foaf/0.1/knows").unwrap()),
-        Some(QName::new_unchecked(None, Name::new_unchecked("knows")))
+        Some(LocalName::new_in_default(Name::new_unchecked("knows")))
     );
     assert_eq!(
         mappings.compress(

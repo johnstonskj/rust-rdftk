@@ -1,30 +1,37 @@
 [package]
 name = "rdftk_iri"
-version = "0.2.6"
+version = "0.3.0"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2024"
 description = "This crate provides an implementation of the IRI and URI specifications."
 documentation = "https://docs.rs/rdftk_core/"
 repository = "https://github.com/johnstonskj/rust-rdftk.git"
-license = "MIT"
+license = "MIT OR Apache-2.0"
 readme = "README.md"
 publish = true
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
+[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dev-dependencies.wasm-bindgen-test]
+version = "0.3"
+
 [features]
 default = ["std", "serde"]
-"std" = ["alloc", "bimap/std", "url/std", "uuid/std"]
+"std" = ["alloc", "bimap/std", "strum/std", "url/std", "uuid/std"]
 "alloc" = []
 "serde" = ["std", "dep:serde", "bimap/serde", "url/serde"]
 
 [dependencies]
 bimap = { version = "0.6", default-features = false }
+document-features = "0.2"
 serde = { version = "1.0", optional = true, default-features = false, features = [
     "derive",
 ] }
+strum = { version = "0.28", default-features = false, features = ["derive"] }
+thiserror = { version = "2.0", default-features = false }
 url = { version = "2.5", default-features = false }
 uuid = { version = "1.23", default-features = false, features = ["v4"] }
 
-[dev-dependencies]
+[lints]
+workspace = true
