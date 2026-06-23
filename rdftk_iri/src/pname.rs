@@ -201,6 +201,30 @@ impl Display for PrefixedName {
     }
 }
 
+impl From<Namespace> for PrefixedName {
+    fn from(value: Namespace) -> Self {
+        Self::Namespace(value)
+    }
+}
+
+impl From<&Namespace> for PrefixedName {
+    fn from(value: &Namespace) -> Self {
+        Self::Namespace(value.clone())
+    }
+}
+
+impl From<LocalName> for PrefixedName {
+    fn from(value: LocalName) -> Self {
+        Self::Local(value)
+    }
+}
+
+impl From<&LocalName> for PrefixedName {
+    fn from(value: &LocalName) -> Self {
+        Self::Local(value.clone())
+    }
+}
+
 // ------------------------------------------------------------------------------------------------
 // Implementations ❱ Namespace
 // ------------------------------------------------------------------------------------------------

@@ -44,6 +44,11 @@ assert_eq!(
 
 ## Changes
 
+### Version 0.3.2
+
+* Feature: add `Display` implementation to `IriRef`.
+* Feature: add variant `From` implementations for `PrefixedName`.
+
 ### Version 0.3.1
 
 * Feature: add new `compress_to_iriref` method on `IriPrefixMap` alongside

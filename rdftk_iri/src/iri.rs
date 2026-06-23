@@ -6,7 +6,10 @@
 use alloc::format;
 
 use crate::{Name, pname::PrefixedName};
-use core::str::FromStr;
+use core::{
+    fmt::{Display, Formatter, Result as FmtResult},
+    str::FromStr,
+};
 use strum::{EnumIs, EnumTryAs};
 
 #[cfg(feature = "genid")]
@@ -340,6 +343,15 @@ pub trait IriExtra {
 // ------------------------------------------------------------------------------------------------
 // Implementations ❱ IriRef
 // ------------------------------------------------------------------------------------------------
+
+impl Display for IriRef {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        match self {
+            Self::Iri(v) => v.fmt(f),
+            Self::PrefixedName(v) => v.fmt(f),
+        }
+    }
+}
 
 impl From<Iri> for IriRef {
     fn from(value: Iri) -> Self {
