@@ -3,8 +3,11 @@
 //! common RDF vocabularies and OWL ontologies.
 //!
 
+#[cfg(not(feature = "std"))]
+use alloc::format;
+
 use crate::{iri::Iri, pname::Namespace};
-use std::str::FromStr;
+use core::str::FromStr;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};

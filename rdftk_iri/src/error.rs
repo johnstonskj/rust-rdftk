@@ -3,6 +3,9 @@
 //! parsing values to `Name`, `Namespace`, and `LocalName`.
 //!
 
+#[cfg(not(feature = "std"))]
+use alloc::string::String;
+
 use strum::{EnumIs, EnumTryAs};
 use thiserror::Error;
 use url::ParseError as UrlError;

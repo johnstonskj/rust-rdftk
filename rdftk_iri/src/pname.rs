@@ -2,8 +2,17 @@
 //! This module provides the types `PrefixedName`, `Namespace`, `Name`, and `LocalName`.
 //!
 
+#[cfg(not(feature = "std"))]
+use alloc::{
+    format,
+    string::{String, ToString},
+};
+
 use crate::error::NameParseError;
-use std::{fmt::Display, str::FromStr};
+use core::{
+    fmt::{Display, Formatter, Result as FmtResult},
+    str::FromStr,
+};
 use strum::{EnumIs, EnumTryAs};
 
 #[cfg(feature = "serde")]
@@ -184,7 +193,7 @@ pub struct LocalName {
 // ------------------------------------------------------------------------------------------------
 
 impl Display for PrefixedName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
             Self::Namespace(v) => v.fmt(f),
             Self::Local(v) => v.fmt(f),
@@ -197,7 +206,7 @@ impl Display for PrefixedName {
 // ------------------------------------------------------------------------------------------------
 
 impl Display for Namespace {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(f, "{}", self.0)
     }
 }
@@ -251,8 +260,8 @@ impl From<&Namespace> for String {
 
 impl Namespace {
     ///
-    /// Construct a `Namespace` from a bare prefix string by appending the
-    /// `':'` separator and validating the result.
+    /// Construct a `Namespace` from a bare prefix string. This function will append the
+    /// necessary `':'` separator character if missing before validating the string.
     ///
     /// ```rust
     /// use rdftk_iri::Namespace;
@@ -262,13 +271,21 @@ impl Namespace {
     ///
     pub fn new_named<S>(s: S) -> Result<Self, NameParseError>
     where
-        S: AsRef<str>,
+        S: Into<String>,
     {
-        Self::from_str(&format!("{}{NAMESPACE_SEPARATOR_CHAR}", s.as_ref()))
+        let s = s.into();
+        Self::from_str(&if s.ends_with(NAMESPACE_SEPARATOR_CHAR) {
+            s
+        } else {
+            format!("{s}:")
+        })
     }
 
     ///
-    /// Construct the *default* (unprefixed) namespace, which serialises as `":"`.
+    /// Construct the *default* (unprefixed) namespace.
+    ///
+    /// The default namespace is the namespace identified by the value
+    /// [`NAMESPACE_DEFAULT_STRING`](../pname/const.NAMESPACE_DEFAULT_STRING.html).
     ///
     pub fn new_default() -> Self {
         Self(NAMESPACE_DEFAULT_STRING.to_string())
@@ -276,18 +293,20 @@ impl Namespace {
 
     ///
     /// Returns a new `Namespace` instance from the string `s` **without** any
-    /// grammar validation. The trailing `':'` is added if not already present.
+    /// grammar validation.
+    ///
+    /// However, the trailing `':'` is added if not already present.
     ///
     pub fn new_unchecked<S>(s: S) -> Self
     where
         S: Into<String>,
     {
         let s = s.into();
-        if s.ends_with(NAMESPACE_SEPARATOR_CHAR) {
-            Self(s)
+        Self(if s.ends_with(NAMESPACE_SEPARATOR_CHAR) {
+            s
         } else {
-            Self(format!("{s}:"))
-        }
+            format!("{s}:")
+        })
     }
 
     ///
@@ -336,7 +355,7 @@ impl Namespace {
 // ------------------------------------------------------------------------------------------------
 
 impl Display for Name {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(f, "{}", self.0)
     }
 }
@@ -414,7 +433,7 @@ impl Name {
 // ------------------------------------------------------------------------------------------------
 
 impl Display for LocalName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(f, "{}{}", self.namespace, self.name)
     }
 }

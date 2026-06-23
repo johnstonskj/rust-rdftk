@@ -2,9 +2,15 @@
 //! This module provides the `IriRef` enum, `Iri` type, and `IriExtra` trait.
 //!
 
-use crate::{Name, error::Error, pname::PrefixedName};
-use std::str::FromStr;
+#[cfg(not(feature = "std"))]
+use alloc::format;
+
+use crate::{Name, pname::PrefixedName};
+use core::str::FromStr;
 use strum::{EnumIs, EnumTryAs};
+
+#[cfg(feature = "genid")]
+use crate::error::Error;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -325,6 +331,7 @@ pub trait IriExtra {
     /// );
     /// ```
     ///
+    #[cfg(feature = "genid")]
     fn genid(&self) -> Result<Self, Error>
     where
         Self: Sized;
@@ -431,6 +438,7 @@ impl IriExtra for Iri {
         }
     }
 
+    #[cfg(feature = "genid")]
     fn genid(&self) -> Result<Self, Error>
     where
         Self: Sized,

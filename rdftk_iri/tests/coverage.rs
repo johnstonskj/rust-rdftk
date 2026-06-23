@@ -11,10 +11,9 @@ use rdftk_iri::{
     vocab::{
         VOCABULARY_CAL, VOCABULARY_DBPEDIA, VOCABULARY_DC_ELEMENTS, VOCABULARY_DC_TERMS,
         VOCABULARY_DOAP, VOCABULARY_FOAF, VOCABULARY_GEO_NAMES, VOCABULARY_ISO_SKOS,
-        VOCABULARY_OPEN_GIS, VOCABULARY_ORG, VOCABULARY_OWL, VOCABULARY_RDF,
-        VOCABULARY_RDF_SCHEMA, VOCABULARY_SIOC, VOCABULARY_SKOS, VOCABULARY_SKOS_XL,
-        VOCABULARY_VANN, VOCABULARY_VOID, VOCABULARY_WOT, VOCABULARY_XML, VOCABULARY_XML_SCHEMA,
-        Vocabulary,
+        VOCABULARY_OPEN_GIS, VOCABULARY_ORG, VOCABULARY_OWL, VOCABULARY_RDF, VOCABULARY_RDF_SCHEMA,
+        VOCABULARY_SIOC, VOCABULARY_SKOS, VOCABULARY_SKOS_XL, VOCABULARY_VANN, VOCABULARY_VOID,
+        VOCABULARY_WOT, VOCABULARY_XML, VOCABULARY_XML_SCHEMA, Vocabulary,
     },
 };
 use std::str::FromStr;
@@ -169,10 +168,7 @@ fn iri_ref_from_variants() {
 #[test]
 fn iri_extra_fragment_helpers() {
     let iri = Iri::from_str("https://example.org/ns#name").unwrap();
-    assert_eq!(
-        iri.with_no_fragment().to_string(),
-        "https://example.org/ns",
-    );
+    assert_eq!(iri.with_no_fragment().to_string(), "https://example.org/ns",);
     assert_eq!(
         iri.with_empty_fragment().to_string(),
         "https://example.org/ns#",
@@ -204,6 +200,7 @@ fn iri_extra_split_and_make_name_negative() {
 }
 
 #[test]
+#[cfg(feature = "genid")]
 fn iri_extra_genid_format() {
     let base = Iri::from_str("https://example.org/").unwrap();
     let id = base.genid().unwrap();

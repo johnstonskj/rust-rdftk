@@ -44,6 +44,31 @@ assert_eq!(
 
 ## Changes
 
+### Version 0.3.1
+
+* Feature: add new `compress_to_iriref` method on `IriPrefixMap` alongside
+  the existing `compress` method.
+* Feature: make the `IriExtra::genid` method gated in `genid` feature.
+* Test: checked the `no_std` compatibility.
+* Documentation: minor fix-ups.
+
+### Version 0.3.0 BREAKING
+
+* Refactor: aligned the API with the SPARQL grammar.
+  * `QName` renamed `LocalName`,
+  * `Name` became separate `Namespace` and `Name`,
+  * added `IriRef` enum,
+  * added `PrefixedName` enum.
+* Test: added significant test cases and coverage target.
+  * test cases both in `tests/` folder and in documentation,
+  * specific tests in `tests/coverage` for weird cases,
+  * property tests for the name parsers.
+* Documentation: complete public documentation.
+
+### Version 0.2.6
+
+Preparation for `0.3.0`.
+
 ### Version 0.2.5
 
 * Feature: added `From<QName` and `From<&QName>` for `String`.

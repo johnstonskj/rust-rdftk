@@ -4,7 +4,7 @@
 //!
 
 use crate::{
-    LocalName,
+    IriRef, LocalName,
     iri::{Iri, IriExtra},
     pname::Namespace,
     vocab::{
@@ -12,7 +12,7 @@ use crate::{
     },
 };
 use bimap::BiBTreeMap;
-use std::fmt::Display;
+use core::fmt::{Display, Formatter, Result as FmtResult};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -32,9 +32,9 @@ use serde::{Deserialize, Serialize};
 /// use std::str::FromStr;
 ///
 /// let map = IriPrefixMap::common();
-/// let qname = LocalName::from_str("rdf:type").unwrap();
+/// let name = LocalName::from_str("rdf:type").unwrap();
 /// assert_eq!(
-///     map.expand(&qname),
+///     map.expand(&name),
 ///     Some(Iri::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#type").unwrap()),
 /// );
 /// ```
@@ -50,7 +50,7 @@ pub struct IriPrefixMap {
 // ------------------------------------------------------------------------------------------------
 
 impl Display for IriPrefixMap {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         writeln!(f, "Prefixes(")?;
         for (prefix, iri) in &self.map {
             writeln!(f, "    {prefix}  {iri} ,")?;
@@ -132,12 +132,18 @@ impl IriPrefixMap {
     ///
     /// Get the default namespace mapping, if present.
     ///
+    /// The default namespace is the namespace identified by the value
+    /// [`NAMESPACE_DEFAULT_STRING`](../pname/const.NAMESPACE_DEFAULT_STRING.html).
+    ///
     pub fn get_default_namespace(&self) -> Option<&Iri> {
         self.map.get_by_left(&Namespace::new_default())
     }
 
     ///
     /// Set the default namespace mapping.
+    ///
+    /// The default namespace is the namespace identified by the value
+    /// [`NAMESPACE_DEFAULT_STRING`](../pname/const.NAMESPACE_DEFAULT_STRING.html).
     ///
     pub fn set_default_namespace(&mut self, iri: Iri) {
         let _ = self.map.insert(Namespace::new_default(), iri);
@@ -146,61 +152,65 @@ impl IriPrefixMap {
     ///
     /// Remove any mapping for the default namespace, if present.
     ///
+    /// The default namespace is the namespace identified by the value
+    /// [`NAMESPACE_DEFAULT_STRING`](../pname/const.NAMESPACE_DEFAULT_STRING.html).
+    ///
     pub fn remove_default_namespace(&mut self) {
         let _ = self.map.remove_by_left(&Namespace::new_default());
     }
 
     ///
-    /// Get the namespace Iri associated with this provided prefix, if present.
+    /// Get the namespace IRI associated with the provided prefix, if present.
     ///
     pub fn get_namespace(&self, prefix: &Namespace) -> Option<&Iri> {
         self.map.get_by_left(prefix)
     }
 
     ///
-    /// Get the prefix associated with this provided namespace URI, if present.
+    /// Get the prefix associated with the provided namespace URI, if present.
     ///
     pub fn get_prefix(&self, namespace: &Iri) -> Option<&Namespace> {
         self.map.get_by_right(namespace)
     }
 
     ///
-    /// Return an iterator over the contained mappings.
+    /// Return an iterator over the current mappings.
     ///
     pub fn mappings(&self) -> impl Iterator<Item = (&Namespace, &Iri)> {
         self.map.iter()
     }
 
     ///
-    /// Return an iterator over the contained mappings.
+    /// Return an iterator over all prefixes in the current mappings.
     ///
     pub fn prefixes(&self) -> impl Iterator<Item = &Namespace> {
         self.map.left_values()
     }
 
     ///
-    /// Return an iterator over the contained mappings.
+    /// Return an iterator over all IRIs in the current mappings.
     ///
     pub fn iris(&self) -> impl Iterator<Item = &Iri> {
         self.map.right_values()
     }
 
     ///
-    /// Insert a mapping from the prefix string to the namespace Iri.
+    /// Insert a mapping from the prefix string to the namespace IRI.
     ///
     pub fn insert(&mut self, prefix: Namespace, iri: Iri) {
         let _ = self.map.insert(prefix, iri);
     }
 
     ///
-    /// Insert a mapping for the prefix and IRI defined by `vocabulary`.
+    /// Insert a mapping for the prefix and IRI defined by `Vocabulary`.
     ///
     pub fn insert_vocabulary(&mut self, vocabulary: &Vocabulary) {
         self.insert(vocabulary.prefix_as_namespace(), vocabulary.iri_as_iri());
     }
 
     ///
-    /// Remove a mapping for the provided prefix. This operation has no effect if no mapping is present.
+    /// Remove a mapping for the provided prefix. This operation has no effect
+    /// if a mapping is not currently present.
     ///
     pub fn remove(&mut self, prefix: &Namespace) {
         let _ = self.map.remove_by_left(prefix);
@@ -218,7 +228,9 @@ impl IriPrefixMap {
     // --------------------------------------------------------------------------------------------
 
     ///
-    /// Expand a qname into an Iri, if possible.
+    /// Expand a `LocalName` into an `Iri`, if possible. If the namespace portion of the local
+    /// name is not a prefix in the current mapping then return `None`, else append the name
+    /// portion to the IRI associated with the prefix.
     ///
     pub fn expand(&self, local_name: &LocalName) -> Option<Iri> {
         match self
@@ -231,7 +243,25 @@ impl IriPrefixMap {
     }
 
     ///
-    /// Compress an Iri into a qname, if possible.
+    /// Compress an `Iri` into a `LocalName`, if possible.
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// use rdftk_iri::{Iri, IriPrefixMap, LocalName, Name, Namespace};
+    /// use std::str::FromStr;
+    ///
+    /// let map = IriPrefixMap::common();
+    /// let type_iri = Iri::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#type").unwrap();
+    /// let type_name = map.compress(&type_iri);
+    /// assert_eq!(
+    ///     Some(LocalName::new(
+    ///         Namespace::new_unchecked("rdf"),
+    ///         Name::new_unchecked("type"),
+    ///     )),
+    ///     type_name,
+    /// );
+    /// ```
     ///
     pub fn compress(&self, iri: &Iri) -> Option<LocalName> {
         let (iri, name) = if let Some((iri, name)) = iri.split() {
@@ -242,6 +272,42 @@ impl IriPrefixMap {
         match self.get_prefix(&iri) {
             None => None,
             Some(prefix) => Some(LocalName::new(prefix.clone(), name)),
+        }
+    }
+
+    ///
+    /// Compress an `Iri` into an `IriRef`. In this case, if the given IRI is not in the mapping
+    /// the `Iri` variant returns a clone of the original. If the IRI is present then the
+    /// `LocalName` is calculated and returned in the `PrefixedName` enum.
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// use rdftk_iri::{
+    ///     Iri, IriPrefixMap, IriRef, LocalName, Name, Namespace, PrefixedName,
+    /// };
+    /// use std::str::FromStr;
+    ///
+    /// let map = IriPrefixMap::common();
+    /// let type_iri = Iri::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#type").unwrap();
+    /// let type_name = map.compress_to_iriref(&type_iri);
+    /// assert_eq!(
+    ///      IriRef::PrefixedName(
+    ///          PrefixedName::Local(
+    ///              LocalName::new(
+    ///                  Namespace::new_unchecked("rdf"),
+    ///                  Name::new_unchecked("type"),
+    ///              )
+    ///          )
+    ///     ),
+    ///     type_name,
+    /// );
+    /// ```
+    ///
+    pub fn compress_to_iriref(&self, iri: &Iri) -> IriRef {
+        match self.compress(iri) {
+            None => IriRef::Iri(iri.clone()),
+            Some(name) => IriRef::PrefixedName(crate::PrefixedName::Local(name)),
         }
     }
 }
