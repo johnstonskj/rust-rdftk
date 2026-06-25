@@ -5,7 +5,7 @@
 
 use crate::{
     IriRef, LocalName,
-    iri::{Iri, IriExtra},
+    iri::Iri,
     pname::Namespace,
     vocab::{
         VOCABULARY_OWL, VOCABULARY_RDF, VOCABULARY_RDF_SCHEMA, VOCABULARY_XML_SCHEMA, Vocabulary,

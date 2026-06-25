@@ -1,6 +1,6 @@
 [package]
 name = "rdftk_iri"
-version = "0.3.2"
+version = "0.4.0"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2024"
 description = "This crate provides an implementation of the IRI and URI specifications."
@@ -18,9 +18,18 @@ version = "0.3"
 
 [features]
 default = ["std", "genid", "serde"]
+
+## This feature implies the presence of the Rust standard library. If not present
+## the `no_std` configuration attribute is set.
 "std" = ["alloc", "bimap/std", "strum/std", "url/std", "uuid?/std"]
+
 "alloc" = []
+
+## This feature enables the `Iri::genid` method, if not required it also
+## removes the dependency on the uuid [crate](https://crates.io/crates/uuid).
 "genid" = ["uuid"]
+
+## This feature provides serde serialization for all types defined in the crate.
 "serde" = ["std", "dep:serde", "bimap/serde", "url/serde"]
 
 [dependencies]

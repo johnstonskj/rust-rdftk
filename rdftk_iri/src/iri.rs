@@ -1,5 +1,5 @@
 //!
-//! This module provides the `IriRef` enum, `Iri` type, and `IriExtra` trait.
+//! This module provides the `IriRef` enum, and `Iri` newtype.
 //!
 
 #[cfg(not(feature = "std"))]
@@ -17,6 +17,17 @@ use crate::error::Error;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+
+// ------------------------------------------------------------------------------------------------
+// Public Types ❱ IRI
+// ------------------------------------------------------------------------------------------------
+
+///
+/// The common type for IRI values used throughout the RDFtk packages.
+///
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
+pub struct Iri(url::Url);
 
 // ------------------------------------------------------------------------------------------------
 // Public Types ❱ IRIRef
@@ -45,37 +56,111 @@ pub enum IriRef {
 }
 
 // ------------------------------------------------------------------------------------------------
-// Public Types ❱ IRI
+// Implementations ❱ Iri
 // ------------------------------------------------------------------------------------------------
 
-///
-/// The common type for IRI values used throughout the RDFtk packages.
-///
-pub type Iri = url::Url;
+impl Display for Iri {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        if f.alternate() {
+            // alternate representation: bare string
+            write!(f, "{}", self.0)
+        } else {
+            // primary representation: RDF <> form
+            write!(f, "<{}>", self.0)
+        }
+    }
+}
 
-///
-/// Additional, mainly constructor, functions for the [`Iri`] type.
-///
-pub trait IriExtra {
+impl FromStr for Iri {
+    type Err = url::ParseError;
+
+    #[inline(always)]
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s = if s.starts_with('<') && s.ends_with('>') {
+            s.strip_prefix('<').unwrap().strip_suffix('>').unwrap()
+        } else {
+            s
+        };
+        Ok(Self(url::Url::from_str(s)?))
+    }
+}
+
+impl TryFrom<&str> for Iri {
+    type Error = url::ParseError;
+
+    #[inline(always)]
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        Ok(Self::from_str(s)?)
+    }
+}
+
+impl From<url::Url> for Iri {
+    fn from(value: url::Url) -> Self {
+        Self(value)
+    }
+}
+
+impl From<&url::Url> for Iri {
+    fn from(value: &url::Url) -> Self {
+        Self(value.clone())
+    }
+}
+
+impl From<Iri> for url::Url {
+    fn from(value: Iri) -> Self {
+        value.0
+    }
+}
+
+impl From<&Iri> for url::Url {
+    fn from(value: &Iri) -> Self {
+        value.0.clone()
+    }
+}
+
+impl AsRef<url::Url> for Iri {
+    fn as_ref(&self) -> &url::Url {
+        &self.0
+    }
+}
+
+impl AsMut<url::Url> for Iri {
+    fn as_mut(&mut self) -> &mut url::Url {
+        &mut self.0
+    }
+}
+
+impl AsRef<str> for Iri {
+    fn as_ref(&self) -> &str {
+        self.0.as_ref()
+    }
+}
+
+impl Iri {
     ///
     /// Returns a copy of the current IRI with the path component replaced by `path`.
     ///
     /// Example
     ///
     /// ```
-    /// use rdftk_iri::{Iri, IriExtra};
+    /// use rdftk_iri::Iri;
     /// use std::str::FromStr;
     ///
     /// let iri = Iri::from_str("https://example.org/old").unwrap();
     /// assert_eq!(
     ///     iri.with_new_path("/new").to_string(),
-    ///     "https://example.org/new",
+    ///     "<https://example.org/new>",
     /// );
     /// ```
     ///
-    fn with_new_path<S>(&self, path: S) -> Self
+    pub fn with_new_path<S>(&self, path: S) -> Self
     where
-        S: AsRef<str>;
+        S: AsRef<str>,
+    {
+        let mut new_self = self.clone();
+        new_self.0.set_path(path.as_ref());
+        new_self
+    }
 
     ///
     /// Returns a copy of the current IRI with the fragment component replaced by `fragment`.
@@ -83,7 +168,7 @@ pub trait IriExtra {
     /// Example
     ///
     /// ```
-    /// use rdftk_iri::{Iri, IriExtra};
+    /// use rdftk_iri::Iri;
     /// use std::str::FromStr;
     ///
     /// let no_fragment = Iri::from_str("https://example.org/ns").unwrap();
@@ -97,9 +182,14 @@ pub trait IriExtra {
     /// assert_eq!(some_fragment, some_fragment.with_new_fragment("name"));
     /// ```
     ///
-    fn with_new_fragment<S>(&self, fragment: S) -> Self
+    pub fn with_new_fragment<S>(&self, fragment: S) -> Self
     where
-        S: AsRef<str>;
+        S: AsRef<str>,
+    {
+        let mut new_self = self.clone();
+        new_self.0.set_fragment(Some(fragment.as_ref()));
+        new_self
+    }
 
     ///
     /// Returns a copy of the current IRI with the fragment component replaced
@@ -108,7 +198,7 @@ pub trait IriExtra {
     /// Example
     ///
     /// ```
-    /// use rdftk_iri::{Iri, IriExtra};
+    /// use rdftk_iri::Iri;
     /// use std::str::FromStr;
     ///
     /// let no_fragment = Iri::from_str("https://example.org/ns").unwrap();
@@ -122,7 +212,9 @@ pub trait IriExtra {
     /// assert_eq!(empty_fragment, some_fragment.with_empty_fragment());
     /// ```
     ///
-    fn with_empty_fragment(&self) -> Self;
+    pub fn with_empty_fragment(&self) -> Self {
+        self.with_new_fragment("")
+    }
 
     ///
     /// Returns a copy of the current IRI with the fragment component removed.
@@ -130,7 +222,7 @@ pub trait IriExtra {
     /// Example
     ///
     /// ```
-    /// use rdftk_iri::{Iri, IriExtra};
+    /// use rdftk_iri::Iri;
     /// use std::str::FromStr;
     ///
     /// let no_fragment = Iri::from_str("https://example.org/ns").unwrap();
@@ -144,7 +236,11 @@ pub trait IriExtra {
     /// assert_eq!(no_fragment, some_fragment.with_no_fragment());
     /// ```
     ///
-    fn with_no_fragment(&self) -> Self;
+    pub fn with_no_fragment(&self) -> Self {
+        let mut new_self = self.clone();
+        new_self.0.set_fragment(None);
+        new_self
+    }
 
     ///
     /// Returns `true` if this IRI may be used as a valid namespace. A valid namespace follows the
@@ -157,7 +253,7 @@ pub trait IriExtra {
     /// Example
     ///
     /// ```
-    /// use rdftk_iri::{Iri, IriExtra};
+    /// use rdftk_iri::Iri;
     /// use std::str::FromStr;
     ///
     /// let maybe = Iri::from_str("https://example.org/ns/").unwrap();
@@ -173,7 +269,9 @@ pub trait IriExtra {
     /// assert!(!maybe.looks_like_namespace());
     /// ```
     ///
-    fn looks_like_namespace(&self) -> bool;
+    pub fn looks_like_namespace(&self) -> bool {
+        self.0.fragment() == Some("") || (self.0.path().ends_with("/") && self.0.query().is_none())
+    }
 
     ///
     /// IF this IRI represents a namespaced-name, return a (namespace, name) pair, else `None`.
@@ -181,7 +279,7 @@ pub trait IriExtra {
     /// Example
     ///
     /// ```
-    /// use rdftk_iri::{Iri, IriExtra, Name};
+    /// use rdftk_iri::{Iri, Name};
     /// use std::str::FromStr;
     ///
     /// let namespace = Iri::from_str("https://example.org/ns/Name").unwrap();
@@ -209,9 +307,31 @@ pub trait IriExtra {
     /// );
     /// ```
     ///
-    fn split(&self) -> Option<(Self, Name)>
+    pub fn split(&self) -> Option<(Self, Name)>
     where
-        Self: Sized;
+        Self: Sized,
+    {
+        if self.0.fragment().map(|s| !s.is_empty()).unwrap_or_default() {
+            if let Ok(name) = Name::from_str(self.0.fragment().unwrap()) {
+                Some((self.with_empty_fragment(), name))
+            } else {
+                None
+            }
+        } else if !self.0.path().is_empty()
+            && !self.0.path().ends_with("/")
+            && self.0.query().is_none()
+        {
+            if let Ok(name) = Name::from_str(self.0.path_segments().unwrap().last().unwrap()) {
+                let path = self.0.path();
+                let path = &path[0..path.len() - name.as_ref().len()];
+                Some((self.with_new_path(path), name))
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
 
     ///
     /// IF this IRI represents a namespaced-name, return the namespace part, else `None`.
@@ -219,7 +339,7 @@ pub trait IriExtra {
     /// Example
     ///
     /// ```
-    /// use rdftk_iri::{Iri, IriExtra};
+    /// use rdftk_iri::Iri;
     /// use std::str::FromStr;
     ///
     /// let ns_name = Iri::from_str("https://example.org/ns/Name").unwrap();
@@ -241,7 +361,7 @@ pub trait IriExtra {
     /// );
     /// ```
     ///
-    fn namespace(&self) -> Option<Self>
+    pub fn namespace(&self) -> Option<Self>
     where
         Self: Sized,
     {
@@ -254,7 +374,7 @@ pub trait IriExtra {
     /// Example
     ///
     /// ```
-    /// use rdftk_iri::{Iri, IriExtra, Name};
+    /// use rdftk_iri::{Iri, Name};
     /// use std::str::FromStr;
     ///
     /// let ns_name = Iri::from_str("https://example.org/ns/Name").unwrap();
@@ -276,7 +396,7 @@ pub trait IriExtra {
     /// );
     /// ```
     ///
-    fn name(&self) -> Option<Name>
+    pub fn name(&self) -> Option<Name>
     where
         Self: Sized,
     {
@@ -289,19 +409,19 @@ pub trait IriExtra {
     /// Example
     ///
     /// ```
-    /// use rdftk_iri::{Iri, IriExtra, Name};
+    /// use rdftk_iri::{Iri, Name};
     /// use std::str::FromStr;
     ///
     /// let namespace = Iri::from_str("https://example.org/ns/").unwrap();
     /// assert_eq!(
     ///     namespace.make_name(Name::from_str("Name").unwrap()).map(|s|s.to_string()),
-    ///     Some("https://example.org/ns/Name".to_string()),
+    ///     Some("<https://example.org/ns/Name>".to_string()),
     /// );
     ///
     /// let namespace = Iri::from_str("https://example.org/ns#").unwrap();
     /// assert_eq!(
     ///     namespace.make_name(Name::from_str("Name").unwrap()).map(|s|s.to_string()),
-    ///     Some("https://example.org/ns#Name".to_string()),
+    ///     Some("<https://example.org/ns#Name>".to_string()),
     /// );
     ///
     /// let namespace = Iri::from_str("https://example.org/ns").unwrap();
@@ -311,9 +431,18 @@ pub trait IriExtra {
     /// );
     /// ```
     ///
-    fn make_name(&self, name: Name) -> Option<Self>
+    pub fn make_name(&self, name: Name) -> Option<Self>
     where
-        Self: Sized;
+        Self: Sized,
+    {
+        if self.0.fragment().is_some() {
+            Some(self.with_new_fragment(name.as_ref()))
+        } else if self.0.path().ends_with("/") && self.0.query().is_none() {
+            Some(self.with_new_path(format!("{}{}", self.0.path(), name.as_ref())))
+        } else {
+            None
+        }
+    }
 
     ///
     /// Returns a new IRI with a well-known path of `"genid"` using the scheme and server
@@ -322,22 +451,35 @@ pub trait IriExtra {
     /// Example
     ///
     /// ```
-    /// use rdftk_iri::{Iri, IriExtra};
+    /// use rdftk_iri::Iri;
     /// use std::str::FromStr;
     ///
     /// let base = Iri::from_str("https://example.org/path#fragment").unwrap();
     ///
     /// assert!(
     ///     base.genid().unwrap().to_string().starts_with(
-    ///         "https://example.org/.well-known/genid/"
+    ///         "<https://example.org/.well-known/genid/"
     ///     )
+    /// );
+    ///
+    /// assert!(
+    ///     base.genid().unwrap().to_string().ends_with(">")
     /// );
     /// ```
     ///
     #[cfg(feature = "genid")]
-    fn genid(&self) -> Result<Self, Error>
+    pub fn genid(&self) -> Result<Self, Error>
     where
-        Self: Sized;
+        Self: Sized,
+    {
+        let new_uuid = uuid::Uuid::new_v4();
+        let new_uuid = new_uuid
+            .simple()
+            .encode_lower(&mut uuid::Uuid::encode_buffer())
+            .to_string();
+        let path = format!("/.well-known/genid/{new_uuid}");
+        Ok(Self(self.0.join(&path).map_err(|e| Error::Url(e))?))
+    }
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -374,93 +516,5 @@ impl From<PrefixedName> for IriRef {
 impl From<&PrefixedName> for IriRef {
     fn from(value: &PrefixedName) -> Self {
         Self::from(value.clone())
-    }
-}
-
-// ------------------------------------------------------------------------------------------------
-// Implementations ❱ Iri
-// ------------------------------------------------------------------------------------------------
-
-impl IriExtra for Iri {
-    fn with_new_path<S>(&self, path: S) -> Self
-    where
-        S: AsRef<str>,
-    {
-        let mut new_self = self.clone();
-        new_self.set_path(path.as_ref());
-        new_self
-    }
-
-    fn with_new_fragment<S>(&self, fragment: S) -> Self
-    where
-        S: AsRef<str>,
-    {
-        let mut new_self = self.clone();
-        new_self.set_fragment(Some(fragment.as_ref()));
-        new_self
-    }
-
-    fn with_empty_fragment(&self) -> Self {
-        self.with_new_fragment("")
-    }
-
-    fn with_no_fragment(&self) -> Self {
-        let mut new_self = self.clone();
-        new_self.set_fragment(None);
-        new_self
-    }
-
-    fn looks_like_namespace(&self) -> bool {
-        self.fragment() == Some("") || (self.path().ends_with("/") && self.query().is_none())
-    }
-
-    fn split(&self) -> Option<(Self, Name)>
-    where
-        Self: Sized,
-    {
-        if self.fragment().map(|s| !s.is_empty()).unwrap_or_default() {
-            if let Ok(name) = Name::from_str(self.fragment().unwrap()) {
-                Some((self.with_empty_fragment(), name))
-            } else {
-                None
-            }
-        } else if !self.path().is_empty() && !self.path().ends_with("/") && self.query().is_none() {
-            if let Ok(name) = Name::from_str(self.path_segments().unwrap().last().unwrap()) {
-                let path = self.path();
-                let path = &path[0..path.len() - name.as_ref().len()];
-                Some((self.with_new_path(path), name))
-            } else {
-                None
-            }
-        } else {
-            None
-        }
-    }
-
-    fn make_name(&self, name: Name) -> Option<Self>
-    where
-        Self: Sized,
-    {
-        if self.fragment().is_some() {
-            Some(self.with_new_fragment(name.as_ref()))
-        } else if self.path().ends_with("/") && self.query().is_none() {
-            Some(self.with_new_path(format!("{}{}", self.path(), name.as_ref())))
-        } else {
-            None
-        }
-    }
-
-    #[cfg(feature = "genid")]
-    fn genid(&self) -> Result<Self, Error>
-    where
-        Self: Sized,
-    {
-        let new_uuid = uuid::Uuid::new_v4();
-        let new_uuid = new_uuid
-            .simple()
-            .encode_lower(&mut uuid::Uuid::encode_buffer())
-            .to_string();
-        let path = format!("/.well-known/genid/{new_uuid}");
-        self.join(&path).map_err(|e| e.into())
     }
 }

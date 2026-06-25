@@ -6,7 +6,7 @@
 //!
 
 use rdftk_iri::{
-    Error, Iri, IriExtra, IriPrefixMap, IriRef, LocalName, Name, Namespace, PrefixedName,
+    Error, Iri, IriPrefixMap, IriRef, LocalName, Name, Namespace, PrefixedName,
     error::NameParseError,
     vocab::{
         VOCABULARY_CAL, VOCABULARY_DBPEDIA, VOCABULARY_DC_ELEMENTS, VOCABULARY_DC_TERMS,
@@ -148,7 +148,7 @@ fn prefixed_name_display() {
 
 #[test]
 fn iri_ref_from_variants() {
-    let iri = Iri::from_str("https://example.org/").unwrap();
+    let iri = Iri::from_str("<https://example.org/>").unwrap();
     let r1: IriRef = iri.clone().into();
     let r2: IriRef = (&iri).into();
     assert_eq!(r1, r2);
@@ -161,56 +161,55 @@ fn iri_ref_from_variants() {
     assert!(r3.is_prefixed_name());
 }
 
-// ------------------------------------------------------------------------------------------------
-// IriExtra branch coverage
-// ------------------------------------------------------------------------------------------------
-
 #[test]
 fn iri_extra_fragment_helpers() {
-    let iri = Iri::from_str("https://example.org/ns#name").unwrap();
-    assert_eq!(iri.with_no_fragment().to_string(), "https://example.org/ns",);
+    let iri = Iri::from_str("<https://example.org/ns#name>").unwrap();
+    assert_eq!(
+        iri.with_no_fragment().to_string(),
+        "<https://example.org/ns>",
+    );
     assert_eq!(
         iri.with_empty_fragment().to_string(),
-        "https://example.org/ns#",
+        "<https://example.org/ns#>",
     );
 }
 
 #[test]
 fn iri_extra_with_new_path() {
-    let iri = Iri::from_str("https://example.org/old").unwrap();
+    let iri = Iri::from_str("<https://example.org/old>").unwrap();
     let updated = iri.with_new_path("/new");
-    assert_eq!(updated.to_string(), "https://example.org/new");
+    assert_eq!(updated.to_string(), "<https://example.org/new>");
 }
 
 #[test]
 fn iri_extra_split_and_make_name_negative() {
     // No fragment, no usable path tail, and a query => split is None.
-    let iri = Iri::from_str("https://example.org/?q=1").unwrap();
+    let iri = Iri::from_str("<https://example.org/?q=1>").unwrap();
     assert_eq!(iri.split(), None);
     assert_eq!(iri.namespace(), None);
     assert_eq!(iri.name(), None);
 
     // make_name on a path without trailing '/' must yield None.
-    let iri = Iri::from_str("https://example.org/ns").unwrap();
+    let iri = Iri::from_str("<https://example.org/ns>").unwrap();
     assert_eq!(iri.make_name(Name::from_str("Name").unwrap()), None);
 
     // make_name on a path with trailing '/' but a query must yield None.
-    let iri = Iri::from_str("https://example.org/ns/?x=1").unwrap();
+    let iri = Iri::from_str("<https://example.org/ns/?x=1>").unwrap();
     assert_eq!(iri.make_name(Name::from_str("Name").unwrap()), None);
 }
 
 #[test]
 #[cfg(feature = "genid")]
 fn iri_extra_genid_format() {
-    let base = Iri::from_str("https://example.org/").unwrap();
+    let base = Iri::from_str("<https://example.org/>").unwrap();
     let id = base.genid().unwrap();
     let s = id.to_string();
-    assert!(s.starts_with("https://example.org/.well-known/genid/"));
+    assert!(s.starts_with("<https://example.org/.well-known/genid/"));
     // 32 hex chars after the path.
     let tail = s
-        .strip_prefix("https://example.org/.well-known/genid/")
+        .strip_prefix("<https://example.org/.well-known/genid/")
         .unwrap();
-    assert_eq!(tail.len(), 32);
+    assert_eq!(tail.len(), 33); // 32 character ID + '>'
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -226,7 +225,7 @@ fn prefix_map_empty_and_iterators() {
     assert_eq!(map.prefixes().count(), 0);
     assert_eq!(map.iris().count(), 0);
 
-    map.set_default_namespace(Iri::from_str("https://example.org/").unwrap());
+    map.set_default_namespace(Iri::from_str("<https://example.org/>").unwrap());
     assert!(!map.is_empty());
     assert_eq!(map.prefixes().count(), 1);
     assert_eq!(map.iris().count(), 1);
@@ -255,7 +254,7 @@ fn prefix_map_insert_vocabulary_and_remove_clear() {
 fn prefix_map_display_contains_mapping() {
     let map = IriPrefixMap::default().with(
         Namespace::from_str("rdf:").unwrap(),
-        Iri::from_str("http://www.w3.org/1999/02/22-rdf-syntax-ns#").unwrap(),
+        Iri::from_str("<http://www.w3.org/1999/02/22-rdf-syntax-ns#>").unwrap(),
     );
     let s = map.to_string();
     assert!(s.contains("rdf:"));
@@ -265,7 +264,7 @@ fn prefix_map_display_contains_mapping() {
 #[test]
 fn prefix_map_compress_returns_none_for_non_namespace_iri() {
     let map = IriPrefixMap::common();
-    let iri = Iri::from_str("https://example.org").unwrap();
+    let iri = Iri::from_str("<https://example.org>").unwrap();
     assert_eq!(map.compress(&iri), None);
 }
 

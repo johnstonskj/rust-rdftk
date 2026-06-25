@@ -12,12 +12,12 @@ slowly than could be the case. For the most part clients should use the `IriRef`
 type that is an `Arc` reference and so can be reused without cloning the whole `Iri`
 value.
 
-# Example
+## Example
 
 The most common use is the parsing of an `IRI` value from a string.
 
 ```rust
-use rdftk_iri::{Iri, IriExtra as _};
+use rdftk_iri::Iri;
 use std::str::FromStr;
 
 let namespace = Iri::from_str(
@@ -43,6 +43,14 @@ assert_eq!(
 ```
 
 ## Changes
+
+### Version 0.4.0 BREAKING
+
+* Refactor: made `Iri` a newtype wrapper around `Url` and directly implemented the `IriExtra` trait.
+
+This change allows the `Display` method on `Iri` to always output `<...>`, and saves the additional
+import of the `IriExtra` trait for additional useful methods. The newtype implements as many of the
+same traits as `Url`, and implements `From` and `Into` for `Url` as well as `AsRef` and `AsMut`.
 
 ### Version 0.3.2
 
