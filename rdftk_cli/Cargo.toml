@@ -31,6 +31,6 @@ rdftk_core = { version = "0.5.5", features = [
     "rdf_star",
 ], path = "../rdftk_core" }
 rdftk_io = { version = "0.3.3", path = "../rdftk_io" }
-rdftk_iri = { version = "0.3.0", path = "../rdftk_iri" }
+rdftk_iri = { version = "0.4.0", path = "../rdftk_iri" }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
