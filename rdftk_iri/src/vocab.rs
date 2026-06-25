@@ -2,15 +2,15 @@
 //! This module provides the `Vocabulary` type and a set of constant `Vocabulary` values for
 //! common RDF vocabularies and OWL ontologies.
 //!
+//! Note that vocabularies are defined with static strings, these are meant to be used as
+//! constants in crates to define namespaces for use.
+//!
 
 #[cfg(not(feature = "std"))]
 use alloc::format;
 
 use crate::{iri::Iri, pname::Namespace};
 use core::str::FromStr;
-
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
 
 // ------------------------------------------------------------------------------------------------
 // Public Types ❱ Vocabulary
@@ -37,7 +37,6 @@ use serde::{Deserialize, Serialize};
 /// ```
 ///
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct Vocabulary {
     prefix: &'static str,
     iri: &'static str,

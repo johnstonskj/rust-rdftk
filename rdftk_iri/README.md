@@ -46,11 +46,15 @@ assert_eq!(
 
 ### Version 0.4.0 BREAKING
 
-* Refactor: made `Iri` a newtype wrapper around `Url` and directly implemented the `IriExtra` trait.
+* Refactor: make `Iri` a newtype wrapper around `Url` and directly implemented the `IriExtra` trait.
 
 This change allows the `Display` method on `Iri` to always output `<...>`, and saves the additional
 import of the `IriExtra` trait for additional useful methods. The newtype implements as many of the
 same traits as `Url`, and implements `From` and `Into` for `Url` as well as `AsRef` and `AsMut`.
+
+* Test: add test suite for serde feature
+  * add dev-dependency on `serde-json`
+  * add round-trip serialize/de-serialize cases for all types in `tests/serde.rs`
 
 ### Version 0.3.2
 
