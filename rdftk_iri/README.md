@@ -44,6 +44,13 @@ assert_eq!(
 
 ## Changes
 
+### 0.4.1
+
+* feat: added third layer of constructor:
+  * `empty` creates an empty map.
+  * `Default::default` creates a map with the four core RDF/OWL vocabularies.
+  * `common` adds DC terms, SKOS, and VOID to the set of four above.
+
 ### Version 0.4.0 BREAKING
 
 * Refactor: make `Iri` a newtype wrapper around `Url` and directly implemented the `IriExtra` trait.

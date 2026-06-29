@@ -1,6 +1,7 @@
 [tools]
 rust = "latest"
 "cargo:cargo-tarpaulin" = "latest"
+"cargo:cargo-nextest" = "latest"
 
 # Coverage for the `rdftk_iri` crate, enforcing the 80% line-coverage gate.
 #

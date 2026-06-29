@@ -8,7 +8,8 @@ use crate::{
     iri::Iri,
     pname::Namespace,
     vocab::{
-        VOCABULARY_OWL, VOCABULARY_RDF, VOCABULARY_RDF_SCHEMA, VOCABULARY_XML_SCHEMA, Vocabulary,
+        VOCABULARY_DC_TERMS, VOCABULARY_OWL, VOCABULARY_RDF, VOCABULARY_RDF_SCHEMA,
+        VOCABULARY_SKOS, VOCABULARY_VOID, VOCABULARY_XML_SCHEMA, Vocabulary,
     },
 };
 use bimap::BiBTreeMap;
@@ -39,7 +40,7 @@ use serde::{Deserialize, Serialize};
 /// );
 /// ```
 ///
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct IriPrefixMap {
     map: BiBTreeMap<Namespace, Iri>,
@@ -59,29 +60,57 @@ impl Display for IriPrefixMap {
     }
 }
 
+impl Default for IriPrefixMap {
+    ///
+    /// Construct a new map with the four core RDF+OWL namespaces.
+    ///
+    /// Refer to the [`IriPrefixMap::common`] documentation for more details.
+    ///
+    fn default() -> Self {
+        Self::empty()
+            .with_vocabulary(&VOCABULARY_RDF)
+            .with_vocabulary(&VOCABULARY_RDF_SCHEMA)
+            .with_vocabulary(&VOCABULARY_XML_SCHEMA)
+            .with_vocabulary(&VOCABULARY_OWL)
+    }
+}
+
 impl IriPrefixMap {
     // --------------------------------------------------------------------------------------------
     // Constructors
     // --------------------------------------------------------------------------------------------
 
     ///
+    /// Construct a new empty map, this is rarely useful. Use either the `default`, or `common`
+    /// constructor methods.
+    ///
+    pub fn empty() -> Self {
+        Self {
+            map: BiBTreeMap::default(),
+        }
+    }
+
+    ///
     /// Construct a new map with the four core RDF+OWL namespaces.
     ///
-    /// The map will be created with the following mappings:
+    /// The map will be created with the following mappings. Note that those created by the
+    /// `Default::default` method are indicated in the right-hand column.
     ///
-    /// | Prefix | Namespace                                      | Vocabulary                |
-    /// | ------ | ---------------------------------------------- | ------------------------- |
-    /// | owl    | <http://www.w3.org/2002/07/owl#>               | [`VOCABULARY_OWL`]        |
-    /// | rdf    | <http://www.w3.org/1999/02/22-rdf-syntax-ns#>  | [`VOCABULARY_RDF`]        |
-    /// | rdfs   | <http://www.w3.org/2000/01/rdf-schema#>        | [`VOCABULARY_RDF_SCHEMA`] |
-    /// | xsd    | <http://www.w3.org/2001/XMLSchema#>            | [`VOCABULARY_XML_SCHEMA`] |
+    /// | Prefix  | Namespace                                      | Vocabulary                | Default |
+    /// | ------- | ---------------------------------------------- | ------------------------- | ------- |
+    /// | owl     | <http://www.w3.org/2002/07/owl#>               | [`VOCABULARY_OWL`]        | Yes     |
+    /// | rdf     | <http://www.w3.org/1999/02/22-rdf-syntax-ns#>  | [`VOCABULARY_RDF`]        | Yes     |
+    /// | rdfs    | <http://www.w3.org/2000/01/rdf-schema#>        | [`VOCABULARY_RDF_SCHEMA`] | Yes     |
+    /// | xsd     | <http://www.w3.org/2001/XMLSchema#>            | [`VOCABULARY_XML_SCHEMA`] | Yes     |
+    /// | dcterms | <http://purl.org/dc/terms/>                    | [`VOCABULARY_DC_TERMS`]   | No      |
+    /// | skos    | <http://www.w3.org/2004/02/skos/core#>         | [`VOCABULARY_SKOS`]       | No      |
+    /// | void    | <http://rdfs.org/ns/void#>                     | [`VOCABULARY_VOID`]       | No      |
     ///
     pub fn common() -> Self {
         Self::default()
-            .with_vocabulary(&VOCABULARY_RDF)
-            .with_vocabulary(&VOCABULARY_RDF_SCHEMA)
-            .with_vocabulary(&VOCABULARY_XML_SCHEMA)
-            .with_vocabulary(&VOCABULARY_OWL)
+            .with_vocabulary(&VOCABULARY_DC_TERMS)
+            .with_vocabulary(&VOCABULARY_SKOS)
+            .with_vocabulary(&VOCABULARY_VOID)
     }
 
     ///
